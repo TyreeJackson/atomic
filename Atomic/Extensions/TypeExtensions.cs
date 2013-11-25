@@ -16,14 +16,14 @@ namespace AtomicStack
 
             public  T   Create()
             {
-                return default(T);
+                throw new NotImplementedException();
             }
 
         }
 
         public  T   Create<T>()
         {
-            return default(T);
+            throw new NotImplementedException();
         }
 
     }

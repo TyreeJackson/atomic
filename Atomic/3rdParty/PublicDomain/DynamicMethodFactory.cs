@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace AtomicStack
+namespace AtomicStack.Dependencies.PublicDomain
 {
 
     ///
