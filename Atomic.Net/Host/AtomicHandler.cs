@@ -1,24 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AtomicNet;
 
 namespace AtomicNet
 {
 
     public
     abstract
-    partial     class   AtomicHandler : Atom<AtomicHandler>
+    partial     class   AtomicHandler   : Atom<AtomicHandler>
     {
 
-        private HostContext context = null;
+        private     HostContext         context = null;
 
-        public  void        ProcessRequest(HostContext context)
+        protected   HostContext         Context     { get { return this.context; } }
+        protected   HostRequest         Request     { get { return this.context.Request; } }
+        protected   HostResponse        Response    { get { return this.context.Response; } }
+        protected   HostServerUtility   Server      { get { return this.context.Server; } }
+
+        public      Promise             ProcessRequest(HostContext context)
         {
-            this.context    = context;
-            throw new NotImplementedException();
+            this.SetContext(context);
+            if (Atomic.IsStillBooting)  return  this.RespondWithEnvironmentTemporarilyUnavailable();
+
+            return this.ProcessRequest();
         }
+
+        private     void                SetContext(HostContext context)
+        {
+            Throw<ArgumentNullException>.If(context==null, "context");
+            this.context    = context;
+        }
+
+        private     Promise             RespondWithEnvironmentTemporarilyUnavailable()
+        {
+            throw new NotImplementedException();
+            return Promise.Completed;
+        }
+
+        protected
+        abstract    Promise             ProcessRequest();
 
     }
 

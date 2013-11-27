@@ -21,13 +21,10 @@ namespace AtomicNet.IIS
 
         private         IISHttpHandler      handler                             = null;
 
-        public                              IISHttpContext(HttpContext context, IISHttpHandler handler)
+        public                              IISHttpContext(HttpContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
-            Throw<ArgumentNullException>.If(handler==null, "handler");
-
             this._context   = context;
-            this.handler    = handler;
         }
 
 

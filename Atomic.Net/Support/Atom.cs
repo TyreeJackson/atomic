@@ -40,12 +40,17 @@ namespace AtomicNet
         public  class   FactoryLocatorClass
         {
 
-            public  t   Create<t>() where t : tAtom
+            public  tSubAtom    Create()
             {
                 throw new NotImplementedException();
             }
 
-            public  t   Create<t, tArg>(tArg arg) where t : tAtom
+            public  tSubAtom    Create<tArg>(tArg arg)
+            {
+                throw new NotImplementedException();
+            }
+
+            public  tSubAtom    Create<tArg1, tArg2>(tArg1 arg1, tArg2 arg2)
             {
                 throw new NotImplementedException();
             }
@@ -59,7 +64,7 @@ namespace AtomicNet
         static              t                   CreateIfNeeded<t, tArg>(ref t item, tArg arg) where t : tSubAtom
         {
             return  item == null
-                    ?   item = Atom<tAtom, tSubAtom>.FactoryLocator.Create<t, tArg>(arg)
+                    ?   item = (t) Atom<tAtom, tSubAtom>.FactoryLocator.Create<tArg>(arg)
                     :   item;
         }
 

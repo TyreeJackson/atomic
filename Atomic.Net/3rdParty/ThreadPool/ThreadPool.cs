@@ -99,7 +99,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
             Debug.WriteLine(string.Format("  dynamic thread decay time: {0} ms", dynamicThreadDecayTime));
             Debug.WriteLine(string.Format("  request queue limit:       {0} entries", requestQueueLimit));
 
-            Handle = stopCompleteEvent.Handle;
+            this.SafeWaitHandle  = stopCompleteEvent.SafeWaitHandle;
 
             if( maxThreadCount < initialThreadCount )
             {
@@ -336,7 +336,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
             lock(this)
             {
                 Debug.WriteLine(string.Format( "[{0}, {1}] Stopping pool (# threads = {2})",
-                                               AppDomain.GetCurrentThreadId(), Thread.CurrentThread.Name,
+                                               Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.Name,
                                                currentThreadCount ));
                 stopInProgress = true;
                 Monitor.PulseAll(this);
@@ -708,7 +708,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
             public void Start()
             {
                 Thread t = new Thread(new ThreadStart(ThreadProc));
-                t.ApartmentState = ApartmentState.MTA;
+                t.SetApartmentState(ApartmentState.MTA);
                 t.Name = name;
                 t.Priority = priority;
                 t.IsBackground = pool.useBackgroundThreads;
@@ -718,7 +718,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
             void ThreadProc()
             {
                 Debug.WriteLine(string.Format( "[{0}, {1}] Worker thread started",
-                                               AppDomain.GetCurrentThreadId(), Thread.CurrentThread.Name ));
+                                               Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.Name ));
 
                 bool done = false;
 
@@ -838,7 +838,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                         if( newThread != null )
                         {
                             Debug.WriteLine(string.Format( "[{0}, {1}] Adding dynamic thread to pool",
-                                                        AppDomain.GetCurrentThreadId(), Thread.CurrentThread.Name ));
+                                                        Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.Name ));
                             newThread.Start();
                         }
 
@@ -878,7 +878,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                 }
 
                 Debug.WriteLine(string.Format( "[{0}, {1}] Worker thread exiting pool",
-                                               AppDomain.GetCurrentThreadId(), Thread.CurrentThread.Name ));
+                                               Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.Name ));
             }
         }
 
