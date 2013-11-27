@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Net", "Atomic\Atomic.Net.csproj", "{DA5F270E-0A55-461F-B975-2D4C56599F3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Net", "Atomic.Net\Atomic.Net.csproj", "{DA5F270E-0A55-461F-B975-2D4C56599F3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
