@@ -59,7 +59,7 @@
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
     <Compile Include="Host\AtomicService.cs" />
-    <Compile Include="Host\AutoStart.cs" />
+    <Compile Include="Host\Loader.cs" />
     <Compile Include="Host\AtomicHandler.cs" />
     <Compile Include="Host\Environment.cs" />
     <Compile Include="Host\IIS\IISHttpRequest.cs" />
