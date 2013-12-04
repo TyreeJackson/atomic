@@ -14,7 +14,7 @@ namespace AtomicNet.IIS
         internal        HttpContext         context                             { get { return this._context; } }
 
         private         IISHttpApplication  _application                        = null;
-        private         IISHttpApplication  application                         { get { return HostApplication.CreateIfNeeded(ref this._application, context); } }
+        private         IISHttpApplication  application                         { get { return HostApplication.CreateIfNeeded(ref this._application, this); } }
 
         private         IISHttpRequest      _request                            = null;
         private         IISHttpRequest      request                             { get { return HostRequest.CreateIfNeeded(ref this._request, this); } }
@@ -44,6 +44,7 @@ namespace AtomicNet.IIS
         {
             get
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
         }
@@ -52,6 +53,7 @@ namespace AtomicNet.IIS
         {
             get
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
         }
@@ -60,6 +62,7 @@ namespace AtomicNet.IIS
         {
             get
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
         }
@@ -68,6 +71,7 @@ namespace AtomicNet.IIS
         {
             get
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
         }
@@ -76,6 +80,7 @@ namespace AtomicNet.IIS
         {
             get
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
         }

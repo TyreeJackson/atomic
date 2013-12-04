@@ -8,7 +8,7 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostContext : Atom<HostContext, HostContext>
+    abstract    class   HostContext : Atom<HostContext>
     {
 
         public  static  HostContext         Current             { get { return HostContext.instance; } }

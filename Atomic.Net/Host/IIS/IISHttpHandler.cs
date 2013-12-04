@@ -11,13 +11,13 @@ namespace AtomicNet.IIS
 
         public  class   AsyncResult : IAsyncResult
         {
-
+#warning NotImplemented
             object      IAsyncResult.AsyncState             { get { throw new NotImplementedException(); } }
-
+#warning NotImplemented
             WaitHandle  IAsyncResult.AsyncWaitHandle        { get { throw new NotImplementedException(); } }
-
+#warning NotImplemented
             bool        IAsyncResult.CompletedSynchronously { get { throw new NotImplementedException(); } }
-
+#warning NotImplemented
             bool        IAsyncResult.IsCompleted            { get { throw new NotImplementedException(); } }
 
         }

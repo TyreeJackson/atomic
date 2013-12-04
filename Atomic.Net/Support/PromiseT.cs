@@ -5,7 +5,7 @@ using AtomicNet;
 namespace AtomicNet
 {
 
-    public  class   Promise<t> : Atom<Promise<t>>
+    public  class   Promise<t> : Atom<Promise<t>, Action<Action<t>, Action<Exception>>>
     {
 
         private     t                           value;
@@ -15,14 +15,17 @@ namespace AtomicNet
         private     Stack<Action>               completedListeners  = new Stack<Action>();
         private     Stack<Action<Exception>>    failureListeners    = new Stack<Action<Exception>>();
 
-        protected                               Promise(t value)
+        protected                               Promise(t value) : base(null)
         {
             this.resolve(value);
         }
 
-        public  static  implicit    operator    Promise<t>(t value) { return new Promise<t>(value); }
+        public
+        static
+        implicit
+        operator                                Promise<t>(t value) { return new Promise<t>(value); }
 
-        protected                               Promise(Action<Action<t>, Action<Exception>> action)
+        protected                               Promise(Action<Action<t>, Action<Exception>> action) : base(action)
         {
             Throw<ArgumentNullException>.If(action == null, "action");
             action(this.resolve, this.reject);
@@ -38,15 +41,6 @@ namespace AtomicNet
         }
 
         public      Promise<at>                 Then<at>(Func<t, Promise<at>> onComplete, Action<Exception> onFailure)
-        {
-            if (!this.isResolved)
-                lock(this.resolveLock)
-                    if (!this.isResolved)   return this.registerCallbacks(onComplete, onFailure);
-                    else                    return this.notifyCallback(onComplete, onFailure);
-            else    return this.notifyCallback(onComplete, onFailure);
-        }
-
-        public      Promise<at1, at2>           Then<at1, at2>(Func<t, Promise<at1, at2>> onComplete, Action<Exception> onFailure)
         {
             if (!this.isResolved)
                 lock(this.resolveLock)
@@ -76,13 +70,6 @@ namespace AtomicNet
             if (onComplete !=null && this.rejection == null)    return onComplete(this.value);
             else if (onFailure != null)                         onFailure(this.rejection);
             return  Atomic.Promise<at>((resolve, reject)=>resolve(default(at)));
-        }
-
-        private     Promise<at1, at2>           notifyCallback<at1, at2>(Func<t, Promise<at1, at2>> onComplete, Action<Exception> onFailure)
-        {
-            if (onComplete !=null && this.rejection == null)    return onComplete(this.value);
-            else if (onFailure != null)                         onFailure(this.rejection);
-            return  Atomic.Promise<at1, at2>((resolve, reject)=>resolve(default(at1), default(at2)));
         }
 
         private     void                        notifyCallback(Action<t> onComplete, Action<Exception> onFailure)
@@ -126,19 +113,6 @@ namespace AtomicNet
             });
         }
 
-        private     Promise<at1, at2>           registerCallbacks<at1, at2>(Func<t, Promise<at1, at2>> onComplete, Action<Exception> onFailure)
-        {
-            return Atomic.Promise<at1, at2>
-            ((resolve, reject)=>
-            {
-                lock(this.resolveLock)
-                {
-                    this.completedListeners.Push(()=>onComplete(this.value).Done(resolve, onFailure));
-                    this.failureListeners.Push(onFailure);
-                }
-            });
-        }
-
         private     void                        resolve(t value)
         {
             this.value      = value;
@@ -149,32 +123,6 @@ namespace AtomicNet
         {
             this.rejection  = ex;
             this.isResolved = true;
-        }
-
-    }
-
-    #warning Do we think we might need a two parameter promise?  If so, here is the start of one
-    public  class   Promise<t1, t2> : Atom<Promise<t1, t2>>
-    {
-
-        public      Promise     Then(Func<t1, t2, Promise> onComplete, Action<Exception> onFailure)
-        {
-            throw new NotImplementedException();
-        }
-
-        public      Promise<t2> Then<at>(Func<t1, t2, Promise<at>> onComplete, Action<Exception> onFailure)
-        {
-            throw new NotImplementedException();
-        }
-
-        public      Promise<t2> Then<at1, at2>(Func<t1, t2, Promise<at1, at2>> onComplete, Action<Exception> onFailure)
-        {
-            throw new NotImplementedException();
-        }
-
-        public      void        Done(Action<t1, t2> onComplete, Action<Exception> onFailure)
-        {
-            throw new NotImplementedException();
         }
 
     }

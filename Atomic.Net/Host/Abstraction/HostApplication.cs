@@ -8,7 +8,7 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostApplication : Atom<HostApplication>
+    abstract    class   HostApplication : Atom<HostApplication, HostContext>
     {
 
         public
@@ -25,6 +25,12 @@ namespace AtomicNet
 
         public
         abstract    HostPrincipal       User        { get; }
+
+        public                          HostApplication(HostContext context) : base(context)
+        {
+            #warning NotImplemented
+            throw new NotImplementedException();
+        }
 
     }
 

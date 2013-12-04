@@ -8,8 +8,11 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostRequest : Atom<HostRequest>
+    abstract    class   HostRequest : Atom<HostRequest, HostContext>
     {
+
+        protected
+        readonly    HostContext             context                             = null;
 
         public
         abstract    List<string>            AcceptTypes                         { get; }
@@ -124,6 +127,12 @@ namespace AtomicNet
 
         public
         abstract    void                    Abort();
+
+        public                              HostRequest(HostContext context) : base(context)
+        {
+            Throw<ArgumentNullException>.If(context==null, "context");
+            this.context    = context;
+        }
 
     }
 

@@ -38,6 +38,7 @@ namespace AtomicNet
             return Atomic.Promise
             ((resolve, reject)=>
             {
+                #warning NotImplemented
                 reject(new NotImplementedException());
             });
         }

@@ -32,10 +32,10 @@ namespace AtomicNet
     :
                     Entity
     {
-
+#warning NotImplemented
         public
         static  tCriteria           Where   { get { throw new NotImplementedException(); } }
-
+#warning NotImplemented
         public
         static  tOrderBySelection   OrderBy { get { throw new NotImplementedException(); } }
 

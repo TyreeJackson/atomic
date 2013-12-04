@@ -5,7 +5,7 @@ using AtomicNet;
 namespace AtomicNet
 {
 
-    public  class   Promise : Atom<Promise>
+    public  class   Promise : Atom<Promise, Action<Action, Action<Exception>>>
     {
 
         private     object                      resolveLock         = new object();
@@ -18,7 +18,7 @@ namespace AtomicNet
         static
         readonly    Promise                     NoOp                = new Promise((resolve, reject)=>resolve());
 
-        protected                               Promise(Action<Action, Action<Exception>> action)
+        protected                               Promise(Action<Action, Action<Exception>> action) : base(action)
         {
             Throw<ArgumentNullException>.If(action == null, "action");
             action(this.resolve, this.reject);

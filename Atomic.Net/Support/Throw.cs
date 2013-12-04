@@ -15,11 +15,13 @@ namespace AtomicNet
 
             public  tException  Create()
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
 
             public  tException  Create<tArg>(tArg arg)
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
 

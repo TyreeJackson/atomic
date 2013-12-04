@@ -1,10 +1,11 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Reflection.Emit;
 
 namespace AtomicNet
 {
 
-    public  class   Atom
+    public      class   Atom
     {
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -30,51 +31,154 @@ namespace AtomicNet
 
     }
 
-    public  class   Atom<tAtom, tSubAtom>
+    public
+    abstract    class   Atom<tAtom>
     :
-                    Atom 
-            where   tAtom           : Atom<tAtom, tSubAtom>
-            where   tSubAtom        : tAtom
+                        Atom 
+                where   tAtom   : Atom<tAtom>
     {
 
-        public  class   FactoryLocatorClass
+        private
+        static  class   TypeContext<tSubAtom>
+                where   tSubAtom    : tAtom
         {
 
-            public  tSubAtom    Create()
+            private delegate    tSubAtom        creatorDelegate();
+
+            private
+            static
+            readonly            Type            type            = typeof(tSubAtom);
+
+            private
+            static              creatorDelegate _creator;
+
+            private
+            static              object          creatorLock     = new object();
+
+            private
+            static              creatorDelegate creator
             {
-                throw new NotImplementedException();
+                get
+                {
+                    if (_creator == null)
+                    lock(creatorLock)
+                    if (_creator == null)
+                    TypeContext<tSubAtom>.setCreator();
+
+                    return _creator;
+                }
             }
 
-            public  tSubAtom    Create<tArg>(tArg arg)
+            private
+            static              void            setCreator()
             {
-                throw new NotImplementedException();
+                DynamicMethod   method  = new DynamicMethod("CreateIntance", type, Type.EmptyTypes);
+                method.GetILGenerator()
+                .AndPushArgument0OntoStack()
+                .AndPushNewObjectOntoStack(type.GetConstructor(Type.EmptyTypes))
+                .AndReturnObject();
+                _creator    = (creatorDelegate) method.CreateDelegate(typeof(creatorDelegate));
             }
 
-            public  tSubAtom    Create<tArg1, tArg2>(tArg1 arg1, tArg2 arg2)
-            {
-                throw new NotImplementedException();
-            }
+            public
+            static              tSubAtom        Create()        { return TypeContext<tSubAtom>.creator(); }
 
         }
 
-        public  
-        static  readonly    FactoryLocatorClass FactoryLocator  = new FactoryLocatorClass();
+        public
+        static  tAtom   Create()                                        { return TypeContext<tAtom>.Create(); }
 
         public
-        static              t                   CreateIfNeeded<t, tArg>(ref t item, tArg arg) where t : tSubAtom
+        static  tSubAtom    Create<tSubAtom>()                          where tSubAtom : tAtom
         {
-            return  item == null
-                    ?   item = (t) Atom<tAtom, tSubAtom>.FactoryLocator.Create<tArg>(arg)
-                    :   item;
+            return TypeContext<tSubAtom>.Create();
+        }
+
+        public
+        static  tAtom   CreateIfNeeded(ref tAtom item)                  { return item == null ? item = Atom<tAtom>.Create() : item; }
+
+        public
+        static  tSubAtom    CreateIfNeeded<tSubAtom>(ref tSubAtom item) where tSubAtom : tAtom
+        {
+            return item == null ? item = Atom<tAtom>.Create<tSubAtom>() : item;
         }
 
     }
 
-    public  class   Atom<tAtom>
+    public
+    abstract    class   Atom<tAtom, tArg>
     :
-                    Atom<tAtom, tAtom>
-            where   tAtom           : Atom<tAtom>
+                        Atom 
+                where   tAtom   : Atom<tAtom, tArg>
     {
+
+        private
+        static  class   TypeContext<tSubAtom>
+                where   tSubAtom    : tAtom
+        {
+
+            private delegate    tSubAtom        creatorDelegate(tArg arg);
+
+            private
+            static
+            readonly            Type            type                = typeof(tSubAtom);
+
+            private
+            static              creatorDelegate _creator;
+
+            private
+            static              object          creatorLock         = new object();
+
+            private
+            static              creatorDelegate creator
+            {
+                get
+                {
+                    if (_creator == null)
+                    lock(creatorLock)
+                    if (_creator == null)
+                    TypeContext<tSubAtom>.setCreator();
+
+                    return _creator;
+                }
+            }
+
+            private
+            static              void            setCreator()
+            {
+                DynamicMethod   method  = new DynamicMethod("CreateIntance", type, Type.EmptyTypes);
+                method.GetILGenerator()
+                .AndPushArgument0OntoStack()
+                .AndPushNewObjectOntoStack(type.GetConstructor(Type.EmptyTypes))
+                .AndReturnObject();
+                _creator    = (creatorDelegate) method.CreateDelegate(typeof(creatorDelegate));
+            }
+
+            public
+            static              tSubAtom        Create(tArg arg)    { return TypeContext<tSubAtom>.creator(arg); }
+
+        }
+
+        public
+        static  tAtom       Create(tArg arg)                                        { return TypeContext<tAtom>.Create(arg); }
+
+        public
+        static  tSubAtom    Create<tSubAtom>(tArg arg)                              where tSubAtom : tAtom
+        {
+            return TypeContext<tSubAtom>.Create(arg);
+        }
+
+        public
+        static  tAtom       CreateIfNeeded(ref tAtom item, tArg arg)                { return item == null ? item = Atom<tAtom, tArg>.Create(arg) : item; }
+
+        public
+        static  tSubAtom    CreateIfNeeded<tSubAtom>(ref tSubAtom item, tArg arg)   where tSubAtom : tAtom
+        {
+            return item == null ? item = Atom<tAtom, tArg>.Create<tSubAtom>(arg) : item;
+        }
+
+        protected       Atom(tArg arg) {}
+
     }
 
 }

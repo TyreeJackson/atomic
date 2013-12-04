@@ -16,6 +16,7 @@ namespace AtomicNet
 
             public  T   Create()
             {
+                #warning NotImplemented
                 throw new NotImplementedException();
             }
 
@@ -23,6 +24,7 @@ namespace AtomicNet
 
         public  T   Create<T>()
         {
+            #warning NotImplemented
             throw new NotImplementedException();
         }
 
