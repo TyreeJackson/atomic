@@ -16,13 +16,24 @@ namespace AtomicNet
         abstract    class   Router : Atom<Router>
         {
 
-            internal    static  Router  Instance;
+            internal
+            static      Router                  Instance;
 
-            public  AtomicHandler   Map(string url)
+            public
+            abstract    Promise<AtomicHandler>  Map(string url);
+
+        }
+
+        public      class   DefaultRouter : Router
+        {
+            public override Promise<AtomicHandler> Map(string url)
             {
-                throw new NotImplementedException();
+                return Atomic.Promise<AtomicHandler>
+                ((resolve,reject)=>
+                {
+                    reject(new NotImplementedException());
+                });
             }
-
         }
 
     }

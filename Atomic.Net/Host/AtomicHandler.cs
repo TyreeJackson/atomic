@@ -16,7 +16,7 @@ namespace AtomicNet
         protected   HostResponse        Response    { get { return this.context.Response; } }
         protected   HostServerUtility   Server      { get { return this.context.Server; } }
 
-        public      Promise             ProcessRequest(HostContext context)
+        internal    Promise             ProcessRequest(HostContext context)
         {
             this.SetContext(context);
             if (Atomic.IsStillBooting)  return  this.RespondWithEnvironmentTemporarilyUnavailable();
@@ -33,7 +33,7 @@ namespace AtomicNet
         private     Promise             RespondWithEnvironmentTemporarilyUnavailable()
         {
             throw new NotImplementedException();
-            return Promise.Completed;
+            return Promise.NoOp;
         }
 
         protected

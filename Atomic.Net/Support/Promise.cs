@@ -16,7 +16,7 @@ namespace AtomicNet
 
         public
         static
-        readonly    Promise                     Completed           = new Promise((resolve, reject)=>resolve());
+        readonly    Promise                     NoOp                = new Promise((resolve, reject)=>resolve());
 
         protected                               Promise(Action<Action, Action<Exception>> action)
         {

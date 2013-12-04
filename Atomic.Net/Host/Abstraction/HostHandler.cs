@@ -11,7 +11,7 @@
             ((resolve, reject)=>
             {
                 AtomicHandler.Router.Instance.Map(context.Request.Path)
-                .ProcessRequest(context)
+                .Then(handler=>handler.ProcessRequest(context), reject)
                 .WhenDone(resolve, reject);
             });
         }
