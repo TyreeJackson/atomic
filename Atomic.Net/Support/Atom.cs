@@ -177,7 +177,7 @@ namespace AtomicNet
             return item == null ? item = Atom<tAtom, tArg>.Create<tSubAtom>(arg) : item;
         }
 
-        protected       Atom(tArg arg) {}
+        protected           Atom(tArg arg) {}
 
     }
 
