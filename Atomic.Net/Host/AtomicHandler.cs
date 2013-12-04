@@ -18,10 +18,13 @@ namespace AtomicNet
 
         internal    Promise             ProcessRequest(HostContext context)
         {
-            this.SetContext(context);
-            if (Atomic.IsStillBooting)  return  this.RespondWithEnvironmentTemporarilyUnavailable();
-
-            return this.ProcessRequest();
+            return Atomic.Promise
+            ((resolve, reject)=>
+            {
+                this.SetContext(context);
+                if (Atomic.IsStillBooting)  this.RespondWithEnvironmentTemporarilyUnavailable().WhenDone(resolve, reject);
+                else                        this.ProcessRequest().WhenDone(resolve, reject);
+            });
         }
 
         private     void                SetContext(HostContext context)
@@ -32,8 +35,11 @@ namespace AtomicNet
 
         private     Promise             RespondWithEnvironmentTemporarilyUnavailable()
         {
-            throw new NotImplementedException();
-            return Promise.NoOp;
+            return Atomic.Promise
+            ((resolve, reject)=>
+            {
+                reject(new NotImplementedException());
+            });
         }
 
         protected

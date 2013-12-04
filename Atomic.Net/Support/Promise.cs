@@ -26,6 +26,7 @@ namespace AtomicNet
 
         public      Promise                     Then(Func<Promise> onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   return this.registerCallbacks(onComplete, onFailure);
@@ -35,6 +36,7 @@ namespace AtomicNet
 
         public      Promise<at>                 Then<at>(Func<Promise<at>> onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   return this.registerCallbacks(onComplete, onFailure);
@@ -44,6 +46,7 @@ namespace AtomicNet
 
         public      void                        WhenDone(Action onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   this.registerCallbacks(onComplete, onFailure);
@@ -53,22 +56,31 @@ namespace AtomicNet
 
         private     Promise                     notifyCallback(Func<Promise> onComplete, Action<Exception> onFailure)
         {
-            if (onComplete !=null && this.rejection == null)    return onComplete();
-            else if (onFailure != null)                         onFailure(this.rejection);
-            return  Atomic.Promise((resolve, reject)=>resolve());
+            return Atomic.Promise
+            ((resolve, reject)=>
+            {
+                if (this.rejection == null) onComplete().WhenDone(resolve, onFailure);
+                else if (onFailure != null) onFailure(this.rejection);
+                else                        throw   this.rejection;
+            });
         }
 
         private     Promise<at>                 notifyCallback<at>(Func<Promise<at>> onComplete, Action<Exception> onFailure)
         {
-            if (onComplete !=null && this.rejection == null)    return onComplete();
-            else if (onFailure != null)                         onFailure(this.rejection);
-            return  Atomic.Promise<at>((resolve, reject)=>resolve(default(at)));
+            return Atomic.Promise<at>
+            ((resolve, reject)=>
+            {
+                if (this.rejection == null) onComplete().WhenDone(resolve, onFailure);
+                else if (onFailure != null) onFailure(this.rejection);
+                else                        throw   this.rejection;
+            });
         }
 
         private     void                        notifyCallback(Action onComplete, Action<Exception> onFailure)
         {
-            if (onComplete !=null && this.rejection == null)    onComplete();
-            else if (onFailure != null)                         onFailure(this.rejection);
+            if (this.rejection == null) onComplete();
+            else if (onFailure != null) onFailure(this.rejection);
+            else                        throw this.rejection;
         }
 
         private     void                        registerCallbacks(Action onComplete, Action<Exception> onFailure)
@@ -108,13 +120,21 @@ namespace AtomicNet
 
         private     void                        resolve()
         {
-            this.isResolved = true;
+            lock (this.resolveLock)
+            {
+                this.isResolved = true;
+                while (this.completedListeners.Count > 0)   this.completedListeners.Pop()();
+            }
         }
 
         private     void                        reject(Exception ex)
         {
-            this.rejection  = ex;
-            this.isResolved = true;
+            lock (this.resolveLock)
+            {
+                this.rejection  = ex;
+                this.isResolved = true;
+                while (this.failureListeners.Count > 0) this.failureListeners.Pop()(this.rejection);
+            }
         }
 
     }

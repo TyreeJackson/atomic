@@ -1,10 +1,17 @@
 ﻿namespace AtomicNet
 {
 
-    public  abstract    class   AutoStart
+    public  abstract    class   Loader
     {
 
-        protected   void    Boot(bool preloading)   { Atomic.Boot(preloading); }
+        internal
+        static      bool    IsPreloading            { get; private set; }
+
+        protected   void    Boot(bool preloading)
+        {
+            Loader.IsPreloading = preloading;
+            Atomic.Boot();
+        }
 
     }
 

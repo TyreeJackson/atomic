@@ -8,11 +8,14 @@ using AtomicNet;
 public class Atomic<tAtomic> : Atom<Atomic<tAtomic>, tAtomic> where tAtomic : Atomic<tAtomic>
 {
 
-    static  Atomic()
+    internal
+    static      bool    IsPreloading    { get { return Loader.IsPreloading; } }
+
+    static              Atomic()
     {
     }
 
-    internal static void Boot(bool preloading)  { /* Do nothing.  The static constructor will take care of everything. */ }
+    internal static void Boot() { /* Do nothing.  The static constructor will take care of everything. */ }
 
 }
 
