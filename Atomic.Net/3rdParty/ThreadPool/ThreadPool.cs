@@ -136,6 +136,9 @@ namespace AtomicNet.Dependencies.DevelopMentor
 
         #endregion
 
+        private
+        readonly    object  threadPoolLock  = new object();
+
         #region ThreadPool properties
         // The Priority & DynamicThreadDecay properties are not thread safe
         // and can only be set before Start is called.
@@ -186,7 +189,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                     throw new ArgumentException("New thread trigger time cannot be <= 0.", "value");
                 }
 
-                lock( this )
+                lock( this.threadPoolLock )
                 {
                     newThreadTrigger = new TimeSpan(TimeSpan.TicksPerMillisecond * value);
                 }
@@ -275,7 +278,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
 
         public void Start()
         {
-            lock( this )
+            lock( this.threadPoolLock )
             {
                 if( hasBeenStarted )
                 {
@@ -333,7 +336,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                 throw new InvalidOperationException("Cannot stop a thread pool that has not been started yet.");
             }
 
-            lock(this)
+            lock(this.threadPoolLock)
             {
                 Debug.WriteLine(string.Format( "[{0}, {1}] Stopping pool (# threads = {2})",
                                                Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.Name,
@@ -419,7 +422,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
         //
         bool PostRequest( WorkRequest request )
         {
-            lock(this)
+            lock(this.threadPoolLock)
             {
                 // A requestQueueLimit of -1 means the queue is "unbounded"
                 // (subject to available resources).  IOW, no artificial limit
@@ -446,7 +449,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
 
         void ResetWorkRequestTimes()
         {
-            lock( this )
+            lock( this.threadPoolLock )
             {
                 DateTime newTime = DateTime.Now; // DateTime.Now.Add(pool.newThreadTrigger);
 
@@ -684,10 +687,16 @@ namespace AtomicNet.Dependencies.DevelopMentor
 
         class ThreadWrapper
         {
-            ThreadPool      pool;
-            bool            isPermanent;
-            ThreadPriority  priority;
-            string          name;
+            private     ThreadPool      pool;
+
+            private
+            readonly    object          poolLock    = new object();
+
+            private     bool            isPermanent;
+
+            private     ThreadPriority  priority;
+
+            private     string          name;
             
             public ThreadWrapper( ThreadPool pool, bool isPermanent,
                                   ThreadPriority priority, string name )
@@ -697,7 +706,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                 this.priority = priority;
                 this.name = name;
 
-                lock( pool )
+                lock( this.poolLock )
                 {
                     // Update the total # of threads in the pool.
                     //
@@ -727,7 +736,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
                     WorkRequest wr = null;
                     ThreadWrapper newThread = null;
 
-                    lock( pool )
+                    lock( this.poolLock )
                     {
                         // As long as the request queue is empty and a shutdown hasn't
                         // been initiated, wait for a new work request to arrive.

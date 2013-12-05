@@ -6,10 +6,12 @@ using AtomicNet;
 namespace AtomicNet.IIS
 {
 
-    public  class IISHttpHandler : HostHandler, IHttpAsyncHandler
+    public
+    sealed  class IISHttpHandler : HostHandler, IHttpAsyncHandler
     {
 
-        public  class   AsyncResult : IAsyncResult
+        public
+        sealed  class   AsyncResult : IAsyncResult
         {
 #warning NotImplemented
             object      IAsyncResult.AsyncState             { get { throw new NotImplementedException(); } }
