@@ -34,6 +34,7 @@ namespace AtomicNet
 
             public  void    SetValue(tIndexKey value)
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
 
@@ -42,6 +43,7 @@ namespace AtomicNet
             implicit
             operator    tIndexKey(KeyProperty property)
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
 
@@ -51,16 +53,19 @@ namespace AtomicNet
 
         public  int IndexOf(tIndexValue item)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void Insert(int index, tIndexValue item)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void RemoveAt(int index)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
@@ -68,31 +73,37 @@ namespace AtomicNet
         {
             get
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
             set
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
         }
 
         public void Add(tIndexValue item)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void Clear()
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public bool Contains(tIndexValue item)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void CopyTo(tIndexValue[] array, int arrayIndex)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
@@ -100,6 +111,7 @@ namespace AtomicNet
         {
             get
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
         }
@@ -108,37 +120,44 @@ namespace AtomicNet
         {
             get
             {
+                #warning NotImplemented
                 throw new System.NotImplementedException();
             }
         }
 
         public bool Remove(tIndexValue item)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public IEnumerator<tIndexValue> GetEnumerator()
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public System.Xml.Schema.XmlSchema GetSchema()
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void ReadXml(System.Xml.XmlReader reader)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
         public void WriteXml(System.Xml.XmlWriter writer)
         {
+            #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
