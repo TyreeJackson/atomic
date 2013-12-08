@@ -43,26 +43,43 @@
     <Compile Include="3rdParty\PublicDomain\DynamicMethodFactory.cs" />
     <Compile Include="3rdParty\ThreadPool\ThreadPool.cs" />
     <Compile Include="Atomic.cs" />
-    <Compile Include="Configurable\Configuration.cs" />
-    <Compile Include="Configurable\Configuration.SubClass.cs">
+    <Compile Include="Configurable\Utility.Config.cs">
+      <DependentUpon>Utility.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Configuration.Class.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
+    <Compile Include="Configurable\Configuration.cs" />
     <Compile Include="Configurable\Configuration.Instance.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Product .AbstractFactory.Locator.StandardInstances.cs">
-      <DependentUpon>Product.cs</DependentUpon>
+    <Compile Include="Configurable\Configuration.Component.cs">
+      <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Product .AbstractFactory.Locator.cs">
-      <DependentUpon>Product.cs</DependentUpon>
+    <Compile Include="Configurable\Configuration.Utility.cs">
+      <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Product .AbstractFactory.cs">
-      <DependentUpon>Product.cs</DependentUpon>
+    <Compile Include="Configurable\Configuration.SubClass.cs">
+      <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Product .Factory.cs">
-      <DependentUpon>Product.cs</DependentUpon>
+    <Compile Include="Configurable\Component.cs" />
+    <Compile Include="Configurable\Configurable.AbstractFactory.cs">
+      <DependentUpon>Configurable.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Product.cs" />
+    <Compile Include="Configurable\Configurable.AbstractFactory.Locator.cs">
+      <DependentUpon>Configurable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Configurable.AbstractFactory.Locator.StandardInstances.cs">
+      <DependentUpon>Configurable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Configurable.Factory.cs">
+      <DependentUpon>Configurable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Component.Config.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Configurable.cs" />
+    <Compile Include="Configurable\Utility.cs" />
     <Compile Include="DataTypes\StringEnum.cs" />
     <Compile Include="DataTypes\Dictionary.cs" />
     <Compile Include="DataTypes\IndexedList.cs" />
@@ -72,6 +89,7 @@
     <Compile Include="Extensions\System\Reflection\ConstructorInfoExtensions.cs" />
     <Compile Include="Extensions\System\Reflection\Emit\ILGeneratorExtensions.cs" />
     <Compile Include="Extensions\System\Reflection\MethodInfoExtensions.cs" />
+    <Compile Include="Extensions\System\StringExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
     <Compile Include="Host\AtomicHandler.Router.cs">
       <DependentUpon>AtomicHandler.cs</DependentUpon>
@@ -95,6 +113,7 @@
     <Compile Include="Host\IIS\IISHttpContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schema\Entity.cs" />
+    <Compile Include="StandardServices\Main.cs" />
     <Compile Include="Support\Atom.cs" />
     <Compile Include="Support\Promise.PromiseT.cs">
       <DependentUpon>Promise.cs</DependentUpon>

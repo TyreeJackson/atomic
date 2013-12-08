@@ -6,8 +6,7 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Product<tProduct, tProductArgs> : Atom<tProduct, tProductArgs>
-    where       tProduct                        : Product<tProduct, tProductArgs>
+    class       Configurable<tConfigurable, tConfigurableArgs>
     {
 
         public
@@ -17,7 +16,7 @@ namespace AtomicNet
         {
 
             protected
-            abstract    tProduct    Create(tProductArgs args);
+            abstract    tConfigurable    Create(tConfigurableArgs args);
 
         }
 

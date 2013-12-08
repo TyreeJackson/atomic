@@ -6,8 +6,7 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Product<tProduct, tProductArgs> : Atom<tProduct, tProductArgs>
-    where       tProduct                        : Product<tProduct, tProductArgs>
+    class       Configurable<tConfigurable, tConfigurableArgs>
     {
 
         public
@@ -21,12 +20,12 @@ namespace AtomicNet
             {
 
                 public
-                Promise<tProduct>               Create(string key, tProductArgs args)
+                Promise<tConfigurable>               Create(string key, tConfigurableArgs args)
                 {
-                    return  Atomic.Promise<tProduct>
+                    return  Atomic.Promise<tConfigurable>
                     ((resolve, reject)=>
                     {
-                        this.LookupInstanceFactory(key)
+                        this.LookupSubclassFactory(key)
                         .WhenDone
                         (
                             factory=>resolve(factory.Create(args)),
@@ -37,23 +36,35 @@ namespace AtomicNet
 
                 protected
                 virtual
-                Promise<AbstractFactory>        LookupInstanceFactory(string key)
+                Promise<AbstractFactory>        LookupSubclassFactory(string subclassKey)
                 {
                     return  Atomic.Promise<AbstractFactory>
                     ((resolve, reject)=>
                     {
-                                                                this.GetInstanceConfiguration(key)
-                        .Then       (instanceConfiguration=>    this.GetSubClassConfiguration(instanceConfiguration.SubClassKey),   reject)
-                        .Then       (subClassConfiguration=>    this.GetSubClassFactory(subClassConfiguration),                     reject)
-                        .WhenDone   (abstractFactory=>          resolve(abstractFactory),                                           reject);
+                                                                this.GetSubClassConfiguration(subclassKey)
+                        .Then       (subClassConfiguration=>    this.GetSubClassFactory(subClassConfiguration), reject)
+                        .WhenDone   (abstractFactory=>          resolve(abstractFactory),                       reject);
                     });
                 }
 
                 protected
                 virtual
-                Promise<Configuration.Instance> GetInstanceConfiguration(string key)
+                Promise<Configuration.InstanceConfiguration> GetInstanceConfiguration(string key)
                 {
-                    return  Atomic.Promise<Configuration.Instance>
+                    return  Atomic.Promise<Configuration.InstanceConfiguration>
+                    ((resolve, reject)=>
+                    {
+                        //Configuration.Config
+                        #warning NotImplemented
+                        reject(new System.NotImplementedException());
+                    });
+                }
+
+                protected
+                virtual
+                Promise<Configuration.SubclassConfiguration> GetSubClassConfiguration(string key)
+                {
+                    return  Atomic.Promise<Configuration.SubclassConfiguration>
                     ((resolve, reject)=>
                     {
                         #warning NotImplemented
@@ -63,19 +74,7 @@ namespace AtomicNet
 
                 protected
                 virtual
-                Promise<Configuration.SubClass> GetSubClassConfiguration(string key)
-                {
-                    return  Atomic.Promise<Configuration.SubClass>
-                    ((resolve, reject)=>
-                    {
-                        #warning NotImplemented
-                        reject(new System.NotImplementedException());
-                    });
-                }
-
-                protected
-                virtual
-                Promise<AbstractFactory>        GetSubClassFactory(Configuration.SubClass subClassConfiguration)
+                Promise<AbstractFactory>        GetSubClassFactory(Configuration.SubclassConfiguration subClassConfiguration)
                 {
                     return  Atomic.Promise<AbstractFactory>
                     ((resolve, reject)=>

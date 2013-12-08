@@ -6,11 +6,11 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Configuration : Atom<Configuration>
+    class       Configuration
     {
 
         public
-        class   SubClass
+        class       SubclassConfiguration
         {
             public  List.KeyProperty    key;
             public  string              Key             { get { return this.key; } set { this.key.SetValue(value); } }
@@ -18,7 +18,7 @@ namespace AtomicNet
             public  string              AssemblyFile;
 
             public
-            class   List : IndexedList<List, string, SubClass>
+            class   List : IndexedList<List, string, SubclassConfiguration>
             {
                 public  List() : base(a=>a.key)
                 {
