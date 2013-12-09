@@ -32,6 +32,10 @@ namespace AtomicNet
         class   KeyProperty : Atom<KeyProperty>
         {
 
+            private     tIndexKey   value;
+            private
+            readonly    tIndexValue item;
+
             public  void    SetValue(tIndexKey value)
             {
                 #warning NotImplemented
@@ -41,11 +45,9 @@ namespace AtomicNet
             public
             static
             implicit
-            operator    tIndexKey(KeyProperty property)
-            {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
-            }
+            operator    tIndexKey(KeyProperty property) { return property != null ? property.value : default(tIndexKey); }
+
+            public      KeyProperty(tIndexValue item)   { this.item = item; }
 
         }
 

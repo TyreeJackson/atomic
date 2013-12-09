@@ -10,6 +10,12 @@ namespace AtomicNet
     {
 
         public
+        partial
+        class   ServiceConfigs{}
+
+        public  ServiceConfigs  Services    = new ServiceConfigs();
+
+        public
         static  Configuration   Config;
 
     }

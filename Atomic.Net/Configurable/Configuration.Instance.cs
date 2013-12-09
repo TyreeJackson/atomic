@@ -6,18 +6,20 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Configuration : Atom<Configuration>
+    class       Configuration
     {
 
         public
-        class   Instance
+        class   InstanceConfiguration
         {
-            public  List.KeyProperty    key;
-            public  string              Key             { get { return this.key; } set { this.key.SetValue(value); } }
-            public  string              SubClassKey;
+            public
+            readonly    List.KeyProperty    key;
+            public      string              Key             { get { return this.key; } set { this.key.SetValue(value); } }
+            public
+            readonly    string              SubclassKey;
 
             public
-            class   List : IndexedList<List, string, Instance>
+            class   List : IndexedList<List, string, InstanceConfiguration>
             {
                 public  List() : base(a=>a.key)
                 {
@@ -26,6 +28,11 @@ namespace AtomicNet
                 }
             }
 
+            protected   InstanceConfiguration(string subclassKey)
+            {
+                this.key            = new IndexedList<List,string,InstanceConfiguration>.KeyProperty(this);
+                this.SubclassKey    = subclassKey;
+            }
         }
 
     }

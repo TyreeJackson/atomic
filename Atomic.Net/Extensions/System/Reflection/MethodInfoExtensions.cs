@@ -12,7 +12,7 @@ namespace AtomicNet
         public  static  DynamicMethodFactory.DynamicMethodDelegate  CreateDelegateForMethod(this MethodInfo method)
         {
             ParameterInfo[] parameters  = method.GetParameters();
-            DynamicMethod   dMethod     = new DynamicMethod(String.Empty, typeof(object), new Type[] { typeof(object), typeof(object[]) }, typeof(DynamicMethodFactory), false);
+            DynamicMethod   dMethod     = new DynamicMethod(string.Empty, typeof(object), new Type[] { typeof(object), typeof(object[]) }, typeof(DynamicMethodFactory), false);
 
             dMethod
             .GetILGenerator()
