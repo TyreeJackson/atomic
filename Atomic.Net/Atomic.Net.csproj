@@ -43,6 +43,9 @@
     <Compile Include="3rdParty\PublicDomain\DynamicMethodFactory.cs" />
     <Compile Include="3rdParty\ThreadPool\ThreadPool.cs" />
     <Compile Include="Atomic.cs" />
+    <Compile Include="Configurable\Configuration.Instance.cs">
+      <DependentUpon>Configuration.cs</DependentUpon>
+    </Compile>
     <Compile Include="Configurable\Utility.Config.cs">
       <DependentUpon>Utility.cs</DependentUpon>
     </Compile>
@@ -50,9 +53,6 @@
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
     <Compile Include="Configurable\Configuration.cs" />
-    <Compile Include="Configurable\Configuration.Instance.cs">
-      <DependentUpon>Configuration.cs</DependentUpon>
-    </Compile>
     <Compile Include="Configurable\Configuration.Component.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
