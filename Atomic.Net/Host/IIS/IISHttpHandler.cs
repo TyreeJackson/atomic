@@ -13,22 +13,45 @@ namespace AtomicNet.IIS
         public
         sealed  class   AsyncResult : IAsyncResult
         {
-#warning NotImplemented
-            object      IAsyncResult.AsyncState             { get { throw new NotImplementedException(); } }
-#warning NotImplemented
-            WaitHandle  IAsyncResult.AsyncWaitHandle        { get { throw new NotImplementedException(); } }
-#warning NotImplemented
-            bool        IAsyncResult.CompletedSynchronously { get { throw new NotImplementedException(); } }
-#warning NotImplemented
-            bool        IAsyncResult.IsCompleted            { get { throw new NotImplementedException(); } }
 
+            private     object              state;
+            private     object              stateLock                           = new object();
+            private     ManualResetEvent    resetEvent                          = null;
+            private     bool                completedSynchronously              = false;
+            private     bool                isCompleted                         = false;
+            private     AsyncCallback       asyncCallback                       = null;
+
+                        object              IAsyncResult.AsyncState             { get { return this.state; } }
+                        WaitHandle          IAsyncResult.AsyncWaitHandle        { get { lock(this.stateLock)    return this.resetEvent = this.resetEvent ?? new ManualResetEvent(false); } }
+                        bool                IAsyncResult.CompletedSynchronously { get { return this.completedSynchronously; } }
+                        bool                IAsyncResult.IsCompleted            { get { return this.isCompleted; } }
+
+            internal    void                CompleteRequest(bool completedSynchronously)
+            {
+                this.completedSynchronously = completedSynchronously;
+                this.isCompleted            = true;
+                lock(this.stateLock)    if (this.resetEvent != null)    this.resetEvent.Set();
+                try
+                {
+                    if (this.asyncCallback != null) this.asyncCallback(this);
+                }
+                catch(System.Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
-        bool            IHttpHandler.IsReusable                             { get { return false; } }
+        bool            IHttpHandler.IsReusable                                     { get { return false; } }
 
-        void            IHttpHandler.ProcessRequest(HttpContext context)    {}
+        void            IHttpHandler.ProcessRequest(HttpContext context)            {}
 
-        IAsyncResult    IHttpAsyncHandler.BeginProcessRequest(HttpContext context, AsyncCallback cb, object extraData)
+        IAsyncResult    IHttpAsyncHandler.BeginProcessRequest
+                        (
+                            HttpContext     context, 
+                            AsyncCallback   cb,
+                            object          extraData
+                        )
         {
             IAsyncResult    asyncResult = new AsyncResult();
 

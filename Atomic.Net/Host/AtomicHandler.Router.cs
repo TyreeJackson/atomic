@@ -31,8 +31,7 @@ namespace AtomicNet
                 return Atomic.Promise<AtomicHandler>
                 ((resolve,reject)=>
                 {
-                    #warning NotImplemented
-                    reject(new NotImplementedException());
+                    resolve(AtomicHandler.Create<AtomicHandler.Default>());
                 });
             }
         }

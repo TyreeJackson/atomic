@@ -91,9 +91,7 @@
     <Compile Include="Extensions\System\Reflection\MethodInfoExtensions.cs" />
     <Compile Include="Extensions\System\StringExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
-    <Compile Include="Host\AtomicHandler.Router.cs">
-      <DependentUpon>AtomicHandler.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Host\Abstraction\HostCookie.cs" />
     <Compile Include="Host\Abstraction\HostServerUtility.cs" />
     <Compile Include="Host\Abstraction\HostResponse.cs" />
     <Compile Include="Host\Abstraction\HostRequest.cs" />
@@ -102,7 +100,14 @@
     <Compile Include="Host\Abstraction\HostPrinciple.cs" />
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
+    <Compile Include="Host\AtomicHandler.Default.cs">
+      <DependentUpon>AtomicHandler.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Host\AtomicHandler.Router.cs">
+      <DependentUpon>AtomicHandler.cs</DependentUpon>
+    </Compile>
     <Compile Include="Host\AtomicService.cs" />
+    <Compile Include="Host\IIS\IISHttpResponse.cs" />
     <Compile Include="Host\Loader.cs" />
     <Compile Include="Host\AtomicHandler.cs" />
     <Compile Include="Host\Environment.cs" />

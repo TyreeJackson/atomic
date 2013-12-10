@@ -36,7 +36,7 @@ namespace AtomicNet
         abstract    Dictionary
                     <
                         string,
-                        string
+                        HostCookie
                     >                       Cookies                             { get; }
 
         public

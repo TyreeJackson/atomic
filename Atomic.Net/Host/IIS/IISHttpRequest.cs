@@ -39,7 +39,7 @@ namespace AtomicNet.IIS
         override    Dictionary
                     <
                         string,
-                        string
+                        HostCookie
                     >                       Cookies                                 { get {
                     #warning NotImplemented
                     throw new NotImplementedException();; } }

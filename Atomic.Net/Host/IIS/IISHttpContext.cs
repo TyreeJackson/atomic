@@ -19,6 +19,9 @@ namespace AtomicNet.IIS
         private         IISHttpRequest      _request                            = null;
         private         IISHttpRequest      request                             { get { return HostRequest.CreateIfNeeded(ref this._request, this); } }
 
+        private         IISHttpResponse     _response                           = null;
+        private         IISHttpResponse     response                            { get { return HostResponse.CreateIfNeeded(ref this._response, this); } }
+
         private         IISHttpHandler      handler                             = null;
 
         public                              IISHttpContext(HttpContext context)
@@ -44,8 +47,7 @@ namespace AtomicNet.IIS
         {
             get
             {
-                #warning NotImplemented
-                throw new NotImplementedException();
+                return this.request;
             }
         }
 
