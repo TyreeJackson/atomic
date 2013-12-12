@@ -46,9 +46,6 @@
     <Compile Include="Configurable\Configuration.Instance.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Utility.Config.cs">
-      <DependentUpon>Utility.cs</DependentUpon>
-    </Compile>
     <Compile Include="Configurable\Configuration.Class.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
@@ -79,7 +76,10 @@
       <DependentUpon>Component.cs</DependentUpon>
     </Compile>
     <Compile Include="Configurable\Configurable.cs" />
-    <Compile Include="Configurable\Utility.cs" />
+    <Compile Include="Configurable\Service.Config.cs">
+      <DependentUpon>Service.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Configurable\Service.cs" />
     <Compile Include="DataTypes\StringEnum.cs" />
     <Compile Include="DataTypes\Dictionary.cs" />
     <Compile Include="DataTypes\IndexedList.cs" />
