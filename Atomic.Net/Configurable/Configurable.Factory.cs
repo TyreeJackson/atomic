@@ -19,7 +19,7 @@ namespace AtomicNet
         {
 
             protected
-            override    tConfigurable    Create(tConfigurableArgs args)   { return Configurable<tConfigurable, tConfigurableArgs>.Create<tSubProduct>(args); }
+            override    tConfigurable    Create(tConfigurableArgs args)   { return Configurable<tConfigurable, tConfigurableArgs>.Create<tSubProduct, tConfigurableArgs>(args); }
 
         }
 

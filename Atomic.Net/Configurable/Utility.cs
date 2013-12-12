@@ -6,11 +6,11 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Utility<tUtility, tUtilityArgs> : Configurable<tUtility, tUtilityArgs>
-    where       tUtility                        : Utility<tUtility, tUtilityArgs>
+    class       Service<tService, tServiceArgs> : Configurable<tService, tServiceArgs>
+    where       tService                        : Service<tService, tServiceArgs>
     {
 
-        protected   Utility(tUtilityArgs args) : base(args) {}
+        protected   Service(tServiceArgs args) : base(args) {}
 
     }
 

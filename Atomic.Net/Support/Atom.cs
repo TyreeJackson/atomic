@@ -74,7 +74,6 @@ namespace AtomicNet
             {
                 DynamicMethod   method  = new DynamicMethod("CreateIntance", type, Type.EmptyTypes);
                 method.GetILGenerator()
-                .AndPushArgument0OntoStack()
                 .AndPushNewObjectOntoStack(type.GetConstructor(Type.EmptyTypes))
                 .AndReturnObject();
                 _creator    = (creatorDelegate) method.CreateDelegate(typeof(creatorDelegate));
@@ -86,19 +85,22 @@ namespace AtomicNet
         }
 
         public
-        static  tAtom   Create()                                        { return TypeContext<tAtom>.Create(); }
+        static  tAtom       Create()                                        { return TypeContext<tAtom>.Create(); }
 
         public
-        static  tSubAtom    Create<tSubAtom>()                          where tSubAtom : tAtom
+        static  tAtom       Create(Type type)                               { return (tAtom) System.Activator.CreateInstance(type); }
+
+        public
+        static  tSubAtom    Create<tSubAtom>()                              where tSubAtom : tAtom
         {
             return TypeContext<tSubAtom>.Create();
         }
 
         public
-        static  tAtom   CreateIfNeeded(ref tAtom item)                  { return item == null ? item = Atom<tAtom>.Create() : item; }
+        static  tAtom       CreateIfNeeded(ref tAtom item)                  { return item == null ? item = Atom<tAtom>.Create() : item; }
 
         public
-        static  tSubAtom    CreateIfNeeded<tSubAtom>(ref tSubAtom item) where tSubAtom : tAtom
+        static  tSubAtom    CreateIfNeeded<tSubAtom>(ref tSubAtom item)     where tSubAtom : tAtom
         {
             return item == null ? item = Atom<tAtom>.Create<tSubAtom>() : item;
         }
@@ -113,11 +115,12 @@ namespace AtomicNet
     {
 
         private
-        static  class   TypeContext<tSubAtom>
+        static  class   TypeContext<tSubAtom, tSubArg>
                 where   tSubAtom    : tAtom
+                where   tSubArg     : tArg
         {
 
-            private delegate    tSubAtom        creatorDelegate(tArg arg);
+            private delegate    tSubAtom        creatorDelegate(tSubArg arg);
 
             private
             static
@@ -137,7 +140,7 @@ namespace AtomicNet
                     if (_creator == null)
                     lock(creatorLock)
                     if (_creator == null)
-                    TypeContext<tSubAtom>.setCreator();
+                    TypeContext<tSubAtom, tSubArg>.setCreator();
 
                     return _creator;
                 }
@@ -146,35 +149,39 @@ namespace AtomicNet
             private
             static              void            setCreator()
             {
-                DynamicMethod   method  = new DynamicMethod("CreateIntance", type, Type.EmptyTypes);
+                DynamicMethod   method  = new DynamicMethod("CreateIntance", type, new Type[] {typeof(tSubArg)});
                 method.GetILGenerator()
                 .AndPushArgument0OntoStack()
-                .AndPushNewObjectOntoStack(type.GetConstructor(Type.EmptyTypes))
+                .AndPushNewObjectOntoStack(type.GetConstructor(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance, null, new Type[] {typeof(tSubArg)}, null))
                 .AndReturnObject();
                 _creator    = (creatorDelegate) method.CreateDelegate(typeof(creatorDelegate));
             }
 
             public
-            static              tSubAtom        Create(tArg arg)    { return TypeContext<tSubAtom>.creator(arg); }
+            static              tSubAtom        Create(tSubArg arg)    { return TypeContext<tSubAtom, tSubArg>.creator(arg); }
 
         }
 
         public
-        static  tAtom       Create(tArg arg)                                        { return TypeContext<tAtom>.Create(arg); }
+        static  tAtom       Create(tArg arg)                                        { return TypeContext<tAtom, tArg>.Create(arg); }
 
         public
-        static  tSubAtom    Create<tSubAtom>(tArg arg)                              where tSubAtom : tAtom
+        static  tSubAtom    Create<tSubAtom, tSubArg>(tSubArg arg)
+        where               tSubAtom                                : tAtom
+        where               tSubArg                                 : tArg
         {
-            return TypeContext<tSubAtom>.Create(arg);
+            return TypeContext<tSubAtom, tSubArg>.Create(arg);
         }
 
         public
         static  tAtom       CreateIfNeeded(ref tAtom item, tArg arg)                { return item == null ? item = Atom<tAtom, tArg>.Create(arg) : item; }
 
         public
-        static  tSubAtom    CreateIfNeeded<tSubAtom>(ref tSubAtom item, tArg arg)   where tSubAtom : tAtom
+        static  tSubAtom    CreateIfNeeded<tSubAtom, tSubArg>(ref tSubAtom item, tSubArg arg)
+        where               tSubAtom                                                            : tAtom
+        where               tSubArg                                                             : tArg
         {
-            return item == null ? item = Atom<tAtom, tArg>.Create<tSubAtom>(arg) : item;
+            return item == null ? item = Atom<tAtom, tArg>.Create<tSubAtom, tSubArg>(arg) : item;
         }
 
         protected           Atom(tArg arg) {}

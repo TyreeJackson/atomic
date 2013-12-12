@@ -25,7 +25,7 @@ namespace AtomicNet
         implicit
         operator                                Promise<t>(t value) { return new Promise<t>(value); }
 
-        protected                               Promise(Action<Action<t>, Action<Exception>> action) : base(action)
+        public                                  Promise(Action<Action<t>, Action<Exception>> action) : base(action)
         {
             Throw<ArgumentNullException>.If(action == null, "action");
             action(this.resolve, this.reject);

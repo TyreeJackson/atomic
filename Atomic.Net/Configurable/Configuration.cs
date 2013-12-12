@@ -1,4 +1,5 @@
-﻿using AtomicNet;
+﻿using System.Linq;
+using AtomicNet;
 
 namespace AtomicNet
 {
@@ -16,7 +17,12 @@ namespace AtomicNet
         public  ServiceConfigs  Services    = new ServiceConfigs();
 
         public
-        static  Configuration   Config;
+        static  Configuration   Config      = new Config();
+
+    }
+
+    public  class   Config  : Configuration
+    {
 
     }
 

@@ -43,24 +43,14 @@ namespace AtomicNet.IIS
         public
         override        HostHandler         Handler                             { get { return this.handler; } }
 
-        public override HostRequest Request
-        {
-            get
-            {
-                return this.request;
-            }
-        }
+        public
+        override        HostRequest         Request                             { get { return this.request; } }
 
-        public override HostResponse Response
-        {
-            get
-            {
-                #warning NotImplemented
-                throw new NotImplementedException();
-            }
-        }
+        public
+        override        HostResponse        Response                            { get { return this.response; } }
 
-        public override HostServerUtility Server
+        public
+        override        HostServerUtility   Server
         {
             get
             {
@@ -69,16 +59,11 @@ namespace AtomicNet.IIS
             }
         }
 
-        public override DateTime Timestamp
-        {
-            get
-            {
-                #warning NotImplemented
-                throw new NotImplementedException();
-            }
-        }
+        public
+        override        DateTime            Timestamp                           { get { return this.context.Timestamp; } }
 
-        public override HostPrincipal User
+        public
+        override        HostPrincipal       User
         {
             get
             {

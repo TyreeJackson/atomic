@@ -9,6 +9,20 @@ namespace AtomicNet
     class       Configurable<tConfigurable, tConfigurableArgs>
     {
 
+        private
+        static      AbstractFactory.Locator locator;
+
+        protected
+        static      AbstractFactory.Locator Locator
+        {
+            get
+            {
+                if (Configurable<tConfigurable, tConfigurableArgs>.locator == null)
+                Configurable<tConfigurable, tConfigurableArgs>.locator  = new AbstractFactory.Locator();
+                return Configurable<tConfigurable, tConfigurableArgs>.locator;
+            }
+        }
+
         public
         abstract
         partial
@@ -44,19 +58,6 @@ namespace AtomicNet
                                                                 this.GetSubClassConfiguration(subclassKey)
                         .Then       (subClassConfiguration=>    this.GetSubClassFactory(subClassConfiguration), reject)
                         .WhenDone   (abstractFactory=>          resolve(abstractFactory),                       reject);
-                    });
-                }
-
-                protected
-                virtual
-                Promise<Configuration.InstanceConfiguration> GetInstanceConfiguration(string key)
-                {
-                    return  Atomic.Promise<Configuration.InstanceConfiguration>
-                    ((resolve, reject)=>
-                    {
-                        //Configuration.Config
-                        #warning NotImplemented
-                        reject(new System.NotImplementedException());
                     });
                 }
 

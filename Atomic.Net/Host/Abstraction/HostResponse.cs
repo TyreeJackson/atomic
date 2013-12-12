@@ -185,7 +185,7 @@ namespace AtomicNet
         abstract    void                    AddHeader(string name, string value);
 
         public
-        abstract    void                    AppendCookie(KeyValuePair<string, HostCookie> cookie);
+        abstract    void                    AppendCookie(HostCookie cookie);
 
         public
         abstract    void                    AppendHeader(string name, string value);

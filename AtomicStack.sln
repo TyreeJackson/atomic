@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Net", "Atomic.Net\Atomic.Net.csproj", "{DA5F270E-0A55-461F-B975-2D4C56599F3E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicWeb", "AtomicWeb\AtomicWeb.csproj", "{44E40934-99C4-40F5-ACBF-4613EF82A428}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DA5F270E-0A55-461F-B975-2D4C56599F3E} = {DA5F270E-0A55-461F-B975-2D4C56599F3E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

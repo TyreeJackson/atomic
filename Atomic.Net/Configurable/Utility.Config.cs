@@ -6,7 +6,7 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       Utility<tUtility, tUtilityArgs>
+    class       Service<tService, tServiceArgs>
     {
 
         public

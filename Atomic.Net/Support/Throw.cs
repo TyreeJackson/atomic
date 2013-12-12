@@ -30,9 +30,9 @@ namespace AtomicNet
         public  
         static  readonly    ExceptionFactoryLocatorClass    ExceptionFactoryLocator = new ExceptionFactoryLocatorClass();
 
-        public  static      void                If(bool condition)                  { throw ExceptionFactoryLocator.Create(); }
+        public  static      void                If(bool condition)                  { if (condition)    throw ExceptionFactoryLocator.Create(); }
 
-        public  static      void                If<tArg>(bool condition, tArg arg)  { throw ExceptionFactoryLocator.Create(arg); }
+        public  static      void                If<tArg>(bool condition, tArg arg)  { if (condition)    throw ExceptionFactoryLocator.Create(arg); }
 
     }
 
