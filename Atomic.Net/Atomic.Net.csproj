@@ -114,6 +114,7 @@
     <Compile Include="Host\AtomicHandler.DefaultRouter.cs">
       <DependentUpon>AtomicHandler.cs</DependentUpon>
     </Compile>
+    <Compile Include="Host\AtomicService.Config.cs" />
     <Compile Include="Host\IIS\IISHttpCookie.cs" />
     <Compile Include="Host\IIS\IISHttpResponse.cs" />
     <Compile Include="Host\Loader.cs" />

@@ -8,15 +8,9 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   AtomicService : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>
+    abstract
+    partial     class   AtomicService : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>
     {
-
-        public
-        new
-        class       Config : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>.Config
-        {
-            public  Config(Configuration.SubclassConfiguration.List subclasses, string key, ServiceArgs args) : base(subclasses, key, args) {}
-        }
 
         public
         class       ServiceArgs{}
@@ -30,6 +24,7 @@ namespace AtomicNet
 
     public
     abstract
+    partial 
     class       AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig> : AtomicService
     where       tAtomicService                                                          : AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>
     where       tAtomicServiceArgs                                                      : AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>.ServiceArgs
@@ -43,29 +38,6 @@ namespace AtomicNet
         private
         static
         readonly    string  _factoryName    = typeof(tAtomicService).FullName + "+Factory";
-
-        public
-        new
-        class       Config : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>.Config
-        {
-            public  Config(tAtomicServiceArgs args)
-            :
-            this
-            (
-                new Configuration.SubclassConfiguration.List()
-                {
-                    new Configuration.SubclassConfiguration()
-                    {
-                        AssemblyFile    = typeof(tAtomicService).Assembly.Location,
-                        Factory         = _factoryName,
-                        Key             = _name
-                    }
-                },
-                args
-            ) {}
-
-            public  Config(Configuration.SubclassConfiguration.List subclasses, tAtomicServiceArgs args) : base(subclasses, _name, args) {}
-        }
 
         public
         override    bool    IsReusable                              { get { return true; } }
