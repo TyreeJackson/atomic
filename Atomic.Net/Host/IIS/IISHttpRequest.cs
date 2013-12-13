@@ -40,9 +40,7 @@ namespace AtomicNet.IIS
                     <
                         string,
                         HostCookie
-                    >                       Cookies                                 { get {
-                    #warning NotImplemented
-                    throw new NotImplementedException();; } }
+                    >                       Cookies                                 { get { return this.request.Cookies.ConvertToDictionary(); } }
 
         public
         override    string                  CurrentExecutionFilePath                { get { return this.request.CurrentExecutionFilePath; }  }

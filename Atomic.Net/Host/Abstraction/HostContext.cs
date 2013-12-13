@@ -13,6 +13,7 @@ namespace AtomicNet
 
         public  static  HostContext         Current             { get { return HostContext.instance; } }
 
+        [ThreadStatic]
         private static  HostContext         instance;
 
         public
@@ -41,6 +42,8 @@ namespace AtomicNet
 
         public
         abstract        HostPrincipal       User                { get; }
+
+        public                              HostContext()       { HostContext.instance = this; }
 
     }
 

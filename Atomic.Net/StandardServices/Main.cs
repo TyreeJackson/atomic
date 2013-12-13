@@ -4,12 +4,12 @@ namespace AtomicNet
 {
 
     public
-    class   Main : AtomicService<Main, Main.Args, Main.Config>
+    class   Main : WebService<Main, Main.Args, Main.Config>
     {
 
         public
         new
-        class   Config : AtomicService<Main, Main.Args, Main.Config>.Config
+        class   Config : WebService<Main, Main.Args, Main.Config>.Config
         {
 
             public  Config()

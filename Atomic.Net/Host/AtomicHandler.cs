@@ -38,8 +38,16 @@ namespace AtomicNet
             return Atomic.Promise
             ((resolve, reject)=>
             {
-                #warning NotImplemented
-                reject(new NotImplementedException());
+                this.Response.Clear();
+                this.Response.StatusCode        = HttpStatusCodes.ServerError_ServiceUnavailable;
+                this.Response.StatusDescription = "Site is waking up.  Please check back soon...";
+
+                this.Response
+                .AddHeader("Retry-After", ".1")
+                .Write(@"<html><head><meta http-equiv=""refresh"" content=""1""></head><body><p>Site is waking up.  Please check back soon...</p></body></html>")
+                .Flush();
+
+                resolve();
             });
         }
 

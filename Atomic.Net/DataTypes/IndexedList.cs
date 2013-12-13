@@ -7,157 +7,188 @@ namespace AtomicNet
 
     public
     abstract
-    class       IndexedList<tIndexedList, tIndexKey, tIndexValue>
+    partial
+    class       IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
     :
                 Atom
                 <
                     tIndexedList, 
                     System.Func
                     <
-                        tIndexValue, 
+                        tIndexedItem, 
                         IndexedList
                         <
                             tIndexedList, 
-                            tIndexKey, 
-                            tIndexValue
+                            tIndexKeyType,
+                            tIndexedItem
                         >.KeyProperty
                     >
                 >,
-                IList<tIndexValue>, 
+                IList<tIndexedItem>, 
                 IXmlSerializable
-    where       tIndexedList                : IndexedList<tIndexedList, tIndexKey, tIndexValue>
+    where       tIndexedList                : IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
+    where       tIndexKeyType               : System.IEquatable<tIndexKeyType>
     {
 
-        public
-        class   KeyProperty : Atom<KeyProperty>
+        private
+        readonly    System.Func
+                    <
+                        tIndexedItem, 
+                        KeyProperty
+                    >                   getKeyProperty;
+        private
+        readonly    Dictionary
+                    <
+                        tIndexKeyType,
+                        tIndexedItem
+                    >                   innerDictionary     = new Dictionary<tIndexKeyType,tIndexedItem>();
+
+        private
+        readonly    List<tIndexedItem>  innerList           = new List<tIndexedItem>();
+
+        public                          IndexedList
+                                        (
+                                            System.Func
+                                            <
+                                                tIndexedItem, 
+                                                KeyProperty
+                                            >                   getKeyProperty
+                                        ) 
+        :
+                                        base(getKeyProperty)                            { this.getKeyProperty = getKeyProperty; }
+
+        private     void                onKeyChanged
+                                        (
+                                            tIndexedItem    item, 
+                                            tIndexKeyType   oldKeyValue, 
+                                            tIndexKeyType   newKeyValue
+                                        )
         {
+            this.innerDictionary.Remove(oldKeyValue);
+            this.innerDictionary.Add(newKeyValue, item);
+        }
 
-            private     tIndexKey   value;
-            private
-            readonly    tIndexValue item;
+        private     void                onKeyChanging
+                                        (
+                                            tIndexedItem                item, 
+                                            tIndexKeyType               oldKeyValue, 
+                                            tIndexKeyType               newKeyValue, 
+                                            KeyProperty
+                                            .IndexKeyChangingEventArgs  args
+                                        )                                               { if (this.innerDictionary.ContainsKey(newKeyValue))  args.Cancel(); }
 
-            public  void    SetValue(tIndexKey value)
-            {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
-            }
+        public      int                 IndexOf(tIndexedItem item)                      { return this.innerList.IndexOf(item); }
 
-            public
-            static
-            implicit
-            operator    tIndexKey(KeyProperty property) { return property != null ? property.value : default(tIndexKey); }
+        private     void                AddValidItemToInnerDictionary(tIndexedItem item)
+        {
+            KeyProperty key;
 
-            public      KeyProperty(tIndexValue item)   { this.item = item; }
+            Throw<System.ArgumentException>
+            .If     (item==null, "Indexed lists can only hold non-null items.")
+            .OrIf   (this.innerDictionary.ContainsKey(key = this.getKeyProperty(item)), "Duplicate item encountered in an indexed list.");
+
+            this.innerDictionary.Add(key, item);
+
+            key.JoinList((tIndexedList) this);
 
         }
 
-        public      IndexedList(System.Func<tIndexValue, KeyProperty> getKeyProperty) : base(getKeyProperty) {}
-
-        public  int IndexOf(tIndexValue item)
+        private     void                RemoveValidItemFromInnerDictionary
+                                        (
+                                            tIndexedItem    item
+                                        )                                               
         {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
+            KeyProperty     key;
+
+            Throw<System.ArgumentException>
+            .If     (item==null, "Indexed lists can only hold non-null items.")
+            .OrIf   (!this.innerDictionary.ContainsKey(key = this.getKeyProperty(item)), "Item was not found in an indexed list.");
+
+            key.LeaveList((tIndexedList) this);
+
+            this.innerDictionary.Remove(key);
         }
 
-        public void Insert(int index, tIndexValue item)
+        public      void                Insert(int index, tIndexedItem item)
         {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
+            this.AddValidItemToInnerDictionary(item);
+            this.innerList.Insert(index, item);
         }
 
-        public void RemoveAt(int index)
+        public      void                RemoveAt(int index)
         {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
+            this.RemoveValidItemFromInnerDictionary(this.innerList[index]);
+            this.innerList.RemoveAt(index);
         }
 
-        public tIndexValue this[int index]
+        public      tIndexedItem        this[int index]
         {
             get
             {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
+                return this.innerList[index];
             }
             set
             {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
+                if (index > this.innerList.Count)   this.Add(value);
+                else                                this.ReplaceItem(index, value);
             }
         }
 
-        public void Add(tIndexValue item)
+        private     void                ReplaceItem(int index, tIndexedItem value)
         {
             #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
-        public void Clear()
+        public      void                Add(tIndexedItem item)
+        {
+            this.AddValidItemToInnerDictionary(item);
+            this.innerList.Add(item);
+        }
+
+        public      void                Clear()                                         { for (int innerListCounter = this.innerList.Count-1; innerListCounter>0; innerListCounter--)   this.RemoveAt(innerListCounter); }
+
+        public      bool                Contains(tIndexedItem item)
+        {
+            Throw<System.ArgumentException>
+            .If     (item==null, "Indexed lists can only hold non-null items.");
+
+            return this.innerDictionary.ContainsKey(this.getKeyProperty(item));
+        }
+
+        public      void                CopyTo(tIndexedItem[] array, int arrayIndex)    { this.innerList.CopyTo(array, arrayIndex);}
+
+        public      int                 Count                                           { get { return this.innerList.Count; } }
+
+        public      bool                IsReadOnly                                      { get { return false; } }
+
+        public      bool                Remove(tIndexedItem item)
+        {
+            this.RemoveValidItemFromInnerDictionary(item);
+            this.innerList.Remove(item);
+            return true;
+        }
+
+        public      IEnumerator
+                    <
+                        tIndexedItem
+                    >                   GetEnumerator()                                 { return this.innerList.GetEnumerator(); }
+
+                    System
+                    .Collections
+                    .IEnumerator        System.Collections.IEnumerable.GetEnumerator()  { return this.innerList.GetEnumerator(); }
+
+        public      System.Xml
+                    .Schema
+                    .XmlSchema          GetSchema()                                     { return null; }
+
+        public      void                ReadXml(System.Xml.XmlReader reader)
         {
             #warning NotImplemented
             throw new System.NotImplementedException();
         }
 
-        public bool Contains(tIndexValue item)
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public void CopyTo(tIndexValue[] array, int arrayIndex)
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public int Count
-        {
-            get
-            {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
-            }
-        }
-
-        public bool IsReadOnly
-        {
-            get
-            {
-                #warning NotImplemented
-                throw new System.NotImplementedException();
-            }
-        }
-
-        public bool Remove(tIndexValue item)
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public IEnumerator<tIndexValue> GetEnumerator()
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public System.Xml.Schema.XmlSchema GetSchema()
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public void ReadXml(System.Xml.XmlReader reader)
-        {
-            #warning NotImplemented
-            throw new System.NotImplementedException();
-        }
-
-        public void WriteXml(System.Xml.XmlWriter writer)
+        public      void                WriteXml(System.Xml.XmlWriter writer)
         {
             #warning NotImplemented
             throw new System.NotImplementedException();

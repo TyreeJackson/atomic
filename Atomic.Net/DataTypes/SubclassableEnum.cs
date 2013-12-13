@@ -21,7 +21,15 @@ namespace AtomicNet
 
         protected   SubclassableEnum(tNaturalType naturalValue)
         {
+            Throw<System.ArgumentException>.If(allValues.ContainsKey(naturalValue), "A duplicate natural value was specified for the " + TypeSupport<tSubclassableEnum>.Name + " enumerated context.");
+
+            allValues.Add(naturalValue, (tSubclassableEnum) this);
             this.naturalValue = naturalValue;
+        }
+
+        public  static  implicit    operator    tNaturalType(SubclassableEnum<tSubclassableEnum, tNaturalType> value)
+        {
+            return value != null ? value.naturalValue : default(tNaturalType);
         }
 
     }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 
 namespace AtomicNet
 {
@@ -10,29 +9,26 @@ namespace AtomicNet
             where   tException  : Exception
     {
 
-        public  class   ExceptionFactoryLocatorClass
+        public
+        sealed
+        class   Or : Atom<Or>
         {
 
-            public  tException  Create()
-            {
-                #warning NotImplemented
-                throw new NotImplementedException();
-            }
+            public
+            static
+            readonly    Or  Empty   = new Or();
 
-            public  tException  Create<tArg>(tArg arg)
-            {
-                #warning NotImplemented
-                throw new NotImplementedException();
-            }
+            public      Or  OrIf(bool condition)                    { if (condition)    throw TypeSupport<tException>.Create(); return Or.Empty;}
+
+            public      Or  OrIf<tArg>(bool condition, tArg arg)    { if (condition)    throw TypeSupport<tException>.Create(arg); return Or.Empty;}
 
         }
 
-        public  
-        static  readonly    ExceptionFactoryLocatorClass    ExceptionFactoryLocator = new ExceptionFactoryLocatorClass();
+        public
+        static  Or  If(bool condition)                  { if (condition)    throw TypeSupport<tException>.Create();  return Or.Empty;}
 
-        public  static      void                If(bool condition)                  { if (condition)    throw ExceptionFactoryLocator.Create(); }
-
-        public  static      void                If<tArg>(bool condition, tArg arg)  { if (condition)    throw ExceptionFactoryLocator.Create(arg); }
+        public
+        static  Or  If<tArg>(bool condition, tArg arg)  { if (condition)    throw TypeSupport<tException>.Create(arg);  return Or.Empty;}
 
     }
 

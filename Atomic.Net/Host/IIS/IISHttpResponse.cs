@@ -92,14 +92,14 @@ namespace AtomicNet.IIS
         public
         override        bool                SuppressContent                                     { get { return this.response.SuppressContent; } set { this.response.SuppressContent = value; } }
 
-        public
-        override        void                AddHeader(string name, string value)                { this.response.AddHeader(name, value); }
+        protected
+        override        void                addHeader(string name, string value)                { this.response.AddHeader(name, value); }
 
-        public
-        override        void                AppendCookie(HostCookie cookie)                     { this.response.AppendCookie(((IISHttpCookie) cookie).Cookie); }
+        protected
+        override        void                appendCookie(HostCookie cookie)                     { this.response.AppendCookie(((IISHttpCookie) cookie).Cookie); }
 
-        public
-        override        void                AppendHeader(string name, string value)             { this.response.AppendHeader(name, value); }
+        protected
+        override        void                appendHeader(string name, string value)             { this.response.AppendHeader(name, value); }
 
         public
         override        IAsyncResult        BeginFlush
@@ -108,102 +108,102 @@ namespace AtomicNet.IIS
                                                 object          state
                                             )                                                   { return this.response.BeginFlush(callback, state); }
 
-        public
-        override        void                BinaryWrite(byte[] buffer)                          { this.response.BinaryWrite(buffer); }
+        protected
+        override        void                binaryWrite(byte[] buffer)                          { this.response.BinaryWrite(buffer); }
 
-        public
-        override        void                Clear()                                             { this.response.Clear(); }
+        protected
+        override        void                clear()                                             { this.response.Clear(); }
 
-        public
-        override        void                ClearHeaders()                                      { this.response.ClearHeaders(); }
+        protected
+        override        void                clearHeaders()                                      { this.response.ClearHeaders(); }
 
-        public
-        override        void                Close()                                             { this.response.Close(); }
+        protected
+        override        void                close()                                             { this.response.Close(); }
 
-        public
-        override        void                End()                                               { this.response.End(); }
+        protected
+        override        void                end()                                               { this.response.End(); }
 
-        public
-        override        void                EndFlush(IAsyncResult asyncResult)                  { this.response.EndFlush(asyncResult); }
+        protected
+        override        void                endFlush(IAsyncResult asyncResult)                  { this.response.EndFlush(asyncResult); }
 
-        public
-        override        void                Flush()                                             { this.response.Flush(); }
+        protected
+        override        void                flush()                                             { this.response.Flush(); }
 
-        public
-        override        void                Redirect(string url)                                { this.response.Redirect(url); }
+        protected
+        override        void                redirect(string url)                                { this.response.Redirect(url); }
 
-        public
-        override        void                Redirect(string url, bool endResponse)              { this.Redirect(url, endResponse); }
+        protected
+        override        void                redirect(string url, bool endResponse)              { this.Redirect(url, endResponse); }
 
-        public
-        override        void                RedirectPermanent(string url)                       { this.response.RedirectPermanent(url); }
+        protected
+        override        void                redirectPermanent(string url)                       { this.response.RedirectPermanent(url); }
 
-        public
-        override        void                RedirectPermanent
+        protected
+        override        void                redirectPermanent
                                             (
                                                 string  url,
                                                 bool    endResponse
                                             )                                                   { this.response.RedirectPermanent(url, endResponse); }
 
-        public
-        override        void                SetCookie(HostCookie cookie)                        { this.response.SetCookie(((IISHttpCookie) cookie).Cookie); }
+        protected
+        override        void                setCookie(HostCookie cookie)                        { this.response.SetCookie(((IISHttpCookie) cookie).Cookie); }
 
-        public
-        override        void                TransmitFile(string filename)                       { this.response.TransmitFile(filename); }
+        protected
+        override        void                transmitFile(string filename)                       { this.response.TransmitFile(filename); }
 
-        public
-        override        void                TransmitFile
+        protected
+        override        void                transmitFile
                                             (
                                                 string  filename,
                                                 long    offset,
                                                 long    length
                                             )                                                   { this.response.TransmitFile(filename, offset, length); }
 
-        public
-        override        void                Write(char ch)                                      { this.response.Write(ch); }
+        protected
+        override        void                write(char ch)                                      { this.response.Write(ch); }
 
-        public
-        override        void                Write(object obj)                                   { this.response.Write(obj); }
+        protected
+        override        void                write(object obj)                                   { this.response.Write(obj); }
 
-        public
-        override        void                Write(string s)                                     { this.response.Write(s); }
+        protected
+        override        void                write(string s)                                     { this.response.Write(s); }
 
-        public
-        override        void                Write
+        protected
+        override        void                write
                                             (
                                                 char[]  buffer,
                                                 int     index,
                                                 int     count
                                             )                                                   { this.response.Write(buffer, index, count); }
 
-        public
-        override        void                WriteFile(string filename)                          { this.response.WriteFile(filename); }
+        protected
+        override        void                writeFile(string filename)                          { this.response.WriteFile(filename); }
 
-        public
-        override        void                WriteFile
+        protected
+        override        void                writeFile
                                             (
                                                 string  filename,
                                                 bool    readIntoMemory
                                             )                                                   { this.response.WriteFile(filename, readIntoMemory); }
 
-        public
-        override        void                WriteFile
+        protected
+        override        void                writeFile
                                             (
                                                 IntPtr  fileHandle,
                                                 long    offset,
                                                 long    size
                                             )                                                   { this.response.WriteFile(fileHandle, offset, size); }
 
-        public
-        override        void                WriteFile
+        protected
+        override        void                writeFile
                                             (
                                                 string  filename,
                                                 long    offset,
                                                 long    size
                                             )                                                   { this.response.WriteFile(filename, offset, size); }
 
-        public
-        override        void                WriteSubstitution
+        protected
+        override        void                writeSubstitution
                                             (
                                                 HostResponse
                                                 .HostResponseSubstitutionCallback   callback

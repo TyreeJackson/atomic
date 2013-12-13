@@ -21,6 +21,7 @@ namespace AtomicNet
             class   Args {}
 
             public
+            new
             class   Config : Component<Router, Router.Args, Router.Config>.Config
             {
 

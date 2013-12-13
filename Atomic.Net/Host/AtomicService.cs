@@ -9,7 +9,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicService : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>
+    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.Config>
     {
 
         public
@@ -18,31 +18,31 @@ namespace AtomicNet
         public
         abstract    bool    IsReusable  { get; }
 
-        protected           AtomicService(ServiceArgs args) : base(args) {}
+        protected           WebService(ServiceArgs args) : base(args) {}
 
     }
 
     public
     abstract
     partial 
-    class       AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig> : AtomicService
-    where       tAtomicService                                                          : AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>
-    where       tAtomicServiceArgs                                                      : AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>.ServiceArgs
-    where       tAtomicServiceConfig                                                    : AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>.Config
+    class       WebService<tWebService, tWebServiceArgs, tWebServiceConfig> : WebService
+    where       tWebService                                                 : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>
+    where       tWebServiceArgs                                             : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.ServiceArgs
+    where       tWebServiceConfig                                           : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.Config
     {
 
         private
         static
-        readonly    string  _name           = typeof(tAtomicService).Name;
+        readonly    string  _name           = typeof(tWebService).Name;
 
         private
         static
-        readonly    string  _factoryName    = typeof(tAtomicService).FullName + "+Factory";
+        readonly    string  _factoryName    = typeof(tWebService).FullName + "+Factory";
 
         public
         override    bool    IsReusable                              { get { return true; } }
 
-        protected           AtomicService(tAtomicServiceArgs args)  : base(args) {}
+        protected           WebService(tWebServiceArgs args)  : base(args) {}
 
     }
 

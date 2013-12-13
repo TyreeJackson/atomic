@@ -21,7 +21,8 @@ namespace AtomicNet
         public                                  Promise(Action<Action, Action<Exception>> action) : base(action)
         {
             Throw<ArgumentNullException>.If(action == null, "action");
-            action(this.resolve, this.reject);
+            try                 { action(this.resolve, this.reject); }
+            catch(Exception ex) { this.reject(ex); }
         }
 
         public      Promise                     Then(Func<Promise> onComplete, Action<Exception> onFailure)

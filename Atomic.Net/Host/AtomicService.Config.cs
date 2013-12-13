@@ -9,12 +9,12 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicService : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>
+    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.Config>
     {
 
         public
         new
-        class       Config : Component<AtomicService, AtomicService.ServiceArgs, AtomicService.Config>.Config
+        class       Config : Component<WebService, WebService.ServiceArgs, WebService.Config>.Config
         {
             public  Config(Configuration.SubclassConfiguration.List subclasses, string key, ServiceArgs args) : base(subclasses, key, args) {}
         }
@@ -24,14 +24,14 @@ namespace AtomicNet
     public
     abstract
     partial 
-    class       AtomicService<tAtomicService, tAtomicServiceArgs, tAtomicServiceConfig>
+    class       WebService<tWebService, tWebServiceArgs, tWebServiceConfig>
     {
 
         public
         new
-        class       Config : AtomicService.Config
+        class       Config : WebService.Config
         {
-            public  Config(tAtomicServiceArgs args)
+            public  Config(tWebServiceArgs args)
             :
             this
             (
@@ -39,7 +39,7 @@ namespace AtomicNet
                 {
                     new Configuration.SubclassConfiguration()
                     {
-                        AssemblyFile    = typeof(tAtomicService).Assembly.Location,
+                        AssemblyFile    = typeof(tWebService).Assembly.Location,
                         Factory         = _factoryName,
                         Key             = _name
                     }
@@ -47,7 +47,7 @@ namespace AtomicNet
                 args
             ) {}
 
-            public  Config(Configuration.SubclassConfiguration.List subclasses, tAtomicServiceArgs args) : base(subclasses, _name, args) {}
+            public  Config(Configuration.SubclassConfiguration.List subclasses, tWebServiceArgs args) : base(subclasses, _name, args) {}
         }
 
     }

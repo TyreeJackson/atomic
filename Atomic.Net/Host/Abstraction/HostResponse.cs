@@ -182,85 +182,137 @@ namespace AtomicNet
 
 
         public
-        abstract    void                    AddHeader(string name, string value);
-
-        public
-        abstract    void                    AppendCookie(HostCookie cookie);
-
-        public
-        abstract    void                    AppendHeader(string name, string value);
-
-        public
         abstract    IAsyncResult            BeginFlush(AsyncCallback callback, object state);
 
-        public
-        abstract    void                    BinaryWrite(byte[] buffer);
+        protected
+        abstract    void                    addHeader(string name, string value);
 
-        public
-        abstract    void                    Clear();
+        protected
+        abstract    void                    appendCookie(HostCookie cookie);
 
-        public
-        abstract    void                    ClearHeaders();
+        protected
+        abstract    void                    appendHeader(string name, string value);
 
-        public
-        abstract    void                    Close();
+        protected
+        abstract    void                    binaryWrite(byte[] buffer);
 
-        public
-        abstract    void                    End();
+        protected
+        abstract    void                    clear();
 
-        public
-        abstract    void                    EndFlush(IAsyncResult asyncResult);
+        protected
+        abstract    void                    clearHeaders();
 
-        public
-        abstract    void                    Flush();
+        protected
+        abstract    void                    close();
 
-        public
-        abstract    void                    Redirect(string url);
+        protected
+        abstract    void                    end();
 
-        public
-        abstract    void                    Redirect(string url, bool endResponse);
+        protected
+        abstract    void                    endFlush(IAsyncResult asyncResult);
 
-        public
-        abstract    void                    RedirectPermanent(string url);
+        protected
+        abstract    void                    flush();
 
-        public
-        abstract    void                    RedirectPermanent(string url, bool endResponse);
+        protected
+        abstract    void                    redirect(string url);
 
-        public
-        abstract    void                    SetCookie(HostCookie cookie);
+        protected
+        abstract    void                    redirect(string url, bool endResponse);
 
-        public
-        abstract    void                    TransmitFile(string filename);
+        protected
+        abstract    void                    redirectPermanent(string url);
 
-        public
-        abstract    void                    TransmitFile(string filename, long offset, long length);
+        protected
+        abstract    void                    redirectPermanent(string url, bool endResponse);
 
-        public
-        abstract    void                    Write(char ch);
+        protected
+        abstract    void                    setCookie(HostCookie cookie);
 
-        public
-        abstract    void                    Write(object obj);
+        protected
+        abstract    void                    transmitFile(string filename);
 
-        public
-        abstract    void                    Write(string s);
+        protected
+        abstract    void                    transmitFile(string filename, long offset, long length);
 
-        public
-        abstract    void                    Write(char[] buffer, int index, int count);
+        protected
+        abstract    void                    write(char ch);
 
-        public
-        abstract    void                    WriteFile(string filename);
+        protected
+        abstract    void                    write(object obj);
 
-        public
-        abstract    void                    WriteFile(string filename, bool readIntoMemory);
+        protected
+        abstract    void                    write(string s);
 
-        public
-        abstract    void                    WriteFile(IntPtr fileHandle, long offset, long size);
+        protected
+        abstract    void                    write(char[] buffer, int index, int count);
 
-        public
-        abstract    void                    WriteFile(string filename, long offset, long size);
+        protected
+        abstract    void                    writeFile(string filename);
 
-        public
-        abstract    void                    WriteSubstitution(HostResponseSubstitutionCallback callback);
+        protected
+        abstract    void                    writeFile(string filename, bool readIntoMemory);
+
+        protected
+        abstract    void                    writeFile(IntPtr fileHandle, long offset, long size);
+
+        protected
+        abstract    void                    writeFile(string filename, long offset, long size);
+
+        protected
+        abstract    void                    writeSubstitution(HostResponseSubstitutionCallback callback);
+
+        public      HostResponse            AddHeader(string name, string value)                            { this.addHeader(name, value); return this; }
+
+        public      HostResponse            AppendCookie(HostCookie cookie)                                 { this.appendCookie(cookie); return this; }
+
+        public      HostResponse            AppendHeader(string name, string value)                         { this.appendHeader(name, value); return this; }
+
+        public      HostResponse            BinaryWrite(byte[] buffer)                                      { this.binaryWrite(buffer); return this; }
+
+        public      HostResponse            Clear()                                                         { this.clear(); return this; }
+
+        public      HostResponse            ClearHeaders()                                                  { this.clearHeaders(); return this; }
+
+        public      HostResponse            Close()                                                         { this.close(); return this; }
+
+        public      HostResponse            End()                                                           { this.end(); return this; }
+
+        public      HostResponse            EndFlush(IAsyncResult asyncResult)                              { this.endFlush(asyncResult); return this; }
+
+        public      HostResponse            Flush()                                                         { this.flush(); return this; }
+
+        public      HostResponse            Redirect(string url)                                            { this.redirect(url); return this; }
+
+        public      HostResponse            Redirect(string url, bool endResponse)                          { this.redirect(url, endResponse); return this; }
+
+        public      HostResponse            RedirectPermanent(string url)                                   { this.redirectPermanent(url); return this; }
+
+        public      HostResponse            RedirectPermanent(string url, bool endResponse)                 { this.redirectPermanent(url, endResponse); return this; }
+
+        public      HostResponse            SetCookie(HostCookie cookie)                                    { this.setCookie(cookie); return this; }
+
+        public      HostResponse            TransmitFile(string filename)                                   { this.transmitFile(filename); return this; }
+
+        public      HostResponse            TransmitFile(string filename, long offset, long length)         { this.transmitFile(filename, offset, length); return this; }
+
+        public      HostResponse            Write(char ch)                                                  { this.write(ch); return this; }
+
+        public      HostResponse            Write(object obj)                                               { this.write(obj); return this; }
+
+        public      HostResponse            Write(string s)                                                 { this.write(s); return this; }
+
+        public      HostResponse            Write(char[] buffer, int index, int count)                      { this.write(buffer, index, count); return this; }
+
+        public      HostResponse            WriteFile(string filename)                                      { this.writeFile(filename); return this; }
+
+        public      HostResponse            WriteFile(string filename, bool readIntoMemory)                 { this.writeFile(filename, readIntoMemory); return this; }
+
+        public      HostResponse            WriteFile(IntPtr fileHandle, long offset, long size)            { this.writeFile(fileHandle, offset, size); return this; }
+
+        public      HostResponse            WriteFile(string filename, long offset, long size)              { this.writeFile(filename, offset, size); return this; }
+
+        public      HostResponse            WriteSubstitution(HostResponseSubstitutionCallback callback)    { this.writeSubstitution(callback); return this; }
 
     }
 
