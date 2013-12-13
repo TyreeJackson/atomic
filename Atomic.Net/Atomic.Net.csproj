@@ -111,14 +111,16 @@
     <Compile Include="Host\AtomicHandler.Router.cs">
       <DependentUpon>AtomicHandler.cs</DependentUpon>
     </Compile>
-    <Compile Include="Host\AtomicService.cs" />
+    <Compile Include="Host\WebService.cs" />
     <Compile Include="Host\AtomicHandler.Router.Config.cs">
       <DependentUpon>AtomicHandler.Router.cs</DependentUpon>
     </Compile>
     <Compile Include="Host\AtomicHandler.DefaultRouter.cs">
       <DependentUpon>AtomicHandler.cs</DependentUpon>
     </Compile>
-    <Compile Include="Host\AtomicService.Config.cs" />
+    <Compile Include="Host\WebService.Config.cs">
+      <DependentUpon>WebService.cs</DependentUpon>
+    </Compile>
     <Compile Include="Host\IIS\IISHttpCookie.cs" />
     <Compile Include="Host\IIS\IISHttpResponse.cs" />
     <Compile Include="Host\Loader.cs" />
