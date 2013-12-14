@@ -75,7 +75,7 @@
       <DependentUpon>Configurable.cs</DependentUpon>
     </Compile>
     <Compile Include="Configurable\Configurable.cs" />
-    <Compile Include="Configurable\Configuration.Utility.cs">
+    <Compile Include="Configurable\Configuration.Service.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
     <Compile Include="Configurable\Service.Config.cs">
