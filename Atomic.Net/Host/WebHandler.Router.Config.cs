@@ -9,7 +9,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicHandler : Atom<AtomicHandler>
+    partial     class   WebHandler : Atom<WebHandler>
     {
 
         public
@@ -60,7 +60,7 @@ namespace AtomicNet
         class   ServiceConfigs
         {
 
-            public  AtomicHandler.Router.Config AtomicHandlerRouter = new AtomicHandler.Router.Config();
+            public  WebHandler.Router.Config AtomicHandlerRouter = new WebHandler.Router.Config();
 
         }
 

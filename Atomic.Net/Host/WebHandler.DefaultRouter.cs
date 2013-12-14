@@ -9,7 +9,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicHandler : Atom<AtomicHandler>
+    partial     class   WebHandler : Atom<WebHandler>
     {
 
         public      class   DefaultRouter : Router
@@ -18,12 +18,12 @@ namespace AtomicNet
             public      DefaultRouter(Args args) : base(args) {}
 
             public
-            override    Promise<AtomicHandler> Map(string url)
+            override    Promise<WebHandler> Map(string url)
             {
-                return Atomic.Promise<AtomicHandler>
+                return Atomic.Promise<WebHandler>
                 ((resolve,reject)=>
                 {
-                    resolve(AtomicHandler.Create<AtomicHandler.Default>());
+                    resolve(WebHandler.Create<WebHandler.Default>());
                 });
             }
         }

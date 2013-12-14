@@ -107,29 +107,15 @@
     <Compile Include="Host\Abstraction\HostPrinciple.cs" />
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
-    <Compile Include="Host\AtomicHandler.Default.cs">
-      <DependentUpon>AtomicHandler.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Host\AtomicHandler.Router.cs">
-      <DependentUpon>AtomicHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="Host\WebService.cs" />
-    <Compile Include="Host\AtomicHandler.Router.Config.cs">
-      <DependentUpon>AtomicHandler.Router.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Host\AtomicHandler.DefaultRouter.cs">
-      <DependentUpon>AtomicHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="Host\WebService.Config.cs">
       <DependentUpon>WebService.cs</DependentUpon>
     </Compile>
     <Compile Include="Host\IIS\IISHttpCookie.cs" />
     <Compile Include="Host\IIS\IISHttpResponse.cs" />
     <Compile Include="Host\Loader.cs" />
-    <Compile Include="Host\AtomicHandler.cs" />
     <Compile Include="Host\Environment.cs" />
     <Compile Include="Host\IIS\IISHttpRequest.cs" />
-    <Compile Include="Host\ServiceHandler.cs" />
     <Compile Include="Host\IIS\IISHttpHandler.cs" />
     <Compile Include="Host\IIS\IISHttpApplication.cs" />
     <Compile Include="Host\IIS\IISHttpContext.cs" />
@@ -144,6 +130,20 @@
     <Compile Include="Support\Promise.cs" />
     <Compile Include="Support\Throw.cs" />
     <Compile Include="Support\TypeSupport.cs" />
+    <Compile Include="Host\WebHandler.Default.cs">
+      <DependentUpon>WebHandler.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Host\WebHandler.Router.cs">
+      <DependentUpon>WebHandler.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Host\WebHandler.Router.Config.cs">
+      <DependentUpon>WebHandler.Router.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Host\WebHandler.DefaultRouter.cs">
+      <DependentUpon>WebHandler.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Host\WebHandler.cs" />
+    <Compile Include="Host\WebServiceHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Boot\" />

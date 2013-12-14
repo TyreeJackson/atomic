@@ -9,10 +9,10 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicHandler : Atom<AtomicHandler>
+    partial     class   WebHandler : Atom<WebHandler>
     {
 
-        public  class   Default : AtomicHandler
+        public  class   Default : WebHandler
         {
 
             protected override Promise ProcessRequest()

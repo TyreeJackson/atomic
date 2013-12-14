@@ -10,7 +10,7 @@
             return Atomic.Promise
             ((resolve, reject)=>
             {
-                AtomicHandler.Router.Instance.Map(context.Request.Path)
+                WebHandler.Router.Instance.Map(context.Request.Path)
                 .Then(handler=>handler.ProcessRequest(context), reject)
                 .WhenDone(resolve, reject);
             });

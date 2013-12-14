@@ -9,7 +9,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicHandler : Atom<AtomicHandler>
+    partial     class   WebHandler : Atom<WebHandler>
     {
 
         public
@@ -26,12 +26,12 @@ namespace AtomicNet
                 Router.Instance = new DefaultRouter(null);
                 return;
 
-                AtomicHandler.Router.Locator.Create(Configuration.Config.Services.AtomicHandlerRouter.SubclassKey, Configuration.Config.Services.AtomicHandlerRouter.args)
+                WebHandler.Router.Locator.Create(Configuration.Config.Services.AtomicHandlerRouter.SubclassKey, Configuration.Config.Services.AtomicHandlerRouter.args)
                 .WhenDone(router=>Router.Instance = router, ex=>{throw ex;});
             }
 
             public
-            abstract    Promise<AtomicHandler>  Map(string url);
+            abstract    Promise<WebHandler>  Map(string url);
 
             public      Router(Args args) : base(args) {}
 

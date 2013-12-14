@@ -6,7 +6,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   AtomicHandler   : Atom<AtomicHandler>
+    partial     class   WebHandler   : Atom<WebHandler>
     {
 
         private     HostContext         context = null;
