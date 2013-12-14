@@ -18,14 +18,7 @@ namespace AtomicNet
             public  string              AssemblyFile;
 
             public
-            class   List : IndexedList<List, string, SubclassConfiguration>
-            {
-                public  List() : base(a=>a.key)
-                {
-                    #warning NotImplemented
-                    throw new System.NotImplementedException();
-                }
-            }
+            class   List : IndexedList<List, string, SubclassConfiguration> { public  List() : base(a=>a.key) {} }
 
         }
 

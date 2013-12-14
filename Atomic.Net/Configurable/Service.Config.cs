@@ -10,7 +10,7 @@ namespace AtomicNet
     {
 
         public
-        class       Config   : Configuration.Utility
+        class       Config   : Configuration.Service
         {
             public  Config(Configuration.SubclassConfiguration.List subclasses, Configuration.InstanceConfiguration.List instances) : base(subclasses, instances) {}
         }

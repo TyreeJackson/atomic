@@ -37,6 +37,7 @@ namespace AtomicNet.IIS
                 }
                 catch(System.Exception ex)
                 {
+                    #warning Log this exception when the Logging Service is implemented
                     throw;
                 }
             }

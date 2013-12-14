@@ -26,7 +26,7 @@ namespace AtomicNet
                 Router.Instance = new DefaultRouter(null);
                 return;
 
-                WebHandler.Router.Locator.Create(Configuration.Config.Services.AtomicHandlerRouter.SubclassKey, Configuration.Config.Services.AtomicHandlerRouter.args)
+                WebHandler.Router.Locator.Create(Configuration.Get<Router.Config>().SubclassKey, Configuration.Get<Router.Config>().args)
                 .WhenDone(router=>Router.Instance = router, ex=>{throw ex;});
             }
 

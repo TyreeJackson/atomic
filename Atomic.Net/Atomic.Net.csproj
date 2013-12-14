@@ -45,6 +45,9 @@
     <Compile Include="3rdParty\PublicDomain\DynamicMethodFactory.cs" />
     <Compile Include="3rdParty\ThreadPool\ThreadPool.cs" />
     <Compile Include="Atomic.cs" />
+    <Compile Include="Configurable\Component.Config.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
     <Compile Include="Configurable\Configuration.Instance.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
@@ -53,9 +56,6 @@
     </Compile>
     <Compile Include="Configurable\Configuration.cs" />
     <Compile Include="Configurable\Configuration.Component.cs">
-      <DependentUpon>Configuration.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Configurable\Configuration.Utility.cs">
       <DependentUpon>Configuration.cs</DependentUpon>
     </Compile>
     <Compile Include="Configurable\Configuration.SubClass.cs">
@@ -74,10 +74,10 @@
     <Compile Include="Configurable\Configurable.Factory.cs">
       <DependentUpon>Configurable.cs</DependentUpon>
     </Compile>
-    <Compile Include="Configurable\Component.Config.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
     <Compile Include="Configurable\Configurable.cs" />
+    <Compile Include="Configurable\Configuration.Utility.cs">
+      <DependentUpon>Configuration.cs</DependentUpon>
+    </Compile>
     <Compile Include="Configurable\Service.Config.cs">
       <DependentUpon>Service.cs</DependentUpon>
     </Compile>

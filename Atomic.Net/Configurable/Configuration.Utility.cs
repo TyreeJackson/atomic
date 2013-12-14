@@ -11,13 +11,13 @@ namespace AtomicNet
 
         public
         abstract
-        class       Utility : ClassConfiguration
+        class       Service : ClassConfiguration
         {
 
             public
             readonly    InstanceConfiguration.List  Instances;
 
-            protected   Utility(SubclassConfiguration.List subclasses, InstanceConfiguration.List instances) : base(subclasses)
+            protected   Service(SubclassConfiguration.List subclasses, InstanceConfiguration.List instances) : base(subclasses)
             {
                 this.Instances  = instances;
             }

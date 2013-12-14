@@ -10,19 +10,20 @@ namespace AtomicNet
     class       Configuration : Atom<Configuration>
     {
 
+        public  Dictionary
+                <
+                    string,
+                    ClassConfiguration
+                >                       Classes = new Dictionary<string,ClassConfiguration>();
+
         public
-        partial
-        class   ServiceConfigs{}
-
-        public  ServiceConfigs  Services    = new ServiceConfigs();
+        static  tConfiguration          Get<tConfiguration>() where tConfiguration : ClassConfiguration
+        {
+            return Configuration.Config.Classes.TryReturnValueAs<tConfiguration>(TypeSupport<tConfiguration>.FullName, null);
+        }
 
         public
-        static  Configuration   Config      = new Config();
-
-    }
-
-    public  class   Config  : Configuration
-    {
+        static  Configuration           Config;
 
     }
 

@@ -19,14 +19,7 @@ namespace AtomicNet
             readonly    string              SubclassKey;
 
             public
-            class   List : IndexedList<List, string, InstanceConfiguration>
-            {
-                public  List() : base(a=>a.key)
-                {
-                    #warning NotImplemented
-                    throw new System.NotImplementedException();
-                }
-            }
+            class   List : IndexedList<List, string, InstanceConfiguration> { public  List() : base(a=>a.key) {} }
 
             protected   InstanceConfiguration(string subclassKey)
             {

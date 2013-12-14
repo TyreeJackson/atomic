@@ -101,6 +101,9 @@ namespace AtomicNet
         static      string      Name                    { get { return TypeSupport<t>.type.Name; } }
 
         public
+        static      string      FullName                { get { return TypeSupport<t>.type.FullName; } }
+
+        public
         static      t           Create()                { return TypeContext.Create(); }
 
         public

@@ -121,6 +121,19 @@ namespace AtomicNet
             this.innerList.RemoveAt(index);
         }
 
+        public      tIndexedItem        this[tIndexKeyType key]
+        {
+            get
+            {
+                return this.innerDictionary[key];
+            }
+            set
+            {
+                if (!this.innerDictionary.ContainsKey(key)) this.Add(value);
+                else                                        this.ReplaceItem(key, value);
+            }
+        }
+
         public      tIndexedItem        this[int index]
         {
             get
@@ -135,6 +148,12 @@ namespace AtomicNet
         }
 
         private     void                ReplaceItem(int index, tIndexedItem value)
+        {
+            #warning NotImplemented
+            throw new System.NotImplementedException();
+        }
+
+        private     void                ReplaceItem(tIndexKeyType key, tIndexedItem value)
         {
             #warning NotImplemented
             throw new System.NotImplementedException();
@@ -192,6 +211,11 @@ namespace AtomicNet
         {
             #warning NotImplemented
             throw new System.NotImplementedException();
+        }
+
+        public      tIndexedItem        TryReturnValue(tIndexKeyType key, tIndexedItem defaultValue)
+        {
+            return this.innerDictionary.TryReturnValueAs(key, defaultValue);
         }
 
     }

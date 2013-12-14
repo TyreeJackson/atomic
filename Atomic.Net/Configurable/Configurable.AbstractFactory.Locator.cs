@@ -50,7 +50,7 @@ namespace AtomicNet
 
                 protected
                 virtual
-                Promise<AbstractFactory>        LookupSubclassFactory(string subclassKey)
+                Promise<AbstractFactory>                        LookupSubclassFactory(string subclassKey)
                 {
                     return  Atomic.Promise<AbstractFactory>
                     ((resolve, reject)=>
@@ -63,21 +63,40 @@ namespace AtomicNet
 
                 protected
                 virtual
-                Promise<Configuration.SubclassConfiguration> GetSubClassConfiguration(string key)
+                Promise<Configuration.SubclassConfiguration>    GetSubClassConfiguration(string key)
                 {
                     return  Atomic.Promise<Configuration.SubclassConfiguration>
                     ((resolve, reject)=>
                     {
-                        #warning NotImplemented
-                        reject(new System.NotImplementedException());
+                        resolve(Configuration.Config.Classes[TypeSupport<tConfigurable>.FullName].Subclasses.TryReturnValue(key, null));
                     });
                 }
 
                 protected
                 virtual
-                Promise<AbstractFactory>        GetSubClassFactory(Configuration.SubclassConfiguration subClassConfiguration)
+                Promise<AbstractFactory>                        GetSubClassFactory(Configuration.SubclassConfiguration subClassConfiguration)
                 {
                     return  Atomic.Promise<AbstractFactory>
+                    ((resolve, reject)=>
+                    {
+                        this.GetAssemblyFor(subClassConfiguration)
+                        .WhenDone
+                        (
+                            assembly=>
+                            {
+                                if (assembly.GetType(subClassConfiguration.Factory, false, true) == null)   reject(new System.Configuration.ConfigurationException("Factory " + subClassConfiguration.Factory + " was not found in the assembly " + subClassConfiguration.AssemblyFile));
+                                else                                                                        resolve((AbstractFactory) assembly.CreateInstance(subClassConfiguration.Factory, true));
+                            },
+                            reject
+                        );
+                    });
+                }
+
+                protected
+                virtual
+                Promise<System.Reflection.Assembly>             GetAssemblyFor(Configuration.SubclassConfiguration subClassConfiguration)
+                {
+                    return  Atomic.Promise<System.Reflection.Assembly>
                     ((resolve, reject)=>
                     {
                         #warning NotImplemented
