@@ -35,9 +35,6 @@ namespace AtomicNet
         abstract    bool        Secure                  { get; set; }
 
         public
-        abstract    bool        Shareable               { get; set; }
-
-        public
         abstract    string      Value                   { get; set; }
 
         public

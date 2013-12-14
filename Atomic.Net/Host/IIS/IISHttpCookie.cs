@@ -40,9 +40,6 @@ namespace AtomicNet.IIS
         override    bool        Secure                                      { get { return this.cookie.Secure; } set { this.cookie.Secure = value; } }
 
         public
-        override    bool        Shareable                                   { get { return this.cookie.Shareable; } set { this.cookie.Shareable = value; } }
-
-        public
         override    string      Value                                       { get { return this.cookie.Value; } set { this.cookie.Value = value; } }
 
         public

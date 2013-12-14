@@ -162,12 +162,6 @@ namespace AtomicNet
         }
 
         public
-        abstract    bool                    SupportsAsyncFlush
-        {
-            get;
-        }
-
-        public
         abstract    bool                    SuppressContent
         {
             get;
@@ -179,10 +173,6 @@ namespace AtomicNet
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;
         }
-
-
-        public
-        abstract    IAsyncResult            BeginFlush(AsyncCallback callback, object state);
 
         protected
         abstract    void                    addHeader(string name, string value);
@@ -207,9 +197,6 @@ namespace AtomicNet
 
         protected
         abstract    void                    end();
-
-        protected
-        abstract    void                    endFlush(IAsyncResult asyncResult);
 
         protected
         abstract    void                    flush();
@@ -277,8 +264,6 @@ namespace AtomicNet
         public      HostResponse            Close()                                                         { this.close(); return this; }
 
         public      HostResponse            End()                                                           { this.end(); return this; }
-
-        public      HostResponse            EndFlush(IAsyncResult asyncResult)                              { this.endFlush(asyncResult); return this; }
 
         public      HostResponse            Flush()                                                         { this.flush(); return this; }
 

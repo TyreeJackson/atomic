@@ -87,9 +87,6 @@ namespace AtomicNet.IIS
         override        int                 SubStatusCode                                       { get { return this.response.SubStatusCode; } set { this.response.SubStatusCode = value; } }
 
         public
-        override        bool                SupportsAsyncFlush                                  { get { return this.response.SupportsAsyncFlush; } }
-
-        public
         override        bool                SuppressContent                                     { get { return this.response.SuppressContent; } set { this.response.SuppressContent = value; } }
 
         protected
@@ -100,13 +97,6 @@ namespace AtomicNet.IIS
 
         protected
         override        void                appendHeader(string name, string value)             { this.response.AppendHeader(name, value); }
-
-        public
-        override        IAsyncResult        BeginFlush
-                                            (
-                                                AsyncCallback   callback,
-                                                object          state
-                                            )                                                   { return this.response.BeginFlush(callback, state); }
 
         protected
         override        void                binaryWrite(byte[] buffer)                          { this.response.BinaryWrite(buffer); }
@@ -122,9 +112,6 @@ namespace AtomicNet.IIS
 
         protected
         override        void                end()                                               { this.response.End(); }
-
-        protected
-        override        void                endFlush(IAsyncResult asyncResult)                  { this.response.EndFlush(asyncResult); }
 
         protected
         override        void                flush()                                             { this.response.Flush(); }

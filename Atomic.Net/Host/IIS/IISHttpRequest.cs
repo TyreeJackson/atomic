@@ -130,9 +130,6 @@ namespace AtomicNet.IIS
         public
         override    List<string>            UserLanguages                           { get { return new List<string>(this.request.UserLanguages); } }
 
-        public
-        override    void                    Abort()                                 { this.request.Abort(); }
-
     }
 
 }

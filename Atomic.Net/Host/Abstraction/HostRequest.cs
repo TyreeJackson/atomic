@@ -125,9 +125,6 @@ namespace AtomicNet
         public
         abstract    List<string>            UserLanguages                       { get; }
 
-        public
-        abstract    void                    Abort();
-
         public                              HostRequest(HostContext context) : base(context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
