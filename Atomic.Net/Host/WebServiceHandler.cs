@@ -8,7 +8,8 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   WebServiceHandler : WebHandler
+    abstract
+    partial     class   WebServiceHandler : WebHandler
     {
 
         private     WebService   _service    = null;

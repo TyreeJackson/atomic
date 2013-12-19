@@ -31,7 +31,7 @@ namespace AtomicNet
             }
 
             public
-            abstract    Promise<WebHandler>  Map(string url);
+            abstract    Promise<WebHandler>  Map(HostContext context);
 
             public      Router(Args args) : base(args) {}
 

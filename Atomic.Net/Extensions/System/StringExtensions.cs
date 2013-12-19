@@ -18,7 +18,7 @@ namespace AtomicNet
         {
             if (thisString.IsNullOrEmpty() || stringToTrim.IsNullOrEmpty()) return thisString;
 
-            return  thisString.Substring(thisString.Length-stringToTrim.Length) == thisString
+            return  thisString.Substring(thisString.Length-stringToTrim.Length) == stringToTrim
                     ?   thisString.Substring(0, thisString.Length-stringToTrim.Length)
                     :   thisString;
         }

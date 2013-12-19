@@ -91,6 +91,7 @@
     <Compile Include="DataTypes\SubclassableEnum.cs" />
     <Compile Include="DataTypes\TransferredFile.cs" />
     <Compile Include="EnumeratedTypes\HttpStatusCodes.cs" />
+    <Compile Include="Extensions\System\Collections\Generic\IEnumerable.cs" />
     <Compile Include="Extensions\System\Collections\Specialized\NameObjectCollectionExtensions.cs" />
     <Compile Include="Extensions\System\Collections\Specialized\NameValueCollectionExtensions.cs" />
     <Compile Include="Extensions\System\Reflection\ConstructorInfoExtensions.cs" />
@@ -107,6 +108,8 @@
     <Compile Include="Host\Abstraction\HostPrinciple.cs" />
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
+    <Compile Include="Host\WebServiceHandler.EntityList.cs" />
+    <Compile Include="Host\WebServiceHandler.ServiceList.cs" />
     <Compile Include="Host\WebService.cs" />
     <Compile Include="Host\WebService.Config.cs">
       <DependentUpon>WebService.cs</DependentUpon>
@@ -147,7 +150,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Boot\" />
-    <Folder Include="Extensions\System\Collections\Generic\" />
     <Folder Include="Licenses\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
