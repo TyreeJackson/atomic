@@ -124,7 +124,7 @@
     <Compile Include="Host\IIS\IISHttpContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Schema\Entity.cs" />
-    <Compile Include="StandardServices\Main.cs" />
+    <Compile Include="StandardWebServices\Main.cs" />
     <Compile Include="Support\Atom.cs" />
     <Compile Include="Support\Promise.PromiseT.cs">
       <DependentUpon>Promise.cs</DependentUpon>
