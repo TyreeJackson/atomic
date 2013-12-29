@@ -5,6 +5,11 @@ using AtomicNet;
 namespace AtomicNet
 {
 
+    public  class   PromiseException : Exception
+    {
+        public  PromiseException(Exception innerException) : base(null, innerException) {} 
+    }
+
     public  class   Promise : Atom<Promise, Action<Action, Action<Exception>>>
     {
 
@@ -132,7 +137,16 @@ namespace AtomicNet
         {
             lock (this.resolveLock)
             {
-                this.rejection  = ex;
+                if (!(ex is PromiseException))
+                try
+                {
+                    throw ex;
+                }
+                catch(Exception ex2)
+                {
+                    this.rejection  = new PromiseException(ex2);
+                }
+                else                            this.rejection  = ex;
                 this.isResolved = true;
                 while (this.failureListeners.Count > 0) this.failureListeners.Pop()(this.rejection);
             }

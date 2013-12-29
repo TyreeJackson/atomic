@@ -23,6 +23,20 @@ namespace AtomicNet
                     :   thisString;
         }
 
+        public
+        static  bool    EndsWithOneOf(this string thisString, params string[] values)
+        {
+            foreach(string value in values) if (thisString.EndsWith(value)) return true;
+            return  false;
+        }
+
+        public
+        static  bool    EndsWithOneOf(this string thisString, System.Collections.Generic.IEnumerable<string> values)
+        {
+            foreach(string value in values) if (thisString.EndsWith(value)) return true;
+            return  false;
+        }
+
     }
 
 }

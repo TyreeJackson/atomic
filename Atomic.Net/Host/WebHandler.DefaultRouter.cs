@@ -29,8 +29,46 @@ namespace AtomicNet
                             if (this.CheckIfUrlIsServicesUrl(segments))                                 resolve(WebHandler.Create<WebServiceHandler.ServiceList>());
                     else    if (this.CheckIfUrlIsEntitiesUrl(segments))                                 resolve(WebHandler.Create<WebServiceHandler.EntityList>());
                     else    if ((indexOfKeyPath = this.GetIndexOfServicesPathSegment(segments)) > -1)   this.LocateWebService(segments, indexOfKeyPath).WhenDone(resolve, reject);
+                    else    if (this.CheckIfUrlIsStaticFile(context))                                   this.ServeStaticFile(context).WhenDone(resolve, reject);
                     else                                                                                resolve(WebHandler.Create<WebHandler.Default>());
                 });
+            }
+
+            private     Promise<WebHandler>         ServeStaticFile(HostContext context)
+            {
+                return  Atomic.Promise<WebHandler>
+                ((resolve, reject)=>
+                {
+                    resolve(WebHandler.Create<StaticFileHandler>().SetContext(context));
+                });
+            }
+
+            private     bool                        CheckIfUrlIsStaticFile(HostContext context)
+            {
+                return  (
+                            System.IO.File.Exists(context.Request.PhysicalPath)
+                            &&
+                            context.Request.RawUrl.ToLower()
+                            .EndsWithOneOf
+                            (
+                                ".html", 
+                                ".htm", 
+                                ".gif", 
+                                ".jpg", 
+                                ".jpeg", 
+                                ".png", 
+                                ".txt", 
+                                ".js", 
+                                ".json", 
+                                ".css"
+                            )
+                        )
+                        ||
+                        (
+                            System.IO.Directory.Exists(context.Request.PhysicalPath)
+                            &&
+                            System.IO.File.Exists(System.IO.Path.Combine(context.Request.PhysicalPath, "index.html"))
+                        );
             }
 
             private     Promise<WebServiceHandler>  LocateWebService(string[] segments, int indexOfKeyPath)

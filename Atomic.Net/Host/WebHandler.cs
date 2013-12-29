@@ -27,10 +27,11 @@ namespace AtomicNet
             });
         }
 
-        private     void                SetContext(HostContext context)
+        private     WebHandler          SetContext(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;
+            return this;
         }
 
         private     Promise             RespondWithEnvironmentTemporarilyUnavailable()

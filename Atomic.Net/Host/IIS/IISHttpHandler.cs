@@ -56,7 +56,7 @@ namespace AtomicNet.IIS
         {
             IAsyncResult    asyncResult = new AsyncResult();
 
-            this.ProcessRequest(new IISHttpContext(context)).WhenDone(()=>cb(asyncResult), ex=>{throw ex;});
+            this.ProcessRequest(new IISHttpContext(context)).WhenDone(()=>cb(asyncResult), ex=>{ex.Throw();});
 
             return asyncResult;
         }
