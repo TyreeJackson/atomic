@@ -38,7 +38,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="index.html" />
+    <Content Include="atomic\boot\.js" />
+    <Content Include="demo\.css" />
+    <Content Include="demo\.html" />
+    <Content Include="demo\.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -46,6 +49,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="demo\.dep" />
+    <Content Include="atomic\boot\.dep" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

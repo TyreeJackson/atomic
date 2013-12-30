@@ -19,7 +19,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes Informational_Continue                  = new HttpStatusCodes(100, "Continue");
+        readonly    HttpStatusCodes Informational_Continue              = new HttpStatusCodes(100, "Continue");
 
         /// <summary>
         /// This means the requester has asked the server to switch protocols and the server is 
@@ -27,7 +27,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Informational_SwitchingProtocols       = new HttpStatusCodes(101, "Switching Protocols");
+        readonly    HttpStatusCodes Informational_SwitchingProtocols    = new HttpStatusCodes(101, "Switching Protocols");
 
         /// <summary>
         /// As a WebDAV request may contain many sub-requests involving file operations, it may take 
@@ -37,7 +37,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Informational_Processing               = new HttpStatusCodes(102, "Processing");
+        readonly    HttpStatusCodes Informational_Processing            = new HttpStatusCodes(102, "Processing");
 
         /// <summary>
         /// Standard response for successful HTTP requests. The actual response will depend on the 
@@ -47,14 +47,14 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_OK                             = new HttpStatusCodes(200, "OK");
+        readonly    HttpStatusCodes Success_OK                          = new HttpStatusCodes(200, "OK");
 
         /// <summary>
         /// The request has been fulfilled and resulted in a new resource being created.
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_Created                        = new HttpStatusCodes(201, "Created");
+        readonly    HttpStatusCodes Success_Created                     = new HttpStatusCodes(201, "Created");
 
         /// <summary>
         /// The request has been accepted for processing, but the processing has not 
@@ -63,7 +63,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_Accepted                       = new HttpStatusCodes(202, "Accepted");
+        readonly    HttpStatusCodes Success_Accepted                    = new HttpStatusCodes(202, "Accepted");
 
         /// <summary>
         /// The server successfully processed the request, but is returning information 
@@ -71,7 +71,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Sucess_NonAuthoritativeInformation     = new HttpStatusCodes(203, "Non-Authoritative Information");
+        readonly    HttpStatusCodes Sucess_NonAuthoritativeInformation  = new HttpStatusCodes(203, "Non-Authoritative Information");
 
         /// <summary>
         /// The server successfully processed the request, but is not returning any 
@@ -79,7 +79,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_NoContent                      = new HttpStatusCodes(204, "No Content");
+        readonly    HttpStatusCodes Success_NoContent                   = new HttpStatusCodes(204, "No Content");
 
         /// <summary>
         /// The server successfully processed the request, but is not returning any 
@@ -88,7 +88,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_ResetContent                   = new HttpStatusCodes(205, "Reset Content");
+        readonly    HttpStatusCodes Success_ResetContent                = new HttpStatusCodes(205, "Reset Content");
 
         /// <summary>
         /// The server is delivering only part of the resource due to a range header 
@@ -98,7 +98,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_PartialContent                 = new HttpStatusCodes(206, "Partial Content");
+        readonly    HttpStatusCodes Success_PartialContent              = new HttpStatusCodes(206, "Partial Content");
 
         /// <summary>
         /// The message body that follows is an XML message and can contain a number 
@@ -106,7 +106,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_MultiStatus                    = new HttpStatusCodes(207, "Multi-Status");
+        readonly    HttpStatusCodes Success_MultiStatus                 = new HttpStatusCodes(207, "Multi-Status");
 
         /// <summary>
         /// The members of a DAV binding have already been enumerated in a previous 
@@ -114,7 +114,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_AlreadyReported                = new HttpStatusCodes(208, "Already Reported");
+        readonly    HttpStatusCodes Success_AlreadyReported             = new HttpStatusCodes(208, "Already Reported");
 
         /// <summary>
         /// The server has fulfilled a GET request for the resource, and the response 
@@ -123,7 +123,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Success_IMUsed                         = new HttpStatusCodes(226, "IM Used");
+        readonly    HttpStatusCodes Success_IMUsed                      = new HttpStatusCodes(226, "IM Used");
 
         /// <summary>
         /// Indicates multiple options for the resource that the client may follow. 
@@ -132,14 +132,14 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_MultipleChoices            = new HttpStatusCodes(300, "Multiple Choices");
+        readonly    HttpStatusCodes Redirection_MultipleChoices         = new HttpStatusCodes(300, "Multiple Choices");
 
         /// <summary>
         /// This and all future requests should be directed to the given URI.
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_MovedPermanently           = new HttpStatusCodes(301, "Moved Permanently");
+        readonly    HttpStatusCodes Redirection_MovedPermanently        = new HttpStatusCodes(301, "Moved Permanently");
 
         /// <summary>
         /// This is an example of industry practice contradicting the standard.
@@ -152,7 +152,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_Found                      = new HttpStatusCodes(302, "Found");
+        readonly    HttpStatusCodes Redirection_Found                   = new HttpStatusCodes(302, "Found");
 
         /// <summary>
         /// The response to the request can be found under another URI using a GET method. 
@@ -162,7 +162,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_SeeOther                   = new HttpStatusCodes(303, "See Other");
+        readonly    HttpStatusCodes Redirection_SeeOther                = new HttpStatusCodes(303, "See Other");
 
         /// <summary>
         /// Indicates that the resource has not been modified since the version specified by 
@@ -172,7 +172,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_NotModified                = new HttpStatusCodes(304, "Not Modified");
+        readonly    HttpStatusCodes Redirection_NotModified             = new HttpStatusCodes(304, "Not Modified");
 
         /// <summary>
         /// The requested resource is only available through a proxy, whose address is provided 
@@ -181,14 +181,14 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_UseProxy                   = new HttpStatusCodes(305, "Use Proxy");
+        readonly    HttpStatusCodes Redirection_UseProxy                = new HttpStatusCodes(305, "Use Proxy");
 
         /// <summary>
         /// No longer used.  Originally meant "Subsequent requests should use the specified proxy."
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_SwitchProxy                = new HttpStatusCodes(306, "Switch Proxy");
+        readonly    HttpStatusCodes Redirection_SwitchProxy             = new HttpStatusCodes(306, "Switch Proxy");
 
         /// <summary>
         /// In this case, the request should be repeated with another URI; however, future requests 
@@ -198,7 +198,7 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_TemporaryRedirect          = new HttpStatusCodes(307, "Temporary Redirect");
+        readonly    HttpStatusCodes Redirection_TemporaryRedirect       = new HttpStatusCodes(307, "Temporary Redirect");
 
         /// <summary>
         /// The request, and all future requests should be repeated using another URI. 307 and 308 
@@ -208,7 +208,54 @@ namespace AtomicNet
         /// </summary>
         public
         static
-        readonly    HttpStatusCodes  Redirection_PermanentRedirect          = new HttpStatusCodes(308, "Permanent Redirect");
+        readonly    HttpStatusCodes Redirection_PermanentRedirect       = new HttpStatusCodes(308, "Permanent Redirect");
+
+        /// <summary>
+        /// The request cannot be fulfilled due to bad syntax.
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes ClientError_BadRequest              = new HttpStatusCodes(400, "Bad Request");
+
+        /// <summary>
+        /// Similar to 403 Forbidden, but specifically for use when authentication is required and
+        /// has failed or has not yet been provided. The response must include a WWW-Authenticate
+        /// header field containing a challenge applicable to the requested resource. See Basic 
+        /// access authentication and Digest access authentication.
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes ClientError_Unauthorized            = new HttpStatusCodes(401, "Unauthorized");
+
+        /// <summary>
+        /// Reserved for future use. The original intention was that this code might be used as part
+        /// of some form of digital cash or micropayment scheme, but that has not happened, and this
+        /// code is not usually used. YouTube uses this status if a particular IP address has made
+        /// excessive requests, and requires the person to enter a CAPTCHA.
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes ClientError_PaymentRequired         = new HttpStatusCodes(402, "Payment Required");
+
+        /// <summary>
+        /// The request was a valid request, but the server is refusing to respond to it. Unlike a
+        /// 401 Unauthorized response, authenticating will make no difference.[2] On servers where
+        /// authentication is required, this commonly means that the provided credentials were 
+        /// successfully authenticated but that the credentials still do not grant the client 
+        /// permission to access the resource (e.g., a recognized user attempting to access 
+        /// restricted content).
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes ClientError_Forbidden               = new HttpStatusCodes(403, "Forbidden");
+
+        /// <summary>
+        /// The requested resource could not be found but may be available again in the future.
+        /// Subsequent requests by the client are permissible.
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes ClientError_NotFound                = new HttpStatusCodes(404, "Not Found");
 
         //public
         //static
@@ -216,16 +263,6 @@ namespace AtomicNet
 
 //4xx Client Error
 
-//400 Bad Request
-//    The request cannot be fulfilled due to bad syntax.[2]
-//401 Unauthorized
-//    Similar to 403 Forbidden, but specifically for use when authentication is required and has failed or has not yet been provided.[2] The response must include a WWW-Authenticate header field containing a challenge applicable to the requested resource. See Basic access authentication and Digest access authentication.
-//402 Payment Required
-//    Reserved for future use.[2] The original intention was that this code might be used as part of some form of digital cash or micropayment scheme, but that has not happened, and this code is not usually used. YouTube uses this status if a particular IP address has made excessive requests, and requires the person to enter a CAPTCHA.
-//403 Forbidden
-//    The request was a valid request, but the server is refusing to respond to it.[2] Unlike a 401 Unauthorized response, authenticating will make no difference.[2] On servers where authentication is required, this commonly means that the provided credentials were successfully authenticated but that the credentials still do not grant the client permission to access the resource (e.g., a recognized user attempting to access restricted content).
-//404 Not Found
-//    The requested resource could not be found but may be available again in the future.[2] Subsequent requests by the client are permissible.
 //405 Method Not Allowed
 //    A request was made of a resource using a request method not supported by that resource;[2] for example, using GET on a form which requires data to be presented via POST, or using PUT on a read-only resource.
 //406 Not Acceptable

@@ -140,7 +140,8 @@ namespace AtomicNet
                 if (!(ex is PromiseException))
                 try
                 {
-                    throw ex;
+                    if (ex.StackTrace != null)  this.rejection  = new PromiseException(ex);
+                    else                        throw ex;
                 }
                 catch(Exception ex2)
                 {

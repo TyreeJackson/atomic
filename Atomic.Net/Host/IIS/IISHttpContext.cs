@@ -8,23 +8,26 @@ namespace AtomicNet.IIS
     public  class IISHttpContext : HostContext
     {
 
-        private static  HttpContext         currentContext                      { get { return HttpContext.Current; } }
+        private static  HttpContext             currentContext                      { get { return HttpContext.Current; } }
 
-        private         HttpContext         _context                            = null;
-        internal        HttpContext         context                             { get { return this._context; } }
+        private         HttpContext             _context                            = null;
+        internal        HttpContext             context                             { get { return this._context; } }
 
-        private         IISHttpApplication  _application                        = null;
-        private         IISHttpApplication  application                         { get { return HostApplication.CreateIfNeeded(ref this._application, this); } }
+        private         IISHttpApplication      _application                        = null;
+        private         IISHttpApplication      application                         { get { return HostApplication.CreateIfNeeded(ref this._application, this); } }
 
-        private         IISHttpRequest      _request                            = null;
-        private         IISHttpRequest      request                             { get { return HostRequest.CreateIfNeeded(ref this._request, this); } }
+        private         IISHttpRequest          _request                            = null;
+        private         IISHttpRequest          request                             { get { return HostRequest.CreateIfNeeded(ref this._request, this); } }
 
-        private         IISHttpResponse     _response                           = null;
-        private         IISHttpResponse     response                            { get { return HostResponse.CreateIfNeeded(ref this._response, this); } }
+        private         IISHttpServerUtility    _server                             = null;
+        private         IISHttpServerUtility    server                              { get { return HostServerUtility.CreateIfNeeded(ref this._server, this); } }
 
-        private         IISHttpHandler      handler                             = null;
+        private         IISHttpResponse         _response                           = null;
+        private         IISHttpResponse         response                            { get { return HostResponse.CreateIfNeeded(ref this._response, this); } }
 
-        public                              IISHttpContext(HttpContext context)
+        private         IISHttpHandler          handler                             = null;
+
+        public                                  IISHttpContext(HttpContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this._context   = context;
@@ -54,8 +57,7 @@ namespace AtomicNet.IIS
         {
             get
             {
-                #warning NotImplemented
-                throw new NotImplementedException();
+                return this.server;
             }
         }
 

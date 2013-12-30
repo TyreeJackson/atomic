@@ -8,6 +8,16 @@ namespace AtomicNet
     {
 
         public
+        static  string  EndWith(this string thisString, string stringEnding)
+        {
+            if (thisString.IsNullOrEmpty() || stringEnding.IsNullOrEmpty()) return thisString;
+
+            return  thisString.Substring(thisString.Length-stringEnding.Length) != stringEnding
+                    ?   thisString + stringEnding
+                    :   thisString;
+        }
+
+        public
         static  bool    IsNullOrEmpty(this string thisString)
         {
             return System.String.IsNullOrEmpty(thisString);

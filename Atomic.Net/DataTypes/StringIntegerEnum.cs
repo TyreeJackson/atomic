@@ -21,7 +21,7 @@ namespace AtomicNet
 
         protected   StringIntegerEnum(int naturalValue, string secondaryNaturalValue) : base(naturalValue)
         {
-            Throw<System.ArgumentException>.If(allValuesByStringValue.ContainsKey(secondaryNaturalValue), "A duplicate secondary natural value was specified for the " + TypeSupport<tStringIntegerEnum>.Name + " enumerated context.");
+            Throw<System.ArgumentException>.If(allValuesByStringValue.ContainsKey(secondaryNaturalValue), "A duplicate secondary natural value (" + secondaryNaturalValue + ") was specified for the " + TypeSupport<tStringIntegerEnum>.Name + " enumerated context.");
 
             allValuesByStringValue.Add(secondaryNaturalValue, (tStringIntegerEnum) this);
             this.secondaryNaturalValue  = secondaryNaturalValue;
