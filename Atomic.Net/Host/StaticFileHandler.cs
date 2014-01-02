@@ -61,6 +61,7 @@ namespace AtomicNet
             string[]    dependencies                = System.IO.File.ReadAllLines(currentDependencyFilePath);
             bool        currentFileHasBeenIncluded  = false;
 
+            if (System.IO.File.Exists(Path.Combine(currentDependencyDirectoryPath, fileExtension + ".pre")))    this.AddStaticFileContent(content, Path.Combine(currentDependencyDirectoryPath, fileExtension + ".pre"));
             foreach(string dependency in dependencies)
             {
                 if (dependency == ".")
@@ -74,18 +75,19 @@ namespace AtomicNet
                     string  dependencyPath      = Path.Combine(System.Web.VirtualPathUtility.GetDirectory(rawDependencyPath), System.Web.VirtualPathUtility.GetFileName(rawDependencyPath));
                     string  dependencyFilePath  = this.Context.Server.MapPath(dependencyPath);
 
-                    if (!this.AddStaticFileContent(content, Path.Combine(dependencyFilePath, fileExtension)))
+                    if (!this.AddStaticFileContent(content, dependencyFilePath + fileExtension))
                     this.AddVirtualizedFileContentIfItExists(content, dependencyPath, dependencyFilePath, fileExtension);
                 }
             }
             if (!currentFileHasBeenIncluded)    this.AddStaticFileContent(content, Path.Combine(currentDependencyDirectoryPath, fileExtension));
+            if (System.IO.File.Exists(Path.Combine(currentDependencyDirectoryPath, fileExtension + ".post")))   this.AddStaticFileContent(content, Path.Combine(currentDependencyDirectoryPath, fileExtension + ".post"));
         }
 
         private     void        AddVirtualizedFileContentIfItExists(StringBuilder content, string dependencyPath, string dependencyFilePath, string fileExtension)
         {
             if (System.IO.File.Exists(Path.Combine(dependencyFilePath, ".dep")))
             {
-                this.GetFileContents(content, dependencyPath, dependencyFilePath, fileExtension);
+                this.GetFileContents(content, System.Web.VirtualPathUtility.GetDirectory(dependencyPath), dependencyFilePath, fileExtension);
             }
         }
 
@@ -93,7 +95,7 @@ namespace AtomicNet
         {
             if (System.IO.File.Exists(filePath))
             {
-                content.Append(System.IO.File.ReadAllText(filePath));
+                content.AppendLine(System.IO.File.ReadAllText(filePath));
                 return true;
             }
             return false;

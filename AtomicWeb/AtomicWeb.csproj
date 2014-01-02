@@ -39,9 +39,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="atomic\boot\.js" />
+    <Content Include="tests\atomic\.js" />
+    <Content Include="atomic\debug\.js" />
     <Content Include="demo\.css" />
     <Content Include="demo\.html" />
     <Content Include="demo\.js" />
+    <Content Include="Scripts\_references.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +54,14 @@
   <ItemGroup>
     <Content Include="demo\.dep" />
     <Content Include="atomic\boot\.dep" />
+    <Content Include="atomic\debug\.dep" />
+    <Content Include="tests\atomic\.dep" />
+    <Content Include="demo\.html.post">
+      <DependentUpon>.html</DependentUpon>
+    </Content>
+    <Content Include="demo\.html.pre">
+      <DependentUpon>.html</DependentUpon>
+    </Content>
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
