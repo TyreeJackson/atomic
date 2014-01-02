@@ -44,7 +44,8 @@
     <Content Include="demo\.css" />
     <Content Include="demo\.html" />
     <Content Include="demo\.js" />
-    <Content Include="Scripts\_references.js" />
+    <None Include="Properties\PublishProfiles\local folder.pubxml" />
+    <None Include="Scripts\_references.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
