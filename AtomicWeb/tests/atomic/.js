@@ -11,6 +11,14 @@
             constructor:
             function()
             {
+            },
+            protected:
+            {
+                bye:    {field: "Bye "}
+            },
+            public:
+            {
+                hello:  {field: "Hello "}
             }
         }},
         prototype:
@@ -28,7 +36,7 @@
                 bye:
                 function(who)
                 {
-                    return "Bye " + who + "!";
+                    return privileged.static.bye + who + "!";
                 },
             },
             public:
@@ -36,7 +44,12 @@
                 hello:
                 function(who)
                 {
-                    return "Hello " + who + "!";
+                    return privileged.static.hello + who + "!";
+                },
+                byeBye:
+                function(who)
+                {
+                    return privileged.bye(who) + " Goodbye!";
                 }
             }
         }}
@@ -51,6 +64,14 @@
             constructor:
             function()
             {
+            },
+            protected:
+            {
+                bye:    {field: "Goodbye "},
+            },
+            public:
+            {
+                hello:  {field: "Hellooo "}
             }
         }},
         prototype:
@@ -86,9 +107,13 @@
             }
         }}
     });
-    var test1   = new TestClass();
-    alert(test1.hello("World"));
-    alert(test1.goodBye("World"));
-    assert(!exists(new TestClass().bye));
+    var test1   = new BaseClass();
+    assert(test1.hello("World") == "Hello World!", "Test 1a");
+    assert(test1.byeBye("World") == "Bye World! Goodbye!", "Test 1b");
+    assert(!exists(test1.goodBye), "Test 1c");
+    var test2   = new TestClass();
+    assert(test2.hello("World") == "Whoa! Hellooo World!", "Test 2a");
+    assert(test2.goodBye("World") == "Doh! Goodbye World! We'll miss you!", "Test 2b");
+    assert(!exists(test2.bye), "Test 2c");
     
 }}})(window);

@@ -55,7 +55,7 @@
 
     function applyFieldToInstance(key, item, privileged, derivativeBaseProxy, isPublic)
     {
-        privileged[key] = item;
+        privileged[key] = item.field;
 
         if (exists(derivativeBaseProxy))
         defineProperty
@@ -193,7 +193,45 @@
         )(definition, convertArgsToArray);
         defineProperty(definition, "class", {value: constructorWrapper, enumerable: true, writable: false, configurable: false});
         extendBaseClass(definition);
-        var baseDefinition  = getBaseDefinition(definition);
+        var baseDefinition      = getBaseDefinition(definition);
+
+        function initializeClass(privileged, topLevel, keysToFreeze, derivativeBaseProxy)
+        {
+            function defineBaseProxy()
+            {
+                return  (function()
+                        {
+                            if (isAFunction(baseStructure.constructor)) baseStructure.constructor.apply(this, convertArgsToArray(arguments)); 
+                            baseStructure.constructor = null;
+                        }).bind(this);
+            }
+            var base            = defineBaseProxy.call(this);
+            var baseStructure   = baseDefinition !== null ? baseDefinition.initialize.call(this, privileged, false, keysToFreeze, base) : {};
+            var structure       = definition.static(base, privileged);
+            if (exists(structure.protected))    applyStructureToInstance.call(this, structure.protected, privileged, keysToFreeze, derivativeBaseProxy, false);
+            if (exists(structure.public))       applyStructureToInstance.call(this, structure.public, privileged, keysToFreeze, derivativeBaseProxy, true);
+            if (derivativeBaseProxy != null)    copyBaseProxyToDerivativeBaseProxy(base, derivativeBaseProxy);
+
+            if (topLevel)
+            {
+                freezeMembers.call(this);
+                if (isAFunction(structure.constructor))     structure.constructor.call(this);
+                if (isAFunction(baseStructure.constructor)) baseStructure.constructor.call(this);
+                baseStructure.constructor   = null;
+            }
+            else
+            {
+                var originalConstructor = structure.constructor;
+                structure.constructor   =
+                function()
+                {
+                    if (isAFunction(originalConstructor))       originalConstructor.apply(this, convertArgsToArray(arguments));
+                    if (isAFunction(baseStructure.constructor)) baseStructure.constructor.call(this);
+                    baseStructure.constructor   = null;
+                }
+                return structure;
+            }
+        }
 
         function defineInstance(privileged, topLevel, keysToFreeze, args, derivativeBaseProxy)
         {
@@ -202,11 +240,10 @@
                 return  (function()
                         {
                             if (isAFunction(baseStructure.constructor)) baseStructure.constructor.apply(this, convertArgsToArray(arguments)); 
-                            baseConstructor = null;
+                            baseStructure.constructor = null;
                         }).bind(this);
             }
 
-            keysToFreeze        = keysToFreeze||[];
             var base            = defineBaseProxy.call(this);
             var baseStructure   = baseDefinition !== null ? baseDefinition.instantiate.call(this, privileged, false, keysToFreeze, null, base) : {};
             var structure       = definition.instance(base, privileged);
@@ -216,6 +253,7 @@
 
             if (topLevel)
             {
+                defineProperty(privileged, "static", {value: staticPrivileged, writable: false, configurable: false, enumerable: true});
                 freezeMembers.call(this);
                 if (isAFunction(structure.constructor))     structure.constructor.apply(this, args);
                 if (isAFunction(baseStructure.constructor)) baseStructure.constructor.call(this);
@@ -235,9 +273,13 @@
             }
         }
 
+        defineFunction(definition, "initialize", initializeClass);
         defineFunction(definition, "instantiate", defineInstance);
         defineProperty(definition.class, "__fullName", {value: (parentName !== undefined ? parentName + "." : "") + definition.class.name});
         classCache[definition.class.__fullName] = definition;
+
+        var staticPrivileged    = {};
+        definition.initialize.call(constructorWrapper, staticPrivileged, true, [], null);
 
         return constructorWrapper;
     }

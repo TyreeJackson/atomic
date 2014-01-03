@@ -5,7 +5,7 @@
     (
         function assert(test, message)
         {
-            if (exists(global.console) && exists(global.console.assert))    global.console.assert(test, message);
+            if (exists(global.console) && exists(global.console.assert))    global.console.assert(test, message||"Assert failed");
             else if(!test)                                                  throw new Error("Assert failed" + (exists(message) ? ": " + message : ""));
         }
     );
