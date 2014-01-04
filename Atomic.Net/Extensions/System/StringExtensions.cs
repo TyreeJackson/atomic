@@ -18,9 +18,28 @@ namespace AtomicNet
         }
 
         public
+        static  string  FormattedWith(this string thisString, params object[] args)
+        {
+            return System.String.Format(thisString, args);
+        }
+
+        public
         static  bool    IsNullOrEmpty(this string thisString)
         {
             return System.String.IsNullOrEmpty(thisString);
+        }
+
+        public
+        static  string  OrIfNullOrEmpty(this string thisString, string defaultValue)
+        {
+            return thisString.IsNullOrEmpty() ? defaultValue : thisString;
+        }
+
+        public
+        static  bool    HasAnyCharactersThatAreAnyOf(this string thisString, params char[] characters)
+        {
+            for (int charCounter = 0; charCounter < thisString.Length; charCounter++)   if (thisString[charCounter].IsOneOf(characters))    return true;
+            return false;
         }
 
         public
@@ -31,6 +50,13 @@ namespace AtomicNet
             return  thisString.Substring(thisString.Length-stringToTrim.Length) == stringToTrim
                     ?   thisString.Substring(0, thisString.Length-stringToTrim.Length)
                     :   thisString;
+        }
+
+        public
+        static  bool    EndsWithOneOf(this string thisString, params char[] values)
+        {
+            foreach(char value in values) if (thisString[thisString.Length-1] == value) return true;
+            return  false;
         }
 
         public
