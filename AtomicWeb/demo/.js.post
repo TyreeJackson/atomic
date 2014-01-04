@@ -1,5 +1,6 @@
 atomic.ready(function(global)
 {with(namespace("atomic"))
+{with(namespace("demo"))
 {
-    new HTMLDomApplication();
-}});
+    new HomeScreen().dock();
+}}});

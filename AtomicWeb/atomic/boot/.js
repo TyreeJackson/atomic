@@ -134,9 +134,9 @@
             var keyToFreeze = keysToFreeze[key] = keysToFreeze[key]||{isPublic: isPublic};
             if (exists(keyToFreeze) && keyToFreeze.isPublic !== isPublic)       throw new Error("An invalid attempt to change the access modifier for member " + key + " was encountered.");
             var item            = structure[key];
-                    if (isAFunction(item)       && canBeAFunction(key, keyToFreeze.item))   applyFunctionToInstance.call(this, key, item, privileged, derivativeBaseProxy, isPublic);
-            else    if (exists(item.field)      && canBeAField(key, keyToFreeze.item))      applyFieldToInstance.call   (this, key, item, privileged, derivativeBaseProxy, isPublic);
-            else    if (exists(item.property)   && canBeAProperty(key, keyToFreeze.item))   applyPropertyToInstance.call(this, key, item, privileged, derivativeBaseProxy, isPublic);
+                    if (isAFunction(item)                   && canBeAFunction(key, keyToFreeze.item))   applyFunctionToInstance.call(this, key, item, privileged, derivativeBaseProxy, isPublic);
+            else    if (hasOwnProperty(item, "field")       && canBeAField(key, keyToFreeze.item))      applyFieldToInstance.call   (this, key, item, privileged, derivativeBaseProxy, isPublic);
+            else    if (hasOwnProperty(item, "property")    && canBeAProperty(key, keyToFreeze.item))   applyPropertyToInstance.call(this, key, item, privileged, derivativeBaseProxy, isPublic);
             keysToFreeze[key].item  = keyToFreeze.item || item;
         }
     }
@@ -207,7 +207,7 @@
             }
             var base            = defineBaseProxy.call(this);
             var baseStructure   = baseDefinition !== null ? baseDefinition.initialize.call(this, privileged, false, keysToFreeze, base) : {};
-            var structure       = definition.static(base, privileged);
+            var structure       = isAFunction(definition.static) ? definition.static(base, privileged) : {};
             if (exists(structure.protected))    applyStructureToInstance.call(this, structure.protected, privileged, keysToFreeze, derivativeBaseProxy, false);
             if (exists(structure.public))       applyStructureToInstance.call(this, structure.public, privileged, keysToFreeze, derivativeBaseProxy, true);
             if (derivativeBaseProxy != null)    copyBaseProxyToDerivativeBaseProxy(base, derivativeBaseProxy);
@@ -244,16 +244,19 @@
                         }).bind(this);
             }
 
+            if (topLevel)
+            {
+                defineProperty(privileged, "static", {value: staticPrivileged, writable: false, configurable: false, enumerable: true});
+            }
             var base            = defineBaseProxy.call(this);
             var baseStructure   = baseDefinition !== null ? baseDefinition.instantiate.call(this, privileged, false, keysToFreeze, null, base) : {};
-            var structure       = definition.instance(base, privileged);
+            var structure       = isAFunction(definition.instance) ? definition.instance(base, privileged) : {};
             if (exists(structure.protected))    applyStructureToInstance.call(this, structure.protected, privileged, keysToFreeze, derivativeBaseProxy, false);
             if (exists(structure.public))       applyStructureToInstance.call(this, structure.public, privileged, keysToFreeze, derivativeBaseProxy, true);
             if (derivativeBaseProxy != null)    copyBaseProxyToDerivativeBaseProxy(base, derivativeBaseProxy);
 
             if (topLevel)
             {
-                defineProperty(privileged, "static", {value: staticPrivileged, writable: false, configurable: false, enumerable: true});
                 freezeMembers.call(this);
                 if (isAFunction(structure.constructor))     structure.constructor.apply(this, args);
                 if (isAFunction(baseStructure.constructor)) baseStructure.constructor.call(this);
@@ -298,16 +301,41 @@
         }
     }
 
-    function namespace(namespaceName, parentName)
+    function namespace(namespaceName, parent)
     {
         var self            = function(namespace) {return defineNamespace.call(self, namespace); }
+        defineProperty(parent, namespaceName, {value: self});
         defineProperty(self, namespaceName, {value: self});
-        defineProperty(self, "__fullName", {value: (parentName !== undefined ? parentName + "." : "") + namespaceName});
+        defineProperty(self, "__fullName", {value: (this.__fullName !== undefined ? this.__fullName + "." : "") + namespaceName});
         defineFunction(self, "define", define.bind(self, this.__fullName));
         return self;
     }
-    function defineNamespace(namespaceName) {return this[namespaceName]||defineFunction(this, namespaceName, new namespace(namespaceName, this.__fullName));}
+    function defineNamespace(namespaceName) {return this[namespaceName]||new namespace(namespaceName, this);}
 
     defineProperty(global, "namespace", {value: defineNamespace.bind(global)});
 
 })(window);
+
+(function(global)
+{with(namespace("atomic"))
+{
+    var readyList   = [];
+    define
+    (
+        function ready(handler){readyList.push(handler);}
+    );
+    function triggerReady()
+    {
+        while(readyList.length > 0)
+        {
+            var queuedReadyList = readyList;
+            readyList   = [];
+            for(var handlerCounter=0;handlerCounter<queuedReadyList.length;handlerCounter++)
+            {
+                queuedReadyList[handlerCounter](global);
+            }
+        }
+    }
+    global.addEventListener("load", triggerReady);
+
+}})(window);
