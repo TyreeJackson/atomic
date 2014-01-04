@@ -1,4 +1,5 @@
 ﻿using AtomicNet;
+using Generic = System.Collections.Generic;
 
 namespace AtomicNet
 {
@@ -14,10 +15,12 @@ namespace AtomicNet
                     <
                         tNaturalType,
                         tSubclassableEnum
-                    >                       allValues       = new Dictionary<tNaturalType,tSubclassableEnum>();
+                    >                       allValues           = new Dictionary<tNaturalType,tSubclassableEnum>();
 
         private
         readonly    tNaturalType            naturalValue;
+
+        static      SubclassableEnum()                          { System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(tSubclassableEnum).TypeHandle); }
 
         protected   SubclassableEnum(tNaturalType naturalValue)
         {
@@ -30,6 +33,27 @@ namespace AtomicNet
         public  static  implicit    operator    tNaturalType(SubclassableEnum<tSubclassableEnum, tNaturalType> value)
         {
             return value != null ? value.naturalValue : default(tNaturalType);
+        }
+
+        public  static  tSubclassableEnum               TrySelect(tNaturalType naturalValue, tSubclassableEnum defaultValue)
+        {
+            return allValues.TryReturnValueAs(naturalValue, defaultValue);
+        }                                    
+
+        public  static  Generic.List<tSubclassableEnum> AllValues
+        {
+            get
+            {
+                return allValues.Values.ConvertToList(a=>a);
+            }
+        }
+
+        public  static  Generic.List<tNaturalType>      AllNaturalValues
+        {
+            get
+            {
+                return allValues.Values.ConvertToList(a=>a.naturalValue);
+            }
         }
 
     }

@@ -12,6 +12,17 @@ namespace AtomicNet
     partial     class   StaticFileHandler : WebHandler
     {
 
+        public  class   Extension : StringEnum<Extension>
+        {
+            private string  mimeType;
+            public  static  readonly    Extension   html        = new Extension(".html",    "text/html");
+            public  static  readonly    Extension   js          = new Extension(".js",      "application/javascript");
+            public  static  readonly    Extension   css         = new Extension(".css",     "text/css");
+            protected                               Extension(string extension, string mimeType) : base(extension) { this.mimeType = mimeType; }
+
+            public                      string      MimeType    { get { return this.mimeType; } }
+        }
+
         public                  StaticFileHandler() : base()    {}
 
         protected
@@ -42,10 +53,11 @@ namespace AtomicNet
             List<string>    missingFiles                = new List<string>();
             List<string>    includedFiles               = new List<string>();
 
-            if (fileExtension.IsOneOf(".js", ".css", ".html") && System.IO.File.Exists(Path.Combine(filePathWithoutExtension, ".dep")))
+            if (fileExtension.ToLower().IsOneOf(Extension.AllNaturalValues) && System.IO.File.Exists(Path.Combine(filePathWithoutExtension, ".dep")))
             {
                 this.Context.Response.Write(this.GetFileContents(System.Web.VirtualPathUtility.GetDirectory(this.Context.Request.Path), Path.Combine(filePathWithoutExtension), fileExtension, includedFiles, missingFiles));
                 if (missingFiles.Count > 0) this.Response.AddHeader("MissingFiles", String.Join(";", missingFiles));
+                this.Response.AddHeader("content-type", Extension.TrySelect(fileExtension, null).MimeType);
                 return missingFiles.Count == 0;
             }
             return false;

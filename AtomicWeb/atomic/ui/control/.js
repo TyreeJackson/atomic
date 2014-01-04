@@ -10,7 +10,17 @@ atomic.ready(function(global)
             constructor:
             function(elementId)
             {
+                if (!exists(elementId))             return;
+
                 privileged.template = atomic.application.byId(elementId);
+                if (!exists(privileged.template))   return;
+
+                var parentNode;
+                if ((parentNode = privileged.template.parentNode).className == "templateContainer")
+                {
+                    parentNode.removeChild(privileged.template);
+                    parentNode.parentNode.removeChild(parentNode);
+                }
             },
             protected:
             {
