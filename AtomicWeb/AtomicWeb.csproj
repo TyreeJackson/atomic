@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="services\TestService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="demo\.dep" />

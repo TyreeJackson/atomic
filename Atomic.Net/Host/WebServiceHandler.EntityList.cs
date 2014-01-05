@@ -15,7 +15,8 @@ namespace AtomicNet
         public  class   EntityList : WebHandler
         {
 
-            protected override Promise ProcessRequest()
+            protected
+            override    Promise ProcessRequest()
             {
                 return Atomic.Promise
                 ((resolve, reject)=>

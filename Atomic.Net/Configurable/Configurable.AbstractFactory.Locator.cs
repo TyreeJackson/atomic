@@ -55,9 +55,9 @@ namespace AtomicNet
                     return  Atomic.Promise<AbstractFactory>
                     ((resolve, reject)=>
                     {
-                                                                this.GetSubClassConfiguration(subclassKey)
-                        .Then       (subClassConfiguration=>    this.GetSubClassFactory(subClassConfiguration), reject)
-                        .WhenDone   (abstractFactory=>          resolve(abstractFactory),                       reject);
+                        this.GetSubClassConfiguration(subclassKey)
+                        .RelayTo    (this.GetSubClassFactory, reject)
+                        .WhenDone   (resolve, reject);
                     });
                 }
 

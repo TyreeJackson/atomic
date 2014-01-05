@@ -41,7 +41,7 @@ namespace AtomicNet
             else    return this.notifyCallback(onComplete, onFailure);
         }
 
-        public      Promise<at>                 Then<at>(Func<t, Promise<at>> onComplete, Action<Exception> onFailure)
+        public      Promise<at>                 RelayTo<at>(Func<t, Promise<at>> onComplete, Action<Exception> onFailure)
         {
             if (!this.isResolved)
                 lock(this.resolveLock)
