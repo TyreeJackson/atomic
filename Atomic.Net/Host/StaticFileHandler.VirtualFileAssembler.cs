@@ -16,27 +16,54 @@ namespace AtomicNet
         partial     class VirtualFileAssembler
         {
 
+            public  class   FileCache
+            {
+                public  string      etag;
+                public  string      contents;
+                public  DateTime    lastModified    = DateTime.MinValue;
+            }
+
             public  HostContext     Context;
             public  string          RequestDirectoryPath;
             public  Extension       FileExtension;
+            public  FileCache       CachedFile;
+            public  List<string>    MissingFiles            { get { return this.missingFiles; } }
 
             public      bool        RequestedFileIsVirtual()
             {
                 return this.FileExtension != null && System.IO.File.Exists(this.Context.Server.MapPath(VirtualPath.Combine('/', this.RequestDirectoryPath, ".dep")));
             }
 
-            public      string      GetFileContents()
+            public      void        GetFileContents()
             {
-                lock(this.AssemblerLock)
+                lock(this.assemblerLock)
                 try
                 {
-                    this.Content    = new StringBuilder();
+                    this.fullFileName   = new StringBuilder();
+                    this.content        = new StringBuilder();
                     this.AddFileContents(byParent: this.RequestDirectoryPath+this.FileExtension, fromPath: this.RequestDirectoryPath);
-                    return this.missingFiles.Count == 0 ? this.Content.ToString() : String.Empty;
+                    this.fullFileName.Append("|"+this.lastModified.ConvertToEpoch().ToString());
+                    if
+                    (
+                        !VirtualFileAssembler.fileCache.TryGetValue(this.RequestDirectoryPath+this.FileExtension, out this.CachedFile)
+                        ||
+                        this.lastModified > this.CachedFile.lastModified
+                    )
+                    {
+                        this.loadContent.ForEach(a=>a());
+                        VirtualFileAssembler.fileCache[this.RequestDirectoryPath+this.FileExtension]    =
+                        this.CachedFile = 
+                        new FileCache()
+                        {
+                            etag            = this.fullFileName.ToString(), 
+                            contents        = this.content.ToString(), 
+                            lastModified    = this.lastModified
+                        };
+                    }
                 }
                 finally
                 {
-                    this.Content    = null;
+                    this.content    = null;
                 }
             }
 
@@ -44,17 +71,25 @@ namespace AtomicNet
                 #region Private
             // ****************************************************************
 
-            private List<string>    IncludedFiles           = new List<string>();
+            private
+            static  Dictionary
+                    <
+                        string,
+                        FileCache
+                    >               fileCache               = new Dictionary<string,FileCache>();
+            private List<string>    includedFiles           = new List<string>();
             private List<string>    missingFiles            = new List<string>();
-            public  List<string>    MissingFiles            { get { return this.missingFiles; } }
-            private StringBuilder   Content;
-            private object          AssemblerLock           = new object();
+            private StringBuilder   content;
+            private object          assemblerLock           = new object();
+            private DateTime        lastModified            = DateTime.MinValue;
+            private List<Action>    loadContent             = new List<Action>();
+            private StringBuilder   fullFileName;
 
             private     void        AddFileContents(string byParent, string fromPath)
             {
                 bool    currentFileHasNotBeenIncluded   = true;
 
-                this.IncludedFiles.Add(fromPath);
+                this.includedFiles.Add(fromPath);
 
                 this.AddPreContentsIfTheyExist(byParent, fromPath);
 
@@ -105,7 +140,7 @@ namespace AtomicNet
 
             private     void        AddFileContentsIfNotAlreadyIncluded(string byParent, string currentDependencyDirectoryPath)
             {
-                if (this.IncludedFiles.Contains(currentDependencyDirectoryPath)) return;
+                if (this.includedFiles.Contains(currentDependencyDirectoryPath)) return;
                 this.AddFileContents(byParent, currentDependencyDirectoryPath);
             }
 
@@ -137,10 +172,16 @@ namespace AtomicNet
 
             private     void        AddStaticFileContent(string byParent, string fromPath, string physicalPath)
             {
-                if (this.IncludedFiles.Contains(fromPath))   return;
-                this.IncludedFiles.Add(fromPath);
-                this.Content.AppendLine(this.FileExtension.Comment.FormattedWith(fromPath, byParent));
-                this.Content.AppendLine(System.IO.File.ReadAllText(physicalPath)+"\n");
+                if (this.includedFiles.Contains(fromPath))   return;
+                this.includedFiles.Add(fromPath);
+                this.lastModified   = this.lastModified.Or(System.IO.File.GetLastWriteTime(physicalPath), IfIts.Greater);
+                this.fullFileName.Append((this.fullFileName.Length == 0 ? String.Empty : "|") + physicalPath);
+                this.loadContent.Add
+                (()=>
+                {
+                    this.content.AppendLine(this.FileExtension.Comment.FormattedWith(fromPath, byParent));
+                    this.content.AppendLine(System.IO.File.ReadAllText(physicalPath)+"\n");
+                });
             }
 
             // ****************************************************************

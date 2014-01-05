@@ -25,6 +25,8 @@ namespace AtomicNet
         public
         static  Configuration           Config;
 
+        public  int                     TimeShift;
+
     }
 
 }

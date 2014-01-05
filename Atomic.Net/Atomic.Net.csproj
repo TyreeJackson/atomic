@@ -86,9 +86,10 @@
     <Compile Include="DataTypes\IntegerEnum.cs" />
     <Compile Include="DataTypes\StringIntegerEnum.cs" />
     <Compile Include="DataTypes\StringEnum.cs" />
-    <Compile Include="DataTypes\Dictionary.cs" />
+    <Compile Include="DataTypes\System\Collections\Generic\Dictionary.cs" />
     <Compile Include="DataTypes\IndexedList.cs" />
     <Compile Include="DataTypes\SubclassableEnum.cs" />
+    <Compile Include="DataTypes\System\DateTimeOffset.cs" />
     <Compile Include="DataTypes\TransferredFile.cs" />
     <Compile Include="EnumeratedTypes\HttpStatusCodes.cs" />
     <Compile Include="Extensions\GenericExtensions.cs" />
@@ -96,6 +97,9 @@
     <Compile Include="Extensions\System\Collections\Specialized\NameObjectCollectionExtensions.cs" />
     <Compile Include="Extensions\System\Collections\Specialized\NameValueCollectionExtensions.cs" />
     <Compile Include="Extensions\System\BooleanExtensions.cs" />
+    <Compile Include="Extensions\System\DateTimeOffset.cs" />
+    <Compile Include="Extensions\System\DateTime.cs" />
+    <Compile Include="Extensions\System\DoubleExtensions.cs" />
     <Compile Include="Extensions\System\ExceptionExtensions.cs" />
     <Compile Include="Extensions\System\IO\VirtualPath.cs" />
     <Compile Include="Extensions\System\Reflection\ConstructorInfoExtensions.cs" />
