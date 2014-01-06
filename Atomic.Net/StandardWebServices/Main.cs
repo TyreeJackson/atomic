@@ -9,7 +9,7 @@ namespace AtomicNet
 
         public
         new
-        class   Config : WebService<Main, Main.Args, Main.Config>.Config
+        class   Config : WebService<Main, Main.Args, Main.Config>.ServiceConfig
         {
 
             public  Config()

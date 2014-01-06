@@ -10,9 +10,9 @@ namespace AtomicNet
     {
 
         public
-        class       Config   : Configuration.Component<tComponentArgs>
+        class       BaseConfig   : Configuration.Component<tComponentArgs>
         {
-            public  Config(Configuration.SubclassConfiguration.List subclasses, string key, tComponentArgs args) : base(subclasses, key, args) {}
+            public  BaseConfig(Configuration.SubclassConfiguration.List subclasses, string key, tComponentArgs args) : base(subclasses, key, args) {}
         }
 
     }

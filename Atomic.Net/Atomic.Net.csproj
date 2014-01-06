@@ -139,9 +139,72 @@
     <Compile Include="Host\IIS\IISHttpApplication.cs" />
     <Compile Include="Host\IIS\IISHttpContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Schema\ValidationWarning.cs" />
+    <Compile Include="Schema\Entity.Criteria.CommonOps.IsEqualOp.cs">
+      <DependentUpon>Entity.Criteria.CommonOps.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.Criteria.CommonOps.cs">
+      <DependentUpon>Entity.Criteria.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.Criteria.BehalfOf.Router.cs">
+      <DependentUpon>Entity.Criteria.BehalfOf.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.Criteria.ConjunctionRouter.cs">
+      <DependentUpon>Entity.Criteria.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.Criteria.BehalfOf.cs">
+      <DependentUpon>Entity.Criteria.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.Criteria.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\RequestUser.cs" />
+    <Compile Include="Schema\Entity.Language.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Query.cs" />
+    <Compile Include="Schema\Entity.Business.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityDataAccess.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityDataObject.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityDataObjectList.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityIndexSelection.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityModification.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityOrderBySelection.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityPrefetch.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityProperties.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\Entity.EntityPropertySelection.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\CoreEntities\User.generated.cs">
+      <DependentUpon>User.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\CoreEntities\User.cs" />
     <Compile Include="Schema\Entity.cs" />
+    <Compile Include="Schema\Entity.EntitySelection.cs">
+      <DependentUpon>Entity.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Schema\TransactionGroup.cs" />
     <Compile Include="StandardWebServices\Main.cs" />
     <Compile Include="Support\Atom.cs" />
+    <Compile Include="Support\LanguageObject.cs" />
     <Compile Include="Support\Promise.PromiseT.cs">
       <DependentUpon>Promise.cs</DependentUpon>
     </Compile>

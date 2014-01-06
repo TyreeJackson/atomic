@@ -22,7 +22,7 @@ namespace AtomicNet
 
             public
             new
-            class   Config : Component<Router, Router.Args, Router.Config>.Config
+            class   Config : Component<Router, Router.Args, Router.Config>.BaseConfig
             {
 
                 public  Config()

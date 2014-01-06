@@ -9,14 +9,14 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.Config>
+    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.BaseConfig>
     {
 
         public
         new
-        class       Config : Component<WebService, WebService.ServiceArgs, WebService.Config>.Config
+        class       BaseConfig : Component<WebService, WebService.ServiceArgs, WebService.BaseConfig>.BaseConfig
         {
-            public  Config(Configuration.SubclassConfiguration.List subclasses, string key, ServiceArgs args) : base(subclasses, key, args) {}
+            public  BaseConfig(Configuration.SubclassConfiguration.List subclasses, string key, ServiceArgs args) : base(subclasses, key, args) {}
         }
 
     }
@@ -29,9 +29,9 @@ namespace AtomicNet
 
         public
         new
-        class       Config : WebService.Config
+        class       ServiceConfig : WebService.BaseConfig
         {
-            public  Config(tWebServiceArgs args)
+            public  ServiceConfig(tWebServiceArgs args)
             :
             this
             (
@@ -47,7 +47,7 @@ namespace AtomicNet
                 args
             ) {}
 
-            public  Config(Configuration.SubclassConfiguration.List subclasses, tWebServiceArgs args) : base(subclasses, _name, args) {}
+            public  ServiceConfig(Configuration.SubclassConfiguration.List subclasses, tWebServiceArgs args) : base(subclasses, _name, args) {}
         }
 
     }

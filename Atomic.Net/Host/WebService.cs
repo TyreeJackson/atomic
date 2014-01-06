@@ -9,7 +9,7 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.Config>
+    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.BaseConfig>
     {
 
         public
@@ -28,21 +28,23 @@ namespace AtomicNet
     class       WebService<tWebService, tWebServiceArgs, tWebServiceConfig> : WebService
     where       tWebService                                                 : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>
     where       tWebServiceArgs                                             : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.ServiceArgs
-    where       tWebServiceConfig                                           : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.Config
+    where       tWebServiceConfig                                           : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.ServiceConfig
     {
 
         private
         static
-        readonly    string  _name           = typeof(tWebService).Name;
+        readonly    string      _name                                           = typeof(tWebService).Name;
 
         private
         static
-        readonly    string  _factoryName    = typeof(tWebService).FullName + "+Factory";
+        readonly    string      _factoryName                                    = typeof(tWebService).FullName + "+Factory";
 
         public
-        override    bool    IsReusable                              { get { return true; } }
+        override    bool        IsReusable                                      { get { return true; } }
 
-        protected           WebService(tWebServiceArgs args)  : base(args) {}
+        protected   RequestUser RequestedUser                                   { get { throw new NotImplementedException(); } }
+
+        protected               WebService(tWebServiceArgs args)  : base(args)  {}
 
     }
 
