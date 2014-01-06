@@ -27,11 +27,25 @@ namespace AtomicNet
     {
 
         public
-        partial class   EntityPrefetch : Atom<EntityPrefetch>
+        partial class   EntityCriteria
         {
 
-            public  Entities.User.DataObjectList    CreatedBy;
-            public  Entities.User.DataObjectList    LastUpdatedBy;
+            public
+            partial class   CommonOps<t>
+            {
+
+                public  class   IsEqualOp : Atom<IsEqualOp>
+                {
+                    
+                    private     tCriteria           criteria;
+
+                    internal                        IsEqualOp(tCriteria criteria)   { this.criteria = criteria; }
+
+                    public      ConjunctionRouter   this[t value]                   { get { throw new NotImplementedException(); } }
+
+                }
+
+            }
 
         }
 

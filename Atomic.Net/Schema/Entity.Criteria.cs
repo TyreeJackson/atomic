@@ -38,9 +38,11 @@ namespace AtomicNet
                 return new BehalfOf.Router((tCriteria) this);
             }
 
+            public  RelatedOps<User.Criteria>   CreatedBy           { get { throw new NotImplementedException(); } }
             public  CommonOps<Guid>             CreatedById         { get { throw new NotImplementedException(); } }
             public  CommonOps<DateTimeOffset>   CreationDateTime    { get { throw new NotImplementedException(); } }
             public  CommonOps<Guid>             Id                  { get { throw new NotImplementedException(); } }
+            public  RelatedOps<User.Criteria>   LastUpdatedBy       { get { throw new NotImplementedException(); } }
             public  CommonOps<Guid>             LastUpdatedById     { get { throw new NotImplementedException(); } }
             public  CommonOps<DateTimeOffset>   LastUdpateDateTime  { get { throw new NotImplementedException(); } }
 

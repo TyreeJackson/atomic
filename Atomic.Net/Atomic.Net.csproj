@@ -226,6 +226,9 @@
     </Compile>
     <Compile Include="Host\WebHandler.cs" />
     <Compile Include="Host\WebServiceHandler.cs" />
+    <Compile Include="Schema\Entity.Criteria.RelatedOps.cs">
+      <DependentUpon>Entity.Criteria.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Boot\" />

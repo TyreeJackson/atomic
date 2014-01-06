@@ -26,6 +26,10 @@ namespace AtomicWeb
             .OnBehalfOf [RequestedUser]
             .Where      .Id                 .IsEqual[System.Guid.Empty]
             .And        .CreationDateTime   .IsEqual[DateTimeOffset.MinValue]
+            .And        .CreatedBy
+                        [createdByWhere=>
+                            createdByWhere  .CreationDateTime   .IsEqual[DateTimeOffset.MinValue]
+                        ]
             .Select     .Id
                         .CreationDateTime
                         .CreatedById

@@ -35,12 +35,16 @@ namespace AtomicNet
                     
                 private     tCriteria           criteria;
 
-                internal                        ConjunctionRouter(tCriteria criteria)   { this.criteria = criteria; }
+                internal                        ConjunctionRouter(tCriteria criteria)           { this.criteria = criteria; }
 
-                public      tCriteria           And                                     { get { throw new NotImplementedException(); } }
-                public      tCriteria           Or                                      { get { throw new NotImplementedException(); } }
-                public      tSelection          Select                                  { get { throw new NotImplementedException(); } }
-                public      tModification       Change                                  { get { throw new NotImplementedException(); } }
+                public      tCriteria           And                                             { get { throw new NotImplementedException(); } }
+                public      tCriteria           Or                                              { get { throw new NotImplementedException(); } }
+                public      tSelection          Select                                          { get { throw new NotImplementedException(); } }
+                public      tModification       Change                                          { get { throw new NotImplementedException(); } }
+
+                public
+                static
+                implicit                        operator tCriteria (ConjunctionRouter router)   { return router == null ? null : router.criteria; }
 
             }
 
