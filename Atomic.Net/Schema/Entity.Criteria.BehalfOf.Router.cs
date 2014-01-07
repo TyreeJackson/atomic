@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NotImplementedException   = System.NotImplementedException;
+using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
+using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
 {
@@ -10,19 +8,9 @@ namespace AtomicNet
     public
     partial class   Entity
                     <
-                        tEntity,
-                        tPrefetch,
-                        tProperties,
-                        tDataObject,
-                        tDataObjectList,
                         tCriteria,
-                        tOrderBySelection,
                         tModification,
-                        tSelection,
-                        tPropertySelection,
-                        tIndexSelection,
-                        tBusiness,
-                        tDataAccess
+                        tSelection
                     >
     {
 
@@ -30,20 +18,15 @@ namespace AtomicNet
         partial class   EntityCriteria
         {
 
-            public
-            partial class   BehalfOf
+            [EditorBrowsable(EditorBrowsableState.Never)]
+            public  class   BehalfOfRouter : Atom<BehalfOfRouter, tCriteria>
             {
 
-                public  class   Router : Atom<Router>
-                {
+                private tCriteria   criteria;
 
-                    private tCriteria   criteria;
+                internal            BehalfOfRouter(tCriteria criteria) : base(criteria) { this.criteria = criteria; }
 
-                    internal            Router(tCriteria criteria)  { this.criteria = criteria; }
-
-                    public  tCriteria   Where                       { get { return this.criteria; } }
-
-                }
+                public  tCriteria   Where                                               { get { return this.criteria; } }
 
             }
 

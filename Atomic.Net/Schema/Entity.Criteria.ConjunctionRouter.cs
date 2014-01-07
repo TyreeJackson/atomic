@@ -1,11 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NotImplementedException   = System.NotImplementedException;
+using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
+using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
 {
+
+    public
+    partial class   Entity
+                    <
+                        tCriteria,
+                        tModification,
+                        tSelection
+                    >
+    {
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public  class   ConjunctionRouter : Atom<ConjunctionRouter>
+        {
+                    
+            private     tCriteria           criteria;
+
+            internal                        ConjunctionRouter(tCriteria criteria)           { this.criteria = criteria; }
+
+            public      tCriteria           And                                             { get { throw new NotImplementedException(); } }
+            public      tCriteria           Or                                              { get { throw new NotImplementedException(); } }
+            public      tSelection          Select                                          { get { throw new NotImplementedException(); } }
+            public      tModification       Change                                          { get { throw new NotImplementedException(); } }
+
+            public
+            static
+            implicit                        operator tCriteria (ConjunctionRouter router)   { return router == null ? null : router.criteria; }
+
+        }
+
+    }
 
     public
     partial class   Entity
@@ -22,32 +50,22 @@ namespace AtomicNet
                         tPropertySelection,
                         tIndexSelection,
                         tBusiness,
-                        tDataAccess
+                        tDataAccess,
+                        tLanguage,
+                        tCreatedByCriteriaOps,
+                        tCreatedByIdCriteriaOps,
+                        tCreationDateTimeCriteriaOps,
+                        tIdCriteriaOps,
+                        tLastUpdateDateTimeCriteriaOps,
+                        tLastUpdatedByCriteriaOps,
+                        tLastUpdatedByIdCriteriaOps
                     >
     {
 
-        public
-        partial class   EntityCriteria
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public  class   ConjunctionRouter : Entity<tCriteria, tModification, tSelection>.ConjunctionRouter
         {
-
-            public  class   ConjunctionRouter : Atom<ConjunctionRouter>
-            {
-                    
-                private     tCriteria           criteria;
-
-                internal                        ConjunctionRouter(tCriteria criteria)           { this.criteria = criteria; }
-
-                public      tCriteria           And                                             { get { throw new NotImplementedException(); } }
-                public      tCriteria           Or                                              { get { throw new NotImplementedException(); } }
-                public      tSelection          Select                                          { get { throw new NotImplementedException(); } }
-                public      tModification       Change                                          { get { throw new NotImplementedException(); } }
-
-                public
-                static
-                implicit                        operator tCriteria (ConjunctionRouter router)   { return router == null ? null : router.criteria; }
-
-            }
-
+            internal                        ConjunctionRouter(tCriteria criteria) : base(criteria) {}
         }
 
     }

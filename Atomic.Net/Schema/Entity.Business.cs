@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NotImplementedException   = System.NotImplementedException;
+using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
+using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
 {
@@ -22,10 +20,19 @@ namespace AtomicNet
                         tPropertySelection,
                         tIndexSelection,
                         tBusiness,
-                        tDataAccess
+                        tDataAccess,
+                        tLanguage,
+                        tCreatedByCriteriaOps,
+                        tCreatedByIdCriteriaOps,
+                        tCreationDateTimeCriteriaOps,
+                        tIdCriteriaOps,
+                        tLastUpdateDateTimeCriteriaOps,
+                        tLastUpdatedByCriteriaOps,
+                        tLastUpdatedByIdCriteriaOps
                     >
     {
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public
         partial class   EntityBusiness : Atom<EntityBusiness>
         {

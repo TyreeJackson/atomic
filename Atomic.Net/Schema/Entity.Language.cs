@@ -1,4 +1,8 @@
 ﻿using DebuggerNonUserCodeAttribute  = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using NotImplementedException       = System.NotImplementedException;
+using EditorBrowsableAttribute      = System.ComponentModel.EditorBrowsableAttribute;
+using EditorBrowsableState          = System.ComponentModel.EditorBrowsableState;
+
 namespace AtomicNet
 {
 
@@ -17,28 +21,51 @@ namespace AtomicNet
                         tPropertySelection,
                         tIndexSelection,
                         tBusiness,
-                        tDataAccess
+                        tDataAccess,
+                        tLanguage,
+                        tCreatedByCriteriaOps,
+                        tCreatedByIdCriteriaOps,
+                        tCreationDateTimeCriteriaOps,
+                        tIdCriteriaOps,
+                        tLastUpdateDateTimeCriteriaOps,
+                        tLastUpdatedByCriteriaOps,
+                        tLastUpdatedByIdCriteriaOps
                     >
     {
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public
-        partial class   Language : LanguageObject<Language>
+        partial class   EntityLanguage : LanguageObject<EntityLanguage>
+        {
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public
+        partial class   EntityLanguage
+                        <
+                            tBehalfOf,
+                            tBehalfOfRouter
+                        >
+        :
+                        EntityLanguage
+                where   tBehalfOf       : EntityLanguage.EntityBehalfOf<tBehalfOfRouter>
+                where   tBehalfOfRouter : EntityCriteria.BehalfOfRouter
         {
             [DebuggerNonUserCode()]
             public
-            static  EntityCriteria.BehalfOf OnBehalfOf          { get { return new EntityCriteria.BehalfOf(EntityCriteria.Create<tCriteria>()); } }
+            static  tBehalfOf           OnBehalfOf          { get { return EntityCriteria.EntityBehalfOf.Create<tBehalfOf, tCriteria>(EntityCriteria.Create<tCriteria>()); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tOrderBySelection       OrderBy             { get { return EntityOrderBySelection.Create<tOrderBySelection>(); } }
+            static  tOrderBySelection   OrderBy             { get { return EntityOrderBySelection.Create<tOrderBySelection>(); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tPropertySelection      SelectProperties    { get { return EntityPropertySelection.Create<tPropertySelection>(); } }
+            static  tPropertySelection  SelectProperties    { get { return EntityPropertySelection.Create<tPropertySelection>(); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tCriteria               Where               { get { return EntityCriteria.Create<tCriteria>(); } }
+            static  tCriteria           Where               { get { return EntityCriteria.Create<tCriteria>(); } }
         }
 
     }

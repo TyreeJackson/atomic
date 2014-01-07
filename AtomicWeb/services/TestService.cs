@@ -24,13 +24,15 @@ namespace AtomicWeb
 
             Query.User
             .OnBehalfOf [RequestedUser]
-            .Where      .Id                 .IsEqual[System.Guid.Empty]
-            .And        .CreationDateTime   .IsEqual[DateTimeOffset.MinValue]
+            .Where      .Id         .IsEqual[System.Guid.Empty]
+            .And        .FirstName  .IsEqual[string.Empty]
+            .And        .LastName   .IsEqual[string.Empty]
             .And        .CreatedBy
                         [createdByWhere=>
                             createdByWhere  .CreationDateTime   .IsEqual[DateTimeOffset.MinValue]
                         ]
             .Select     .Id
+                        .FirstName
                         .CreationDateTime
                         .CreatedById
             .SelectTo(out users);
