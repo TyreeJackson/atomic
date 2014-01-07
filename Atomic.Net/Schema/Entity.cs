@@ -7,7 +7,7 @@ namespace AtomicNet
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public
-    partial class   Entity
+    partial class   Entity : LanguageObject<Entity>
     {
     }
 
@@ -73,13 +73,6 @@ namespace AtomicNet
             where   tLastUpdatedByIdCriteriaOps     : Entity<tEntity, tPrefetch, tProperties, tDataObject, tDataObjectList, tCriteria, tOrderBySelection, tModification, tSelection, tPropertySelection, tIndexSelection, tBusiness, tDataAccess, tLanguage, tCreatedByCriteriaOps, tCreatedByIdCriteriaOps, tCreationDateTimeCriteriaOps, tIdCriteriaOps, tLastUpdateDateTimeCriteriaOps, tLastUpdatedByCriteriaOps, tLastUpdatedByIdCriteriaOps>.EntityCriteria.CommonOps<System.Guid>
             where   tLastUpdateDateTimeCriteriaOps  : Entity<tEntity, tPrefetch, tProperties, tDataObject, tDataObjectList, tCriteria, tOrderBySelection, tModification, tSelection, tPropertySelection, tIndexSelection, tBusiness, tDataAccess, tLanguage, tCreatedByCriteriaOps, tCreatedByIdCriteriaOps, tCreationDateTimeCriteriaOps, tIdCriteriaOps, tLastUpdateDateTimeCriteriaOps, tLastUpdatedByCriteriaOps, tLastUpdatedByIdCriteriaOps>.EntityCriteria.CommonOps<DateTimeOffset>
     {
-#warning NotImplemented
-        public
-        static  tCriteria           Where   { get { throw new NotImplementedException(); } }
-#warning NotImplemented
-        public
-        static  tOrderBySelection   OrderBy { get { throw new NotImplementedException(); } }
-
     }
 
 }

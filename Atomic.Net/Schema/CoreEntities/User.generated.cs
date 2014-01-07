@@ -35,6 +35,7 @@ namespace AtomicNet
                     >
     {
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   Prefetch : EntityPrefetch
         {
@@ -44,33 +45,22 @@ namespace AtomicNet
         partial class   Properties : EntityProperties
         {
 
-            public  class   FirstName                                                   { public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
-
-            public  class   LastName                                                    { public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
-
-            public  class   UserName                                                    { public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
+            public  class   FirstName                                                   { [EditorBrowsable(EditorBrowsableState.Never)] public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
+            public  class   LastName                                                    { [EditorBrowsable(EditorBrowsableState.Never)] public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
+            public  class   UserName                                                    { [EditorBrowsable(EditorBrowsableState.Never)] public  class   Ops : EntityCriteria.CommonOps<System.String> { public  Ops(Criteria criteria) : base(criteria) {} } }
 
         }
 
-        public  class   CreatedByOps            : EntityProperties.CreatedBy.Ops            { public CreatedByOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   CreatedByIdOps          : EntityProperties.CreatedById.Ops          { public CreatedByIdOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   CreationDateTimeOps     : EntityProperties.CreationDateTime.Ops     { public CreationDateTimeOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   IdOps                   : EntityProperties.Id.Ops                   { public IdOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   LastUpdatedByOps        : EntityProperties.LastUpdatedBy.Ops        { public LastUpdatedByOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   LastUpdatedByIdOps      : EntityProperties.LastUpdatedById.Ops      { public LastUpdatedByIdOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   LastUpdateDateTimeOps   : EntityProperties.LastUpdateDateTime.Ops   { public LastUpdateDateTimeOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   FirstNameOps            : Properties.FirstName.Ops                  { public  FirstNameOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   LastNameOps             : Properties.FirstName.Ops                  { public  LastNameOps(Criteria criteria) : base(criteria) {} }
-
-        public  class   UserNameOps             : Properties.FirstName.Ops                  { public  UserNameOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   CreatedByOps            : EntityProperties.CreatedBy.Ops            { [EditorBrowsable(EditorBrowsableState.Never)] public CreatedByOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   CreatedByIdOps          : EntityProperties.CreatedById.Ops          { [EditorBrowsable(EditorBrowsableState.Never)] public CreatedByIdOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   CreationDateTimeOps     : EntityProperties.CreationDateTime.Ops     { [EditorBrowsable(EditorBrowsableState.Never)] public CreationDateTimeOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   IdOps                   : EntityProperties.Id.Ops                   { [EditorBrowsable(EditorBrowsableState.Never)] public IdOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   LastUpdatedByOps        : EntityProperties.LastUpdatedBy.Ops        { [EditorBrowsable(EditorBrowsableState.Never)] public LastUpdatedByOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   LastUpdatedByIdOps      : EntityProperties.LastUpdatedById.Ops      { [EditorBrowsable(EditorBrowsableState.Never)] public LastUpdatedByIdOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   LastUpdateDateTimeOps   : EntityProperties.LastUpdateDateTime.Ops   { [EditorBrowsable(EditorBrowsableState.Never)] public LastUpdateDateTimeOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   FirstNameOps            : Properties.FirstName.Ops                  { [EditorBrowsable(EditorBrowsableState.Never)] public FirstNameOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   LastNameOps             : Properties.FirstName.Ops                  { [EditorBrowsable(EditorBrowsableState.Never)] public LastNameOps(Criteria criteria) : base(criteria) {} }
+        [EditorBrowsable(EditorBrowsableState.Never)] public  class   UserNameOps             : Properties.FirstName.Ops                  { [EditorBrowsable(EditorBrowsableState.Never)] public UserNameOps(Criteria criteria) : base(criteria) {} }
 
         public
         partial class   DataObject : EntityDataObject
@@ -82,6 +72,7 @@ namespace AtomicNet
         {
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   Criteria : EntityCriteria
         {
@@ -90,11 +81,13 @@ namespace AtomicNet
             public  UserNameOps     UserName    { get { throw new System.NotImplementedException(); } }
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   OrderBySelection : EntityOrderBySelection
         {
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   Modification : EntityModification
         {
@@ -103,6 +96,7 @@ namespace AtomicNet
             public  Modification    UserName    { get { throw new NotImplementedException(); } }
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   Selection : EntitySelection
         {
@@ -111,11 +105,13 @@ namespace AtomicNet
             public  Selection   UserName    { get { throw new NotImplementedException(); } }
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   PropertySelection : EntityPropertySelection
         {
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   IndexSelection : EntityIndexSelection
         {
@@ -131,6 +127,7 @@ namespace AtomicNet
         {
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)] 
         public
         partial class   Language : EntityLanguage<Language.BehalfOf, Language.BehalfOfRouter>
         {
