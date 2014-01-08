@@ -20,16 +20,16 @@ namespace AtomicNet
 
             [EditorBrowsable(EditorBrowsableState.Never)]
             public
-            partial class   EntityBehalfOf : Atom<EntityBehalfOf, tCriteria>
+            partial class   BaseEntityBehalfOf : Atom<BaseEntityBehalfOf, tCriteria>
             {
                 protected   tCriteria       criteria;
 
-                internal                    EntityBehalfOf(tCriteria criteria) : base(criteria) { this.criteria = criteria; }
+                internal                    BaseEntityBehalfOf(tCriteria criteria) : base(criteria) { this.criteria = criteria; }
             }
 
             [EditorBrowsable(EditorBrowsableState.Never)]
             public
-            partial class   EntityBehalfOf<tRouter> : EntityBehalfOf
+            partial class   EntityBehalfOf<tRouter> : BaseEntityBehalfOf
                     where   tRouter : BehalfOfRouter
             {
 

@@ -53,7 +53,7 @@ namespace AtomicNet
         {
             [DebuggerNonUserCode()]
             public
-            static  tBehalfOf           OnBehalfOf          { get { return EntityCriteria.EntityBehalfOf.Create<tBehalfOf, tCriteria>(EntityCriteria.Create<tCriteria>()); } }
+            static  tBehalfOf           OnBehalfOf          { get { return EntityCriteria.BaseEntityBehalfOf.Create<tBehalfOf, tCriteria>(EntityCriteria.Create<tCriteria>()); } }
 
             [DebuggerNonUserCode()]
             public
