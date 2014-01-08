@@ -1,4 +1,4 @@
-atomic
+Atomic Stack
 ======
 
 # Description:
