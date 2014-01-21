@@ -34,6 +34,7 @@ namespace AtomicNet
 
         public      Promise                     Then(Func<t, Promise> onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   return this.registerCallbacks(onComplete, onFailure);
@@ -43,6 +44,7 @@ namespace AtomicNet
 
         public      Promise<at>                 RelayTo<at>(Func<t, Promise<at>> onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   return this.registerCallbacks(onComplete, onFailure);
@@ -52,6 +54,7 @@ namespace AtomicNet
 
         public      void                        WhenDone(Action<t> onComplete, Action<Exception> onFailure)
         {
+            Throw<ArgumentNullException>.If(onComplete==null, "onComplete");
             if (!this.isResolved)
                 lock(this.resolveLock)
                     if (!this.isResolved)   this.registerCallbacks(onComplete, onFailure);
@@ -61,22 +64,31 @@ namespace AtomicNet
 
         private     Promise                     notifyCallback(Func<t, Promise> onComplete, Action<Exception> onFailure)
         {
-            if (onComplete !=null && this.rejection == null)    return onComplete(this.value);
-            else if (onFailure != null)                         onFailure(this.rejection);
-            return  Atomic.Promise((resolve, reject)=>resolve());
+            return Atomic.Promise
+            ((resolve, reject)=>
+            {
+                if (onComplete !=null && this.rejection == null)    onComplete(this.value).WhenDone(resolve, onFailure);
+                else if (onFailure != null)                         onFailure(this.rejection);
+                else                                                throw   this.rejection;
+            });
         }
 
         private     Promise<at>                 notifyCallback<at>(Func<t, Promise<at>> onComplete, Action<Exception> onFailure)
         {
-            if (onComplete !=null && this.rejection == null)    return onComplete(this.value);
-            else if (onFailure != null)                         onFailure(this.rejection);
-            return  Atomic.Promise<at>((resolve, reject)=>resolve(default(at)));
+            return Atomic.Promise<at>
+            ((resolve, reject)=>
+            {
+                if (onComplete !=null && this.rejection == null)    onComplete(this.value).WhenDone(resolve, onFailure);
+                else if (onFailure != null)                         onFailure(this.rejection);
+                else                                                throw   this.rejection;
+            });
         }
 
         private     void                        notifyCallback(Action<t> onComplete, Action<Exception> onFailure)
         {
             if (onComplete !=null && this.rejection == null)    onComplete(this.value);
             else if (onFailure != null)                         onFailure(this.rejection);
+            else                                                throw this.rejection;
         }
 
         private     void                        registerCallbacks(Action<t> onComplete, Action<Exception> onFailure)
@@ -116,14 +128,32 @@ namespace AtomicNet
 
         private     void                        resolve(t value)
         {
-            this.value      = value;
-            this.isResolved = true;
+            lock (this.resolveLock)
+            {
+                this.value      = value;
+                this.isResolved = true;
+                while (this.completedListeners.Count > 0)   this.completedListeners.Pop()();
+            }
         }
 
         private     void                        reject(Exception ex)
         {
-            this.rejection  = ex;
-            this.isResolved = true;
+            lock (this.resolveLock)
+            {
+                if (!(ex is PromiseException))
+                try
+                {
+                    if (ex.StackTrace != null)  this.rejection  = new PromiseException(ex);
+                    else                        throw ex;
+                }
+                catch(Exception ex2)
+                {
+                    this.rejection  = new PromiseException(ex2);
+                }
+                else                            this.rejection  = ex;
+                this.isResolved = true;
+                while (this.failureListeners.Count > 0) this.failureListeners.Pop()(this.rejection);
+            }
         }
 
     }

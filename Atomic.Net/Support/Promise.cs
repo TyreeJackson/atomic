@@ -65,9 +65,9 @@ namespace AtomicNet
             return Atomic.Promise
             ((resolve, reject)=>
             {
-                if (this.rejection == null) onComplete().WhenDone(resolve, onFailure);
-                else if (onFailure != null) onFailure(this.rejection);
-                else                        throw   this.rejection;
+                if (onComplete !=null && this.rejection == null)    onComplete().WhenDone(resolve, onFailure);
+                else if (onFailure != null)                         onFailure(this.rejection);
+                else                                                throw   this.rejection;
             });
         }
 
@@ -76,17 +76,17 @@ namespace AtomicNet
             return Atomic.Promise<at>
             ((resolve, reject)=>
             {
-                if (this.rejection == null) onComplete().WhenDone(resolve, onFailure);
-                else if (onFailure != null) onFailure(this.rejection);
-                else                        throw   this.rejection;
+                if (onComplete !=null && this.rejection == null)    onComplete().WhenDone(resolve, onFailure);
+                else if (onFailure != null)                         onFailure(this.rejection);
+                else                                                throw   this.rejection;
             });
         }
 
         private     void                        notifyCallback(Action onComplete, Action<Exception> onFailure)
         {
-            if (this.rejection == null) onComplete();
-            else if (onFailure != null) onFailure(this.rejection);
-            else                        throw this.rejection;
+            if (onComplete !=null && this.rejection == null)    onComplete();
+            else if (onFailure != null)                         onFailure(this.rejection);
+            else                                                throw this.rejection;
         }
 
         private     void                        registerCallbacks(Action onComplete, Action<Exception> onFailure)
