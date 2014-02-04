@@ -4,3 +4,7 @@
     <title>Welcome to Atomic Stack</title>
     <link href="demo.css" media="all" rel="stylesheet" type="text/css" />
     <script src="demo.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        new atomic.HTMLDomContext();
+        atomic.ready(function(global){atomic.apps.demo.launch();});
+    </script>

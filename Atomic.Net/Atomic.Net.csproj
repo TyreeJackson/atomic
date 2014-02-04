@@ -205,11 +205,7 @@
     <Compile Include="StandardWebServices\Main.cs" />
     <Compile Include="Support\Atom.cs" />
     <Compile Include="Support\LanguageObject.cs" />
-    <Compile Include="Support\Promise.PromiseT.cs">
-      <DependentUpon>Promise.cs</DependentUpon>
-    </Compile>
     <Compile Include="Support\noop.cs" />
-    <Compile Include="Support\Promise.cs" />
     <Compile Include="Support\Throw.cs" />
     <Compile Include="Support\TypeSupport.cs" />
     <Compile Include="Host\WebHandler.Default.cs">

@@ -15,20 +15,17 @@ namespace AtomicNet
         public                              StaticFileHandler() : base()    {}
 
         protected
-        override    Promise                 ProcessRequest()
+        override
+        async       Task                    ProcessRequest()
         {
-            return  Atomic.Promise
-            ((resolve, reject)=>
-            {
-                if (!this.TransmitRequestedFileIfItExists())
-                if (!this.TransmitDefaultDocumentInIndexIfItExists())
-                if (!this.TransmitVirtualizedFileIfItExists())
-                this.RespondWithNotFound();
-                resolve();
-            });
+            if (!this.TransmitRequestedFileIfItExists())
+            if (!this.TransmitDefaultDocumentInIndexIfItExists())
+            if (!this.TransmitVirtualizedFileIfItExists())
+            await this.RespondWithNotFound();
         }
 
-        private     void                    RespondWithNotFound()
+        private 
+        async       Task                    RespondWithNotFound()
         {
             this.Context.Response.StatusCode        = HttpStatusCodes.ClientError_NotFound;
             this.Context.Response.StatusDescription = "Not found";

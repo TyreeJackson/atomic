@@ -14,4 +14,4 @@
         function info(message)  { if (exists(global.console) && exists(global.console.info))  global.console.info(message); }
     );
     info("Atomic debug namespace is present.");
-}})(window);
+}})(this);

@@ -18,52 +18,43 @@ namespace AtomicNet
             public      DefaultRouter(Args args) : base(args) {}
 
             public
-            override    Promise<WebHandler>         Map(HostContext context)
+            override
+            async       Task<WebHandler>        Map(HostContext context)
             {
-                return Atomic.Promise<WebHandler>
-                ((resolve,reject)=>
-                {
-                    string[]    segments        = context.Request.Url.Segments;
-                    int         indexOfKeyPath  = -1;
+                string[]    segments        = context.Request.Url.Segments;
+                int         indexOfKeyPath  = -1;
 
-                            if (this.CheckIfUrlIsServicesUrl(segments))                                 resolve(WebHandler.Create<WebServiceHandler.ServiceList>());
-                    else    if (this.CheckIfUrlIsEntitiesUrl(segments))                                 resolve(WebHandler.Create<WebServiceHandler.EntityList>());
-                    else    if ((indexOfKeyPath = this.GetIndexOfServicesPathSegment(segments)) > -1)   this.LocateWebService(segments, indexOfKeyPath).WhenDone(resolve, reject);
-                    else    this.ServeStaticFile(context).WhenDone(resolve, reject);
-                });
+                        if (this.CheckIfUrlIsServicesUrl(segments))                                 return WebHandler.Create<WebServiceHandler.ServiceList>();
+                else    if (this.CheckIfUrlIsEntitiesUrl(segments))                                 return WebHandler.Create<WebServiceHandler.EntityList>();
+                else    if ((indexOfKeyPath = this.GetIndexOfServicesPathSegment(segments)) > -1)   return await this.LocateWebService(segments, indexOfKeyPath);
+                else    return await this.ServeStaticFile(context);
             }
 
-            private     Promise<WebHandler>         ServeStaticFile(HostContext context)
+            private
+            async       Task<WebHandler>        ServeStaticFile(HostContext context)
             {
-                return  Atomic.Promise<WebHandler>
-                ((resolve, reject)=>
-                {
-                    resolve(WebHandler.Create<StaticFileHandler>().SetContext(context));
-                });
+                return WebHandler.Create<StaticFileHandler>().SetContext(context);
             }
 
-            private     Promise<WebServiceHandler>  LocateWebService(string[] segments, int indexOfKeyPath)
+            private
+            async       Task<WebServiceHandler> LocateWebService(string[] segments, int indexOfKeyPath)
             {
-                return Atomic.Promise<WebServiceHandler>
-                ((resolve, reject)=>
-                {
-                    string  segment = segments[indexOfKeyPath+1].TrimEnd("/");
-                    #warning NotImplemented
-                    reject(new NotImplementedException());
-                });
+                string  segment = segments[indexOfKeyPath+1].TrimEnd("/");
+                #warning NotImplemented
+                throw new NotImplementedException();
             }
 
-            private     int                         GetIndexOfServicesPathSegment(string[] segments)
+            private     int                     GetIndexOfServicesPathSegment(string[] segments)
             {
                 return segments.IndexOfLast(segment=>segment.ToLower().Replace('\\', '/').TrimEnd("/") == "services");
             }
 
-            private     bool                        CheckIfUrlIsEntitiesUrl(string[] segments)
+            private     bool                    CheckIfUrlIsEntitiesUrl(string[] segments)
             {
                 return segments[segments.Length-1].ToLower().Replace('\\', '/').TrimEnd("/") == "entities";
             }
 
-            private     bool                        CheckIfUrlIsServicesUrl(string[] segments)
+            private     bool                    CheckIfUrlIsServicesUrl(string[] segments)
             {
                 return segments[segments.Length-1].ToLower().Replace('\\', '/').TrimEnd("/") == "services";
             }

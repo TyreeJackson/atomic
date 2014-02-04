@@ -1,7 +1,7 @@
 atomic.ready(function(global)
 {with(namespace("atomic")("ui"))
 {
-    var canvas  = atomic.application.byId("canvas");
+    var canvas      = atomic.context.byId("canvas");
     define
     ({
         class:      function Control(){},
@@ -12,7 +12,7 @@ atomic.ready(function(global)
             {
                 if (!exists(elementId))             return;
 
-                privileged.template = atomic.application.byId(elementId);
+                privileged.template = atomic.context.byId(elementId);
                 if (!exists(privileged.template))   return;
 
                 var parentNode;
@@ -34,7 +34,7 @@ atomic.ready(function(global)
             function(elements)
             {
                 if (exists(elements))
-                for(var key in elements)    privileged.elements[key]    = privileged.control.getElementsByClassName(elements[key]);
+                for(var key in elements)    privileged.elements[key]    = atomic.is.aString(elements[key]) ? privileged.control.getElementsByClassName(elements[key])[0] : elements[key];
             },
             protected:
             {

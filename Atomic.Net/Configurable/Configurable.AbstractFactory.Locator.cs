@@ -1,4 +1,5 @@
 ﻿using AtomicNet;
+using System.Threading.Tasks;
 
 namespace AtomicNet
 {
@@ -34,74 +35,41 @@ namespace AtomicNet
             {
 
                 public
-                Promise<tConfigurable>               Create(string key, tConfigurableArgs args)
+                async       Task<tConfigurable>                         Create(string key, tConfigurableArgs args)
                 {
-                    return  Atomic.Promise<tConfigurable>
-                    ((resolve, reject)=>
-                    {
-                        this.LookupSubclassFactory(key)
-                        .WhenDone
-                        (
-                            factory=>resolve(factory.Create(args)),
-                            reject
-                        );
-                    });
+                    return (await this.LookupSubclassFactory(key)).Create(args);
                 }
 
                 protected
                 virtual
-                Promise<AbstractFactory>                        LookupSubclassFactory(string subclassKey)
+                async       Task<AbstractFactory>                       LookupSubclassFactory(string subclassKey)
                 {
-                    return  Atomic.Promise<AbstractFactory>
-                    ((resolve, reject)=>
-                    {
-                        this.GetSubClassConfiguration(subclassKey)
-                        .RelayTo    (this.GetSubClassFactory, reject)
-                        .WhenDone   (resolve, reject);
-                    });
+                    return await this.GetSubClassFactory(await this.GetSubClassConfiguration(subclassKey));
                 }
 
                 protected
                 virtual
-                Promise<Configuration.SubclassConfiguration>    GetSubClassConfiguration(string key)
+                async       Task<Configuration.SubclassConfiguration>   GetSubClassConfiguration(string key)
                 {
-                    return  Atomic.Promise<Configuration.SubclassConfiguration>
-                    ((resolve, reject)=>
-                    {
-                        resolve(Configuration.Config.Classes[TypeSupport<tConfigurable>.FullName].Subclasses.TryReturnValue(key, null));
-                    });
+                    return Configuration.Config.Classes[TypeSupport<tConfigurable>.FullName].Subclasses.TryReturnValue(key, null);
                 }
 
                 protected
                 virtual
-                Promise<AbstractFactory>                        GetSubClassFactory(Configuration.SubclassConfiguration subClassConfiguration)
+                async       Task<AbstractFactory>                       GetSubClassFactory(Configuration.SubclassConfiguration subClassConfiguration)
                 {
-                    return  Atomic.Promise<AbstractFactory>
-                    ((resolve, reject)=>
-                    {
-                        this.GetAssemblyFor(subClassConfiguration)
-                        .WhenDone
-                        (
-                            assembly=>
-                            {
-                                if (assembly.GetType(subClassConfiguration.Factory, false, true) == null)   reject(new System.Configuration.ConfigurationException("Factory " + subClassConfiguration.Factory + " was not found in the assembly " + subClassConfiguration.AssemblyFile));
-                                else                                                                        resolve((AbstractFactory) assembly.CreateInstance(subClassConfiguration.Factory, true));
-                            },
-                            reject
-                        );
-                    });
+                    System.Reflection.Assembly  assembly    = await this.GetAssemblyFor(subClassConfiguration);
+
+                    if (assembly.GetType(subClassConfiguration.Factory, false, true) == null)   throw new System.Configuration.ConfigurationException("Factory " + subClassConfiguration.Factory + " was not found in the assembly " + subClassConfiguration.AssemblyFile);
+                    else                                                                        return (AbstractFactory) assembly.CreateInstance(subClassConfiguration.Factory, true);
                 }
 
                 protected
                 virtual
-                Promise<System.Reflection.Assembly>             GetAssemblyFor(Configuration.SubclassConfiguration subClassConfiguration)
+                async       Task<System.Reflection.Assembly>            GetAssemblyFor(Configuration.SubclassConfiguration subClassConfiguration)
                 {
-                    return  Atomic.Promise<System.Reflection.Assembly>
-                    ((resolve, reject)=>
-                    {
-                        #warning NotImplemented
-                        reject(new System.NotImplementedException());
-                    });
+                    #warning NotImplemented
+                    throw new System.NotImplementedException();
                 }
 
             }

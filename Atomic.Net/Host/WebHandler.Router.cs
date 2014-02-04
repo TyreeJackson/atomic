@@ -18,22 +18,21 @@ namespace AtomicNet
         {
 
             internal
-            static      Router                  Instance;
+            static      Router              Instance;
 
-            static  Router()
+            static                          Router()
             {
                 #warning Hardcoding Default Router here until we have the abstract factory implementation and configuration complete
                 Router.Instance = new DefaultRouter(null);
                 return;
 
-                WebHandler.Router.Locator.Create(Configuration.Get<Router.Config>().SubclassKey, Configuration.Get<Router.Config>().args)
-                .WhenDone(router=>Router.Instance = router, ex=>{throw ex;});
+                WebHandler.Router.Locator.Create(Configuration.Get<Router.Config>().SubclassKey, Configuration.Get<Router.Config>().args);
             }
 
             public
-            abstract    Promise<WebHandler>  Map(HostContext context);
+            abstract    Task<WebHandler>    Map(HostContext context);
 
-            public      Router(Args args) : base(args) {}
+            public                          Router(Args args) : base(args) {}
 
         }
 

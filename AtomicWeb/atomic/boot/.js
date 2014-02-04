@@ -7,6 +7,7 @@
     var getOwnPropertyNamesFunction         = Object.getOwnPropertyNames;
     var getOwnPropertyDescriptorFunction    = Object.getOwnPropertyDescriptor;
     var definePropertyFunction              = Object.defineProperty;
+    var toStringFunction                    = Object.prototype.toString;
 
     function hasOwnProperty(obj, prop)                          {return hasOwnPropertyFunction.call(obj, prop);}
     function getOwnPropertyNames(obj)                           {return getOwnPropertyNamesFunction(obj);}
@@ -29,13 +30,14 @@
     var slice       = Array.prototype.slice;
 
     function convertArgsToArray(args)                           {return slice.call(args, 0);}
-    function toString(item)                                     {return primitive.toString.call(item);}
-    function defineProperty(obj, propertyName, attributes)      {definePropertyFunction(obj, propertyName, attributes); return this[propertyName];}
+    function defineProperty(obj, propertyName, attributes)      {definePropertyFunction(obj, propertyName, attributes); return obj[propertyName];}
     function defineFunction(obj, functionName, functionBody)    {return defineProperty(obj, functionName, {get: function(){return functionBody;}});}
     defineFunction(Object, "defineFunction", defineFunction);
+    defineFunction(Object.prototype, "defineProperty", function(propertyName, attributes){ defineProperty(this, propertyName, attributes); });
+    defineFunction(Object.prototype, "defineFunction", function(functionName, functionBody){ defineFunction(this, functionName, functionBody); });
     function exists(item)                                       {return item !== undefined && item !== null;}
-    defineFunction(window, "exists", exists);
-    function isAFunction(item)                                  {return exists(item) && toString(item) === "[object Function]";}
+    defineFunction(global, "exists", exists);
+    function isAFunction(item)                                  {return exists(item) && toStringFunction.call(item) === "[object Function]";}
     function hasProperty(obj, prop)                             {return hasOwnProperty(obj, prop);}
     function extendBaseClass(definition)
     {
@@ -84,30 +86,46 @@
 
     function applyPropertyToInstance(key, item, privileged, derivativeBaseProxy, isPublic)
     {
-        defineProperty
-        (
-            derivativeBaseProxy,
-            key,
-            {
-                get:            exists(item.property.get) ? item.property.get.bind(this) : undefined,
-                set:            exists(item.property.set) ? item.property.set.bind(this) : undefined,
-                enumerable:     true,
-                configurable:   false
-            }
-        );
-
         if (exists(derivativeBaseProxy))
-        defineProperty
-        (
-            privileged,
-            key,
-            {
-                get:            exists(item.property.get) ? function(){return derivativeBaseProxy[key];} : undefined,
-                set:            exists(item.property.set) ? function(value){derivativeBaseProxy[key] = value;} : undefined,
-                enumerable:     true,
-                configurable:   true
-            }
-        );
+        {
+            defineProperty
+            (
+                derivativeBaseProxy,
+                key,
+                {
+                    get:            exists(item.property.get) ? item.property.get.bind(this) : undefined,
+                    set:            exists(item.property.set) ? item.property.set.bind(this) : undefined,
+                    enumerable:     true,
+                    configurable:   false
+                }
+            );
+
+            defineProperty
+            (
+                privileged,
+                key,
+                {
+                    get:            exists(item.property.get) ? function(){return derivativeBaseProxy[key];} : undefined,
+                    set:            exists(item.property.set) ? function(value){derivativeBaseProxy[key] = value;} : undefined,
+                    enumerable:     true,
+                    configurable:   true
+                }
+            );
+        }
+        else
+        {
+            defineProperty
+            (
+                privileged,
+                key,
+                {
+                    get:            exists(item.property.get) ? item.property.get.bind(this) : undefined,
+                    set:            exists(item.property.set) ? item.property.set.bind(this) : undefined,
+                    enumerable:     true,
+                    configurable:   false
+                }
+            );
+        }
 
         if (isPublic && !hasOwnProperty(this, key))
         defineProperty
@@ -123,9 +141,9 @@
         );
     }
 
-    function canBeAFunction(key, item)  { if (exists(item) && !isAFunction(item))       throw new Error("An invalid attempt to override a non function " + key + " with a function was encountered."); return true;}
-    function canBeAField(key, item)     { if (exists(item) && isAFunction(item))        throw new Error("An invalid attempt to redefine a function " + key + " with a value was encountered."); return true;}
-    function canBeAProperty(key, item)  { if (exists(item) && !exists(item.property))   throw new Error("An invalid attempt to override a non property " + key + " with a property was encountered."); return true;}
+    function canBeAFunction(key, item)                          { if (exists(item) && !isAFunction(item))       throw new Error("An invalid attempt to override a non function " + key + " with a function was encountered."); return true;}
+    function canBeAField(key, item)                             { if (exists(item) && isAFunction(item))        throw new Error("An invalid attempt to redefine a function " + key + " with a value was encountered."); return true;}
+    function canBeAProperty(key, item)                          { if (exists(item) && !exists(item.property))   throw new Error("An invalid attempt to override a non property " + key + " with a property was encountered."); return true;}
 
     function applyStructureToInstance(structure, privileged, keysToFreeze, derivativeBaseProxy, isPublic)
     {
@@ -313,8 +331,15 @@
     function defineNamespace(namespaceName) {return this[namespaceName]||new namespace(namespaceName, this);}
 
     defineProperty(global, "namespace", {value: defineNamespace.bind(global)});
+    defineFunction(global, "convertArgsToArray", convertArgsToArray);
+    defineFunction(Function.prototype, "relay", function(args){this.apply(null, convertArgsToArray(args));});
+    with(global.namespace("atomic")("is"))
+    {
+        define(function aFunction(item){return isAFunction(item);});
+        define(function aString(item){return exists(item) === true && toStringFunction.call(item) === "[object String]";});
+    }
 
-})(window);
+})(this);
 
 (function(global)
 {with(namespace("atomic"))
@@ -338,4 +363,4 @@
     }
     global.addEventListener("load", triggerReady);
 
-}})(window);
+}})(this);

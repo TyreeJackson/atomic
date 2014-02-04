@@ -18,13 +18,10 @@ atomic.ready(function(global)
             constructor:
             function(elements)
             {
-                if (exists(elements))
-                for(var key in elements)    privileged.elements[key]    = privileged.byClass(elements[key]);
+                base(elements);
             },
             protected:
             {
-                control:    {field: privileged.static.template.cloneNode(true)},
-                elements:   {field: {}}
             }
         }}
     });

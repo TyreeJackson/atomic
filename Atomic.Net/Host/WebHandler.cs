@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using AtomicNet;
 
 namespace AtomicNet
@@ -16,15 +17,12 @@ namespace AtomicNet
         protected   HostResponse        Response    { get { return this.context.Response; } }
         protected   HostServerUtility   Server      { get { return this.context.Server; } }
 
-        internal    Promise             ProcessRequest(HostContext context)
+        internal
+        async       Task                ProcessRequest(HostContext context)
         {
-            return Atomic.Promise
-            ((resolve, reject)=>
-            {
-                this.SetContext(context);
-                if (Atomic.IsStillBooting)  this.RespondWithEnvironmentTemporarilyUnavailable().WhenDone(resolve, reject);
-                else                        this.ProcessRequest().WhenDone(resolve, reject);
-            });
+            this.SetContext(context);
+            if (Atomic.IsStillBooting)  await this.RespondWithEnvironmentTemporarilyUnavailable();
+            else                        await this.ProcessRequest();
         }
 
         private     WebHandler          SetContext(HostContext context)
@@ -34,26 +32,21 @@ namespace AtomicNet
             return this;
         }
 
-        private     Promise             RespondWithEnvironmentTemporarilyUnavailable()
+        private
+        async       Task                RespondWithEnvironmentTemporarilyUnavailable()
         {
-            return Atomic.Promise
-            ((resolve, reject)=>
-            {
-                this.Response.Clear();
-                this.Response.StatusCode        = HttpStatusCodes.ServerError_ServiceUnavailable;
-                this.Response.StatusDescription = "Site is waking up.  Please check back soon...";
+            this.Response.Clear();
+            this.Response.StatusCode        = HttpStatusCodes.ServerError_ServiceUnavailable;
+            this.Response.StatusDescription = "Site is waking up.  Please check back soon...";
 
-                this.Response
-                .AddHeader("Retry-After", ".1")
-                .Write(@"<html><head><meta http-equiv=""refresh"" content=""1""></head><body><p>Site is waking up.  Please check back soon...</p></body></html>")
-                .Flush();
-
-                resolve();
-            });
+            this.Response
+            .AddHeader("Retry-After", ".1")
+            .Write(@"<html><head><meta http-equiv=""refresh"" content=""1""></head><body><p>Site is waking up.  Please check back soon...</p></body></html>")
+            .Flush();
         }
 
         protected
-        abstract    Promise             ProcessRequest();
+        abstract    Task                ProcessRequest();
 
     }
 

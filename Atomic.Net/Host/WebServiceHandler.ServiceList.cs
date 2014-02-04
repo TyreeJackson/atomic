@@ -16,14 +16,10 @@ namespace AtomicNet
         {
 
             protected
-            override    Promise ProcessRequest()
+            override
+            async       Task    ProcessRequest()
             {
-                return Atomic.Promise
-                ((resolve, reject)=>
-                {
-                    this.Response.Write("The Web Services Listing will go here.");
-                    resolve();
-                });
+                this.Response.Write("The Web Services Listing will go here.");
             }
 
         }

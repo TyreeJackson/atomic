@@ -24,7 +24,4 @@ public class Atomic : Atomic<Atomic>
 
     public  static  bool            IsStillBooting                                          { get; private set; }
 
-    public  static  Promise         Promise(Action<Action, Action<Exception>> action)       { return AtomicNet.Promise.Create(action); }
-    public  static  Promise<t>      Promise<t>(Action<Action<t>, Action<Exception>> action) { return AtomicNet.Promise<t>.Create(action); }
-
 }

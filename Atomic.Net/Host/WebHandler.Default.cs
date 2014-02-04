@@ -16,14 +16,10 @@ namespace AtomicNet
         {
 
             protected
-            override    Promise ProcessRequest()
+            override
+            async       Task    ProcessRequest()
             {
-                return Atomic.Promise
-                ((resolve, reject)=>
-                {
-                    this.Response.Write("You have reached the default handler.");
-                    resolve();
-                });
+                this.Response.Write("You have reached the default handler.");
             }
 
         }

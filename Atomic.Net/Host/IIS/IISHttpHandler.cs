@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Web;
 using System.Threading;
+using System.Threading.Tasks;
 using AtomicNet;
 
 namespace AtomicNet.IIS
@@ -56,7 +57,7 @@ namespace AtomicNet.IIS
         {
             IAsyncResult    asyncResult = new AsyncResult();
 
-            this.ProcessRequest(new IISHttpContext(context)).WhenDone(()=>cb(asyncResult), ex=>{ex.Throw();});
+            this.ProcessRequest(new IISHttpContext(context)).ContinueWith(result=>cb(asyncResult));
 
             return asyncResult;
         }

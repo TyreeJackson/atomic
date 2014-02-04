@@ -11,13 +11,7 @@ namespace AtomicNet
         {
             if (exception == null)  throw new Exception("An unknown error has occurred.");
 
-            System.Runtime.ExceptionServices
-            .ExceptionDispatchInfo.Capture
-            (
-                exception is PromiseException
-                ?   exception.InnerException
-                :   exception
-            ).Throw();
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
         }
 
     }

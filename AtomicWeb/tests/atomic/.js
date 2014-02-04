@@ -116,4 +116,4 @@
     assert(test2.goodBye("World") == "Doh! Goodbye World! We'll miss you!", "Test 2b");
     assert(!exists(test2.bye), "Test 2c");
     info("Tests completed successfully.");
-}}})(window);
+}}})(this);

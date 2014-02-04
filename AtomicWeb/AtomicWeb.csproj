@@ -41,16 +41,31 @@
     <Content Include="atomic\boot\.js" />
     <Content Include="atomic\baseApplication\.css" />
     <Content Include="atomic\baseApplication\.js" />
-    <Content Include="atomic\htmlDomApplication\.css" />
-    <Content Include="atomic\htmlDomApplication\.js" />
+    <Content Include="atomic\baseContext\.css" />
+    <Content Include="atomic\baseContext\.js" />
+    <Content Include="atomic\mock\.js" />
+    <Content Include="atomic\jsDomContext\.css" />
+    <Content Include="atomic\jsDomContext\.js" />
+    <Content Include="atomic\htmlDomContext\.css" />
+    <Content Include="atomic\htmlDomContext\.js" />
     <Content Include="atomic\ui\control\.css" />
     <Content Include="atomic\ui\control\.html" />
     <Content Include="atomic\ui\control\.js" />
     <Content Include="atomic\ui\screen\.css" />
     <Content Include="atomic\ui\screen\.js" />
+    <Content Include="demo-test\.css" />
+    <Content Include="demo-test\.html" />
+    <Content Include="demo-test\.js" />
+    <Content Include="demo\app\.js" />
     <Content Include="demo\homeScreen\.css" />
     <Content Include="demo\homeScreen\.html" />
     <Content Include="demo\homeScreen\.js" />
+    <Content Include="lib\jasmine-2.0.0\boot.js" />
+    <Content Include="lib\jasmine-2.0.0\console.js" />
+    <Content Include="lib\jasmine-2.0.0\jasmine-html.js" />
+    <Content Include="lib\jasmine-2.0.0\jasmine.css" />
+    <Content Include="lib\jasmine-2.0.0\jasmine.js" />
+    <Content Include="lib\jasmine-2.0.0\jasmine_favicon.png" />
     <Content Include="tests\atomic\.js" />
     <Content Include="atomic\debug\.js" />
     <Content Include="demo\.css" />
@@ -58,12 +73,21 @@
     <Content Include="demo\.js" />
     <Content Include="atomic\ui\control\.dep" />
     <Content Include="atomic\baseApplication\.dep" />
-    <Content Include="atomic\htmlDomApplication\.dep" />
+    <Content Include="atomic\htmlDomContext\.dep" />
     <Content Include="atomic\ui\screen\.dep" />
     <Content Include="demo\homeScreen\.dep" />
-    <Content Include="demo\.js.post">
-      <DependentUpon>.js</DependentUpon>
+    <Content Include="atomic\jsDomContext\.dep" />
+    <Content Include="demo-test\.dep" />
+    <Content Include="demo-test\.html.post">
+      <DependentUpon>.html</DependentUpon>
     </Content>
+    <Content Include="demo-test\.html.pre">
+      <DependentUpon>.html</DependentUpon>
+    </Content>
+    <Content Include="atomic\baseContext\.dep" />
+    <Content Include="demo\app\.dep" />
+    <Content Include="atomic\mock\.dep" />
+    <Content Include="lib\jasmine-2.0.0\MIT.LICENSE" />
     <None Include="Properties\PublishProfiles\local folder.pubxml" />
     <None Include="Scripts\_references.js" />
     <Content Include="Web.config" />

@@ -13,10 +13,10 @@ namespace AtomicNet
                                         bool
                                     >                       comparer;
         public  static  readonly    IfIts                   Equal               = new IfIts(0, (a,b)=>a.CompareTo(b)==0);
-        public  static  readonly    IfIts                   Greater             = new IfIts(1, (a,b)=>a.CompareTo(b)>0);
-        public  static  readonly    IfIts                   GreaterThanOrEqual  = new IfIts(2, (a,b)=>a.CompareTo(b)>=0);
-        public  static  readonly    IfIts                   LessThan            = new IfIts(3, (a,b)=>a.CompareTo(b)<0);
-        public  static  readonly    IfIts                   LessThanOrEqual     = new IfIts(4, (a,b)=>a.CompareTo(b)<=0);
+        public  static  readonly    IfIts                   Greater             = new IfIts(1, (a,b)=>a.CompareTo(b)<0);
+        public  static  readonly    IfIts                   GreaterThanOrEqual  = new IfIts(2, (a,b)=>a.CompareTo(b)<=0);
+        public  static  readonly    IfIts                   LessThan            = new IfIts(3, (a,b)=>a.CompareTo(b)>0);
+        public  static  readonly    IfIts                   LessThanOrEqual     = new IfIts(4, (a,b)=>a.CompareTo(b)>=0);
         protected   IfIts(int naturalValue, System.Func<System.IComparable, System.IComparable, bool> comparer) : base(naturalValue){ this.comparer = comparer; }
 
         public  bool    IsTrue<t>(t a, t b) where t : System.IComparable

@@ -1,19 +1,15 @@
-﻿namespace AtomicNet
+﻿using System.Threading.Tasks;
+namespace AtomicNet
 {
 
     public
     abstract    class   HostHandler : Atom<HostHandler>
     {
 
-        public      Promise ProcessRequest(HostContext context)
+        public
+        async   Task    ProcessRequest(HostContext context)
         {
-            return Atomic.Promise
-            ((resolve, reject)=>
-            {
-                WebHandler.Router.Instance.Map(context)
-                .Then(handler=>handler.ProcessRequest(context), reject)
-                .WhenDone(resolve, reject);
-            });
+            await (await WebHandler.Router.Instance.Map(context)).ProcessRequest(context);
         }
 
     }

@@ -1,11 +1,10 @@
 atomic.ready(function(global)
-{with(namespace("atomic")("ui"))
-{with(namespace("demo"))
+{with(namespace("demoSpace"))
 {
     define
     ({
         class:      function HomeScreen(){},
-        extends:    Screen,
+        extends:    atomic.ui.Screen,
         static:     function(base, privileged)
         {return{
             constructor:
@@ -24,4 +23,4 @@ atomic.ready(function(global)
             }
         }}
     });
-}}});
+}});

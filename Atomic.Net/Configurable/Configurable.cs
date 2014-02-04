@@ -11,13 +11,13 @@ namespace AtomicNet
     {
 
         private
-        readonly    tConfigurableArgs  _args;
+        readonly    tConfigurableArgs   _args;
 
-        protected   tConfigurableArgs  args                            { get { return this._args; } }
+        protected   tConfigurableArgs   args                                { get { return this._args; } }
 
-        protected                   Configurable(tConfigurableArgs args)
+        protected                       Configurable(tConfigurableArgs args)
         :
-                                    base(args)
+                                        base(args)
         {
             this._args  = args;
         }

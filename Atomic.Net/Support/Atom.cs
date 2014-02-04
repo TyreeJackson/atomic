@@ -5,7 +5,8 @@ using System.Reflection.Emit;
 namespace AtomicNet
 {
 
-    public      class   Atom
+    public
+    abstract    class   Atom
     {
 
         [EditorBrowsable(EditorBrowsableState.Never)]

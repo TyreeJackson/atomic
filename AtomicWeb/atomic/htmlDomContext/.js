@@ -1,10 +1,10 @@
-atomic.ready(function(global)
+(function(global)
 {with(namespace("atomic"))
 {
     define
     ({
-        class:      function HTMLDomApplication(){},
-        extends:    BaseApplication,
+        class:      function HTMLDomContext(){},
+        extends:    BaseContext,
         instance:   function(base, privileged)
         {return{
             constructor:
@@ -17,4 +17,4 @@ atomic.ready(function(global)
             }
         }}
     });
-}});
+}})(this);
