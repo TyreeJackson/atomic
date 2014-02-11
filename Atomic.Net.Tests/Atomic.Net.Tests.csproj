@@ -51,7 +51,11 @@
   </Choose>
   <ItemGroup>
     <Compile Include="AtomicTests.cs" />
+    <Compile Include="DataTypes\ExpectedException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Support\AtomTests.cs" />
+    <Compile Include="Support\TypeSupportTests.cs" />
+    <Compile Include="Support\ThrowTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atomic.Net\Atomic.Net.csproj">
@@ -59,9 +63,7 @@
       <Name>Atomic.Net</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Support\" />
-  </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

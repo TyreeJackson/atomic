@@ -88,8 +88,8 @@ namespace AtomicNet
         public
         static  tAtom       Create()                                        { return TypeContext<tAtom>.Create(); }
 
-        public
-        static  tAtom       Create(Type type)                               { return (tAtom) System.Activator.CreateInstance(type); }
+        //public
+        //static  tAtom       Create(Type type)                               { return (tAtom) System.Activator.CreateInstance(type); }
 
         public
         static  tSubAtom    Create<tSubAtom>()                              where tSubAtom : tAtom
