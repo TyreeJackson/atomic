@@ -51,6 +51,9 @@
     <Content Include="atomic\ui\control\.css" />
     <Content Include="atomic\ui\control\.html" />
     <Content Include="atomic\ui\control\.js" />
+    <Content Include="atomic\ui\viewModel\.css" />
+    <Content Include="atomic\ui\viewModel\.html" />
+    <Content Include="atomic\ui\viewModel\.js" />
     <Content Include="atomic\ui\screen\.css" />
     <Content Include="atomic\ui\screen\.js" />
     <Content Include="demo-test\.css" />
@@ -88,6 +91,7 @@
     <Content Include="demo\app\.dep" />
     <Content Include="atomic\mock\.dep" />
     <Content Include="lib\jasmine-2.0.0\MIT.LICENSE" />
+    <Content Include="atomic\ui\viewModel\.dep" />
     <None Include="Properties\PublishProfiles\local folder.pubxml" />
     <None Include="Scripts\_references.js" />
     <Content Include="Web.config" />

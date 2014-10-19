@@ -1,12 +1,14 @@
 ﻿using NotImplementedException   = System.NotImplementedException;
 using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
 using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
+using AtomicNet;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AtomicNet
+namespace AtomicNetTests
 {
 
     public
-    partial class   Entity
+    partial class   EntityTests
                     <
                         tEntity,
                         tPrefetch,
@@ -32,30 +34,10 @@ namespace AtomicNet
                     >
     {
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
+        [TestClass]
         public
-        partial class   EntityDataAccess : Atom<EntityDataAccess>
+        partial class   EntityModificationTests
         {
-
-            protected   tBusiness   business                    { get; private set; }
-
-            public                  EntityDataAccess() : this(EntityBusiness.Create<tBusiness>(), SqlBuilder.Create()) {}
-
-            protected
-            internal                EntityDataAccess
-                                    (
-                                        tBusiness   business,
-                                        SqlBuilder  sqlBuilder
-                                    )
-            {
-                this.business   = business;
-            }
-
-            public  tDataObjectList Load(tSelection selection)
-            {
-                throw new NotImplementedException();
-            }
-
         }
 
     }

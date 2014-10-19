@@ -32,29 +32,16 @@ namespace AtomicNet
                     >
     {
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public
-        partial class   EntityDataAccess : Atom<EntityDataAccess>
+        partial class   EntityDataAccess
         {
 
-            protected   tBusiness   business                    { get; private set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public
+        partial class   SqlBuilder : Atom<SqlBuilder>
+        {
 
-            public                  EntityDataAccess() : this(EntityBusiness.Create<tBusiness>(), SqlBuilder.Create()) {}
-
-            protected
-            internal                EntityDataAccess
-                                    (
-                                        tBusiness   business,
-                                        SqlBuilder  sqlBuilder
-                                    )
-            {
-                this.business   = business;
-            }
-
-            public  tDataObjectList Load(tSelection selection)
-            {
-                throw new NotImplementedException();
-            }
+        }
 
         }
 
