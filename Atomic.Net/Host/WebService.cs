@@ -9,42 +9,37 @@ namespace AtomicNet
 
     public
     abstract
-    partial     class   WebService : Component<WebService, WebService.ServiceArgs, WebService.BaseConfig>
+    partial     class   WebService : Atom<WebService>
     {
 
         public
-        class       ServiceArgs{}
+        abstract    bool    IsReusable      { get; }
 
-        public
-        abstract    bool    IsReusable  { get; }
-
-        protected           WebService(ServiceArgs args) : base(args) {}
+        protected           WebService()    {}
 
     }
 
     public
     abstract
     partial 
-    class       WebService<tWebService, tWebServiceArgs, tWebServiceConfig> : WebService
-    where       tWebService                                                 : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>
-    where       tWebServiceArgs                                             : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.ServiceArgs
-    where       tWebServiceConfig                                           : WebService<tWebService, tWebServiceArgs, tWebServiceConfig>.ServiceConfig
+    class       WebService<tWebService> : WebService
+    where       tWebService             : WebService<tWebService>
     {
 
         private
         static
-        readonly    string      _name                                           = typeof(tWebService).Name;
+        readonly    string      _name           = typeof(tWebService).Name;
 
         private
         static
-        readonly    string      _factoryName                                    = typeof(tWebService).FullName + "+Factory";
+        readonly    string      _factoryName    = typeof(tWebService).FullName + "+Factory";
 
         public
-        override    bool        IsReusable                                      { get { return true; } }
+        override    bool        IsReusable      { get { return true; } }
 
-        protected   RequestUser RequestedUser                                   { get { throw new NotImplementedException(); } }
+        protected   RequestUser RequestedUser   { get { throw new NotImplementedException(); } }
 
-        protected               WebService(tWebServiceArgs args)  : base(args)  {}
+        protected               WebService()    {}
 
     }
 

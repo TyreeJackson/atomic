@@ -8,7 +8,6 @@ namespace AtomicNet
     [EditorBrowsable(EditorBrowsableState.Never)]
     public  delegate    tRelatedCriteria    RelatedCriteriaQuery<tRelatedCriteria>(tRelatedCriteria relatedCriteria);
 
-    public
     partial class   Entity
                     <
                         tCriteria,
@@ -17,30 +16,29 @@ namespace AtomicNet
                     >
     {
 
+    partial class   EntityCriteria
+    {
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public
-        partial class   EntityCriteria
+        partial class   RelatedOps<tRelatedCriteria> : Atom<RelatedOps<tRelatedCriteria>>
         {
 
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public
-            partial class   RelatedOps<tRelatedCriteria> : Atom<RelatedOps<tRelatedCriteria>>
-            {
+            private     tCriteria           criteria;
 
-                private     tCriteria           criteria;
+            internal                        RelatedOps(tCriteria criteria)              { this.criteria = criteria; }
 
-                internal                        RelatedOps(tCriteria criteria)              { this.criteria = criteria; }
-
-                public      ConjunctionRouter   this
-                                                [
-                                                    RelatedCriteriaQuery
-                                                    <
-                                                        tRelatedCriteria
-                                                    >                       relatedCriteria
-                                                ]                                           { get { throw new NotImplementedException (); } }
-
-            }
+            public      ConjunctionRouter   this
+                                            [
+                                                RelatedCriteriaQuery
+                                                <
+                                                    tRelatedCriteria
+                                                >                       relatedCriteria
+                                            ]                                           { get { throw new NotImplementedException (); } }
 
         }
+
+    }
 
     }
 

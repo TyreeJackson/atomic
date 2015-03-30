@@ -8,13 +8,13 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostServerUtility : Atom<HostServerUtility, HostContext>
+    abstract    class   HostServerUtility : Atom<HostServerUtility>
     {
 
         protected
         readonly    HostContext             context                             = null;
 
-        public              HostServerUtility(HostContext context) : base(context)
+        public              HostServerUtility(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;

@@ -5,7 +5,6 @@ using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 namespace AtomicNet
 {
 
-    public
     partial class   Entity
                     <
                         tCriteria,
@@ -14,23 +13,22 @@ namespace AtomicNet
                     >
     {
 
-        public
-        partial class   EntityCriteria
+    partial class   EntityCriteria
+    {
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public  class   BehalfOfRouter : Atom<BehalfOfRouter>
         {
 
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public  class   BehalfOfRouter : Atom<BehalfOfRouter, tCriteria>
-            {
+            private tCriteria   criteria;
 
-                private tCriteria   criteria;
+            internal            BehalfOfRouter(tCriteria criteria) { this.criteria = criteria; }
 
-                internal            BehalfOfRouter(tCriteria criteria) : base(criteria) { this.criteria = criteria; }
-
-                public  tCriteria   Where                                               { get { return this.criteria; } }
-
-            }
+            public  tCriteria   Where                              { get { return this.criteria; } }
 
         }
+
+    }
 
     }
 

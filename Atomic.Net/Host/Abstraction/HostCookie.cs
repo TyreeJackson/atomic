@@ -8,10 +8,10 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostCookie : Atom<HostCookie, string>
+    abstract    class   HostCookie : Atom<HostCookie>
     {
 
-        public                  HostCookie(string name) : base(name) {}
+        public                  HostCookie(string name) {}
 
         public
         abstract    string      Domain                  { get; set; }

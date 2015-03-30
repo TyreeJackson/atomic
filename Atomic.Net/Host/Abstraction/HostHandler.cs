@@ -6,10 +6,17 @@ namespace AtomicNet
     abstract    class   HostHandler : Atom<HostHandler>
     {
 
-        public
-        async   Task    ProcessRequest(HostContext context)
+        private WebHandler.Router   router { get; set; }
+
+        public                      HostHandler(WebHandler.Router router)
         {
-            await (await WebHandler.Router.Instance.Map(context)).ProcessRequest(context);
+            this.router = router;
+        }
+
+        public
+        async   Task                ProcessRequest(HostContext context)
+        {
+            await (await this.router.Map(context)).ProcessRequest(context);
         }
 
     }

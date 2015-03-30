@@ -1,6 +1,7 @@
-﻿using NotImplementedException   = System.NotImplementedException;
-using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
-using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
+﻿using NotImplementedException = System.NotImplementedException;
+using EditorBrowsableAttribute = System.ComponentModel.EditorBrowsableAttribute;
+using EditorBrowsableState = System.ComponentModel.EditorBrowsableState;
+using System;
 
 namespace AtomicNet
 {
@@ -12,6 +13,7 @@ namespace AtomicNet
                     Entity
                     <
                         User,
+                        User.Hooks,
                         User.Prefetch,
                         User.Properties,
                         User.DataObject,
@@ -34,6 +36,30 @@ namespace AtomicNet
                         User.LastUpdatedByIdOps
                     >
     {
+
+        public
+        partial class   Hooks : EntityHooks
+        {
+
+            public  override    Criteria                        createCriteria()            { return new Criteria(); }
+
+            public  override    OrderBySelection                createOrderBySelection()    { return new OrderBySelection(); }
+
+            public  override    PropertySelection               createPropertySelection()   { return new PropertySelection(); }
+
+            public  override    tRouter                         createRouter<tRouter>(Criteria criteria)
+            {
+                if (typeof(tRouter) == typeof(User.Language.BehalfOfRouter))    return new User.Language.BehalfOfRouter(criteria) as tRouter;
+                throw new ArgumentException("Unknown router type.");
+            }
+
+            public  override    tBehalfOf                       createBehalfOf<tBehalfOf, tBehalfOfRouter>(Criteria criteria)
+            {
+                if (typeof(tBehalfOf) == typeof(User.Language.BehalfOf))    return new User.Language.BehalfOf(criteria) as tBehalfOf;
+                throw new ArgumentException("Unknown router type.");
+            }
+
+        }
 
         [EditorBrowsable(EditorBrowsableState.Never)] 
         public

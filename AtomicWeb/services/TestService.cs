@@ -3,19 +3,10 @@
 namespace AtomicWeb
 {
 
-    public  class   TestService : WebService<TestService, TestService.Args, TestService.Config>
+    public  class   TestService : WebService<TestService>
     {
 
-        public  class   Args : ServiceArgs
-        {
-        }
-
-        public  class   Config : ServiceConfig
-        {
-            public  Config(Args args) : base(args) {}
-        }
-
-        public  TestService(Args args) : base(args) {}
+        public  TestService()   {}
 
         public  void    Main()
         {

@@ -5,7 +5,6 @@ using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 namespace AtomicNet
 {
 
-    public
     partial class   Entity
                     <
                         tCriteria,
@@ -16,25 +15,23 @@ namespace AtomicNet
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public
-        partial class   EntityCriteria : Atom<EntityCriteria>
+        abstract
+        partial class   EntityCriteria
         {
 
             protected   RequestUser     requestUser;
 
-            protected   tRouter SetRequestUser<tRouter>(RequestUser requestUser) where tRouter : EntityCriteria.BehalfOfRouter
-            {
-                this.requestUser    = requestUser;
-                return EntityCriteria.BehalfOfRouter.Create<tRouter, tCriteria>((tCriteria) this);
-            }
+            protected
+            abstract    tRouter         SetRequestUser<tRouter>(RequestUser requestUser) where tRouter : EntityCriteria.BehalfOfRouter;
 
         }
 
     }
 
-    public
     partial class   Entity
                     <
                         tEntity,
+                        tHooks,
                         tPrefetch,
                         tProperties,
                         tDataObject,
@@ -63,13 +60,20 @@ namespace AtomicNet
         partial class   EntityCriteria : Entity<tCriteria, tModification, tSelection>.EntityCriteria
         {
 
-            public  tCreatedByCriteriaOps           CreatedBy           { get { throw new NotImplementedException(); } }
-            public  tCreatedByIdCriteriaOps         CreatedById         { get { throw new NotImplementedException(); } }
-            public  tCreationDateTimeCriteriaOps    CreationDateTime    { get { throw new NotImplementedException(); } }
-            public  tIdCriteriaOps                  Id                  { get { throw new NotImplementedException(); } }
-            public  tLastUpdatedByCriteriaOps       LastUpdatedBy       { get { throw new NotImplementedException(); } }
-            public  tLastUpdatedByIdCriteriaOps     LastUpdatedById     { get { throw new NotImplementedException(); } }
-            public  tLastUpdateDateTimeCriteriaOps  LastUdpateDateTime  { get { throw new NotImplementedException(); } }
+            public      tCreatedByCriteriaOps           CreatedBy           { get { throw new NotImplementedException(); } }
+            public      tCreatedByIdCriteriaOps         CreatedById         { get { throw new NotImplementedException(); } }
+            public      tCreationDateTimeCriteriaOps    CreationDateTime    { get { throw new NotImplementedException(); } }
+            public      tIdCriteriaOps                  Id                  { get { throw new NotImplementedException(); } }
+            public      tLastUpdatedByCriteriaOps       LastUpdatedBy       { get { throw new NotImplementedException(); } }
+            public      tLastUpdatedByIdCriteriaOps     LastUpdatedById     { get { throw new NotImplementedException(); } }
+            public      tLastUpdateDateTimeCriteriaOps  LastUdpateDateTime  { get { throw new NotImplementedException(); } }
+
+            protected
+            override    tRouter                         SetRequestUser<tRouter>(RequestUser requestUser)
+            {
+                this.requestUser    = requestUser;
+                return hooks.createRouter<tRouter>((tCriteria) this);
+            }
 
         }
 

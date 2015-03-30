@@ -7,15 +7,11 @@ using System.Threading.Tasks;
 namespace AtomicNet
 {
 
-    public
-    abstract
     partial     class   WebHandler : Atom<WebHandler>
     {
 
         public      class   DefaultRouter : Router
         {
-
-            public      DefaultRouter(Args args) : base(args) {}
 
             public
             override
@@ -24,8 +20,8 @@ namespace AtomicNet
                 string[]    segments        = context.Request.Url.Segments;
                 int         indexOfKeyPath  = -1;
 
-                        if (this.CheckIfUrlIsServicesUrl(segments))                                 return WebHandler.Create<WebServiceHandler.ServiceList>();
-                else    if (this.CheckIfUrlIsEntitiesUrl(segments))                                 return WebHandler.Create<WebServiceHandler.EntityList>();
+                        if (this.CheckIfUrlIsServicesUrl(segments))                                 return new WebServiceHandler.ServiceList();
+                else    if (this.CheckIfUrlIsEntitiesUrl(segments))                                 return new WebServiceHandler.EntityList();
                 else    if ((indexOfKeyPath = this.GetIndexOfServicesPathSegment(segments)) > -1)   return await this.LocateWebService(segments, indexOfKeyPath);
                 else    return await this.ServeStaticFile(context);
             }
@@ -33,7 +29,7 @@ namespace AtomicNet
             private
             async       Task<WebHandler>        ServeStaticFile(HostContext context)
             {
-                return WebHandler.Create<StaticFileHandler>().SetContext(context);
+                return new StaticFileHandler().SetContext(context);
             }
 
             private

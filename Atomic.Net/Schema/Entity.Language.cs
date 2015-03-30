@@ -6,10 +6,10 @@ using EditorBrowsableState          = System.ComponentModel.EditorBrowsableState
 namespace AtomicNet
 {
 
-    public
     partial class   Entity
                     <
                         tEntity,
+                        tHooks,
                         tPrefetch,
                         tProperties,
                         tDataObject,
@@ -53,19 +53,19 @@ namespace AtomicNet
         {
             [DebuggerNonUserCode()]
             public
-            static  tBehalfOf           OnBehalfOf          { get { return EntityCriteria.BaseEntityBehalfOf.Create<tBehalfOf, tCriteria>(EntityCriteria.Create<tCriteria>()); } }
+            static  tBehalfOf           OnBehalfOf          { get { return hooks.createBehalfOf<tBehalfOf, tBehalfOfRouter>(hooks.createCriteria()); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tOrderBySelection   OrderBy             { get { return EntityOrderBySelection.Create<tOrderBySelection>(); } }
+            static  tOrderBySelection   OrderBy             { get { return hooks.createOrderBySelection(); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tPropertySelection  SelectProperties    { get { return EntityPropertySelection.Create<tPropertySelection>(); } }
+            static  tPropertySelection  SelectProperties    { get { return hooks.createPropertySelection(); } }
 
             [DebuggerNonUserCode()]
             public
-            static  tCriteria           Where               { get { return EntityCriteria.Create<tCriteria>(); } }
+            static  tCriteria           Where               { get { return hooks.createCriteria(); } }
         }
 
     }

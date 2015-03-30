@@ -8,7 +8,7 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostRequest : Atom<HostRequest, HostContext>
+    abstract    class   HostRequest : Atom<HostRequest>
     {
 
         protected
@@ -125,7 +125,7 @@ namespace AtomicNet
         public
         abstract    List<string>            UserLanguages                       { get; }
 
-        public                              HostRequest(HostContext context) : base(context)
+        public                              HostRequest(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;

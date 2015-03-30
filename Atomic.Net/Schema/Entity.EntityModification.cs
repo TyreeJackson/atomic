@@ -9,10 +9,10 @@ namespace AtomicNet
     public
     delegate    void    SelectAndSaveFunction<tDataObjectList>(tDataObjectList entityRecords, TransactionGroup transaction, ValidationWarning.List validationWarings);
 
-    public
     partial class   Entity
                     <
                         tEntity,
+                        tHooks,
                         tPrefetch,
                         tProperties,
                         tDataObject,

@@ -48,6 +48,8 @@ namespace AtomicNet.IIS
 
         void            IHttpHandler.ProcessRequest(HttpContext context)            {}
 
+        public          IISHttpHandler() : base(new WebHandler.DefaultRouter()) {}
+
         IAsyncResult    IHttpAsyncHandler.BeginProcessRequest
                         (
                             HttpContext     context, 

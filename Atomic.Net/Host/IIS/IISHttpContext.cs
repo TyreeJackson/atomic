@@ -8,31 +8,64 @@ namespace AtomicNet.IIS
     public  class IISHttpContext : HostContext
     {
 
-        private static  HttpContext             currentContext                      { get { return HttpContext.Current; } }
+        private
+        static          HttpContext                             currentContext                      { get { return HttpContext.Current; } }
 
-        private         HttpContext             _context                            = null;
-        internal        HttpContext             context                             { get { return this._context; } }
+        public
+        delegate        tComponent                              createComponent<tComponent>(IISHttpContext context);
 
-        private         IISHttpApplication      _application                        = null;
-        private         IISHttpApplication      application                         { get { return HostApplication.CreateIfNeeded(ref this._application, this); } }
+        private         createComponent<IISHttpApplication>     createHttpApplication               { get; set; }
 
-        private         IISHttpRequest          _request                            = null;
-        private         IISHttpRequest          request                             { get { return HostRequest.CreateIfNeeded(ref this._request, this); } }
+        private         createComponent<IISHttpRequest>         createHttpRequest                   { get; set; }
 
-        private         IISHttpServerUtility    _server                             = null;
-        private         IISHttpServerUtility    server                              { get { return HostServerUtility.CreateIfNeeded(ref this._server, this); } }
+        private         createComponent<IISHttpServerUtility>   createHttpServerUtility             { get; set; }
 
-        private         IISHttpResponse         _response                           = null;
-        private         IISHttpResponse         response                            { get { return HostResponse.CreateIfNeeded(ref this._response, this); } }
+        private         createComponent<IISHttpResponse>        createHttpResponse                  { get; set; }
 
-        private         IISHttpHandler          handler                             = null;
+        private         HttpContext                             _context                            = null;
+        internal        HttpContext                             context                             { get { return this._context; } }
 
-        public                                  IISHttpContext(HttpContext context)
+        private         IISHttpApplication                      _application                        = null;
+        private         IISHttpApplication                      application                         { get { return this._application??this.createHttpApplication(this); } }
+
+        private         IISHttpRequest                          _request                            = null;
+        private         IISHttpRequest                          request                             { get { return this._request??this.createHttpRequest(this); } }
+
+        private         IISHttpServerUtility                    _server                             = null;
+        private         IISHttpServerUtility                    server                              { get { return this._server??this.createHttpServerUtility(this); } }
+
+        private         IISHttpResponse                         _response                           = null;
+        private         IISHttpResponse                         response                            { get { return this._response??this.createHttpResponse(this); } }
+
+        private         IISHttpHandler                          handler                             = null;
+
+        public                                                  IISHttpContext(HttpContext context)
+        :
+                                                                this
+                                                                (
+                                                                    context, 
+                                                                    iisContext=>new IISHttpApplication(iisContext), 
+                                                                    iisContext=>new IISHttpRequest(iisContext), 
+                                                                    iisContext=>new IISHttpServerUtility(iisContext), 
+                                                                    iisContext=>new IISHttpResponse(iisContext)
+                                                                )                                               {}
+
+        internal                                IISHttpContext
+                                                (
+                                                    HttpContext                             context,
+                                                    createComponent<IISHttpApplication>     createHttpApplication,
+                                                    createComponent<IISHttpRequest>         createHttpRequest,
+                                                    createComponent<IISHttpServerUtility>   createHttpServerUtility,
+                                                    createComponent<IISHttpResponse>        createHttpResponse
+                                                )
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this._context   = context;
+            this.createHttpApplication      = createHttpApplication;
+            this.createHttpRequest          = createHttpRequest;
+            this.createHttpResponse         = createHttpResponse;
+            this.createHttpServerUtility    = createHttpServerUtility;
         }
-
 
         public
         override        Exception[]         AllErrors                           { get { return this.context.AllErrors; } }

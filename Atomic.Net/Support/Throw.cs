@@ -20,7 +20,8 @@ namespace AtomicNet
 
             public      Or  OrIf(bool condition)                    { if (condition)    throw TypeSupport<tException>.Create(); return Or.Empty;}
 
-            public      Or  OrIf<tArg>(bool condition, tArg arg)    { if (condition)    throw TypeSupport<tException>.Create(arg); return Or.Empty;}
+            public      Or  OrIf<tArg>(bool condition, tArg arg)    { if (condition)    throw TypeSupport<tException>.
+                        Create(arg); return Or.Empty;}
 
         }
 

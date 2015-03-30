@@ -8,7 +8,7 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostResponse : Atom<HostResponse, HostContext>
+    abstract    class   HostResponse : Atom<HostResponse>
     {
 
         public
@@ -168,7 +168,7 @@ namespace AtomicNet
             set;
         }
 
-        public                              HostResponse(HostContext context) : base(context)
+        public                              HostResponse(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;

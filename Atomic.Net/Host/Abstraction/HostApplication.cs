@@ -8,10 +8,10 @@ namespace AtomicNet
 {
 
     public
-    abstract    class   HostApplication : Atom<HostApplication, HostContext>
+    abstract    class   HostApplication : Atom<HostApplication>
     {
 
-        public  HostApplication(HostContext context) : base(context) {}
+        public  HostApplication(HostContext context) {}
 
     }
 

@@ -8,26 +8,9 @@ namespace AtomicNet
     public
     abstract
     partial
-    class       IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
-    :
-                Atom
-                <
-                    tIndexedList, 
-                    System.Func
-                    <
-                        tIndexedItem, 
-                        IndexedList
-                        <
-                            tIndexedList, 
-                            tIndexKeyType,
-                            tIndexedItem
-                        >.KeyProperty
-                    >
-                >,
-                IList<tIndexedItem>, 
-                IXmlSerializable
-    where       tIndexedList                : IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
-    where       tIndexKeyType               : System.IEquatable<tIndexKeyType>
+    class       IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>  : Atom<tIndexedList>, IList<tIndexedItem>, IXmlSerializable
+    where       tIndexedList                                            : IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
+    where       tIndexKeyType                                           : System.IEquatable<tIndexKeyType>
     {
 
         private
@@ -53,9 +36,10 @@ namespace AtomicNet
                                                 tIndexedItem, 
                                                 KeyProperty
                                             >                   getKeyProperty
-                                        ) 
-        :
-                                        base(getKeyProperty)                            { this.getKeyProperty = getKeyProperty; }
+                                        )
+        {
+            this.getKeyProperty = getKeyProperty;
+        }
 
         private     void                onKeyChanged
                                         (

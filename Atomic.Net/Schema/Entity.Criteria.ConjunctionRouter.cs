@@ -5,7 +5,6 @@ using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 namespace AtomicNet
 {
 
-    public
     partial class   Entity
                     <
                         tCriteria,
@@ -35,10 +34,10 @@ namespace AtomicNet
 
     }
 
-    public
     partial class   Entity
                     <
                         tEntity,
+                        tHooks,
                         tPrefetch,
                         tProperties,
                         tDataObject,

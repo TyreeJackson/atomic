@@ -5,7 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using AtomicNet;
 
-public class Atomic<tAtomic> : Atom<tAtomic> where tAtomic : Atomic<tAtomic>
+public
+abstract    class   Atomic<tAtomic> : Atom<tAtomic> where tAtomic : Atomic<tAtomic>
 {
 
     internal
@@ -19,7 +20,7 @@ public class Atomic<tAtomic> : Atom<tAtomic> where tAtomic : Atomic<tAtomic>
 
 }
 
-public class Atomic : Atomic<Atomic>
+public      class   Atomic : Atomic<Atomic>
 {
 
     public  static  bool            IsStillBooting                                          { get; private set; }
