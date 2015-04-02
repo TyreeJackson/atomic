@@ -7,8 +7,8 @@
     <ProjectGuid>{DA5F270E-0A55-461F-B975-2D4C56599F3E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AtomicNet</RootNamespace>
-    <AssemblyName>AtomicNet</AssemblyName>
+    <RootNamespace>Atomic.Net</RootNamespace>
+    <AssemblyName>Atomic.Net</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProductVersion>12.0.0</ProductVersion>
@@ -80,6 +80,9 @@
     <Compile Include="Host\Abstraction\HostPrinciple.cs" />
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
+    <Compile Include="Host\IIS\IISHostHandler.cs" />
+    <Compile Include="Host\IIS\IISHostIdentity.cs" />
+    <Compile Include="Host\IIS\IISHostPrinciple.cs" />
     <Compile Include="Host\StaticFileHandler.Extensions.cs">
       <DependentUpon>StaticFileHandler.cs</DependentUpon>
     </Compile>

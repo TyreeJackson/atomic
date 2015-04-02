@@ -17,6 +17,10 @@ namespace AtomicNet.IIS
 
         public                              IISHttpResponse(IISHttpContext context)             : base(context) {}
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            IISHttpResponse() : this(null) {}
+
         public
         override        bool                Buffer                                              { get { return this.response.Buffer; } set { this.response.Buffer = value; } }
 

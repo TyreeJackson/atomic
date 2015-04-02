@@ -17,6 +17,10 @@ namespace AtomicNet.IIS
 
         public                              IISHttpRequest(IISHttpContext context) : base(context) {}
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            IISHttpRequest() : this(null) {}
+
         public
         override    List<string>            AcceptTypes                             { get { return new List<string>(this.request.AcceptTypes); } }
 
@@ -49,9 +53,14 @@ namespace AtomicNet.IIS
         override    string                  FilePath                                { get { return this.request.FilePath; } }
 
         public
-        override    List<TransferredFile>   Files                                   { get {
+        override    List<TransferredFile>   Files
+        {
+            get
+            {
                     #warning NotImplemented
-                    throw new NotImplementedException(); } }
+                    throw new NotImplementedException();
+            }
+        }
 
         public
         override    Dictionary

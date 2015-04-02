@@ -75,6 +75,7 @@ namespace AtomicNet.Dependencies.DevelopMentor
 
     #region ThreadPool class
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public sealed class ThreadPool : WaitHandle
     {
         #region ThreadPool constructors

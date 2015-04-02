@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Web;
 using AtomicNet;
+using System.Security.Principal;
 
 namespace AtomicNet.IIS
 {
@@ -8,36 +9,106 @@ namespace AtomicNet.IIS
     public  class IISHttpContext : HostContext
     {
 
-        private
-        static          HttpContext                             currentContext                      { get { return HttpContext.Current; } }
+        internal        HttpContext                             context;
 
         public
         delegate        tComponent                              createComponent<tComponent>(IISHttpContext context);
 
         private         createComponent<IISHttpApplication>     createHttpApplication               { get; set; }
 
+        private         IISHttpApplication                      application;
+
         private         createComponent<IISHttpRequest>         createHttpRequest                   { get; set; }
+
+        private         IISHttpRequest                          request;
 
         private         createComponent<IISHttpServerUtility>   createHttpServerUtility             { get; set; }
 
+        private         IISHttpServerUtility                    server;
+
         private         createComponent<IISHttpResponse>        createHttpResponse                  { get; set; }
 
-        private         HttpContext                             _context                            = null;
-        internal        HttpContext                             context                             { get { return this._context; } }
+        private         IISHttpResponse                         response;
 
-        private         IISHttpApplication                      _application                        = null;
-        private         IISHttpApplication                      application                         { get { return this._application??this.createHttpApplication(this); } }
+        private         Func<IPrincipal, IISHostPrincipal>      createUser                          { get; set; }
 
-        private         IISHttpRequest                          _request                            = null;
-        private         IISHttpRequest                          request                             { get { return this._request??this.createHttpRequest(this); } }
+        private         IISHostPrincipal                        user;
 
-        private         IISHttpServerUtility                    _server                             = null;
-        private         IISHttpServerUtility                    server                              { get { return this._server??this.createHttpServerUtility(this); } }
+        private         Func<IISHostHandler>                    createHandler                       { get; set; }
 
-        private         IISHttpResponse                         _response                           = null;
-        private         IISHttpResponse                         response                            { get { return this._response??this.createHttpResponse(this); } }
+        private         IISHostHandler                          handler                             = null;
 
-        private         IISHttpHandler                          handler                             = null;
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public
+        override        Exception[]                             AllErrors                           { get { return this.context.AllErrors; } }
+
+        public
+        override        HostApplication                         ApplicationInstance
+        {
+            get
+            {
+                if (this.application == null)   this.application = this.createHttpApplication(this);
+                return this.application;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public
+        override        Exception                               Error                               { get { return this.context.Error; } }
+
+        public
+        override        HostHandler                             Handler
+        {
+            get
+            {
+                if (this.handler == null)   this.handler = this.createHandler();
+                return this.handler;
+            }
+        }
+
+        public
+        override        HostRequest                             Request
+        {
+            get
+            {
+                if (this.request == null)   this.request = this.createHttpRequest(this);
+                return this.request;
+            }
+        }
+
+        public
+        override        HostResponse                            Response
+        {
+            get
+            {
+                if (this.response == null)  this.response = this.createHttpResponse(this);
+                return this.response;
+            }
+        }
+
+        public
+        override        HostServerUtility                       Server
+        {
+            get
+            {
+                if (this.server == null)    this.server = this.createHttpServerUtility(this);
+                return this.server;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public
+        override        DateTime                                Timestamp                           { get { return this.context.Timestamp; } }
+
+        public
+        override        HostPrincipal                           User
+        {
+            get
+            {
+                if (this.user == null)  this.user = this.createUser(this.context.User);
+                return this.user;
+            }
+        }
 
         public                                                  IISHttpContext(HttpContext context)
         :
@@ -47,65 +118,34 @@ namespace AtomicNet.IIS
                                                                     iisContext=>new IISHttpApplication(iisContext), 
                                                                     iisContext=>new IISHttpRequest(iisContext), 
                                                                     iisContext=>new IISHttpServerUtility(iisContext), 
-                                                                    iisContext=>new IISHttpResponse(iisContext)
-                                                                )                                               {}
-
-        internal                                IISHttpContext
-                                                (
-                                                    HttpContext                             context,
-                                                    createComponent<IISHttpApplication>     createHttpApplication,
-                                                    createComponent<IISHttpRequest>         createHttpRequest,
-                                                    createComponent<IISHttpServerUtility>   createHttpServerUtility,
-                                                    createComponent<IISHttpResponse>        createHttpResponse
-                                                )
+                                                                    iisContext=>new IISHttpResponse(iisContext),
+                                                                    user=>new IISHostPrincipal(user),
+                                                                    ()=>new IISHostHandler()
+                                                                )
         {
             Throw<ArgumentNullException>.If(context==null, "context");
-            this._context   = context;
+        }
+
+        internal                                                IISHttpContext
+                                                                (
+                                                                    HttpContext                             context,
+                                                                    createComponent<IISHttpApplication>     createHttpApplication,
+                                                                    createComponent<IISHttpRequest>         createHttpRequest,
+                                                                    createComponent<IISHttpServerUtility>   createHttpServerUtility,
+                                                                    createComponent<IISHttpResponse>        createHttpResponse,
+                                                                    Func<IPrincipal, IISHostPrincipal>      createUser,
+                                                                    Func<IISHostHandler>                    createHandler
+                                                                )
+        {
+            this.context                    = context;
             this.createHttpApplication      = createHttpApplication;
             this.createHttpRequest          = createHttpRequest;
             this.createHttpResponse         = createHttpResponse;
             this.createHttpServerUtility    = createHttpServerUtility;
+            this.createUser                 = createUser;
+            this.createHandler              = createHandler;
         }
 
-        public
-        override        Exception[]         AllErrors                           { get { return this.context.AllErrors; } }
-
-        public
-        override        HostApplication     ApplicationInstance                 { get { return this.application; } }
-
-        public
-        override        Exception           Error                               { get { return this.context.Error; } }
-
-        public
-        override        HostHandler         Handler                             { get { return this.handler; } }
-
-        public
-        override        HostRequest         Request                             { get { return this.request; } }
-
-        public
-        override        HostResponse        Response                            { get { return this.response; } }
-
-        public
-        override        HostServerUtility   Server
-        {
-            get
-            {
-                return this.server;
-            }
-        }
-
-        public
-        override        DateTime            Timestamp                           { get { return this.context.Timestamp; } }
-
-        public
-        override        HostPrincipal       User
-        {
-            get
-            {
-                #warning NotImplemented
-                throw new NotImplementedException();
-            }
-        }
     }
 
 }

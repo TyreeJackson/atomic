@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace AtomicNetTests
 {
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public  class   ExpectedExceptionAttribute : ExpectedExceptionBaseAttribute
     {
 

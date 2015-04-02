@@ -17,6 +17,9 @@ namespace AtomicNet.IIS
 
         public                              IISHttpServerUtility(IISHttpContext context) : base(context)    {}
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            IISHttpServerUtility() : this(null) {}
 
         public
         override        string              MapPath(string path)                                            { return this.server.MapPath(path); }
