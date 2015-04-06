@@ -110,42 +110,17 @@ namespace AtomicNet.IIS
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHttpApplication                      createApplication(IISHttpContext context)   { return new IISHttpApplication(context); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHttpRequest                          createRequest(IISHttpContext context)       { return new IISHttpRequest(context); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHttpServerUtility                    createServerUtility(IISHttpContext context) { return new IISHttpServerUtility(context); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHttpResponse                         createResponse(IISHttpContext context)      { return new IISHttpResponse(context); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHostPrincipal                        createHostUser(IPrincipal user)             { return new IISHostPrincipal(user); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private
-        static          IISHttpHandler                          createHttpHandler()                         { return new IISHttpHandler(); }
-
-        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public                                                  IISHttpContext(HttpContext context)
         :
                                                                 this
                                                                 (
                                                                     context, 
-                                                                    createApplication, 
-                                                                    createRequest, 
-                                                                    createServerUtility, 
-                                                                    createResponse,
-                                                                    createHostUser,
-                                                                    createHttpHandler
+                                                                    iisContext=>new IISHttpApplication(iisContext), 
+                                                                    iisContext=>new IISHttpRequest(iisContext), 
+                                                                    iisContext=>new IISHttpServerUtility(iisContext), 
+                                                                    iisContext=>new IISHttpResponse(iisContext),
+                                                                    user=>new IISHostPrincipal(user),
+                                                                    ()=>new IISHttpHandler()
                                                                 )
         {
         }

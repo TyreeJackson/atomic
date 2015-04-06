@@ -47,6 +47,54 @@ namespace AtomicNetTests
         }
 
         [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHttpApplication_class_instance_for_the_ApplicationInstance_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.ApplicationInstance);
+            Assert.AreEqual(typeof(IISHttpApplication), context.ApplicationInstance.GetType());
+        }
+
+        [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHttpRequest_class_instance_for_the_Request_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.Request);
+            Assert.AreEqual(typeof(IISHttpRequest), context.Request.GetType());
+        }
+
+        [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHttpServerUtility_class_instance_for_the_Server_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.Server);
+            Assert.AreEqual(typeof(IISHttpServerUtility), context.Server.GetType());
+        }
+
+        [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHttpResponse_class_instance_for_the_Response_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.Response);
+            Assert.AreEqual(typeof(IISHttpResponse), context.Response.GetType());
+        }
+
+        [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHostPrinciple_class_instance_for_the_User_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.User);
+            Assert.AreEqual(typeof(IISHostPrincipal), context.User.GetType());
+        }
+
+        [TestMethod]
+        public  void    When_constructing_an_IISHttpContext_using_the_default_constructor_the_IISHttpContext_object_should_create_a_default_IISHttpHandler_class_instance_for_the_Handler_property()
+        {
+            var context = new IISHttpContext(this.httpContext);
+            Assert.IsNotNull(context.Handler);
+            Assert.AreEqual(typeof(IISHttpHandler), context.Handler.GetType());
+        }
+
+        [TestMethod]
         public  void    When_getting_the_ApplicationInstance_from_the_IISHttpContext_instance_our_mockHttpApplication_should_be_returned()
         {
             var context =   new IISHttpContext
