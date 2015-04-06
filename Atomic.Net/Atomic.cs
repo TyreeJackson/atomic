@@ -16,13 +16,15 @@ abstract    class   Atomic<tAtomic> : Atom<tAtomic> where tAtomic : Atomic<tAtom
     {
     }
 
-    internal static void Boot() { /* Do nothing.  The static constructor will take care of everything. */ }
+    internal
+    static      void    Boot()          { /* Do nothing.  The static constructor will take care of everything. */ }
 
 }
 
 public      class   Atomic : Atomic<Atomic>
 {
 
-    public  static  bool            IsStillBooting                                          { get; private set; }
+    public
+    static  bool    IsStillBooting  { get; private set; }
 
 }

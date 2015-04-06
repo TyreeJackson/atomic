@@ -18,161 +18,85 @@ namespace AtomicNet
         readonly    HostContext             context                             = null;
 
         public
-        abstract    bool                    Buffer
-        {
-            get;
-            set;
-        }
+        abstract    bool                    Buffer                              { get; set; }
 
         public
-        abstract    bool                    BufferOutput
-        {
-            get;
-            set;
-        }
+        abstract    bool                    BufferOutput                        { get; set; }
 
         public
-        abstract    string                  CacheControl
-        {
-            get;
-            set;
-        }
+        abstract    string                  CacheControl                        { get; set; }
 
         public
-        abstract    string                  Charset
-        {
-            get;
-            set;
-        }
+        abstract    string                  Charset                             { get; set; }
 
         public
-        abstract    Encoding                ContentEncoding
-        {
-            get;
-            set;
-        }
+        abstract    Encoding                ContentEncoding                     { get; set; }
 
         public
-        abstract    string                  ContentType
-        {
-            get;
-            set;
-        }
+        abstract    string                  ContentType                         { get; set; }
 
         public
         abstract    Dictionary
                     <
                         string,
                         HostCookie
-                    >                       Cookies
-        {
-            get;
-        }
+                    >                       Cookies                             { get; }
 
         public
-        abstract    int                     Expires
-        {
-            get;
-            set;
-        }
+        abstract    int                     Expires                             { get; set; }
 
         public
-        abstract    DateTime                ExpiresAbsolute
-        {
-            get;
-            set;
-        }
+        abstract    DateTime                ExpiresAbsolute                     { get; set; }
 
         public
-        abstract    System.IO.Stream        Filter
-        {
-            get;
-            set;
-        }
+        abstract    System.IO.Stream        Filter                              { get; set; }
 
         public
-        abstract    Encoding                HeaderEncoding
-        {
-            get;
-            set;
-        }
+        abstract    Encoding                HeaderEncoding                      { get; set; }
 
         public
         abstract    Dictionary
                     <
                         string,
                         string
-                    >                       Headers
-        {
-            get;
-        }
+                    >                       Headers                             { get; }
 
         public
-        abstract    bool                    IsClientConnected
-        {
-            get;
-        }
+        abstract    bool                    IsClientConnected                   { get; }
 
         public
-        abstract    System.IO.TextWriter    Output
-        {
-            get;
-            set;
-        }
+        abstract    System.IO.TextWriter    Output                              { get; set; }
 
         public
-        abstract    System.IO.Stream        OutputStream
-        {
-            get;
-        }
+        abstract    System.IO.Stream        OutputStream                        { get; }
 
         public
-        abstract    string                  RedirectLocation
-        {
-            get;
-            set;
-        }
+        abstract    string                  RedirectLocation                    { get; set; }
 
         public
-        abstract    string                  Status
-        {
-            get;
-            set;
-        }
+        abstract    string                  Status                              { get; set; }
 
         public
-        abstract    int                     StatusCode
-        {
-            get;
-            set;
-        }
+        abstract    int                     StatusCode                          { get; set; }
 
         public
-        abstract    string                  StatusDescription
-        {
-            get;
-            set;
-        }
+        abstract    string                  StatusDescription                   { get; set; }
 
         public
-        abstract    int                     SubStatusCode
-        {
-            get;
-            set;
-        }
+        abstract    int                     SubStatusCode                       { get; set; }
 
         public
-        abstract    bool                    SuppressContent
-        {
-            get;
-            set;
-        }
+        abstract    bool                    SuppressContent                     { get; set; }
 
         public                              HostResponse(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;
         }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            HostResponse()                      {}
 
         protected
         abstract    void                    addHeader(string name, string value);

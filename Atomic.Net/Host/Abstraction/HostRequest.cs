@@ -131,6 +131,10 @@ namespace AtomicNet
             this.context    = context;
         }
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            HostRequest()                       {}
+
     }
 
 }

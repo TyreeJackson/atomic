@@ -80,9 +80,9 @@
     <Compile Include="Host\Abstraction\HostPrinciple.cs" />
     <Compile Include="Host\Abstraction\HostContext.cs" />
     <Compile Include="Host\Abstraction\HostHandler.cs" />
-    <Compile Include="Host\IIS\IISHostHandler.cs" />
     <Compile Include="Host\IIS\IISHostIdentity.cs" />
     <Compile Include="Host\IIS\IISHostPrinciple.cs" />
+    <Compile Include="Host\IIS\IISHttpHandler.cs" />
     <Compile Include="Host\StaticFileHandler.Extensions.cs">
       <DependentUpon>StaticFileHandler.cs</DependentUpon>
     </Compile>
@@ -103,7 +103,7 @@
     <Compile Include="Host\Loader.cs" />
     <Compile Include="Host\Environment.cs" />
     <Compile Include="Host\IIS\IISHttpRequest.cs" />
-    <Compile Include="Host\IIS\IISHttpHandler.cs" />
+    <Compile Include="Host\IIS\IISHttpHandler.AsyncResult.cs" />
     <Compile Include="Host\IIS\IISHttpApplication.cs" />
     <Compile Include="Host\IIS\IISHttpContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

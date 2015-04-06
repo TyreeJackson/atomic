@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 namespace AtomicNet
 {
 
@@ -10,6 +11,7 @@ namespace AtomicNet
 
         public                      HostHandler(WebHandler.Router router)
         {
+            Throw<ArgumentNullException>.If(router==null, "router");
             this.router = router;
         }
 

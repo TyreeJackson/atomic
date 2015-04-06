@@ -19,7 +19,7 @@ namespace AtomicNet.IIS
 
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         [Obsolete("This constructor is for mocking purposes only.")]
-        internal                            IISHttpRequest() : this(null) {}
+        internal                            IISHttpRequest() : base() {}
 
         public
         override    List<string>            AcceptTypes                             { get { return new List<string>(this.request.AcceptTypes); } }

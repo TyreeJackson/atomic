@@ -8,7 +8,7 @@ namespace AtomicNet.IIS
 {
 
     public
-    sealed  class IISHttpHandler : HostHandler, IHttpAsyncHandler
+    partial class IISHttpHandler : HostHandler, IHttpAsyncHandler
     {
 
         public
@@ -46,9 +46,12 @@ namespace AtomicNet.IIS
 
         bool            IHttpHandler.IsReusable                                     { get { return false; } }
 
-        void            IHttpHandler.ProcessRequest(HttpContext context)            {}
+        void            IHttpHandler.ProcessRequest(HttpContext context)            { throw new InvalidOperationException("This handler must be called asynchronously."); }
 
-        public          IISHttpHandler() : base(new WebHandler.DefaultRouter()) {}
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public          IISHttpHandler() : this(new WebHandler.DefaultRouter())     {}
+
+        internal        IISHttpHandler(WebHandler.Router router) : base(router)     {}
 
         IAsyncResult    IHttpAsyncHandler.BeginProcessRequest
                         (

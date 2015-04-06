@@ -14,33 +14,33 @@ namespace AtomicNet.IIS
         public
         delegate        tComponent                              createComponent<tComponent>(IISHttpContext context);
 
-        private         createComponent<IISHttpApplication>     createHttpApplication               { get; set; }
+        private         createComponent<IISHttpApplication>     createHttpApplication                       { get; set; }
 
         private         IISHttpApplication                      application;
 
-        private         createComponent<IISHttpRequest>         createHttpRequest                   { get; set; }
+        private         createComponent<IISHttpRequest>         createHttpRequest                           { get; set; }
 
         private         IISHttpRequest                          request;
 
-        private         createComponent<IISHttpServerUtility>   createHttpServerUtility             { get; set; }
+        private         createComponent<IISHttpServerUtility>   createHttpServerUtility                     { get; set; }
 
         private         IISHttpServerUtility                    server;
 
-        private         createComponent<IISHttpResponse>        createHttpResponse                  { get; set; }
+        private         createComponent<IISHttpResponse>        createHttpResponse                          { get; set; }
 
         private         IISHttpResponse                         response;
 
-        private         Func<IPrincipal, IISHostPrincipal>      createUser                          { get; set; }
+        private         Func<IPrincipal, IISHostPrincipal>      createUser                                  { get; set; }
 
         private         IISHostPrincipal                        user;
 
-        private         Func<IISHostHandler>                    createHandler                       { get; set; }
+        private         Func<IISHttpHandler>                    createHandler                               { get; set; }
 
-        private         IISHostHandler                          handler                             = null;
+        private         IISHttpHandler                          handler                                     = null;
 
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public
-        override        Exception[]                             AllErrors                           { get { return this.context.AllErrors; } }
+        override        Exception[]                             AllErrors                                   { get { return this.context.AllErrors; } }
 
         public
         override        HostApplication                         ApplicationInstance
@@ -54,7 +54,7 @@ namespace AtomicNet.IIS
 
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public
-        override        Exception                               Error                               { get { return this.context.Error; } }
+        override        Exception                               Error                                       { get { return this.context.Error; } }
 
         public
         override        HostHandler                             Handler
@@ -98,7 +98,7 @@ namespace AtomicNet.IIS
 
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public
-        override        DateTime                                Timestamp                           { get { return this.context.Timestamp; } }
+        override        DateTime                                Timestamp                                   { get { return this.context.Timestamp; } }
 
         public
         override        HostPrincipal                           User
@@ -110,20 +110,44 @@ namespace AtomicNet.IIS
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHttpApplication                      createApplication(IISHttpContext context)   { return new IISHttpApplication(context); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHttpRequest                          createRequest(IISHttpContext context)       { return new IISHttpRequest(context); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHttpServerUtility                    createServerUtility(IISHttpContext context) { return new IISHttpServerUtility(context); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHttpResponse                         createResponse(IISHttpContext context)      { return new IISHttpResponse(context); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHostPrincipal                        createHostUser(IPrincipal user)             { return new IISHostPrincipal(user); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        private
+        static          IISHttpHandler                          createHttpHandler()                         { return new IISHttpHandler(); }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public                                                  IISHttpContext(HttpContext context)
         :
                                                                 this
                                                                 (
                                                                     context, 
-                                                                    iisContext=>new IISHttpApplication(iisContext), 
-                                                                    iisContext=>new IISHttpRequest(iisContext), 
-                                                                    iisContext=>new IISHttpServerUtility(iisContext), 
-                                                                    iisContext=>new IISHttpResponse(iisContext),
-                                                                    user=>new IISHostPrincipal(user),
-                                                                    ()=>new IISHostHandler()
+                                                                    createApplication, 
+                                                                    createRequest, 
+                                                                    createServerUtility, 
+                                                                    createResponse,
+                                                                    createHostUser,
+                                                                    createHttpHandler
                                                                 )
         {
-            Throw<ArgumentNullException>.If(context==null, "context");
         }
 
         internal                                                IISHttpContext
@@ -134,9 +158,10 @@ namespace AtomicNet.IIS
                                                                     createComponent<IISHttpServerUtility>   createHttpServerUtility,
                                                                     createComponent<IISHttpResponse>        createHttpResponse,
                                                                     Func<IPrincipal, IISHostPrincipal>      createUser,
-                                                                    Func<IISHostHandler>                    createHandler
+                                                                    Func<IISHttpHandler>                    createHandler
                                                                 )
         {
+            Throw<ArgumentNullException>.If(context==null, "context");
             this.context                    = context;
             this.createHttpApplication      = createHttpApplication;
             this.createHttpRequest          = createHttpRequest;

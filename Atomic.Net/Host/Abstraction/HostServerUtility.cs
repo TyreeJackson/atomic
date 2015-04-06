@@ -12,13 +12,17 @@ namespace AtomicNet
     {
 
         protected
-        readonly    HostContext             context                             = null;
+        readonly    HostContext             context                 = null;
 
         public              HostServerUtility(HostContext context)
         {
             Throw<ArgumentNullException>.If(context==null, "context");
             this.context    = context;
         }
+
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        [Obsolete("This constructor is for mocking purposes only.")]
+        internal                            HostServerUtility()     {}
 
         //
         // Summary:

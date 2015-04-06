@@ -117,11 +117,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="AtomicNet">
-      <HintPath>..\Atomic.Net\bin\Debug\AtomicNet.dll</HintPath>
+    <Reference Include="Atomic.Net">
+      <HintPath>..\Atomic.Net\bin\Debug\Atomic.Net.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
