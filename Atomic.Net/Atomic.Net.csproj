@@ -103,7 +103,9 @@
     <Compile Include="Host\Loader.cs" />
     <Compile Include="Host\Environment.cs" />
     <Compile Include="Host\IIS\IISHttpRequest.cs" />
-    <Compile Include="Host\IIS\IISHttpHandler.AsyncResult.cs" />
+    <Compile Include="Host\IIS\IISHttpHandler.AsyncResult.cs">
+      <DependentUpon>IISHttpHandler.cs</DependentUpon>
+    </Compile>
     <Compile Include="Host\IIS\IISHttpApplication.cs" />
     <Compile Include="Host\IIS\IISHttpContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
