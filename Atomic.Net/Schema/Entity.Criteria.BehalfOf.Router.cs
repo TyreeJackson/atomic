@@ -1,35 +1,21 @@
-﻿using NotImplementedException   = System.NotImplementedException;
-using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
+﻿using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
 using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
+{   partial class   Entity<tEntity, tCriteria, tModification, tSelection>
+{   partial class   EntityCriteria
 {
 
-    partial class   Entity
-                    <
-                        tCriteria,
-                        tModification,
-                        tSelection
-                    >
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public  class   BehalfOfRouter : Atom<BehalfOfRouter>
     {
 
-    partial class   EntityCriteria
-    {
+        private tCriteria   criteria;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public  class   BehalfOfRouter : Atom<BehalfOfRouter>
-        {
+        internal            BehalfOfRouter(tCriteria criteria) { this.criteria = criteria; }
 
-            private tCriteria   criteria;
-
-            internal            BehalfOfRouter(tCriteria criteria) { this.criteria = criteria; }
-
-            public  tCriteria   Where                              { get { return this.criteria; } }
-
-        }
+        public  tCriteria   Where                              { get { return this.criteria; } }
 
     }
 
-    }
-
-}
+}}}

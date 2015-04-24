@@ -1,8 +1,6 @@
-﻿using System;
-using AtomicNet;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AtomicNetTests
+namespace AtomicNet.tests
 {
 
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]

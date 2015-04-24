@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Web;
-using AtomicNet;
 
 namespace AtomicNet.IIS
 {

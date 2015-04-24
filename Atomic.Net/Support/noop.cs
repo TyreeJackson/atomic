@@ -1,6 +1,4 @@
-﻿using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
     public  sealed  class   noop { private noop(){} }

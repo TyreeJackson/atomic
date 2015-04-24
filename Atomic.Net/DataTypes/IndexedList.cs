@@ -1,5 +1,4 @@
-﻿using AtomicNet;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace AtomicNet
@@ -7,10 +6,9 @@ namespace AtomicNet
 
     public
     abstract
-    partial
-    class       IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>  : Atom<tIndexedList>, IList<tIndexedItem>, IXmlSerializable
-    where       tIndexedList                                            : IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
-    where       tIndexKeyType                                           : System.IEquatable<tIndexKeyType>
+    partial     class       IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>  : Atom<tIndexedList>, IList<tIndexedItem>, IXmlSerializable
+                where       tIndexedList                                            : IndexedList<tIndexedList, tIndexKeyType, tIndexedItem>
+                where       tIndexKeyType                                           : System.IEquatable<tIndexKeyType>
     {
 
         private

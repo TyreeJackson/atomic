@@ -3,38 +3,21 @@ using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute
 using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
+{   partial class   Entity<tEntity, tCriteria, tModification, tSelection>
+{   partial class   EntityCriteria
+{   partial class   CommonOps<t>
 {
 
-    partial class   Entity
-                    <
-                        tCriteria,
-                        tModification,
-                        tSelection
-                    >
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public  class   IsEqualOp : Atom<IsEqualOp>
     {
-
-    partial class   EntityCriteria
-    {
-
-    partial class   CommonOps<t>
-    {
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public  class   IsEqualOp : Atom<IsEqualOp>
-        {
                     
-            private     tCriteria           criteria;
+        private     tCriteria           criteria;
 
-            internal                        IsEqualOp(tCriteria criteria)   { this.criteria = criteria; }
+        internal                        IsEqualOp(tCriteria criteria)   { this.criteria = criteria; }
 
-            public      ConjunctionRouter   this[t value]                   { get { throw new NotImplementedException(); } }
-
-        }
+        public      ConjunctionRouter   this[t value]                   { get { throw new NotImplementedException(); } }
 
     }
 
-    }
-
-    }
-
-}
+}}}}

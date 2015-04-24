@@ -1,12 +1,14 @@
-﻿using AtomicNet;
-using Generic = System.Collections.Generic;
+﻿using Generic = System.Collections.Generic;
 
 namespace AtomicNet
 {
 
-    public
-    class   SubclassableEnum<tSubclassableEnum, tNaturalType>
-    where   tSubclassableEnum                                   : SubclassableEnum<tSubclassableEnum, tNaturalType>
+    public  class   SubclassableEnum
+                    <
+                        tSubclassableEnum, 
+                        tNaturalType
+                    >
+            where   tSubclassableEnum   : SubclassableEnum<tSubclassableEnum, tNaturalType>
     {
 
         private

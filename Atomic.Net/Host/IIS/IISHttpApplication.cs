@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Web;
-using AtomicNet;
 
 namespace AtomicNet.IIS
 {

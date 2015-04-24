@@ -1,5 +1,4 @@
-﻿using NotImplementedException   = System.NotImplementedException;
-using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
+﻿using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
 using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
 
 namespace AtomicNet
@@ -15,11 +14,15 @@ namespace AtomicNet
     public
     partial class   Entity
                     <
+                        tEntity,
                         tCriteria,
                         tModification,
                         tSelection
                     >
-            where   tCriteria   : Entity<tCriteria, tModification, tSelection>.EntityCriteria
+    :
+                    Entity
+            where   tEntity     : Entity<tEntity, tCriteria, tModification, tSelection>
+            where   tCriteria   : Entity<tEntity, tCriteria, tModification, tSelection>.EntityCriteria
     {
     }
 
@@ -51,7 +54,7 @@ namespace AtomicNet
                         tLastUpdatedByIdCriteriaOps
                     >
     :
-                    Entity<tCriteria, tModification, tSelection>
+                    Entity<tEntity, tCriteria, tModification, tSelection>
             where   tEntity                         : Entity<tEntity, tHooks, tPrefetch, tProperties, tDataObject, tDataObjectList, tCriteria, tOrderBySelection, tModification, tSelection, tPropertySelection, tIndexSelection, tBusiness, tDataAccess, tLanguage, tCreatedByCriteriaOps, tCreatedByIdCriteriaOps, tCreationDateTimeCriteriaOps, tIdCriteriaOps, tLastUpdateDateTimeCriteriaOps, tLastUpdatedByCriteriaOps, tLastUpdatedByIdCriteriaOps>
             where   tHooks                          : Entity<tEntity, tHooks, tPrefetch, tProperties, tDataObject, tDataObjectList, tCriteria, tOrderBySelection, tModification, tSelection, tPropertySelection, tIndexSelection, tBusiness, tDataAccess, tLanguage, tCreatedByCriteriaOps, tCreatedByIdCriteriaOps, tCreationDateTimeCriteriaOps, tIdCriteriaOps, tLastUpdateDateTimeCriteriaOps, tLastUpdatedByCriteriaOps, tLastUpdatedByIdCriteriaOps>.EntityHooks, new()
             where   tPrefetch                       : Entity<tEntity, tHooks, tPrefetch, tProperties, tDataObject, tDataObjectList, tCriteria, tOrderBySelection, tModification, tSelection, tPropertySelection, tIndexSelection, tBusiness, tDataAccess, tLanguage, tCreatedByCriteriaOps, tCreatedByIdCriteriaOps, tCreationDateTimeCriteriaOps, tIdCriteriaOps, tLastUpdateDateTimeCriteriaOps, tLastUpdatedByCriteriaOps, tLastUpdatedByIdCriteriaOps>.EntityPrefetch

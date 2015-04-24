@@ -1,6 +1,4 @@
-﻿using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
     using IComparable                   = System.IComparable;

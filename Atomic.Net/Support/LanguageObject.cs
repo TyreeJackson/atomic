@@ -1,7 +1,6 @@
 ﻿using System;
 using EditorBrowsableAttribute  = System.ComponentModel.EditorBrowsableAttribute;
 using EditorBrowsableState      = System.ComponentModel.EditorBrowsableState;
-using AtomicNet;
 
 namespace AtomicNet
 {

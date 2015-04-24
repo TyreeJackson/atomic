@@ -1,13 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Web;
-using AtomicNet;
 using AtomicNet.IIS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace AtomicNetTests
+namespace AtomicNet.tests
 {
 
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]

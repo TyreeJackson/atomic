@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
     public

@@ -1,11 +1,8 @@
-﻿using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
-    public
-    class   StringIntegerEnum<tStringIntegerEnum>   : IntegerEnum<tStringIntegerEnum>
-    where   tStringIntegerEnum                      : StringIntegerEnum<tStringIntegerEnum>
+    public  class   StringIntegerEnum<tStringIntegerEnum>   : IntegerEnum<tStringIntegerEnum>
+            where   tStringIntegerEnum                      : StringIntegerEnum<tStringIntegerEnum>
     {
 
         private

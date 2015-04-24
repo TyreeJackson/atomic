@@ -1,6 +1,4 @@
-﻿using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
     public  class   IfIts : IntegerEnum<IfIts>

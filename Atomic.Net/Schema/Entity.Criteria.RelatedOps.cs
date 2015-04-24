@@ -8,13 +8,11 @@ namespace AtomicNet
     [EditorBrowsable(EditorBrowsableState.Never)]
     public  delegate    tRelatedCriteria    RelatedCriteriaQuery<tRelatedCriteria>(tRelatedCriteria relatedCriteria);
 
-    partial class   Entity
-                    <
-                        tCriteria,
-                        tModification,
-                        tSelection
-                    >
-    {
+}
+
+namespace AtomicNet
+{   partial class   Entity<tEntity, tCriteria, tModification, tSelection>
+{
 
     partial class   EntityCriteria
     {
@@ -40,6 +38,4 @@ namespace AtomicNet
 
     }
 
-    }
-
-}
+}}

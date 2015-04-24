@@ -1,10 +1,7 @@
-﻿using AtomicNet;
-
-namespace AtomicNet
+﻿namespace AtomicNet
 {
 
-    public
-    class   HttpStatusCodes : StringIntegerEnum<HttpStatusCodes>
+    public  class   HttpStatusCodes : StringIntegerEnum<HttpStatusCodes>
     {
 
         /// <summary>
@@ -124,6 +121,14 @@ namespace AtomicNet
         public
         static
         readonly    HttpStatusCodes Success_IMUsed                      = new HttpStatusCodes(226, "IM Used");
+
+        /// <summary>
+        /// The resource is undergoing an active process and it's content may be changing at various intervals.
+        /// The resource will return 200 or another status code once it has deactivated.
+        /// </summary>
+        public
+        static
+        readonly    HttpStatusCodes Success_Activated                   = new HttpStatusCodes(227, "Activated");
 
         /// <summary>
         /// Indicates multiple options for the resource that the client may follow. 

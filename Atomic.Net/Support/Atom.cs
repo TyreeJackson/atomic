@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Reflection.Emit;
 
 namespace AtomicNet
 {
@@ -9,26 +8,36 @@ namespace AtomicNet
     abstract    class   Atom
     {
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public      override    bool    Equals(object obj)                          { return base.Equals(obj); }
+        protected
+        static      readonly    undefined   undefined   = undefined.value;
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public      override    int     GetHashCode()                               { return base.GetHashCode(); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      override    bool        Equals(object obj)                          { return base.Equals(obj); }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public      override    string  ToString()                                  { return base.ToString(); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      override    int         GetHashCode()                               { return base.GetHashCode(); }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public      new         Type    GetType()                                   { return base.GetType(); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      override    string      ToString()                                  { return base.ToString(); }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        protected   new         object  MemberwiseClone()                           { return base.MemberwiseClone(); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      new         Type        GetType()                                   { return base.GetType(); }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public      new static  bool    Equals(object objA, object objB)            { return Object.Equals(objA, objB); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        protected   new         object      MemberwiseClone()                           { return base.MemberwiseClone(); }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public      new static  bool    ReferenceEquals(object objA, object objB)   { return Object.ReferenceEquals(objA, objB); }
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      new static  bool        Equals(object objA, object objB)            { return Object.Equals(objA, objB); }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public      new static  bool        ReferenceEquals(object objA, object objB)   { return Object.ReferenceEquals(objA, objB); }
 
     }
 
@@ -37,20 +46,15 @@ namespace AtomicNet
     :
                         Atom 
 
-                where   tAtom   : Atom<tAtom> {}
-
-    public
-    abstract    class   DIAtom<tAtom, tHooks>
-    :
-                        Atom 
-                where   tAtom   : DIAtom<tAtom, tHooks>
-                where   tHooks  : DIAtom<tAtom, tHooks>.BaseHooks
+                where   tAtom   : Atom<tAtom>
     {
 
-        public
-        abstract    class   BaseHooks {}
-
-        protected           DIAtom() {}
+        protected
+        new         class   InjectionSpace<T>
+        {
+            public  static  T       defaultValue;
+            public  static  Func<T> defaultFactoryMethod;
+        }
 
     }
 
