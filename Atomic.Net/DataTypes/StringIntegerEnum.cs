@@ -1,4 +1,6 @@
-﻿namespace AtomicNet
+﻿using Generic = System.Collections.Generic;
+
+namespace AtomicNet
 {
 
     public  class   StringIntegerEnum<tStringIntegerEnum>   : IntegerEnum<tStringIntegerEnum>
@@ -22,6 +24,19 @@
 
             allValuesByStringValue.Add(secondaryNaturalValue, (tStringIntegerEnum) this);
             this.secondaryNaturalValue  = secondaryNaturalValue;
+        }
+
+        public static implicit operator string(StringIntegerEnum<tStringIntegerEnum> value)
+        {
+            return value != null ? value.secondaryNaturalValue : null;
+        }
+
+        public static Generic.List<string> AllStringValues
+        {
+            get
+            {
+                return allValuesByStringValue.Values.ConvertToList(a => a.secondaryNaturalValue);
+            }
         }
 
     }

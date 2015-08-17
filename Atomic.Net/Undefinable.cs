@@ -9,8 +9,6 @@ namespace AtomicNet
         static
         readonly    undefined   value;
 
-        public                  undefined() {}
-
         public
         static      bool    operator ==(undefined undefined1, undefined undefined2)  { return true; }
 
@@ -26,12 +24,6 @@ namespace AtomicNet
         public      bool    IsDefined   { get { return this.isDefined; } }
         private     T       value;
         public      T       Value       { get { if (!this.isDefined) throw new UndefinedException(); return value; } }
-
-        public              Undefinable()
-        {
-            this.isDefined  = false;
-            this.value      = default(T);
-        }
 
         private             Undefinable(T value)
         {
