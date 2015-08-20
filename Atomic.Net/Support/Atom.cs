@@ -48,14 +48,6 @@ namespace AtomicNet
 
                 where   tAtom   : Atom<tAtom>
     {
-
-        protected
-        new         class   InjectionSpace<T>
-        {
-            public  static  T       defaultValue;
-            public  static  Func<T> defaultFactoryMethod;
-        }
-
     }
 
 }

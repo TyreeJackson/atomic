@@ -21,11 +21,11 @@ namespace AtomicNet
             if (!this.TransmitRequestedFileIfItExists())
             if (!this.TransmitDefaultDocumentInIndexIfItExists())
             if (!this.TransmitVirtualizedFileIfItExists())
-            await this.RespondWithNotFound();
+            this.RespondWithNotFound();
+            this.Context.Response.End();
         }
 
-        private 
-        async       Task                    RespondWithNotFound()
+        private     void                    RespondWithNotFound()
         {
             this.Context.Response.StatusCode        = HttpStatusCodes.ClientError_NotFound;
             this.Context.Response.StatusDescription = "Not found";

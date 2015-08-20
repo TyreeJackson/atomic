@@ -195,7 +195,6 @@
     </Compile>
     <Compile Include="Schema\TransactionGroup.cs" />
     <Compile Include="StandardWebServices\Main.cs" />
-    <Compile Include="Support\Composer.cs" />
     <Compile Include="Support\Atom.cs" />
     <Compile Include="Support\LanguageObject.cs" />
     <Compile Include="Support\noop.cs" />
