@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.22609.0
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Net", "Atomic.Net\Atomic.Net.csproj", "{DA5F270E-0A55-461F-B975-2D4C56599F3E}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atomic.Net.Tests", "Atomic.Net.Tests\Atomic.Net.Tests.csproj", "{1BE4659A-7831-48F1-BD92-45D93160E6C2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{720F0941-7C18-4B81-A3E9-1245A10E13A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicJS", "AtomicJS\AtomicJS.csproj", "{45E40558-5703-4CE0-91A7-801CF280E20F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,10 @@ Global
 		{1BE4659A-7831-48F1-BD92-45D93160E6C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BE4659A-7831-48F1-BD92-45D93160E6C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BE4659A-7831-48F1-BD92-45D93160E6C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45E40558-5703-4CE0-91A7-801CF280E20F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45E40558-5703-4CE0-91A7-801CF280E20F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45E40558-5703-4CE0-91A7-801CF280E20F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45E40558-5703-4CE0-91A7-801CF280E20F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
