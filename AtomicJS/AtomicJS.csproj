@@ -66,11 +66,26 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rdparty\aja.min.js" />
-    <Content Include="index.html" />
-    <Content Include="scripts\utilities.js" />
-    <Content Include="scripts\viewAdapterParameterInitializers.js" />
-    <Content Include="scripts\modules.js" />
-    <Content Include="scripts\viewMemberAdapters.js" />
+    <Content Include="todoMVC\controllers\appController.js" />
+    <Content Include="todoMVC\index.js">
+      <DependentUpon>index.html</DependentUpon>
+    </Content>
+    <Content Include="todoMVC\node_modules\todomvc-app-css\index.css" />
+    <Content Include="todoMVC\node_modules\todomvc-common\base.css" />
+    <Content Include="todoMVC\node_modules\todomvc-common\base.js" />
+    <Content Include="todoMVC\proxies\appProtoProxy.js" />
+    <Content Include="todoMVC\proxies\appProxy.js" />
+    <Content Include="todoMVC\views\appView.js" />
+    <Content Include="todoMVC\index.css">
+      <DependentUpon>index.html</DependentUpon>
+    </Content>
+    <Content Include="todoMVC\index.html" />
+    <Content Include="atomic\scripts\namespaces.js" />
+    <Content Include="atomic\scripts\utilities.js" />
+    <Content Include="atomic\scripts\viewAdapterFactory.js" />
+    <Content Include="atomic\scripts\initializeViewAdapter.js" />
+    <Content Include="atomic\scripts\references.js" />
+    <Content Include="atomic\scripts\attachViewMemberAdapters.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>

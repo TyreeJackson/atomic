@@ -5,7 +5,8 @@ namespace AtomicNet.REST
 {   partial class   Resource
 {
 
-    public  class   Entity : Property
+    public
+    abstract    class   Entity : Property
     {
 
         public  List<Property>  properties;

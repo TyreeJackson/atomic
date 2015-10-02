@@ -8,11 +8,13 @@ namespace AtomicNet.REST
     public
     abstract    class   Property : Atom
     {
-        public  string  type    { get; }
-        public  List<Action>    actions;
+        public
+        abstract    string          type    { get; }
+        public      List<Action>    actions;
     }
 
-    public      class   Property<T> : Property
+    public
+    abstract    class   Property<T> : Property
     {
         public  T               value;
     }
