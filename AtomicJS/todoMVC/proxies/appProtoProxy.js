@@ -46,7 +46,7 @@
                     var todos   = getTodos();
                     todo.id     = todos.currentId++;
                     todos.items.push(todo);
-                    setTodos(todos)
+                    setTodos(todos);
                     callback(todos.items);
                 },
                 completeTodo:
@@ -56,14 +56,23 @@
                     var todo    = getTodo(todoId, todos);
                     todo.completed  = true;
                     setTodo(todo, todos);
-                    setTodos(todos)
+                    setTodos(todos);
+                    callback(todos.items);
+                },
+                deleteCompletedTodos:
+                function(callback)
+                {
+                    var todos   = getTodos();
+                    for(var itemCounter=todos.items.length-1;itemCounter>=0;itemCounter--)
+                    if (todos.items[itemCounter].completed === true)    removeFromArray(todos.items, itemCounter);
+                    setTodos(todos);
                     callback(todos.items);
                 },
                 deleteTodo:
                 function(todoId, callback)
                 {
                     var todos   = removeTodo(todoId);
-                    setTodos(todos)
+                    setTodos(todos);
                     callback(todos.items);
                 },
                 saveTodo:
@@ -71,7 +80,7 @@
                 {
                     var todos   = getTodos();
                     setTodo(todo, todos);
-                    setTodos(todos)
+                    setTodos(todos);
                     callback(todos.items);
                 },
                 saveTodos:
@@ -79,8 +88,16 @@
                 {
                     var storedTodos = getTodos();
                     for(var todoCounter=0;todoCounter<todosToSave.length;todoCounter++) setTodo(todosToSave[todoCounter], storedTodos);
-                    setTodos(storedTodos)
+                    setTodos(storedTodos);
                     callback(storedTodos.items);
+                },
+                toggleAllTodos:
+                function(value, callback)
+                {
+                    var todos   = getTodos();
+                    for(var todoCounter=0;todoCounter<todos.items.length;todoCounter++)   todos.items[todoCounter].completed  = value;;
+                    setTodos(todos);
+                    callback(todos.items);
                 }
             };
         }

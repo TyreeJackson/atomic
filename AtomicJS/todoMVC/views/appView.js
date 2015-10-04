@@ -57,7 +57,8 @@
                                 todosCountDescription:  { bindAs: function(todos){return todos.length == 0 || todos.length > 1 ? " items left" : " item left";} },
                                 allTodosLink:           { onclick: function(){appViewAdapter.attribute("filter", "none");} },
                                 activeTodosLink:        { onclick: function(){appViewAdapter.attribute("filter", "active");} },
-                                completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} }
+                                completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} },
+                                deleteCompletedTodos:   { onclick: function(){appViewAdapter.on.deleteCompletedTodos();} },
                             },
                             hidden: true,
                             onbind: function(data)
@@ -66,7 +67,7 @@
                             }
                         }
                     },
-                    events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted"]
+                    events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted", "deleteCompletedTodos"]
                 };
             }
         }

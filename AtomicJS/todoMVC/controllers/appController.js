@@ -30,9 +30,12 @@
             appView.on.toggleAllCompleted.listen
             (function(value)
             {
-                var todos   = todosObserver();
-                for(var todoCounter=0;todoCounter<todos.length;todoCounter++)   todos[todoCounter].completed  = value;;
-                appProxy.saveTodos(todos, function(refreshedTodos){rebindTodoList(refreshedTodos);});
+                appProxy.toggleAllTodos(value, function(refreshedTodos){rebindTodoList(refreshedTodos);});
+            });
+            appView.on.deleteCompletedTodos.listen
+            (function()
+            {
+                appProxy.deleteCompletedTodos(function(refreshedTodos){rebindTodoList(refreshedTodos);});
             });
             this.launch =
             function()
