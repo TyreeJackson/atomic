@@ -8,7 +8,7 @@
             var initializers    =
             {
                 onenter:    function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) callback.call(viewAdapter); }, false); },
-                onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==27) callback.call(viewAdapter); }, false); },
+                onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) callback.call(viewAdapter); }, false); },
                 hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
             };
             each(["bindAs", "bindSource", "bindTo", "onbind", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });

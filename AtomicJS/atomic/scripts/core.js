@@ -180,6 +180,7 @@
                 var propertyKeys    = [];
                 var updating        = null;
                 var backup;
+                var rollingback     = false;
 
                 function notifyPropertyListener(propertyKey, listener)
                 {
@@ -203,6 +204,7 @@
                         if (updating !== null && pathSegments.length > 0)   addProperties(updating.properties, pathSegments);
                         return navDataPath(item, pathSegments);
                     }
+                    if (rollingback)    return;
                     navDataPath(item, pathSegments, value);
                     var revisedPath = getFullPath(pathSegments);
                     notifyPropertyListeners.call(observable, revisedPath, value);
@@ -233,9 +235,11 @@
                 observable.rollback         =
                 function()
                 {
-                    item    = backup;
+                    rollingback = true;
+                    item        = backup;
                     delete backup;
                     notifyPropertyListeners.call(observable, "", item);
+                    rollingback = false;
                 }
                 return observable;
             };
