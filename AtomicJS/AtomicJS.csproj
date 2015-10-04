@@ -85,7 +85,7 @@
     <Content Include="atomic\scripts\viewAdapterFactory.js" />
     <Content Include="atomic\scripts\initializeViewAdapter.js" />
     <Content Include="atomic\scripts\references.js" />
-    <Content Include="atomic\scripts\attachViewMemberAdapters.js" />
+    <Content Include="atomic\scripts\htmlAttachViewMemberAdapters.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>

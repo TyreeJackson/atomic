@@ -10,13 +10,13 @@
             function setTodos(todos) { localStorage.setItem(storageKey, JSON.stringify(todos)); }
             function getTodo(todoId, todos)
             {
-                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter)
-                if (todos.items[itemCounter].Id == todoId) return todos.items[itemCounter];
+                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter++)
+                if (todos.items[itemCounter].id == todoId) return todos.items[itemCounter];
             }
             function setTodo(todo, todos)
             {
-                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter)
-                if (todos.items[itemCounter].Id == todo.Id)
+                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter++)
+                if (todos.items[itemCounter].id == todo.id)
                 {
                     todos.items[itemCounter] = todo;
                     return;
@@ -26,8 +26,8 @@
             function removeTodo(todoId)
             {
                 var todos   = getTodos();
-                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter)
-                if (todos.items[itemCounter].Id == todoId)
+                for(var itemCounter=0;itemCounter<todos.items.length;itemCounter++)
+                if (todos.items[itemCounter].id == todoId)
                 {
                     removeFromArray(todos.items, itemCounter);
                     break;
@@ -35,19 +35,19 @@
                 return todos;
             }
      return {
-                loadTodos:
+                getTodos:
                 function(callback)
                 {
-                    callback(localStorage.getItem(storageKey).items);
+                    callback(getTodos().items);
                 },
                 addTodo:
                 function(todo, callback)
                 {
                     var todos   = getTodos();
-                    todo.Id     = todos.currentId++;
+                    todo.id     = todos.currentId++;
                     todos.items.push(todo);
                     setTodos(todos)
-                    callback(todos);
+                    callback(todos.items);
                 },
                 completeTodo:
                 function(todoId, callback)
@@ -57,14 +57,14 @@
                     todo.completed  = true;
                     setTodo(todo, todos);
                     setTodos(todos)
-                    callback(todos);
+                    callback(todos.items);
                 },
                 deleteTodo:
                 function(todoId, callback)
                 {
                     var todos   = removeTodo(todoId);
                     setTodos(todos)
-                    callback(todos);
+                    callback(todos.items);
                 }
             };
         }

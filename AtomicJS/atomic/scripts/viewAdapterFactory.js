@@ -2,10 +2,23 @@
 {
     root.define
     (
-        "atomic.viewAdapterFactorySupport",
-        function(attachViewMemberAdapters, initializeViewAdapter, querySelector, pubSub)
+        "atomic.htmlViewAdapterFactorySupport",
+        function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub)
         {
-     return {
+            var querySelector       =
+            function(uiElement, selector)
+            {
+                var element = uiElement.querySelector(selector);
+                if (element === null)   throw new Error("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
+                element.removeAttribute("id");
+                return element;
+            };
+            function removeAllElementChildren(element)
+            {
+                while(element.lastChild)    element.removeChild(element.lastChild);
+            }
+            var internalFunctions   =
+            {
                 addEvents:
                 function(viewAdapter, eventNames)
                 {
@@ -21,15 +34,50 @@
                 attachControls:
                 function (viewAdapter, controlDeclarations, viewElement)
                 {
+                    if (controlDeclarations === undefined)  return;
                     viewAdapter.__controlKeys   = [];
                     viewAdapter.controls        = {};
                     for(var controlKey in controlDeclarations)
                     {
                         viewAdapter.__controlKeys.push(controlKey);
-                        var controlDeclaration              = controlDeclarations[controlKey];
-                        viewAdapter.controls[controlKey]    = this.create(controlDeclaration.viewAdapter||function(){ return controlDeclaration; }, querySelector(viewElement, (controlDeclaration.selector||("#"+controlKey))));
-                        initializeViewAdapter(viewAdapter.controls[controlKey], controlDeclaration)
+                        viewAdapter.controls[controlKey] = this.createControl(controlDeclarations[controlKey], querySelector(viewElement, (controlDeclarations[controlKey].selector||("#"+controlKey))));
                     }
+                },
+                createControl:
+                function(controlDeclaration, controlElement)
+                {
+                    var control = this.create(controlDeclaration.viewAdapter||function(){ return controlDeclaration; }, controlElement);
+                    initializeViewAdapter(control, controlDeclaration);
+                    return control;
+                },
+                extractDeferredControls:
+                function(viewAdapter, templateDeclarations, viewElement)
+                {
+                    if (templateDeclarations === undefined) return;
+                    viewAdapter.__templateKeys          = [];
+                    viewAdapter.__templateElements      = {};
+                    viewAdapter.__createTemplateCopy    =
+                    function(templateKey)
+                    {
+                        var templateElement = this.__templateElements[templateKey];
+                        return { getKey: templateElement.declaration.getKey, parent: templateElement.parent, control: internalFunctions.createControl(templateElement.declaration, templateElement.element.cloneNode(true)) };
+                    };
+                    for(var templateKey in templateDeclarations)
+                    {
+                        viewAdapter.__templateKeys.push(templateKey);
+                        var templateDeclaration                         = templateDeclarations[templateKey];
+                        var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)));
+                        var templateElementParent                       = templateElement.parentNode;
+                        templateElementParent.removeChild(templateElement);
+                        viewAdapter.__templateElements[templateKey]     =
+                        {
+                            parent:         templateElementParent,
+                            declaration:    templateDeclaration,
+                            element:        templateElement
+                        };
+                    }
+                    for(var templateKey in templateDeclarations)
+                    removeAllElementChildren(viewAdapter.__templateElements[templateKey].parent);
                 },
                 create:
                 function createViewAdapter(viewAdapterDefinitionConstructor, viewElement)
@@ -37,6 +85,7 @@
                     var viewAdapter             = {__element: viewElement};
                     var viewAdapterDefinition   = new viewAdapterDefinitionConstructor(viewAdapter);
                     this.attachControls(viewAdapter, viewAdapterDefinition.controls, viewElement);
+                    this.extractDeferredControls(viewAdapter, viewAdapterDefinition.repeat, viewElement);
                     attachViewMemberAdapters(viewAdapter);
                     this.addEvents(viewAdapter, viewAdapterDefinition.events);
                     this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
@@ -44,6 +93,7 @@
                     return viewAdapter;
                 }
             };
+            return internalFunctions;
         }
     );
     root.define

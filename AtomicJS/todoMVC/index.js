@@ -3,20 +3,20 @@
     window.onload   =
     function ComposeApp()
     {
-        var querySelector       = function(uiElement, selector){ return uiElement.querySelector(selector); };
         var viewAdapterFactory  =
         new root.atomic.viewAdapterFactory
         (
-            new root.atomic.viewAdapterFactorySupport
+            new root.atomic.htmlViewAdapterFactorySupport
             (
-                new root.atomic.attachViewMemberAdapters
+                document,
+                new root.atomic.htmlAttachViewMemberAdapters
                 (
+                    document,
                     root.utilities.removeItemFromArray, 
                     window.setTimeout, 
                     window.clearTimeout
                 ),
                 new root.atomic.initializeViewAdapter(root.utilities.each),
-                querySelector,
                 root.utilities.pubSub
             )
         );
@@ -29,15 +29,10 @@
                 (
                 
                 ), 
-                querySelector(document, "#todoMVCApp")
+                document.querySelector("#todoMVCApp")
             ),
-            new root.todoMVC.appProxy(window.localStorage)
+            new root.todoMVC.appProxy(window.localStorage, root.utilities.removeFromArray)
         );
-        
-        //var app = new root.demo.app
-        //(
-        //    viewAdapterFactory.createView(root.demo.app.views.appView, document.body),
-        //    new root.demo.app.proxy(aja)
-        //);
+        app.launch();
     };
 }();
