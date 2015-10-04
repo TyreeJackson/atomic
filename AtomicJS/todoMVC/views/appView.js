@@ -51,7 +51,19 @@
                         },
                         todosFooter:
                         {
-                            hidden: true
+                            controls:
+                            {
+                                todosCountLabel:        { bindAs: function(todos){return todos.length;} },
+                                todosCountDescription:  { bindAs: function(todos){return todos.length == 0 || todos.length > 1 ? " items left" : " item left";} },
+                                allTodosLink:           { onclick: function(){appViewAdapter.attribute("filter", "none");} },
+                                activeTodosLink:        { onclick: function(){appViewAdapter.attribute("filter", "active");} },
+                                completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} }
+                            },
+                            hidden: true,
+                            onbind: function(data)
+                            {
+                                this.toggleDisplay(data().length>0);
+                            }
                         }
                     },
                     events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted"]

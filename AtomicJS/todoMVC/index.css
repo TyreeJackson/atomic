@@ -1,2 +1,3 @@
-﻿body {
-}
+﻿.todoapp[data-filter="active"] .todo-list li.completed { display: none; }
+.todoapp[data-filter="completed"] .todo-list li { display: none; }
+.todoapp[data-filter="completed"] .todo-list li.completed { display: inline-block; }

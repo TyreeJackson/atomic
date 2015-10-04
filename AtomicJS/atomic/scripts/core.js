@@ -133,25 +133,25 @@
                     {
                         var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
                         pathSegment     = pathSegment.substring(0, bracket);
-                        returnSegments.push({type:1, value: pathSegment});
+                        if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
                         extractArrayPathSegmentsInto(subSegments, returnSegments, path);
                     }
-                    else    returnSegments.push({type:0, value: pathSegment});
+                    else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
                 }
                 return returnSegments;
             }
             function getFullPath(paths)
             {
-                if (paths.length <= 1) return root;
+                if (paths.length == 0) return root;
                 var path    = paths[0].value;
-                for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
+                for(var pathCounter=0;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
                 return path;
             }
             function navDataPath(root, paths, value)
             {
-                if (paths.length <= 1) return root;
+                if (paths.length == 0) return root;
                 var current     = root;
-                for(var pathCounter=1;pathCounter<paths.length-1;pathCounter++)
+                for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
                 {
                     var path    = paths[pathCounter];
                     if (current[path.value] === undefined)    current[path.value]   = path.type===0?{}:[];
@@ -199,7 +199,7 @@
                     var pathSegments    = extractPathSegments(path||"");
                     if (value === undefined)
                     {
-                        if (updating !== null)      addProperties(updating.properties, pathSegments);
+                        if (updating !== null && pathSegments.length > 0)   addProperties(updating.properties, pathSegments);
                         return navDataPath(item, pathSegments);
                     }
                     navDataPath(item, pathSegments, value);

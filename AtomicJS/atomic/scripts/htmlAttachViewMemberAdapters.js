@@ -61,11 +61,15 @@
                 {
                     this.boundItem          = observer;
                     this.bindPath           = getFullPath(bindPath, this.__bindTo);
-                    if (this.bindPath !== undefined)
+                    if (this.bindPath !== undefined || this.__bindAs)
                     {
-                        this.__bindListener     = (function(item){this.value(item(this.bindPath), true);}).bind(this);
-                        this.__inputListener    = (function(){observer(this.bindPath, this.value());}).bind(this);
-                        this.addEventListener("change", this.__inputListener, false, true);
+                        if(this.__bindAs)   this.__bindListener     = (function(item){this.value(this.__bindAs(item(this.bindPath)), true);}).bind(this);
+                        else
+                        {
+                            this.__bindListener     = (function(item){this.value(item(this.bindPath), true);}).bind(this);
+                            this.__inputListener    = (function(){observer(this.bindPath, this.value());}).bind(this);
+                            this.addEventListener("change", this.__inputListener, false, true);
+                        }
                         observer.listen(this.__bindListener);
                     }
                     notifyOnbind.call(this, observer);
@@ -202,6 +206,12 @@
                 viewAdapter.addClass            = function(className){ addClass(this.__element, className); }
                 viewAdapter.addEventListener    = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); };
                 viewAdapter.appendControl       = function(childControl){ this.__element.appendChild(childControl.__element); };
+                viewAdapter.attribute           =
+                function(attributeName, value)
+                {
+                    if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
+                    else                        this.__element.setAttribute("data-" + attributeName, value);
+                };
                 viewAdapter.bindSource          = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
                 viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
                 viewAdapter.blur                = function(){this.__element.blur(); }
