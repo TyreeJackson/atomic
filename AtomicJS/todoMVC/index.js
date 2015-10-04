@@ -31,7 +31,8 @@
                 ), 
                 document.querySelector("#todoMVCApp")
             ),
-            new root.todoMVC.appProxy(window.localStorage, root.utilities.removeFromArray)
+            new root.todoMVC.appProxy(window.localStorage, root.utilities.removeFromArray),
+            new root.atomic.observer(root.utilities.removeFromArray)
         );
         app.launch();
     };

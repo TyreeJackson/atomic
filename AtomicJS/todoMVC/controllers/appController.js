@@ -3,11 +3,14 @@
     root.define
     (
         "todoMVC.appController",
-        function todoMVCAppController(appView, appProxy)
+        function todoMVCAppController(appView, appProxy, observer)
         {
+            var todosObserver;
             function rebindTodoList(todos)
             {
-                appView.bindData(todos);
+                todosObserver   = new observer(todos);
+                appView.unbindData();
+                appView.bindData(todosObserver);
             }
             appView.on.addNewTodo.listen
             (function(value)
@@ -18,6 +21,11 @@
             (function(value)
             {
                 appProxy.deleteTodo(value, function(todos){rebindTodoList(todos);});
+            });
+            appView.on.saveTodo.listen
+            (function(todo)
+            {
+                appProxy.saveTodo(todo, function(todos){rebindTodoList(todos);});
             });
             this.launch =
             function()

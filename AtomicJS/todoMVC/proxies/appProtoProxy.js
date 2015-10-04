@@ -59,6 +59,14 @@
                     setTodos(todos)
                     callback(todos.items);
                 },
+                saveTodo:
+                function(todo, callback)
+                {
+                    var todos   = getTodos();
+                    setTodo(todo, todos);
+                    setTodos(todos)
+                    callback(todos.items);
+                },
                 deleteTodo:
                 function(todoId, callback)
                 {

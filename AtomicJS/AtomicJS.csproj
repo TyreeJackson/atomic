@@ -82,7 +82,7 @@
     <Content Include="todoMVC\index.html" />
     <Content Include="atomic\scripts\namespaces.js" />
     <Content Include="atomic\scripts\utilities.js" />
-    <Content Include="atomic\scripts\viewAdapterFactory.js" />
+    <Content Include="atomic\scripts\core.js" />
     <Content Include="atomic\scripts\initializeViewAdapter.js" />
     <Content Include="atomic\scripts\references.js" />
     <Content Include="atomic\scripts\htmlAttachViewMemberAdapters.js" />

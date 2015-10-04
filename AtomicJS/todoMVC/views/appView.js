@@ -5,14 +5,14 @@
         "todoMVC.appView",
         function()
         {
-            return function todoMVCAppView(viewAdapter)
+            return function todoMVCAppView(appViewAdapter)
             {
          return {
                     controls:
                     {
                         newTodoTextbox:
                         {
-                            onEnter: function() { viewAdapter.on.addNewTodo(this.value()); this.value(""); }
+                            onenter: function() { appViewAdapter.on.addNewTodo(this.value()); this.value(""); }
                         },
                         todosView:
                         {
@@ -28,24 +28,26 @@
                                             getKey:     function(item){return "todoListItem-"+item.id},
                                             controls:
                                             {
-                                                toggleCompletedCheckbox:    { bindTo: "completed" },
-                                                todoLabel:                  { bindTo: "todo" },
-                                                deleteTodoButton:           { bindTo: "id", onclick: function(){viewAdapter.on.deleteTodo(this.value()); } },
-                                                editTodoTextbox:            { hidden: true }
-                                            }
+                                                toggleCompletedCheckbox:    { bindTo:   "completed", onchange:      function(){ appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath)); } },
+                                                todoLabel:                  { bindTo:   "todo",         ondblclick: function(){this.parent.addClass("editing"); this.parent.controls.editTodoTextbox.focus();} },
+                                                deleteTodoButton:           { bindTo:   "id",           onclick:    function(){appViewAdapter.on.deleteTodo(this.boundItem(this.bindPath));} },
+                                                editTodoTextbox:            { bindTo:   "todo",         onenter:    function(){this.blur(); appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath));} }
+                                            },
+                                            onbind:     function(data) { this.toggleClass("completed", data(this.bindPath).completed); },
                                         }
                                     }
                                 }
                             },
-                            hidden: true,
-                            onbind: function(data){ this.toggleDisplay(data.length>0); }
+                            hidden:     true,
+                            onbind:     function(data) { this.toggleDisplay(data().length>0); },
+                            onunbind:   function(data) { this.hide(); }
                         },
                         todosFooter:
                         {
                             hidden: true
                         }
                     },
-                    events:["addNewTodo", "deleteTodo"]
+                    events:["addNewTodo", "deleteTodo", "saveTodo"]
                 };
             }
         }
