@@ -51,34 +51,3 @@
         }
     );
 }();
-function demoViewAdapterLibrary(demoSubView)
-{
-    return function demoViewAdapter(viewAdapter)
-    {
- return {
-            controls:
-            {
-                sampleButton:   { hidden:       true },
-                sampleTextbox:  { onchange:     function(){} },
-                classedSubView:
-                {
-                    viewAdapter:    demoSubView,
-                    hidden:         true
-                },
-                inlineSubView:
-                {
-                    controls:
-                    {
-                        subViewButton1:     { hidden:   true },
-                        subViewCheckbox:    { onchange: function(){} }
-                    },
-                    hidden:     true
-                }
-            },
-            events: [],
-            members:
-            {
-            }
-        }
-    }
-}
