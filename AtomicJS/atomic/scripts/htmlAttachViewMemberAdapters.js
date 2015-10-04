@@ -52,8 +52,27 @@
                 function(sources)
                 {
                     for(var controlKey in this.controls)    this.controls[controlKey].bindSource(sources);
+                    return this;
                 }
             };
+            function bindUpdateEvents()
+            {
+                if (this.__updateon===undefined)
+                {
+                    this.addEventListener("change", this.__inputListener, false, true);
+                    return;
+                }
+                for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.addEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
+            }
+            function unbindUpdateEvents()
+            {
+                if (this.__updateon===undefined)
+                {
+                    this.removeEventListener("change", this.__inputListener, false, true);
+                    return;
+                }
+                for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.removeEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
+            }
             var bindDataFunctions  =
             {
                 "default":
@@ -67,12 +86,13 @@
                         else
                         {
                             this.__bindListener     = (function(item){this.value(item(this.bindPath), true);}).bind(this);
-                            this.__inputListener    = (function(){observer(this.bindPath, this.value());}).bind(this);
-                            this.addEventListener("change", this.__inputListener, false, true);
+                            this.__inputListener    = (function() {observer(this.bindPath, this.value());}).bind(this);
+                            bindUpdateEvents.call(this);
                         }
                         observer.listen(this.__bindListener);
                     }
                     notifyOnbind.call(this, observer);
+                    return this;
                 },
                 container:
                 function(observer, bindPath)
@@ -81,16 +101,17 @@
                     this.bindPath   = getFullPath(bindPath, this.__bindTo);
                     for(var controlKey in this.controls)    this.controls[controlKey].bindData(observer, this.bindPath);
                     notifyOnbind.call(this, observer);
+                    return this;
                 },
                 repeater:
                 function(observer, bindPath)
                 {
                     this.boundItem          = observer;
                     this.bindPath           = getFullPath(bindPath, this.__bindTo||"");
-                    //bindRepeatedList.call(this, observer, bindTo);
                     this.__bindListener = (function(item){bindRepeatedList.call(this, observer, this.bindPath);}).bind(this);
                     observer.listen(this.__bindListener);
                     notifyOnbind.call(this, observer);
+                    return this;
                 }
             };
             var unbindDataFunctions  =
@@ -102,11 +123,12 @@
                     {
                         this.boundItem.ignore(this.__bindListener);
                         delete this.__bindListener;
-                        this.removeEventListener("change", this.__inputListener, false);
+                        unbindUpdateEvents.call(this);
                         delete this.__inputListener;
                         delete this.boundItem;
                     }
                     notifyOnunbind.call(this);
+                    return this;
                 },
                 container:
                 function()
@@ -114,6 +136,7 @@
                     delete this.boundItem;
                     for(var controlKey in this.controls)    this.controls[controlKey].unbindData();
                     notifyOnunbind.call(this);
+                    return this;
                 },
                 repeater:
                 function()
@@ -126,6 +149,7 @@
                     unbindRepeatedList.call(this);
                     this.__reattach();
                     notifyOnunbind.call(this);
+                    return this;
                 }
             };
             function htmlBasedValueFunc(value, forceSet)
@@ -214,21 +238,25 @@
                 };
                 viewAdapter.bindSource          = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
                 viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
-                viewAdapter.blur                = function(){this.__element.blur(); }
-                viewAdapter.__detach            = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element);};
-                viewAdapter.focus               = function(){this.__element.focus(); }
-                viewAdapter.hide                = function(){ this.__element.style.display="none"; };
-                viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); };
-                viewAdapter.removeClass         = function(className){ removeClass(this.__element, className); }
-                viewAdapter.removeControl       = function(childControl){ this.__element.removeChild(childControl.__element); };
-                viewAdapter.removeEventListener = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); };
-                viewAdapter.__reattach          = function(){this.__elementParent.appendChild(this.__element);};
-                viewAdapter.show                = function(){ this.__element.style.display=""; };
-                viewAdapter.showFor             = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); };
-                viewAdapter.toggleClass         = function(className, condition){ this[condition?"addClass":"removeClass"](className); };
-                viewAdapter.toggleDisplay       = function(condition){ this[condition?"show":"hide"](); };
+                viewAdapter.blur                = function(){this.__element.blur(); return this;}
+                viewAdapter.__detach            = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
+                viewAdapter.focus               = function(){this.__element.focus(); return this;}
+                viewAdapter.hide                = function(){ this.__element.style.display="none"; return this;};
+                viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
+                viewAdapter.removeClass         = function(className){ removeClass(this.__element, className); return this;}
+                viewAdapter.removeControl       = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
+                viewAdapter.removeEventListener = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
+                viewAdapter.__reattach          = function(){this.__elementParent.appendChild(this.__element); return this;};
+                viewAdapter.show                = function(){ this.__element.style.display=""; return this;};
+                viewAdapter.showFor             = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
+                viewAdapter.toggleClass         = function(className, condition){ this[condition?"addClass":"removeClass"](className); return this;};
+                viewAdapter.toggleDisplay       = function(condition){ this[condition?"show":"hide"](); return this;};
                 viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
                 viewAdapter.value               = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
+                if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
+                {
+                    viewAdapter.select          = function(){this.__element.select(); return this;};
+                }
             };
         }
     );

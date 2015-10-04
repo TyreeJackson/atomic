@@ -56,13 +56,13 @@
             <!-- Remove this if you don't implement routing -->
             <ul class="filters">
                 <li>
-                    <a id="allTodosLink" class="selected" href="#/">All</a>
+                    <a id="allTodosLink" class="nofilter" href="#/">All</a>
                 </li>
                 <li>
-                    <a id="activeTodosLink"href="#/active">Active</a>
+                    <a id="activeTodosLink" class="activeonly" href="#/active">Active</a>
                 </li>
                 <li>
-                    <a id="completedTodosLink" href="#/completed">Completed</a>
+                    <a id="completedTodosLink" class="completedonly" href="#/completed">Completed</a>
                 </li>
             </ul>
             <!-- Hidden if no completed items are left ↓ -->

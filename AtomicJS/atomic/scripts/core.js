@@ -144,7 +144,7 @@
             {
                 if (paths.length == 0) return root;
                 var path    = paths[0].value;
-                for(var pathCounter=0;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
+                for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
                 return path;
             }
             function navDataPath(root, paths, value)
@@ -179,6 +179,7 @@
                 var itemListeners   = [];
                 var propertyKeys    = [];
                 var updating        = null;
+                var backup;
 
                 function notifyPropertyListener(propertyKey, listener)
                 {
@@ -206,18 +207,35 @@
                     var revisedPath = getFullPath(pathSegments);
                     notifyPropertyListeners.call(observable, revisedPath, value);
                 }
-                observable.listen   = function(callback)
+                observable.listen           = function(callback)
                 {
                     var listener    = {callback: callback};
                     itemListeners.push(listener);
                     notifyPropertyListener.call(this, "", listener);
                 }
-                observable.ignore   =
+                observable.ignore           =
                 function(callback)
                 {
                     for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)
                     if (itemListeners[listenerCounter].callback === callback)
                     removeFromArray(itemListeners, listenerCounter);
+                }
+                observable.beginTransaction =
+                function()
+                {
+                    backup  = JSON.parse(JSON.stringify(item));
+                }
+                observable.commit           =
+                function()
+                {
+                    delete backup;
+                }
+                observable.rollback         =
+                function()
+                {
+                    item    = backup;
+                    delete backup;
+                    notifyPropertyListeners.call(observable, "", item);
                 }
                 return observable;
             };
