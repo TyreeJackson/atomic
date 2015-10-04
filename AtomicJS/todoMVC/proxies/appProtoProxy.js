@@ -59,6 +59,13 @@
                     setTodos(todos)
                     callback(todos.items);
                 },
+                deleteTodo:
+                function(todoId, callback)
+                {
+                    var todos   = removeTodo(todoId);
+                    setTodos(todos)
+                    callback(todos.items);
+                },
                 saveTodo:
                 function(todo, callback)
                 {
@@ -67,12 +74,13 @@
                     setTodos(todos)
                     callback(todos.items);
                 },
-                deleteTodo:
-                function(todoId, callback)
+                saveTodos:
+                function(todosToSave, callback)
                 {
-                    var todos   = removeTodo(todoId);
-                    setTodos(todos)
-                    callback(todos.items);
+                    var storedTodos = getTodos();
+                    for(var todoCounter=0;todoCounter<todosToSave.length;todoCounter++) setTodo(todosToSave[todoCounter], storedTodos);
+                    setTodos(storedTodos)
+                    callback(storedTodos.items);
                 }
             };
         }

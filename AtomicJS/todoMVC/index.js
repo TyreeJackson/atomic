@@ -25,10 +25,7 @@
         (
             viewAdapterFactory.create
             (
-                new root.todoMVC.appView
-                (
-                
-                ), 
+                new root.todoMVC.appView(), 
                 document.querySelector("#todoMVCApp")
             ),
             new root.todoMVC.appProxy(window.localStorage, root.utilities.removeFromArray),

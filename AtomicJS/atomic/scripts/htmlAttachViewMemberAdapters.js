@@ -61,11 +61,13 @@
                 {
                     this.boundItem          = observer;
                     this.bindPath           = getFullPath(bindPath, this.__bindTo);
-                    if (this.bindPath === undefined)   return;
-                    this.__bindListener     = (function(item){this.value(item(this.bindPath), true);}).bind(this);
-                    this.__inputListener    = (function(){observer(this.bindPath, this.value());}).bind(this);
-                    this.addEventListener("change", this.__inputListener, false, true);
-                    observer.listen(this.__bindListener);
+                    if (this.bindPath !== undefined)
+                    {
+                        this.__bindListener     = (function(item){this.value(item(this.bindPath), true);}).bind(this);
+                        this.__inputListener    = (function(){observer(this.bindPath, this.value());}).bind(this);
+                        this.addEventListener("change", this.__inputListener, false, true);
+                        observer.listen(this.__bindListener);
+                    }
                     notifyOnbind.call(this, observer);
                 },
                 container:
@@ -92,16 +94,19 @@
                 "default":
                 function()
                 {
-                    if (this.boundItem === undefined)   return;
-                    this.boundItem.ignore(this.__bindListener);
-                    this.removeEventListener("change", this.__inputListener, false);
-                    delete this.boundItem;
+                    if (this.boundItem !== undefined && this.bindPath !== undefined)
+                    {
+                        this.boundItem.ignore(this.__bindListener);
+                        delete this.__bindListener;
+                        this.removeEventListener("change", this.__inputListener, false);
+                        delete this.__inputListener;
+                        delete this.boundItem;
+                    }
                     notifyOnunbind.call(this);
                 },
                 container:
                 function()
                 {
-                    if (this.boundItem === undefined)   return;
                     delete this.boundItem;
                     for(var controlKey in this.controls)    this.controls[controlKey].unbindData();
                     notifyOnunbind.call(this);

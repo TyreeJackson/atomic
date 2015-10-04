@@ -18,7 +18,7 @@
                         {
                             controls:
                             {
-                                toggleAllCompleted: {},
+                                toggleAllCompleted: { onchange: function() { appViewAdapter.on.toggleAllCompleted(this.value()); } },
                                 todoList:
                                 {
                                     repeat:
@@ -28,7 +28,7 @@
                                             getKey:     function(item){return "todoListItem-"+item.id},
                                             controls:
                                             {
-                                                toggleCompletedCheckbox:    { bindTo:   "completed", onchange:      function(){ appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath)); } },
+                                                toggleCompletedCheckbox:    { bindTo:   "completed",    onchange:   function(){ appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath)); } },
                                                 todoLabel:                  { bindTo:   "todo",         ondblclick: function(){this.parent.addClass("editing"); this.parent.controls.editTodoTextbox.focus();} },
                                                 deleteTodoButton:           { bindTo:   "id",           onclick:    function(){appViewAdapter.on.deleteTodo(this.boundItem(this.bindPath));} },
                                                 editTodoTextbox:            { bindTo:   "todo",         onenter:    function(){this.blur(); appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath));} }
@@ -39,7 +39,14 @@
                                 }
                             },
                             hidden:     true,
-                            onbind:     function(data) { this.toggleDisplay(data().length>0); },
+                            onbind:     function(data)
+                            {
+                                var items           = data();
+                                this.toggleDisplay(items.length>0);
+                                var allCompleted    = true;
+                                for(var itemCounter=0;itemCounter<items.length;itemCounter++)   allCompleted = allCompleted && (items[itemCounter].completed||false);
+                                this.controls.toggleAllCompleted.value(allCompleted);
+                            },
                             onunbind:   function(data) { this.hide(); }
                         },
                         todosFooter:
@@ -47,7 +54,7 @@
                             hidden: true
                         }
                     },
-                    events:["addNewTodo", "deleteTodo", "saveTodo"]
+                    events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted"]
                 };
             }
         }

@@ -27,6 +27,13 @@
             {
                 appProxy.saveTodo(todo, function(todos){rebindTodoList(todos);});
             });
+            appView.on.toggleAllCompleted.listen
+            (function(value)
+            {
+                var todos   = todosObserver();
+                for(var todoCounter=0;todoCounter<todos.length;todoCounter++)   todos[todoCounter].completed  = value;;
+                appProxy.saveTodos(todos, function(refreshedTodos){rebindTodoList(refreshedTodos);});
+            });
             this.launch =
             function()
             {
