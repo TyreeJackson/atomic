@@ -28,12 +28,58 @@
                                             getKey:     function(item){return "todoListItem-"+item.id},
                                             controls:
                                             {
-                                                toggleCompletedCheckbox:    { bindTo:   "completed",    onchange:   function(){ appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath)); } },
-                                                todoLabel:                  { bindTo:   "todo",         ondblclick: function(){this.boundItem.beginTransaction(); this.parent.addClass("editing"); this.parent.controls.editTodoTextbox.focus().select();} },
-                                                deleteTodoButton:           { bindTo:   "id",           onclick:    function(){appViewAdapter.on.deleteTodo(this.boundItem(this.bindPath));} },
-                                                editTodoTextbox:            { bindTo:   "todo",         onenter:    function(){this.boundItem.commit(); appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath));},  onescape: function(){this.boundItem.rollback(); this.parent.removeClass("editing");}, updateon:["change", "keyup"] }
+                                                toggleCompletedCheckbox:
+                                                {
+                                                    bindTo:     "completed",
+                                                    onchange:
+                                                    function()
+                                                    {
+                                                        appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath));
+                                                    } 
+                                                },
+                                                todoLabel:
+                                                {
+                                                    bindTo:     "todo",
+                                                    ondblclick:
+                                                    function()
+                                                    {
+                                                        this.boundItem.beginTransaction();
+                                                        this.parent.addClass("editing");
+                                                        this.parent.controls.editTodoTextbox.focus().select();
+                                                    } 
+                                                },
+                                                deleteTodoButton:
+                                                {
+                                                    bindTo:     "id",
+                                                    onclick:
+                                                    function()
+                                                    {
+                                                        appViewAdapter.on.deleteTodo(this.boundItem(this.bindPath));
+                                                    }
+                                                },
+                                                editTodoTextbox:
+                                                {
+                                                    bindTo:     "todo",
+                                                    onenter:
+                                                    function()
+                                                    {
+                                                        this.boundItem.commit();
+                                                        appViewAdapter.on.saveTodo(this.boundItem(this.parent.bindPath));
+                                                    },
+                                                    onescape:
+                                                    function()
+                                                    {
+                                                        this.boundItem.rollback();
+                                                        this.parent.removeClass("editing");
+                                                    },
+                                                    updateon:   ["change", "keyup"]
+                                                }
                                             },
-                                            onbind:     function(data) { this.toggleClass("completed", data(this.bindPath).completed); },
+                                            onbind:
+                                            function(data)
+                                            {
+                                                this.toggleClass("completed", data(this.bindPath).completed);
+                                            },
                                         }
                                     }
                                 }
