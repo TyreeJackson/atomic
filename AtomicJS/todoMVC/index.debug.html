@@ -1,12 +1,12 @@
 ﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Atomic • TodoMVC</title>
-    <link rel="stylesheet" href="node_modules/todomvc-common/base.css" />
-    <link rel="stylesheet" href="node_modules/todomvc-app-css/index.css" />
-    <link rel="stylesheet" type="text/css" href="index.css" />
+    <link rel="stylesheet" href="node_modules/todomvc-common/base.css">
+    <link rel="stylesheet" href="node_modules/todomvc-app-css/index.css">
+    <link rel="stylesheet" type="text/css" href="index.debug.css" />
 </head>
 <body>
     <section    id="todoMVCApp" class="todoapp">
@@ -66,11 +66,16 @@
         <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
     </footer>
     <!-- Scripts here. Don't remove ↓ -->
-    <!---<script src="node_modules/todomvc-common/base.js"></script>-->
-    <script type="text/javascript" src="3rdparty/atomic.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/namespaces.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/utilities.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/htmlAttachViewMemberAdapters.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/initializeViewAdapter.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/htmlIsolatedFunctionFactory.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/core.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/htmlCompositionRoot.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
     <script type="text/javascript" src="controllers/appController.js"></script>
-    <script type="text/javascript" src="index.js"></script>
+    <script type="text/javascript" src="index.debug.js"></script>
 </body>
 </html>

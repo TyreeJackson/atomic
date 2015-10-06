@@ -66,6 +66,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rdparty\aja.min.js" />
+    <Content Include="atomic\scripts\htmlCompositionRoot.js" />
+    <Content Include="atomic\scripts\htmlIsolatedFunctionFactory.js" />
     <Content Include="todoMVC\controllers\appController.js" />
     <Content Include="todoMVC\index.js">
       <DependentUpon>index.html</DependentUpon>
@@ -87,6 +89,15 @@
     <Content Include="atomic\scripts\references.js" />
     <Content Include="atomic\scripts\htmlAttachViewMemberAdapters.js" />
     <Content Include="Web.config" />
+    <Content Include="todoMVC\3rdparty\atomic.js" />
+    <Content Include="todoMVC\index.debug.html" />
+    <Content Include="todoMVC\index.debug.css">
+      <DependentUpon>index.debug.html</DependentUpon>
+    </Content>
+    <Content Include="todoMVC\index.debug.js">
+      <DependentUpon>index.debug.html</DependentUpon>
+    </Content>
+    <Content Include="todoMVC\3rdparty\atomic.min.js" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -123,4 +134,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup />
 </Project>
