@@ -123,11 +123,11 @@ function htmlAttachViewMemberAdapters(document, removeItemFromArray, setTimeout,
             this.boundItem          = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
-                if(this.__bindAs)   this.__bindListener     = (function(item){this.value(this.__bindAs(this.__bindTo !== undefined ? item(this.__bindTo) : item), true);}).bind(this);
+                if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(item){this.value(item(this.__bindTo), true);}).bind(this);
-                    this.__inputListener    = (function() {observer(this.__bindTo, this.value());}).bind(this);
+                    this.__bindListener     = (function(){this.value(observer(this.__bindTo), true);}).bind(this);
+                    this.__inputListener    = (function(){observer(this.__bindTo, this.value());}).bind(this);
                     bindUpdateEvents.call(this);
                 }
                 observer.listen(this.__bindListener);
@@ -474,29 +474,35 @@ function(removeFromArray, isolatedFunctionFactory)
     }
     function navDataPath(root, paths, value)
     {
-        if (paths.length == 0) return root;
-        var current     = root;
+        if (paths.length == 0)
+        {
+            if(value === undefined) return root.item;
+            root.item   = value;
+            return;
+        }
+        var current     = root.item;
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
             if (current[path.value] === undefined)    current[path.value]   = path.type===0?{}:[];
             current     = current[path.value];
         }
-        if (value !== undefined)    current[paths[paths.length-1].value]    = value;
-        else                        return current[paths[paths.length-1].value];
+        if (value === undefined)    return current[paths[paths.length-1].value];
+        current[paths[paths.length-1].value]    = value;
     }
-    function addPropertyPath(properties, path)
+    function addPropertyPath(properties, path, remainingPath)
     {
-        if (properties.indexOf(path) == -1) properties.push(path);
+        properties[path]    = remainingPath !== undefined ? remainingPath : "";
     }
     function addProperties(properties, pathSegments)
     {
+        addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
         var path    = pathSegments[0].value;
-        addPropertyPath(properties, path);
+        addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
         for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
         {
             path    += "." + pathSegments[segmentCounter].value;
-            addPropertyPath(properties, path);
+            addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
         }
     }
     return function observer(_item)
@@ -504,17 +510,17 @@ function(removeFromArray, isolatedFunctionFactory)
         var bag             = {item: _item};
         var itemListeners   = [];
         var propertyKeys    = [];
-        var updating        = null;
+        var updating        = [];
         var rollingback     = false;
 
         function notifyPropertyListener(propertyKey, listener)
         {
-            if (listener.callback !== undefined && (propertyKey == "" || listener.properties.indexOf(propertyKey) > -1))
+            if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
             {
-                updating = listener;
-                listener.properties = [];
-                listener.callback(this);
-                updating = null;
+                updating.push(listener);
+                listener.properties = {};
+                listener.callback();
+                updating.pop();
             }
         }
         function notifyPropertyListeners(propertyKey, value)
@@ -529,7 +535,7 @@ function(removeFromArray, isolatedFunctionFactory)
             {
                 if (path === undefined) return arraySubObserver.__item(basePath);
                 if (path === null)      path    = "";
-                return arraySubObserver.__invoke(basePath+"."+path.toString(), value);
+                return arraySubObserver.__invoke(path.toString(), value);
             }
             arraySubObserver.__getBasePath  = function(){return basePath;};
             return arraySubObserver;
@@ -540,12 +546,12 @@ function(removeFromArray, isolatedFunctionFactory)
         function(path, value)
         {
             if (path === undefined || path === null)    path    = "";
-            var pathSegments    = extractPathSegments(path);
-            var revisedPath = getFullPath(pathSegments);
+            var pathSegments    = extractPathSegments(this.__getBasePath()+"."+path);
+            var revisedPath     = getFullPath(pathSegments);
             if (value === undefined)
             {
-                if (updating !== null && pathSegments.length > 0)   addProperties(updating.properties, pathSegments);
-                var returnValue = navDataPath(bag.item, pathSegments);
+                if (updating.length > 0  && pathSegments.length > 0)   addProperties(updating[updating.length-1].properties, pathSegments);
+                var returnValue = navDataPath(bag, pathSegments);
                 if (typeof returnValue == "object")
                 {
                     if (returnValue.constructor == Array)   return new arraySubObserver(revisedPath);
@@ -554,10 +560,10 @@ function(removeFromArray, isolatedFunctionFactory)
                 return returnValue;
             }
             if (rollingback)    return;
-            navDataPath(bag.item, pathSegments, value);
+            navDataPath(bag, pathSegments, value);
             notifyPropertyListeners.call(this, revisedPath, value);
         }
-        arraySubObserverPrototype.__item            = function(basePath) { return navDataPath(bag.item, extractPathSegments(basePath)); }
+        arraySubObserverPrototype.__item            = function(basePath) { return navDataPath(bag, extractPathSegments(basePath)); }
         arraySubObserverPrototype.listen            =
         function(callback)
         {
@@ -599,7 +605,7 @@ function(removeFromArray, isolatedFunctionFactory)
             {
                 if (path === undefined) return subObserver.__item(basePath);
                 if (path === null)      path    = "";
-                return subObserver.__invoke(basePath+"."+path, value);
+                return subObserver.__invoke(path, value);
             }
             subObserver.__getBasePath   = function(){return basePath;};
             return subObserver;
@@ -610,12 +616,12 @@ function(removeFromArray, isolatedFunctionFactory)
         function(path, value)
         {
             if (path === undefined || path === null)    path    = "";
-            var pathSegments    = extractPathSegments(path);
-            var revisedPath = getFullPath(pathSegments);
+            var pathSegments    = extractPathSegments(this.__getBasePath()+"."+path);
+            var revisedPath     = getFullPath(pathSegments);
             if (value === undefined)
             {
-                if (updating !== null && pathSegments.length > 0)   addProperties(updating.properties, pathSegments);
-                var returnValue = navDataPath(bag.item, pathSegments);
+                if (updating.length > 0 && pathSegments.length > 0)   addProperties(updating[updating.length-1].properties, pathSegments);
+                var returnValue = navDataPath(bag, pathSegments);
                 if (typeof returnValue == "object")
                 {
                     if (returnValue.constructor == Array)   return new arraySubObserver(revisedPath);
@@ -624,10 +630,10 @@ function(removeFromArray, isolatedFunctionFactory)
                 return returnValue;
             }
             if (rollingback)    return;
-            navDataPath(bag.item, pathSegments, value);
+            navDataPath(bag, pathSegments, value);
             notifyPropertyListeners.call(this, revisedPath, value);
         }
-        subObserverPrototype.__item                 = function(basePath) { return navDataPath(bag.item, extractPathSegments(basePath)); }
+        subObserverPrototype.__item                 = function(basePath) { return navDataPath(bag, extractPathSegments(basePath)); }
         subObserverPrototype.listen                 =
         function(callback)
         {

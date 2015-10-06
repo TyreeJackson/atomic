@@ -70,11 +70,11 @@ function htmlAttachViewMemberAdapters(document, removeItemFromArray, setTimeout,
             this.boundItem          = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
-                if(this.__bindAs)   this.__bindListener     = (function(item){this.value(this.__bindAs(this.__bindTo !== undefined ? item(this.__bindTo) : item), true);}).bind(this);
+                if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(item){this.value(item(this.__bindTo), true);}).bind(this);
-                    this.__inputListener    = (function() {observer(this.__bindTo, this.value());}).bind(this);
+                    this.__bindListener     = (function(){this.value(observer(this.__bindTo), true);}).bind(this);
+                    this.__inputListener    = (function(){observer(this.__bindTo, this.value());}).bind(this);
                     bindUpdateEvents.call(this);
                 }
                 observer.listen(this.__bindListener);

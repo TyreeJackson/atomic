@@ -5,12 +5,19 @@
         "todoMVC.appController",
         function todoMVCAppController(appView, appProxy, observer)
         {
+            // todosObserver is the model observer that wraps the todo list "model"
             var todosObserver;
             function rebindTodoList(todos)
             {
-                todosObserver   = new observer(todos);
-                appView.unbindData();
-                appView.bindData(todosObserver);
+                //todosObserver   = new observer(todos);
+                //appView.unbindData();
+                //appView.bindData(todosObserver);
+                if (todosObserver === undefined)
+                {
+                    todosObserver   = new observer(todos);
+                    appView.bindData(todosObserver);
+                }
+                else                                todosObserver("", todos);
             }
             appView.on.addNewTodo.listen
             (function(value)
