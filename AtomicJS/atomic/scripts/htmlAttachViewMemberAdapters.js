@@ -76,10 +76,10 @@ function htmlAttachViewMemberAdapters(document, removeItemFromArray, setTimeout,
                     this.__bindListener     = (function(){this.value(observer(this.__bindTo), true);}).bind(this);
                     this.__inputListener    = (function(){observer(this.__bindTo, this.value());}).bind(this);
                     bindUpdateEvents.call(this);
+                    notifyOnbind.call(this, observer);
                 }
                 observer.listen(this.__bindListener);
             }
-            notifyOnbind.call(this, observer);
             return this;
         },
         container:
@@ -87,16 +87,25 @@ function htmlAttachViewMemberAdapters(document, removeItemFromArray, setTimeout,
         {
             this.boundItem  = observer;
             for(var controlKey in this.controls)    this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            notifyOnbind.call(this, observer);
+            this.__bindListener = 
+            (function()
+            {
+                if (observer() !== undefined) notifyOnbind.call(this, observer);
+            }).bind(this);
+            observer.listen(this.__bindListener);
             return this;
         },
         repeater:
         function(observer)
         {
-            this.boundItem          = observer;
-            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            this.boundItem      = observer;
+            this.__bindListener = 
+            (function()
+            {
+                bindRepeatedList.call(this, this.boundItem(this.__bindTo||""));
+                notifyOnbind.call(this, observer);
+            }).bind(this);
             observer.listen(this.__bindListener);
-            notifyOnbind.call(this, observer);
             return this;
         }
     };

@@ -84,7 +84,6 @@
     <Content Include="todoMVC\index.html" />
     <Content Include="atomic\scripts\namespaces.js" />
     <Content Include="atomic\scripts\utilities.js" />
-    <Content Include="atomic\scripts\core.js" />
     <Content Include="atomic\scripts\initializeViewAdapter.js" />
     <Content Include="atomic\scripts\references.js" />
     <Content Include="atomic\scripts\htmlAttachViewMemberAdapters.js" />
@@ -98,6 +97,16 @@
       <DependentUpon>index.debug.html</DependentUpon>
     </Content>
     <Content Include="todoMVC\3rdparty\atomic.min.js" />
+    <Content Include="atomic\scripts\htmlViewAdapterFactorySupport.js" />
+    <Content Include="atomic\scripts\viewAdapterFactory.js" />
+    <Content Include="atomic\scripts\observerFactory.js" />
+    <Content Include="atomic\scripts\tests\mock.js" />
+    <Content Include="atomic\scripts\tests\htmlDocumentLogger.js" />
+    <Content Include="atomic\scripts\tests\viewAdapterFactoryTests.js">
+      <DependentUpon>viewAdapterFactoryTests.html</DependentUpon>
+    </Content>
+    <Content Include="atomic\scripts\tests\tests.html" />
+    <Content Include="atomic\scripts\tests\viewAdapterFactoryTests.html" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -134,5 +143,6 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup />
   <ItemGroup />
 </Project>
