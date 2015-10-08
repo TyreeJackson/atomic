@@ -1,6 +1,6 @@
 ﻿!function()
-{root.define("atomic.tests.mock",
-function mockModule(debugLogger)
+{root.define("atomic.testUtilities.mock",
+function mockModule(debugLogger, assertionsLogger)
 {
     const debugging = true;
     var isAny       = {};
@@ -241,19 +241,37 @@ function mockModule(debugLogger)
     {
         if (!condition) throw new Error(failureMessage);
     };
-    mock.execute                        =
-    function(tests, logger)
+    mock.assert.areEqual                =
+    function(expectedValue, actualValue, failureMessage)
     {
-        for(var testKey in tests)
+        return this(expectedValue===actualValue, failureMessage);
+    }
+    mock.assert.fail                    =
+    function(failureMessage)
+    {
+        return this(false, failureMessage);
+    }
+    mock.execute                        =
+    function(testsNamespace)
+    {
+        var testNames   = Object.getOwnPropertyNames(testsNamespace);
+        for(var testNameCounter=0;testNameCounter<testNames.length;testNameCounter++)
         {
-            try
+            var tests   = new testsNamespace[testNames[testNameCounter]](this);
+            for(var testKey in tests)
             {
-                tests[testKey]();
-                logger("SUCCESS: " + testKey + " test passed successfully.");
-            }
-            catch(error)
-            {
-                logger("FAIL:    " + testKey + " test failed.  " + error.message);
+                if (testKey == "__setup")   continue;
+                try
+                {
+                    var testContext = {};
+                    if (tests.__setup)  tests.__setup.call(testContext);
+                    tests[testKey].call(testContext);
+                    assertionsLogger("SUCCESS: \"" + testKey + "\" test passed successfully.");
+                }
+                catch(error)
+                {
+                    assertionsLogger("FAIL:    \"" + testKey + "\" test failed.  " + error.message);
+                }
             }
         }
     }

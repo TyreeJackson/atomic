@@ -68,6 +68,8 @@
     <Content Include="3rdparty\aja.min.js" />
     <Content Include="atomic\scripts\htmlCompositionRoot.js" />
     <Content Include="atomic\scripts\htmlIsolatedFunctionFactory.js" />
+    <Content Include="atomic\scripts\tests\htmlViewAdapterFactorySupportTests.js" />
+    <Content Include="atomic\scripts\tests\viewAdapterFactoryTests.js" />
     <Content Include="todoMVC\controllers\appController.js" />
     <Content Include="todoMVC\index.js">
       <DependentUpon>index.html</DependentUpon>
@@ -102,11 +104,8 @@
     <Content Include="atomic\scripts\observerFactory.js" />
     <Content Include="atomic\scripts\tests\mock.js" />
     <Content Include="atomic\scripts\tests\htmlDocumentLogger.js" />
-    <Content Include="atomic\scripts\tests\viewAdapterFactoryTests.js">
-      <DependentUpon>viewAdapterFactoryTests.html</DependentUpon>
-    </Content>
     <Content Include="atomic\scripts\tests\tests.html" />
-    <Content Include="atomic\scripts\tests\viewAdapterFactoryTests.html" />
+    <Content Include="atomic\scripts\tests\testRunner.html" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
