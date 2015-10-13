@@ -9,7 +9,12 @@ function()
         {
             newTodoTextbox:
             {
-                onenter: function() { if (this.value().trim() !== "") appViewAdapter.on.addNewTodo(this.value().trim()); this.value(""); }
+                onenter:
+                function(
+                {
+                    if (this.value().trim() !== "") appViewAdapter.on.addNewTodo(this.value().trim());
+                    this.value("");
+                }
             },
             todosView:
             {
