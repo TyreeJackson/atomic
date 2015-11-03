@@ -10,7 +10,7 @@ function()
             newTodoTextbox:
             {
                 onenter:
-                function(
+                function()
                 {
                     if (this.value().trim() !== "") appViewAdapter.on.addNewTodo(this.value().trim());
                     this.value("");
