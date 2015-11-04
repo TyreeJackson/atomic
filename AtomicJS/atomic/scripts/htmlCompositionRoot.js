@@ -1,4 +1,4 @@
-﻿!function()
+!function()
 {"use strict";root.define("atomic.htmlCompositionRoot",
 function htmlCompositionRoot()
 {
@@ -11,6 +11,7 @@ return {
                 document,
                 new root.atomic.htmlAttachViewMemberAdapters
                 (
+                    window,
                     document,
                     root.utilities.removeItemFromArray, 
                     window.setTimeout, 
