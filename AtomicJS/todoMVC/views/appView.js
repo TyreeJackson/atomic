@@ -1,4 +1,4 @@
-﻿!function()
+!function()
 {"use strict";root.define("todoMVC.appView",
 function()
 {return function todoMVCAppView(appViewAdapter)
@@ -79,17 +79,17 @@ function()
                                         updateon:   ["change", "keyup"]
                                     }
                                 },
-                                onbind:
+                                onboundedupdate:
                                 function(data)
                                 {
-                                    this.toggleClass("completed", data().completed);
+                                    this.toggleClass("completed", data().completed||false);
                                 },
                             }
                         }
                     }
                 },
                 hidden:     true,
-                onbind:     function(data)
+                onboundedupdate:     function(data)
                 {
                     var items           = data();
                     this.toggleDisplay(items.length>0);
@@ -112,7 +112,7 @@ function()
                     deleteCompletedTodos:   { onclick: function(){appViewAdapter.on.deleteCompletedTodos();} },
                 },
                 hidden: true,
-                onbind: function(data)
+                onboundedupdate: function(data)
                 {
                     this.toggleDisplay(data().length>0);
                 }

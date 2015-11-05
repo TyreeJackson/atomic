@@ -1,4 +1,4 @@
-﻿/*
+/*
 outstanding issues:
 support string key paths in observable
 */
@@ -11,7 +11,6 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
     {
         var element = uiElement.querySelector(selector);
         if (element === null)   throw new Error("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-        element.removeAttribute("id");
         return element;
     };
     function removeAllElementChildren(element)
@@ -87,7 +86,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             var viewAdapterDefinition   = new viewAdapterDefinitionConstructor(viewAdapter);
             this.attachControls(viewAdapter, viewAdapterDefinition.controls, viewElement);
             this.extractDeferredControls(viewAdapter, viewAdapterDefinition.repeat, viewElement);
-            attachViewMemberAdapters(viewAdapter);
+            attachViewMemberAdapters(viewAdapter, viewAdapterDefinition.customAttachments, viewAdapterDefinition);
             this.addEvents(viewAdapter, viewAdapterDefinition.events);
             this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);

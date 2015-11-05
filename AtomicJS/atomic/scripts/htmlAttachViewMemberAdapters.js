@@ -17,6 +17,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 var key                         = clone.getKey(subDataItem);
                 this.__repeatedControls[key]    = clone.control;
                 clone.control.bindData(subDataItem);
+                clone.control.__element.setAttribute("id", key);
                 clone.parent.appendChild(clone.control.__element);
             }
         }
@@ -33,7 +34,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         }
         this.__repeatedControls     = {};
     }
-    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
+    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); notifyOnboundedUpdate.call(this, data); }
+    function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     var bindSourceFunctions  =
     {
@@ -48,7 +50,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     {
         if (this.__updateon===undefined)
         {
-            this.addEventListener("input", this.__inputListener, false, true);
+            this.addEventListener("change", this.__inputListener, false, true);
             return;
         }
         for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.addEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
@@ -57,7 +59,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     {
         if (this.__updateon===undefined)
         {
-            this.removeEventListener("input", this.__inputListener, false, true);
+            this.removeEventListener("change", this.__inputListener, false, true);
             return;
         }
         for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.removeEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
@@ -73,7 +75,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){if (this.__notifyingObserver) return; this.value(observer(this.__bindTo), true);}).bind(this);
+                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true);  notifyOnboundedUpdate.call(this, observer); }).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
@@ -87,14 +89,16 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             this.boundItem  = observer;
             for(var controlKey in this.controls)    this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            notifyOnbind.call(this, observer);
+            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            if (this.boundItem === undefined) debugger;
+            observer.listen(this.__bindListener);
             return this;
         },
         repeater:
         function(observer)
         {
             this.boundItem          = observer;
-            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             notifyOnbind.call(this, observer);
             return this;
@@ -119,6 +123,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         container:
         function()
         {
+            this.boundItem.ignore(this.__bindListener);
+            delete this.__bindListener;
             delete this.boundItem;
             for(var controlKey in this.controls)    this.controls[controlKey].unbindData();
             notifyOnunbind.call(this);
@@ -129,6 +135,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             if (this.boundItem === undefined)   return;
             this.boundItem.ignore(this.__bindListener);
+            delete this.__bindListener;
             delete this.boundItem;
             var documentFragment    = document.createDocumentFragment();
             this.__detach(documentFragment);
@@ -226,7 +233,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         selection.removeAllRanges();
         selection.addRange(range);
     }
-    return function(viewAdapter)
+    return function(viewAdapter, customAttachments, viewAdapterDefinition)
     {
         var listenersUsingCapture       = {};
         var listenersNotUsingCapture    = {};
@@ -282,5 +289,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             viewAdapter.select          = function(){selectContents(this.__element); return this; };
         }
+        if (customAttachments !== undefined && customAttachments.length !== undefined)
+        for(var counter=0;counter<customAttachments.length;counter++)   customAttachments[counter](viewAdapter, viewAdapterDefinition);
     };
 });}();

@@ -1,4 +1,4 @@
-﻿/*
+/*
 outstanding issues:
 support string key paths in observable
 add routing
@@ -77,7 +77,7 @@ function(removeFromArray, isolatedFunctionFactory)
         {
             var subSegment  = subSegments[subSegmentCounter];
             // warning: string subsegments are not currently supported
-            if (isNaN(subSegment))  throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path);
+            if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
             returnSegments.push({type:1, value: parseInt(subSegment)});
         }
     }

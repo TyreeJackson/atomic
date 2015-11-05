@@ -70,6 +70,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 var key                         = clone.getKey(subDataItem);
                 this.__repeatedControls[key]    = clone.control;
                 clone.control.bindData(subDataItem);
+                clone.control.__element.setAttribute("id", key);
                 clone.parent.appendChild(clone.control.__element);
             }
         }
@@ -86,7 +87,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         }
         this.__repeatedControls     = {};
     }
-    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
+    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); notifyOnboundedUpdate.call(this, data); }
+    function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     var bindSourceFunctions  =
     {
@@ -101,7 +103,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     {
         if (this.__updateon===undefined)
         {
-            this.addEventListener("input", this.__inputListener, false, true);
+            this.addEventListener("change", this.__inputListener, false, true);
             return;
         }
         for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.addEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
@@ -110,7 +112,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     {
         if (this.__updateon===undefined)
         {
-            this.removeEventListener("input", this.__inputListener, false, true);
+            this.removeEventListener("change", this.__inputListener, false, true);
             return;
         }
         for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.removeEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
@@ -126,7 +128,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){if (this.__notifyingObserver) return; this.value(observer(this.__bindTo), true);}).bind(this);
+                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true);  notifyOnboundedUpdate.call(this, observer); }).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
@@ -140,14 +142,16 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             this.boundItem  = observer;
             for(var controlKey in this.controls)    this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            notifyOnbind.call(this, observer);
+            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            if (this.boundItem === undefined) debugger;
+            observer.listen(this.__bindListener);
             return this;
         },
         repeater:
         function(observer)
         {
             this.boundItem          = observer;
-            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             notifyOnbind.call(this, observer);
             return this;
@@ -172,6 +176,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         container:
         function()
         {
+            this.boundItem.ignore(this.__bindListener);
+            delete this.__bindListener;
             delete this.boundItem;
             for(var controlKey in this.controls)    this.controls[controlKey].unbindData();
             notifyOnunbind.call(this);
@@ -182,6 +188,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             if (this.boundItem === undefined)   return;
             this.boundItem.ignore(this.__bindListener);
+            delete this.__bindListener;
             delete this.boundItem;
             var documentFragment    = document.createDocumentFragment();
             this.__detach(documentFragment);
@@ -279,7 +286,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         selection.removeAllRanges();
         selection.addRange(range);
     }
-    return function(viewAdapter)
+    return function(viewAdapter, customAttachments, viewAdapterDefinition)
     {
         var listenersUsingCapture       = {};
         var listenersNotUsingCapture    = {};
@@ -335,6 +342,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             viewAdapter.select          = function(){selectContents(this.__element); return this; };
         }
+        if (customAttachments !== undefined && customAttachments.length !== undefined)
+        for(var counter=0;counter<customAttachments.length;counter++)   customAttachments[counter](viewAdapter, viewAdapterDefinition);
     };
 });}();
 !function()
@@ -344,7 +353,7 @@ function(each)
     function cancelEvent(event)
     {
         event.preventDefault();
-        event.stopPropogation();
+        event.stopPropagation();
         return false;
     }
     var initializers    =
@@ -353,29 +362,47 @@ function(each)
         onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false); },
         hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
-    each(["bindAs", "bindSource", "bindTo", "onbind", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindSource", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     return function initializeViewAdapter(viewAdapter, viewAdapterDefinition)
     {
-        for(var initializerKey in initializers)    if (viewAdapterDefinition.hasOwnProperty(initializerKey))    initializers[initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
+        for(var initializerKey in initializers)
+        if (viewAdapterDefinition.hasOwnProperty(initializerKey))    initializers[initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
+
+        if (viewAdapterDefinition.__customInitializers)
+        for(var initializerSetKey in viewAdapterDefinition.__customInitializers)
+        for(var initializerKey in viewAdapterDefinition.__customInitializers[initializerSetKey])
+        if (viewAdapterDefinition.hasOwnProperty(initializerKey))   viewAdapterDefinition.__customInitializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
     };
 });}();
 !function()
 {"use strict";root.define("atomic.isolatedFunctionFactory",
 function isolatedFunctionFactory(document)
 {
-    return function(functionToIsolate)
+    return function()
     {
         var iframe              = document.createElement("iframe");
         iframe.style.display    = "none";
         document.body.appendChild(iframe);
-        frames[frames.length - 1].document.write("<script>parent.__isolatedFunction = " + functionToIsolate.toString() + "; parent.__isolatedFunction.__prototype=Function.prototype;<\/script>");
-        var __isolatedFunction  = window.__isolatedFunction;
+        var isolatedDocument    = frames[frames.length - 1].document;
+        isolatedDocument.write("<script>parent.__isolatedFunction = Function;<\/script>");
+        var isolatedFunction    = window.__isolatedFunction;
         delete window.__isolatedFunction;
-        document.body.removeChild(iframe);
-        return __isolatedFunction;
-    };
+ return {
+            create:
+            function(functionToIsolate)
+            {
+                isolatedDocument.open();
+                isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
+                isolatedDocument.close();
+                var __isolatedSubFunction  = window.__isolatedSubFunction;
+                delete window.__isolatedSubFunction;
+                return __isolatedSubFunction;
+            },
+            root:   isolatedFunction
+        };
+    }
 });}();
 !function()
 {"use strict";root.define("atomic.htmlViewAdapterFactorySupport",
@@ -386,7 +413,6 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
     {
         var element = uiElement.querySelector(selector);
         if (element === null)   throw new Error("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-        element.removeAttribute("id");
         return element;
     };
     function removeAllElementChildren(element)
@@ -462,7 +488,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             var viewAdapterDefinition   = new viewAdapterDefinitionConstructor(viewAdapter);
             this.attachControls(viewAdapter, viewAdapterDefinition.controls, viewElement);
             this.extractDeferredControls(viewAdapter, viewAdapterDefinition.repeat, viewElement);
-            attachViewMemberAdapters(viewAdapter);
+            attachViewMemberAdapters(viewAdapter, viewAdapterDefinition.customAttachments, viewAdapterDefinition);
             this.addEvents(viewAdapter, viewAdapterDefinition.events);
             this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
@@ -470,24 +496,88 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
         }
     };
     return internalFunctions;
-}
-);
-root.define("atomic.viewAdapterFactory",
-function(internalFunctions, observableFactory)
+});}();
+!function()
+{"use strict";root.define("atomic.viewAdapterFactory",
+function(internalFunctions)
 {
-return { create: function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent); } };
-}
-);
-root.define("atomic.observerFactory",
+    return { create: function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent); } };
+});}();
+!function()
+{"use strict";root.define("atomic.observerFactory",
 function(removeFromArray, isolatedFunctionFactory)
 {
+    var functionFactory = new isolatedFunctionFactory();
+    var subObserver                                 =
+    functionFactory.create
+    (function subObserverFactory(basePath, bag)
+    {
+        function subObserver(path, value)
+        {
+            return subObserver.__invoke(path, value);
+        }
+        Object.defineProperty(subObserver, "__basePath", {get:function(){return basePath;}});
+        Object.defineProperty(subObserver, "__bag", {get:function(){return bag;}});
+        return subObserver;
+    });
+    functionFactory.root.prototype.__invoke         =
+    function(path, value)
+    {
+        if (path === undefined) return navDataPath(this.__bag, extractPathSegments(this.__basePath));
+        if (path === null)      path    = "";
+        var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
+        var revisedPath     = getFullPath(pathSegments);
+        if (value === undefined)
+        {
+            if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            var returnValue = navDataPath(this.__bag, pathSegments);
+            if (typeof returnValue == "object")                 return new subObserver(revisedPath, this.__bag);
+            return returnValue;
+        }
+        if (this.__bag.rollingback)    return;
+        navDataPath(this.__bag, pathSegments, value);
+        notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+    }
+    functionFactory.root.prototype.listen           =
+    function(callback)
+    {
+        var listener    = {callback: callback};
+        this.__bag.itemListeners.push(listener);
+        notifyPropertyListener.call(this, "", listener, this.__bag);
+    }
+    functionFactory.root.prototype.ignore           =
+    function(callback)
+    {
+        for(var listenerCounter=0;listenerCounter<this.__bag.itemListeners.length;listenerCounter++)
+        if (this.__bag.itemListeners[listenerCounter].callback === callback)
+        removeFromArray(this.__bag.itemListeners, listenerCounter);
+    }
+    functionFactory.root.prototype.beginTransaction =
+    function()
+    {
+        this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));
+    }
+    functionFactory.root.prototype.commit           =
+    function()
+    {
+        delete this.__bag.backup;
+    }
+    functionFactory.root.prototype.rollback         =
+    function()
+    {
+        this.__bag.rollingback  = true;
+        this.__bag.item         = this.__bag.backup;
+        delete this.__bag.backup;
+        notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
+        this.__bag.rollingback  = false;
+    }
     function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
     {
         for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
         {
             var subSegment  = subSegments[subSegmentCounter];
             // warning: string subsegments are not currently supported
-            if (isNaN(subSegment))  throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path);
+            if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
             returnSegments.push({type:1, value: parseInt(subSegment)});
         }
     }
@@ -550,169 +640,31 @@ function(removeFromArray, isolatedFunctionFactory)
             addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
         }
     }
+    function notifyPropertyListener(propertyKey, listener, bag)
+    {
+        if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+        {
+            bag.updating.push(listener);
+            listener.properties = {};
+            listener.callback();
+            bag.updating.pop();
+        }
+    }
+    function notifyPropertyListeners(propertyKey, value, bag)
+    {
+        for(var listenerCounter=0;listenerCounter<bag.itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, bag.itemListeners[listenerCounter], bag);
+    }
     return function observer(_item)
     {
-        var bag             = {item: _item};
-        var itemListeners   = [];
-        var propertyKeys    = [];
-        var updating        = [];
-        var rollingback     = false;
-
-        function notifyPropertyListener(propertyKey, listener)
+        var bag             =
         {
-            if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
-            {
-                updating.push(listener);
-                listener.properties = {};
-                listener.callback();
-                updating.pop();
-            }
-        }
-        function notifyPropertyListeners(propertyKey, value)
-        {
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter]);
-        }
-        var arraySubObserver                        =
-        new isolatedFunctionFactory
-        (function arraySubObserverFactory(basePath)
-        {
-            function arraySubObserver(path, value)
-            {
-                if (path === undefined) return arraySubObserver.__item(basePath);
-                if (path === null)      path    = "";
-                return arraySubObserver.__invoke(path.toString(), value);
-            }
-            arraySubObserver.__getBasePath  = function(){return basePath;};
-            return arraySubObserver;
-        });
-        var arraySubObserverPrototype               = arraySubObserver.__prototype;
-        delete  arraySubObserver.__prototype;
-        arraySubObserverPrototype.__invoke          =
-        function(path, value)
-        {
-            if (path === undefined || path === null)    path    = "";
-            var pathSegments    = extractPathSegments(this.__getBasePath()+"."+path);
-            var revisedPath     = getFullPath(pathSegments);
-            if (value === undefined)
-            {
-                if (updating.length > 0  && pathSegments.length > 0)   addProperties(updating[updating.length-1].properties, pathSegments);
-                var returnValue = navDataPath(bag, pathSegments);
-                if (typeof returnValue == "object")
-                {
-                    if (returnValue.constructor == Array)   return new arraySubObserver(revisedPath);
-                    return new subObserver(revisedPath);
-                }
-                return returnValue;
-            }
-            if (rollingback)    return;
-            navDataPath(bag, pathSegments, value);
-            notifyPropertyListeners.call(this, revisedPath, value);
-        }
-        arraySubObserverPrototype.__item            = function(basePath) { return navDataPath(bag, extractPathSegments(basePath)); }
-        arraySubObserverPrototype.listen            =
-        function(callback)
-        {
-            var listener    = {callback: callback};
-            itemListeners.push(listener);
-            notifyPropertyListener.call(this, "", listener);
-        }
-        arraySubObserverPrototype.ignore            =
-        function(callback)
-        {
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)
-            if (itemListeners[listenerCounter].callback === callback)
-            removeFromArray(itemListeners, listenerCounter);
-        }
-        arraySubObserverPrototype.beginTransaction  =
-        function()
-        {
-            bag.backup  = JSON.parse(JSON.stringify(bag.item));
-        }
-        arraySubObserverPrototype.commit            =
-        function()
-        {
-            delete bag.backup;
-        }
-        arraySubObserverPrototype.rollback          =
-        function()
-        {
-            rollingback = true;
-            bag.item    = bag.backup;
-            delete bag.backup;
-            notifyPropertyListeners.call(this, this.__getBasePath(), bag.item);
-            rollingback = false;
-        }
-        var subObserver                             =
-        new isolatedFunctionFactory
-        (function subObserverFactory(basePath)
-        {
-            function subObserver(path, value)
-            {
-                if (path === undefined) return subObserver.__item(basePath);
-                if (path === null)      path    = "";
-                return subObserver.__invoke(path, value);
-            }
-            subObserver.__getBasePath   = function(){return basePath;};
-            return subObserver;
-        });
-        var subObserverPrototype                    = subObserver.__prototype;
-        delete  subObserver.__prototype;
-        subObserverPrototype.__invoke               =
-        function(path, value)
-        {
-            if (path === undefined || path === null)    path    = "";
-            var pathSegments    = extractPathSegments(this.__getBasePath()+"."+path);
-            var revisedPath     = getFullPath(pathSegments);
-            if (value === undefined)
-            {
-                if (updating.length > 0 && pathSegments.length > 0)   addProperties(updating[updating.length-1].properties, pathSegments);
-                var returnValue = navDataPath(bag, pathSegments);
-                if (typeof returnValue == "object")
-                {
-                    if (returnValue.constructor == Array)   return new arraySubObserver(revisedPath);
-                    return new subObserver(revisedPath);
-                }
-                return returnValue;
-            }
-            if (rollingback)    return;
-            navDataPath(bag, pathSegments, value);
-            notifyPropertyListeners.call(this, revisedPath, value);
-        }
-        subObserverPrototype.__item                 = function(basePath) { return navDataPath(bag, extractPathSegments(basePath)); }
-        subObserverPrototype.listen                 =
-        function(callback)
-        {
-            var listener    = {callback: callback};
-            itemListeners.push(listener);
-            notifyPropertyListener.call(this, "", listener);
-        }
-        subObserverPrototype.ignore                 =
-        function(callback)
-        {
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)
-            if (itemListeners[listenerCounter].callback === callback)
-            removeFromArray(itemListeners, listenerCounter);
-        }
-        subObserverPrototype.beginTransaction       =
-        function()
-        {
-            bag.backup  = JSON.parse(JSON.stringify(bag.item));
-        }
-        subObserverPrototype.commit                 =
-        function()
-        {
-            delete bag.backup;
-        }
-        subObserverPrototype.rollback               =
-        function()
-        {
-            rollingback = true;
-            bag.item    = bag.backup;
-            delete bag.backup;
-            notifyPropertyListeners.call(this, this.__getBasePath(), bag.item);
-            rollingback = false;
-        }
-        return new subObserver("");
+            item:           _item,
+            itemListeners:  [],
+            propertyKeys:   [],
+            updating:       [],
+            rollingback:    false
+        };
+        return new subObserver("", bag);
     };
 });}();
 !function()
