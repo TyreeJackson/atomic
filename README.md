@@ -26,16 +26,22 @@ This visual studio project contains components written in c# for the purpose of 
 * Core Entities
     * User
 
-
-## AtomicWeb
+## AtomicWeb (MVC)
 This visual studio project contains components written in HTML/CSS/JavaScript for the purpose of building web application clients.  That sounds a little better than the .Net one, but how about a feature list anyway:
 
 * Pure disconnected client side MVC implementation built using M:JSON / V:HTML 5 / C:JavaScript 1.8.5(ECMAScript 5).
-* High Fidelity Functional Prototyping support provided by lgihtweight object data storage modules (comprising localStorage and optional remote persistence using services built upon Atomic.Net)
+* High Fidelity Functional Prototyping support provided by lightweight object data storage modules (comprising localStorage and optional remote persistence using services built upon Atomic.Net)
 * Classical style inheritance/method dispatching implementation (provides instance and static scopes, base class member access, method overriding, and protected, privileged and public boundaries)
 * DOM abstraction via Control controller base class. (Dependency Injection option for headless and other alternative views)
 * Small MVC triplets promote reusable components (.html, .css, .js files in component folders)
 * Virtual File dependency routing provided through .dep files which are processed via the Atomic.Net StaticFileHandler or other alternative engine)
+
+## AtomicJS (MVVAC)
+This visual studio project contains lightweight alternative components written in HTML/CSS/JavaScript for the purpose of building web application clients.
+
+* Pure disconnected client side MVVAC (Model-View-View Adapter-Controller) implementation build using M:JSON / V: HTML 5 / VA: JSON/JavaScript 1.8.5(ECMAScript 5).
+* High Fidelity Functional Prototyping support provided by lightweight object data storage modules (comprising localStorage and optional remote persistence using services built upon Atomic.Net)
+* DOM abstraction via View Adapter definitions. (Dependency Injection adapter attachment options for headless and other alternative views)
 
 # Installation Instructions
 For now, get the latest source and build using Visual Studio 2012 or higher or Xamarin Studio.  (Visual Studio 2010 might work, but is currently untested).  After you build, run the AtomicWeb project.  If you are using Visual Studio on Window 8, you may need to run as an admin in order to setup the application under IIS.  You can also try running it under the visual studio development server, but this has not been tested yet.  After you run it, you should see a list of links.  The demo link loads an AtomicJS demo SPA that is still under development.  The services and entities link each open up what will eventually be the middleware discovery screens.
