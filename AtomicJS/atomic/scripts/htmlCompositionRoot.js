@@ -18,7 +18,8 @@ return {
                     window.clearTimeout
                 ),
                 new root.atomic.initializeViewAdapter(root.utilities.each),
-                root.utilities.pubSub
+                root.utilities.pubSub,
+                function(message){console.log(message);}
             )
         ),
         observer:

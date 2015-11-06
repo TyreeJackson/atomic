@@ -3,7 +3,7 @@
 root.define("atomic.htmlAttachViewMemberAdapters",
 function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout)
 {
-    function bindRepeatedList(observer, bindTo)
+    function bindRepeatedList(observer)
     {
         var documentFragment    = document.createDocumentFragment();
         this.__detach(documentFragment);
@@ -13,11 +13,9 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             var subDataItem = observer(dataItemCounter);
             for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
             {
-                var clone                       = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter]);
-                var key                         = clone.getKey(subDataItem);
-                this.__repeatedControls[key]    = clone.control;
+                var clone                           = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter], subDataItem);
+                this.__repeatedControls[clone.key]  = clone.control;
                 clone.control.bindData(subDataItem);
-                clone.control.__element.setAttribute("id", key);
                 clone.parent.appendChild(clone.control.__element);
             }
         }
@@ -171,6 +169,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             if (value !== undefined || forceSet)    this.__element.src  = value;
             else                                    return this.__element.src;
         },
+        "dd":      htmlBasedValueFunc,
+        "div":      htmlBasedValueFunc,
         "span":     htmlBasedValueFunc,
         "td":       htmlBasedValueFunc,
         "label":    htmlBasedValueFunc
