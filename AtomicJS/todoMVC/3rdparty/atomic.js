@@ -52,8 +52,7 @@
     root.define("utilities.removeItemFromArray", removeItemFromArray);
 }();
 !function()
-{"use strict";
-root.define("atomic.htmlAttachViewMemberAdapters",
+{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
 function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout)
 {
     function bindRepeatedList(observer)
@@ -139,9 +138,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         function(observer)
         {
             this.boundItem  = observer;
-            for(var controlKey in this.controls)    this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
-            if (this.boundItem === undefined) debugger;
+            for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
+            this.__bindListener = (function(item){ notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             return this;
         },
@@ -362,7 +360,7 @@ function(each)
         onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false); },
         hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
-    each(["bindAs", "bindSource", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "bindSource", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     return function initializeViewAdapter(viewAdapter, viewAdapterDefinition)
@@ -429,6 +427,11 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
         }
         return element;
     };
+    var querySelectorAll    =
+    function(uiElement, selector, selectorPath, typeHint)
+    {
+        return uiElement.querySelectorAll(selector);
+    };
     function createMissingElementsContainer()
     {
         var missingElements = document.createElement("div");
@@ -469,7 +472,13 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
                 viewAdapter.__controlKeys.push(controlKey);
                 var declaration = controlDeclarations[controlKey];
                 var selector    = (declaration.selector||("#"+controlKey));
-                viewAdapter.controls[controlKey] = this.createControl(declaration, querySelector(viewElement, selector, selectorPath), viewAdapter, selector);
+                if (declaration.multipresent)
+                {
+                    var elements    = querySelectorAll(viewElement, selector, selectorPath);
+                    for(var elementCounter=0;elementCounter<elements.length;elementCounter++)
+                    viewAdapter.controls[controlKey+elementCounter] = this.createControl(declaration, elements[elementCounter], viewAdapter, selector);
+                }
+                else    viewAdapter.controls[controlKey] = this.createControl(declaration, querySelector(viewElement, selector, selectorPath), viewAdapter, selector);
             }
         },
         createControl:

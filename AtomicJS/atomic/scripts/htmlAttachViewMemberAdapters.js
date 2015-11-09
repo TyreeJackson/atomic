@@ -1,6 +1,5 @@
 !function()
-{"use strict";
-root.define("atomic.htmlAttachViewMemberAdapters",
+{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
 function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout)
 {
     function bindRepeatedList(observer)
@@ -86,9 +85,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         function(observer)
         {
             this.boundItem  = observer;
-            for(var controlKey in this.controls)    this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
-            if (this.boundItem === undefined) debugger;
+            for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
+            this.__bindListener = (function(item){notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             return this;
         },
