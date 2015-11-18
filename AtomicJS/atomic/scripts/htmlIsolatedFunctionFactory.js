@@ -1,4 +1,4 @@
-﻿!function()
+!function()
 {"use strict";root.define("atomic.isolatedFunctionFactory",
 function isolatedFunctionFactory(document)
 {
@@ -15,9 +15,7 @@ function isolatedFunctionFactory(document)
             create:
             function(functionToIsolate)
             {
-                isolatedDocument.open();
                 isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
-                isolatedDocument.close();
                 var __isolatedSubFunction  = window.__isolatedSubFunction;
                 delete window.__isolatedSubFunction;
                 return __isolatedSubFunction;
