@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Path = System.IO.Path;
 using System.Text;
+#if DEBUG
+using StopWatch = System.Diagnostics.Stopwatch;
+#endif
 using System.Threading.Tasks;
 
 namespace AtomicNet
@@ -12,12 +15,19 @@ namespace AtomicNet
     partial     class   StaticFileHandler : WebHandler
     {
 
+#if DEBUG
+        private     StopWatch               stopWatch           = new StopWatch();
+#endif
+
         public                              StaticFileHandler() : base()    {}
 
         protected
         override
         async       Task                    ProcessRequest()
         {
+#if DEBUG
+            this.stopWatch.Start();
+#endif
             if (!this.TransmitRequestedFileIfItExists())
             if (!this.TransmitDefaultDocumentInIndexIfItExists())
             if (!this.TransmitVirtualizedFileIfItExists())
@@ -27,6 +37,10 @@ namespace AtomicNet
 
         private     void                    RespondWithNotFound()
         {
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
             this.Context.Response.StatusCode        = HttpStatusCodes.ClientError_NotFound;
             this.Context.Response.StatusDescription = "Not found";
             this.Context.Response.Write("File not found.");
@@ -57,7 +71,12 @@ namespace AtomicNet
         {
             this.Context.Response.AddHeader("ETag", fileAssembler.CachedFile.etag);
             this.Context.Response.AddHeader("content-length", fileAssembler.CachedFile.contents.Length.ToString());
-            this.Context.Response.Write(fileAssembler.CachedFile.contents);
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
+            fileAssembler.CachedFile.contents.Position  = 0;
+            fileAssembler.CachedFile.contents.CopyTo(this.Context.Response.OutputStream);
         }
 
         private     bool                    checkForIfNoneMatch(VirtualFileAssembler fileAssembler)
@@ -67,6 +86,10 @@ namespace AtomicNet
             {
                 this.Context.Response.StatusCode    = HttpStatusCodes.Redirection_NotModified;
                 this.Context.Response.AddHeader("content-length", "0");
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
                 return true;
             }
             return false;
@@ -77,6 +100,10 @@ namespace AtomicNet
             if (fileAssembler.MissingFiles.Count > 0)
             {
                 this.Response.AddHeader("MissingFiles", String.Join(";", fileAssembler.MissingFiles));
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
                 return true;
             }
             return false;
@@ -97,6 +124,10 @@ namespace AtomicNet
         {
             if (System.IO.File.Exists(Path.Combine(this.Context.Request.PhysicalPath, "index.html")))
             {
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
                 this.Context.Response.TransmitFile(Path.Combine(this.Context.Request.PhysicalPath, "index.html"));
                 return true;
             }
@@ -107,10 +138,23 @@ namespace AtomicNet
         {
             if (System.IO.File.Exists(this.Context.Request.PhysicalPath))
             {
+                this.addMimeTypeFromExtension(Path.GetExtension(this.Context.Request.Path).OrIfNullOrEmpty(Extension.html).ToLower());
+#if DEBUG
+            this.stopWatch.Stop();
+            this.Context.Response.AddHeader("x-content-load-time", this.stopWatch.ElapsedMilliseconds.ToString() + "ms");
+#endif
                 this.Context.Response.TransmitFile(this.Context.Request.PhysicalPath);
                 return true;
             }
             return  false;
+        }
+
+        private     void                    addMimeTypeFromExtension(string fileNameExtension)
+        {
+            Extension   fileExtension   = Extension.TrySelect(fileNameExtension, null);
+            string      mimeType        = fileExtension != null ? fileExtension.MimeType : System.Web.MimeMapping.GetMimeMapping(fileNameExtension);
+
+            if (!String.IsNullOrEmpty(mimeType))    this.Response.AddHeader("content-type", mimeType);
         }
 
     }
