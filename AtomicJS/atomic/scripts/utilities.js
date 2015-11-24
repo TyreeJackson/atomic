@@ -1,6 +1,6 @@
-﻿!function()
+!function()
 {
-    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter]); }
+    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
     root.define("utilities.each", each);
     function pubSub()
     {

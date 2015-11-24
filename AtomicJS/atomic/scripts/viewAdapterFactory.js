@@ -9,9 +9,13 @@ return {
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
             return (function(parent, containerElement, containerSelector)
             {
-                var container                   = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
-                container.__element.innerHTML   = "";
-                var view                        = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
+                var container   = parent;
+                if (containerElement !== undefined)
+                {
+                    container                       = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
+                    container.__element.innerHTML   = "";
+                }
+                var view                            = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
                 container.appendControl(view);
                 return view;
             }).bind(this);

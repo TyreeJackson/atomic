@@ -27,7 +27,7 @@
 }();
 !function()
 {"use strict";
-    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter]); }
+    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
     root.define("utilities.each", each);
     function pubSub()
     {
@@ -533,6 +533,18 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             attachViewMemberAdapters(viewAdapter, viewAdapterDefinition.customAttachments, viewAdapterDefinition);
             this.addEvents(viewAdapter, viewAdapterDefinition.events);
             this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
+
+            viewAdapter.addControl  =
+            function(controlKey, controlDeclaration)
+            {
+                if (controlDeclaration === undefined)  return;
+                viewAdapter.__controlKeys           = viewAdapter.__controlKeys || [];
+                viewAdapter.controls                = viewAdapter.controls      || {};
+                viewAdapter.__controlKeys.push(controlKey);
+                viewAdapter.controls[controlKey]    = internalFunctions.createControl(controlDeclaration, undefined, viewAdapter, "#" + controlKey);
+                viewAdapter.controls[controlKey].__element.setAttribute("id", controlKey);
+            }
+
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
             return viewAdapter;
         }
@@ -550,9 +562,13 @@ return {
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
             return (function(parent, containerElement, containerSelector)
             {
-                var container                   = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
-                container.__element.innerHTML   = "";
-                var view                        = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
+                var container   = parent;
+                if (containerElement !== undefined)
+                {
+                    container                       = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
+                    container.__element.innerHTML   = "";
+                }
+                var view                            = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
                 container.appendControl(view);
                 return view;
             }).bind(this);

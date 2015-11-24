@@ -124,6 +124,18 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             attachViewMemberAdapters(viewAdapter, viewAdapterDefinition.customAttachments, viewAdapterDefinition);
             this.addEvents(viewAdapter, viewAdapterDefinition.events);
             this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
+
+            viewAdapter.addControl  =
+            function(controlKey, controlDeclaration)
+            {
+                if (controlDeclaration === undefined)  return;
+                viewAdapter.__controlKeys           = viewAdapter.__controlKeys || [];
+                viewAdapter.controls                = viewAdapter.controls      || {};
+                viewAdapter.__controlKeys.push(controlKey);
+                viewAdapter.controls[controlKey]    = internalFunctions.createControl(controlDeclaration, undefined, viewAdapter, "#" + controlKey);
+                viewAdapter.controls[controlKey].__element.setAttribute("id", controlKey);
+            }
+
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
             return viewAdapter;
         }
