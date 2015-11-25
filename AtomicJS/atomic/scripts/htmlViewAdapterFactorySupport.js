@@ -27,6 +27,11 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
         }
         return element;
     };
+    var querySelectorAll    =
+    function(uiElement, selector, selectorPath, typeHint)
+    {
+        return uiElement.querySelectorAll(selector);
+    };
     function createMissingElementsContainer()
     {
         var missingElements = document.createElement("div");
@@ -67,7 +72,13 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
                 viewAdapter.__controlKeys.push(controlKey);
                 var declaration = controlDeclarations[controlKey];
                 var selector    = (declaration.selector||("#"+controlKey));
-                viewAdapter.controls[controlKey] = this.createControl(declaration, querySelector(viewElement, selector, selectorPath), viewAdapter, selector);
+                if (declaration.multipresent)
+                {
+                    var elements    = querySelectorAll(viewElement, selector, selectorPath);
+                    for(var elementCounter=0;elementCounter<elements.length;elementCounter++)
+                    viewAdapter.controls[controlKey+elementCounter] = this.createControl(declaration, elements[elementCounter], viewAdapter, selector);
+                }
+                else    viewAdapter.controls[controlKey] = this.createControl(declaration, querySelector(viewElement, selector, selectorPath), viewAdapter, selector);
             }
         },
         createControl:
@@ -92,6 +103,8 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             function(templateKey, subDataItem)
             {
                 var templateElement = this.__templateElements[templateKey];
+
+                if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
                 var key             = templateElement.declaration.getKey(subDataItem);
                 var elementCopy     = templateElement.element.cloneNode(true);
                 elementCopy.setAttribute("id", key);

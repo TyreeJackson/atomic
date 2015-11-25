@@ -13,9 +13,10 @@ return {
                 (
                     window,
                     document,
-                    root.utilities.removeItemFromArray, 
-                    window.setTimeout, 
-                    window.clearTimeout
+                    root.utilities.removeItemFromArray,
+                    window.setTimeout,
+                    window.clearTimeout,
+                    root.utilities.each
                 ),
                 new root.atomic.initializeViewAdapter(root.utilities.each),
                 root.utilities.pubSub,

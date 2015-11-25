@@ -158,7 +158,7 @@ function(removeFromArray, isolatedFunctionFactory)
     {
         var bag             =
         {
-            item:           _item, 
+            item:           _item,
             itemListeners:  [],
             propertyKeys:   [],
             updating:       [],

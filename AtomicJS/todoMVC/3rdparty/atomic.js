@@ -1,10 +1,8 @@
 !function()
 {"use strict";
-    var __root  = new __namespace();
-    function __namespace()
-    {
-        return { define: function(fullName, item) { namespace(this, fullName, item); } };
-    }
+    var __root              = new __namespace();
+    function __namespace(){}
+    __namespace.prototype.define    = function(fullName, item) { namespace(this, fullName, item); }
     function getNamespace(root, paths)
     {
         var current     = root;
@@ -52,8 +50,9 @@
     root.define("utilities.removeItemFromArray", removeItemFromArray);
 }();
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
-function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout)
+{"use strict";
+root.define("atomic.htmlAttachViewMemberAdapters",
+function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
 {
     function bindRepeatedList(observer)
     {
@@ -66,9 +65,12 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
             {
                 var clone                           = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter], subDataItem);
-                this.__repeatedControls[clone.key]  = clone.control;
-                clone.control.bindData(subDataItem);
-                clone.parent.appendChild(clone.control.__element);
+                if (clone !== undefined)
+                {
+                    this.__repeatedControls[clone.key]  = clone.control;
+                    clone.control.bindData(subDataItem);
+                    clone.parent.appendChild(clone.control.__element);
+                }
             }
         }
         this.__reattach();
@@ -87,13 +89,77 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); notifyOnboundedUpdate.call(this, data); }
     function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
-    var bindSourceFunctions  =
+    function clearSelectList(selectList)
+    {
+        for(var counter=selectList.options.length-counter;counter>=0;counter--)
+        {
+            selectList.remove(i);
+        }
+    }
+    function bindSelectListSource()
+    {
+        clearSelectList(this.__element);
+        var selectedValue   = this.boundItem(this.__bindTo||"");
+        var source          = this.boundSource(this.__bindSource||"");
+        if (source === undefined)   return;
+        for(var counter=0;counter<source().length;counter++)
+        {
+            var option      = document.createElement('option');
+            var sourceItem  = source()[counter];
+            option.value    = sourceItem[this.__bindSourceValue];
+            option.text     = sourceItem[this.__bindSourceText];
+            option.selected = sourceItem[this.__bindSourceValue] === selectedValue;
+            this.__element.appendChild(option);
+        }
+    }
+    var bindSourceFunctions     =
     {
         "default":
         function(sources)
         {
-            for(var controlKey in this.controls)    this.controls[controlKey].bindSource(sources);
+            this.boundSource            = sources;
+            for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(sources(this.__bindSource||""));
             return this;
+        },
+        "select:select-one":
+        function(sources)
+        {
+            this.boundSource            = sources;
+            this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
+            bindUpdateEvents.call(this);
+            sources.listen(this.__bindSourceListener);
+        }
+    };
+    var unbindSourceFunctions   =
+    {
+        "default":
+        function(sources)
+        {
+            if (this.boundSource !== undefined && this.__bindSource !== undefined)
+            {
+                this.boundSource.ignore(this.__bindSourceListener);
+                delete this.__bindSourceListener;
+                delete this.boundSource;
+                for(var controlKey in this.controls)    this.controls[controlKey].unbindSourceData();
+            }
+            return this;
+        },
+        "select:select-one":
+        function(sources)
+        {
+            this.boundSource    = sources(this.__bindSource||"");
+            clearSelectList(this.__element);
+            var selectedValue   = this.boundItem(this.__bindTo||"");
+            var source          = sources(this.__bindSource||"")();
+            for(var counter=0;counter<source.length;counter++)
+            {
+                var option      = document.createElement('option');
+                var sourceItem  = source[counter];
+                option.value    = sourceItem[this.__bindSourceValue];
+                option.text     = sourceItem[this.__bindSourceText];
+                option.selected = sourceItem[this.__bindSourceValue] === selectedValue;
+                this.__element.appendChild(opt);
+            }
         }
     };
     function bindUpdateEvents()
@@ -139,7 +205,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             this.boundItem  = observer;
             for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){ notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            this.__bindListener = (function(item){notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             return this;
         },
@@ -305,8 +371,32 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
             this.__element.setAttribute("data-" + attributeName, value);
         };
-        viewAdapter.bindSource          = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
+        viewAdapter.bindSourceData      = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
         viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
+        if (viewAdapter.__templateKeys)
+        {
+            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); };
+        }
+        viewAdapter.bindTo              =
+        function(value)
+        {
+            if(value === undefined) return this.__bindTo;
+            if (this.boundItem !== undefined)   this.unbindData();
+            this.__bindTo = value;
+            if (this.boundItem !== undefined)   this.bindData(this.boundItem);
+        };
+        each(["bindSource", "bindSourceValue", "bindSourceText"],
+        function(name)
+        {
+            viewAdapter[name]           =
+            function(value)
+            {
+                if(value === undefined) return this["__"+name];
+                if (this.boundItem !== undefined)   this.unbindSourceData();
+                this["__"+name] = value;
+                if (this.boundItem !== undefined)   this.bindSourceData(this.boundSource);
+            };
+        });
         viewAdapter.blur                = function(){this.__element.blur(); return this;};
         viewAdapter.click               = function(){this.__element.click(); return this;};
         viewAdapter.__detach            = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
@@ -331,6 +421,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         viewAdapter.toggleEdit          = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
         viewAdapter.toggleDisplay       = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
         viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
+        viewAdapter.unbindSourceData    = unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
         viewAdapter.value               = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
         if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
         {
@@ -360,7 +451,7 @@ function(each)
         onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false); },
         hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
-    each(["bindAs", "bindingRoot", "bindSource", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "bindSource", "bindSourceValue", "bindSourceText", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     return function initializeViewAdapter(viewAdapter, viewAdapterDefinition)
@@ -501,6 +592,8 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             function(templateKey, subDataItem)
             {
                 var templateElement = this.__templateElements[templateKey];
+
+                if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
                 var key             = templateElement.declaration.getKey(subDataItem);
                 var elementCopy     = templateElement.element.cloneNode(true);
                 elementCopy.setAttribute("id", key);
@@ -754,9 +847,10 @@ return {
                 (
                     window,
                     document,
-                    root.utilities.removeItemFromArray, 
-                    window.setTimeout, 
-                    window.clearTimeout
+                    root.utilities.removeItemFromArray,
+                    window.setTimeout,
+                    window.clearTimeout,
+                    root.utilities.each
                 ),
                 new root.atomic.initializeViewAdapter(root.utilities.each),
                 root.utilities.pubSub,
