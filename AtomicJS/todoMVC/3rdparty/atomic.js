@@ -363,6 +363,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         }
 
         viewAdapter.addClass            = function(className){ addClass(this.__element, className); return this;}
+        viewAdapter.addClassFor         = function(className, milliseconds){ this.addClass(className); setTimeout((function(){this.removeClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.addEventListener    = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); };
         viewAdapter.appendControl       = function(childControl){ this.__element.appendChild(childControl.__element); };
         viewAdapter.attribute           =
@@ -411,6 +412,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         viewAdapter.hide                = function(){ this.__element.style.display="none"; return this;};
         viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.removeClass         = function(className){ removeClass(this.__element, className); return this;}
+        viewAdapter.removeClassFor      = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.removeControl       = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
         viewAdapter.removeEventListener = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
         viewAdapter.__reattach          = function(){this.__elementParent.appendChild(this.__element); return this;};
