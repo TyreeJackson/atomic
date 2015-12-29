@@ -1,4 +1,4 @@
-﻿!function()
+!function()
 {"use strict";
     var __root              = new __namespace();
     function __namespace(){}
@@ -21,5 +21,5 @@
         if (value === undefined)            return namespace[paths[paths.length-1]];
         namespace[paths[paths.length-1]]    = value;
     }
-    window.root = __root;
+    window.root = window.root || __root;
 }();

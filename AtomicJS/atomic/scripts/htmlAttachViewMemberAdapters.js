@@ -40,15 +40,15 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     function clearSelectList(selectList)
     {
-        for(var counter=selectList.options.length-counter;counter>=0;counter--)
+        for(var counter=selectList.options.length-1;counter>=0;counter--)
         {
-            selectList.remove(i);
+            selectList.remove(counter);
         }
     }
     function bindSelectListSource()
     {
         clearSelectList(this.__element);
-        var selectedValue   = this.boundItem(this.__bindTo||"");
+        var selectedValue   = this.value();// this.boundItem(this.__bindTo||"");
         var source          = this.boundSource(this.__bindSource||"");
         if (source === undefined)   return;
         for(var counter=0;counter<source().length;counter++)
@@ -57,7 +57,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             var sourceItem  = source()[counter];
             option.value    = sourceItem[this.__bindSourceValue];
             option.text     = sourceItem[this.__bindSourceText];
-            option.selected = sourceItem[this.__bindSourceValue] === selectedValue;
+            option.selected = sourceItem[this.__bindSourceValue] == selectedValue;
             this.__element.appendChild(option);
         }
     }
@@ -75,7 +75,6 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             this.boundSource            = sources;
             this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
-            bindUpdateEvents.call(this);
             sources.listen(this.__bindSourceListener);
         }
     };
@@ -96,19 +95,13 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         "select:select-one":
         function(sources)
         {
-            this.boundSource    = sources(this.__bindSource||"");
-            clearSelectList(this.__element);
-            var selectedValue   = this.boundItem(this.__bindTo||"");
-            var source          = sources(this.__bindSource||"")();
-            for(var counter=0;counter<source.length;counter++)
+            if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
-                var option      = document.createElement('option');
-                var sourceItem  = source[counter];
-                option.value    = sourceItem[this.__bindSourceValue];
-                option.text     = sourceItem[this.__bindSourceText];
-                option.selected = sourceItem[this.__bindSourceValue] === selectedValue;
-                this.__element.appendChild(opt);
+                this.boundSource.ignore(this.__bindSourceListener);
+                delete this.__bindSourceListener;
+                delete this.boundSource;
             }
+            return this;
         }
     };
     function bindUpdateEvents()
@@ -140,7 +133,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true);  notifyOnboundedUpdate.call(this, observer); }).bind(this);
+                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true); notifyOnboundedUpdate.call(this, observer);}).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
@@ -154,7 +147,8 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             this.boundItem  = observer;
             for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+            if (this.boundItem === undefined) debugger;
             observer.listen(this.__bindListener);
             return this;
         },
@@ -239,7 +233,13 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         "div":      htmlBasedValueFunc,
         "span":     htmlBasedValueFunc,
         "td":       htmlBasedValueFunc,
-        "label":    htmlBasedValueFunc
+        "label":    htmlBasedValueFunc,
+        "select:select-one":
+        function(value, forceSet)
+        {
+            if (value !== undefined || forceSet)    this.__element.value    = value;
+            else                                    return this.__element.value;
+        },
     };
     function addClass(element, className)
     {
@@ -352,14 +352,15 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         viewAdapter.__detach            = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
         viewAdapter.focus               = function(){this.__element.focus(); return this;};
         viewAdapter.hasClass            = function(className){ return hasClass(this.__element, className); }
+        viewAdapter.height              = function(){return this.__element.offsetHeight;}
+        viewAdapter.hide                = function(){ this.__element.style.display="none"; return this;};
+        viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.href                = function(value)
         {
             if (value === undefined)    return this.__element.href;
             this.__element.href=value;
             return this;
         };
-        viewAdapter.hide                = function(){ this.__element.style.display="none"; return this;};
-        viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.removeClass         = function(className){ removeClass(this.__element, className); return this;}
         viewAdapter.removeClassFor      = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.removeControl       = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
@@ -382,6 +383,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         {
             viewAdapter.select          = function(){selectContents(this.__element); return this; };
         }
+        viewAdapter.width               = function(){return this.__element.offsetWidth;}
         if (customAttachments !== undefined && customAttachments.length !== undefined)
         for(var counter=0;counter<customAttachments.length;counter++)   customAttachments[counter](viewAdapter, viewAdapterDefinition);
     };
