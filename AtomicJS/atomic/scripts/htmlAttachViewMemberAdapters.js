@@ -1,6 +1,5 @@
 !function()
-{"use strict";
-root.define("atomic.htmlAttachViewMemberAdapters",
+{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
 function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
 {
     function bindRepeatedList(observer)
@@ -299,7 +298,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         selection.removeAllRanges();
         selection.addRange(range);
     }
-    return function(viewAdapter, customAttachments, viewAdapterDefinition)
+    return function(viewAdapter, viewAdapterDefinition)
     {
         var listenersUsingCapture       = {};
         var listenersNotUsingCapture    = {};
@@ -384,7 +383,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             viewAdapter.select          = function(){selectContents(this.__element); return this; };
         }
         viewAdapter.width               = function(){return this.__element.offsetWidth;}
-        if (customAttachments !== undefined && customAttachments.length !== undefined)
-        for(var counter=0;counter<customAttachments.length;counter++)   customAttachments[counter](viewAdapter, viewAdapterDefinition);
+        if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
+        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)    viewAdapterDefinition.extensions[counter].extend(viewAdapter);
     };
 });}();

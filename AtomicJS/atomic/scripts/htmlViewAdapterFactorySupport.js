@@ -134,7 +134,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             var viewAdapterDefinition   = new viewAdapterDefinitionConstructor(viewAdapter);
             this.attachControls(viewAdapter, viewAdapterDefinition.controls, viewElement);
             this.extractDeferredControls(viewAdapter, viewAdapterDefinition.repeat, viewElement);
-            attachViewMemberAdapters(viewAdapter, viewAdapterDefinition.customAttachments, viewAdapterDefinition);
+            attachViewMemberAdapters(viewAdapter, viewAdapterDefinition);
             this.addEvents(viewAdapter, viewAdapterDefinition.events);
             this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
 
