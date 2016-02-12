@@ -207,7 +207,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         if (value !== undefined || forceSet)    this.__element.innerHTML=value;
         else                                    return this.__element.innerHTML;
     }
-    var valueFunctions  =
+    var valueFunctions          =
     {
         "default":
         function(value, forceSet)
@@ -221,18 +221,12 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             if (value !== undefined || forceSet)    this.__element.checked  = value===true;
             else                                    return this.__element.checked;
         },
-        "a":        htmlBasedValueFunc,
         "img":
         function(value, forceSet)
         {
             if (value !== undefined || forceSet)    this.__element.src  = value;
             else                                    return this.__element.src;
         },
-        "dd":      htmlBasedValueFunc,
-        "div":      htmlBasedValueFunc,
-        "span":     htmlBasedValueFunc,
-        "td":       htmlBasedValueFunc,
-        "label":    htmlBasedValueFunc,
         "select:select-one":
         function(value, forceSet)
         {
@@ -240,6 +234,11 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             else                                    return this.__element.value;
         },
     };
+    each(["a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","progress","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    function(name)
+    {
+        valueFunctions[name]    = htmlBasedValueFunc;
+    });
     function addClass(element, className)
     {
         var classNames  = element.className.split(" ");
