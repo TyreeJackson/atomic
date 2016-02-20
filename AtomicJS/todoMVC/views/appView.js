@@ -30,14 +30,36 @@ function()
                                 getKey:     function(item){return "todoListItem-"+item().id},
                                 controls:
                                 {
-                                    toggleCompletedCheckbox:
+                                    /*toggleCompletedCheckbox:
                                     {
                                         bindTo:     "completed",
                                         onchange:
                                         function()
                                         {
                                             appViewAdapter.on.saveTodo(this.boundItem());
-                                        } 
+                                        },
+                                        onboundedupdate:
+                                        function(data)
+                                        {
+                                            this.parent.toggleClass("completed", data().completed||false);
+                                        }
+                                    },*/
+                                    completedRadio:
+                                    {
+                                        bindTo:             "completed",
+                                        bindSource:         "booleans",
+                                        bindSourceValue:    "value",
+                                        bindSourceText:     "text",
+                                        onchange:
+                                        function()
+                                        {
+                                            appViewAdapter.on.saveTodo(this.boundItem());
+                                        },
+                                        onboundedupdate:
+                                        function(data)
+                                        {
+                                            this.parent.toggleClass("completed", data().completed||false);
+                                        }
                                     },
                                     todoLabel:
                                     {
@@ -78,12 +100,7 @@ function()
                                         },
                                         updateon:   ["change", "keyup"]
                                     }
-                                },
-                                onboundedupdate:
-                                function(data)
-                                {
-                                    this.toggleClass("completed", data().completed||false);
-                                },
+                                }
                             }
                         }
                     }

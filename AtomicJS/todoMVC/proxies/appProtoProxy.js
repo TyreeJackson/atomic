@@ -1,4 +1,4 @@
-﻿!function()
+!function()
 {
     root.define
     (
@@ -38,7 +38,7 @@
                 getTodos:
                 function(callback)
                 {
-                    callback(getTodos().items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: getTodos().items});
                 },
                 addTodo:
                 function(todo, callback)
@@ -47,7 +47,7 @@
                     todo.id     = todos.currentId++;
                     todos.items.push(todo);
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 },
                 completeTodo:
                 function(todoId, callback)
@@ -57,7 +57,7 @@
                     todo.completed  = true;
                     setTodo(todo, todos);
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 },
                 deleteCompletedTodos:
                 function(callback)
@@ -66,14 +66,14 @@
                     for(var itemCounter=todos.items.length-1;itemCounter>=0;itemCounter--)
                     if (todos.items[itemCounter].completed === true)    removeFromArray(todos.items, itemCounter);
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 },
                 deleteTodo:
                 function(todoId, callback)
                 {
                     var todos   = removeTodo(todoId);
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 },
                 saveTodo:
                 function(todo, callback)
@@ -81,7 +81,7 @@
                     var todos   = getTodos();
                     setTodo(todo, todos);
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 },
                 saveTodos:
                 function(todosToSave, callback)
@@ -89,7 +89,7 @@
                     var storedTodos = getTodos();
                     for(var todoCounter=0;todoCounter<todosToSave.length;todoCounter++) setTodo(todosToSave[todoCounter], storedTodos);
                     setTodos(storedTodos);
-                    callback(storedTodos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: storedTodos.items});
                 },
                 toggleAllTodos:
                 function(value, callback)
@@ -97,7 +97,7 @@
                     var todos   = getTodos();
                     for(var todoCounter=0;todoCounter<todos.items.length;todoCounter++)   todos.items[todoCounter].completed  = value;;
                     setTodos(todos);
-                    callback(todos.items);
+                    callback({sources:{booleans: [{value: true, text: "Complete"}, {value: false, text: "Incomplete"}]}, items: todos.items});
                 }
             };
         }
