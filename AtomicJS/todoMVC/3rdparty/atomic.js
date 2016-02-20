@@ -25,28 +25,33 @@
 }();
 !function()
 {"use strict";
-    root.define("utilities.each", function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); });
-    root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
-    {
-        var rest        = array.slice((to || from) + 1 || array.length);
-        array.length    = from < 0 ? array.length + from : from;
-        return array.push.apply(array, rest);
-    });
-    root.define("utilities.pubSub", function pubSub()
+    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
+    root.define("utilities.each", each);
+    function pubSub()
     {
         var listeners   = [];
         function _pubSub() { for(var listenerCounter=0;listenerCounter<listeners.length;listenerCounter++) listeners[listenerCounter].apply(null, arguments); }
         _pubSub.listen  = function(listener) { listeners.push(listener); }
-        _pubSub.ignore  = function(listener) { root.utilities.removeFromArray.call(listeners, listener); }
+        _pubSub.ignore  = function(listener) { removeFromArray.call(listeners, listener); }
         return _pubSub;
-    });
-    root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item)
+    }
+    root.define("utilities.pubSub", pubSub);
+    function removeFromArray(array, from, to)
     {
-        root.utilities.removeFromArray(array, array.indexOf(item));
-    });
+        var rest        = array.slice((to || from) + 1 || array.length);
+        array.length    = from < 0 ? array.length + from : from;
+        return array.push.apply(array, rest);
+    }
+    root.define("utilities.removeFromArray", removeFromArray);
+    function removeItemFromArray(array, item)
+    {
+        removeFromArray(array, array.indexOf(item));
+    }
+    root.define("utilities.removeItemFromArray", removeItemFromArray);
 }();
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
+{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
+function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
 {
     function bindRepeatedList(observer)
     {
@@ -67,12 +72,10 @@
                 }
             }
         }
-        this.bindSourceData(this.boundSource);
         this.__reattach();
     }
     function unbindRepeatedList()
     {
-        this.unbindSourceData();
         if (this.__repeatedControls !== undefined)
         for(var repeatedControlKey in this.__repeatedControls)
         {
@@ -92,17 +95,10 @@
             selectList.remove(counter);
         }
     }
-    function clearRadioList(radioList)
-    {
-        for(var counter=radioList.childNodes.length-1;counter>=0;counter--)
-        {
-            radioList.removeChild(radioList.childNodes[counter]);
-        }
-    }
     function bindSelectListSource()
     {
-        var selectedValue   = this.value();// this.boundItem(this.__bindTo||"");
         clearSelectList(this.__element);
+        var selectedValue   = this.value();// this.boundItem(this.__bindTo||"");
         var source          = this.boundSource(this.__bindSource||"");
         if (source === undefined)   return;
         for(var counter=0;counter<source().length;counter++)
@@ -115,38 +111,13 @@
             this.__element.appendChild(option);
         }
     }
-    function bindRadioListSource()
-    {
-        var selectedValue   = this.value();// this.boundItem(this.__bindTo||"");
-        clearRadioList(this.__element);
-        var source          = this.boundSource(this.__bindSource||"");
-        if (source === undefined)   return;
-        for(var counter=0;counter<source().length;counter++)
-        {
-            var option                      = this.__templateElement.cloneNode(true);
-            var sourceItem                  = source()[counter];
-            option.childNodes[0].rawValue   = sourceItem[this.__bindSourceValue];
-            option.childNodes[1].innerHTML  = sourceItem[this.__bindSourceText];
-            option.childNodes[0].checked    = sourceItem[this.__bindSourceValue] == selectedValue;
-            option.childNodes[0].addEventListener("click", (function(radioControl, event){radioControl.value(this.rawValue); radioControl.triggerEvent("change");}).bind(option.childNodes[0], this), false, true)
-            this.__element.appendChild(option);
-        }
-    }
     var bindSourceFunctions     =
     {
-        "default":          function(sources){},
-        "container":
+        "default":
         function(sources)
         {
             this.boundSource            = sources;
-            for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
-            return this;
-        },
-        "repeater":
-        function(sources)
-        {
-            this.boundSource            = sources;
-            for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+            for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(sources(this.__bindSource||""));
             return this;
         },
         "select:select-one":
@@ -154,31 +125,12 @@
         {
             this.boundSource            = sources;
             this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
-            this.boundSource.listen(this.__bindSourceListener);
-        },
-        "input:radio":
-        function(sources)
-        {
-            this.boundSource            = sources;
-            if (this.__templateElement === undefined)
-            {
-                var originalElement     = this.__element;
-                originalElement.setAttribute("name", originalElement.__selectorPath);
-                originalElement.setAttribute("id", "");
-                this.__templateElement  = document.createElement("span");
-                this.__element          = document.createElement("div");
-                originalElement.parentNode.replaceChild(this.__element, originalElement);
-                this.__templateElement.appendChild(originalElement);
-                this.__templateElement.appendChild(document.createElement("span"));
-            }
-            this.__bindSourceListener   = (function(){bindRadioListSource.call(this);}).bind(this);
-            this.boundSource.listen(this.__bindSourceListener);
+            sources.listen(this.__bindSourceListener);
         }
     };
     var unbindSourceFunctions   =
     {
-        "default":          function(sources){},
-        "container":
+        "default":
         function(sources)
         {
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
@@ -190,30 +142,7 @@
             }
             return this;
         },
-        "repeater":
-        function(sources)
-        {
-            if (this.boundSource !== undefined && this.__bindSource !== undefined)
-            {
-                this.boundSource.ignore(this.__bindSourceListener);
-                delete this.__bindSourceListener;
-                delete this.boundSource;
-                for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].unbindSourceData();
-            }
-            return this;
-        },
         "select:select-one":
-        function(sources)
-        {
-            if (this.boundSource !== undefined && this.__bindSource !== undefined)
-            {
-                this.boundSource.ignore(this.__bindSourceListener);
-                delete this.__bindSourceListener;
-                delete this.boundSource;
-            }
-            return this;
-        },
-        "input:radio":
         function(sources)
         {
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
@@ -273,24 +202,6 @@
             observer.listen(this.__bindListener);
             return this;
         },
-        radio:
-        function(observer)
-        {
-            this.boundItem          = observer;
-            if (this.__bindTo !== undefined || this.__bindAs)
-            {
-                if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
-                else
-                {
-                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true); notifyOnboundedUpdate.call(this, observer);}).bind(this);
-                    this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
-                    bindUpdateEvents.call(this);
-                }
-                observer.listen(this.__bindListener);
-            }
-            notifyOnbind.call(this, observer);
-            return this;
-        },
         repeater:
         function(observer)
         {
@@ -327,20 +238,6 @@
             notifyOnunbind.call(this);
             return this;
         },
-        radio:
-        function()
-        {
-            if (this.boundItem !== undefined && this.__bindTo !== undefined)
-            {
-                this.boundItem.ignore(this.__bindListener);
-                delete this.__bindListener;
-                unbindUpdateEvents.call(this);
-                delete this.__inputListener;
-                delete this.boundItem;
-            }
-            notifyOnunbind.call(this);
-            return this;
-        },
         repeater:
         function()
         {
@@ -360,13 +257,6 @@
     {
         if (value !== undefined || forceSet)    this.__element.innerHTML=value;
         else                                    return this.__element.innerHTML;
-    }
-    function setRadioValue(control, value)
-    {
-        control.__value = value;
-        if (control.__templateElement !== undefined)
-        for(var counter=0;counter<control.__element.childNodes.length;counter++)
-        control.__element.childNodes[counter].childNodes[0].checked = control.__element.childNodes[counter].childNodes[0].rawValue == value;
     }
     var valueFunctions          =
     {
@@ -394,12 +284,6 @@
             if (value !== undefined || forceSet)    this.__element.value    = value;
             else                                    return this.__element.value;
         },
-        "input:radio":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setRadioValue(this, value);
-            else                                    return this.__value;
-        }
     };
     each(["a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
@@ -428,13 +312,9 @@
         if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
         element.className = classNames.join(" ");
     }
-    function triggerEvent()
-    {
-        for(var listenerCounter=0;listenerCounter<this.listeners.length;listenerCounter++)   this.listeners[listenerCounter].apply(null, arguments);
-    }
     function createElementListener(listeners)
     {
-        return function() { triggerEvent.apply(listeners, arguments); };
+        return function() { for(var listenerCounter=0;listenerCounter<listeners.listeners.length;listenerCounter++)   listeners.listeners[listenerCounter].apply(null, arguments); };
     }
     function addListener(viewAdapter, eventName, listeners, listener, withCapture, notifyEarly)
     {
@@ -456,6 +336,8 @@
                 viewAdapter.__element.removeEventListener(eventName, listeners.elementListener, withCapture);
                 delete listeners.elementListener;
             }
+            listeners.elementListener   = createElementListener(listeners);
+            viewAdapter.__element.addEventListener(eventName, listeners.elementListener, withCapture);
         }
     }
     function selectContents(element)
@@ -488,8 +370,8 @@
             if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
             this.__element.setAttribute("data-" + attributeName, value);
         };
-        viewAdapter.bindSourceData      = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
-        viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "") == "input:radio" ? bindDataFunctions.radio : bindDataFunctions.default;
+        viewAdapter.bindSourceData      = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
+        viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
         if (viewAdapter.__templateKeys)
         {
             viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); };
@@ -539,9 +421,8 @@
         viewAdapter.toggleClass         = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
         viewAdapter.toggleEdit          = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
         viewAdapter.toggleDisplay       = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent        = function(eventName){ triggerEvent.call(getListeners(eventName, true)); triggerEvent.call(getListeners(eventName, false)); };
-        viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "") == "input:radio" ? unbindDataFunctions.radio : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData    = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
+        viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
+        viewAdapter.unbindSourceData    = unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
         viewAdapter.value               = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
         if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
         {
@@ -557,7 +438,8 @@
     };
 });}();
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter", function(each)
+{"use strict";root.define("atomic.initializeViewAdapter",
+function(each)
 {
     function cancelEvent(event)
     {
@@ -572,7 +454,7 @@
         hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindAs", "bindingRoot", "bindSource", "bindSourceValue", "bindSourceText", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
-    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
+    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
     {
@@ -595,7 +477,8 @@
     };
 });}();
 !function()
-{"use strict";root.define("atomic.isolatedFunctionFactory", function isolatedFunctionFactory(document)
+{"use strict";root.define("atomic.isolatedFunctionFactory",
+function isolatedFunctionFactory(document)
 {
     return function()
     {
@@ -620,7 +503,8 @@
     }
 });}();
 !function()
-{"use strict";root.define("atomic.htmlViewAdapterFactorySupport", function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
+{"use strict";root.define("atomic.htmlViewAdapterFactorySupport",
+function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
 {
     var typeHintMap         = {};
     var missingElements;
@@ -641,7 +525,6 @@
             missingElements.appendChild(container);
             element.style.border    = "solid 1px black";
         }
-        element.__selectorPath  = selectorPath;
         return element;
     };
     var querySelectorAll    =
@@ -773,7 +656,8 @@
     return internalFunctions;
 });}();
 !function()
-{"use strict";root.define("atomic.viewAdapterFactory", function(internalFunctions)
+{"use strict";root.define("atomic.viewAdapterFactory",
+function(internalFunctions)
 {
 return {
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent, (viewElement.id?("#"+viewElement.id):("."+viewElement.className))); },
@@ -796,7 +680,8 @@ return {
     };
 });}();
 !function()
-{"use strict";root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory)
+{"use strict";root.define("atomic.observerFactory",
+function(removeFromArray, isolatedFunctionFactory)
 {
     var functionFactory = new isolatedFunctionFactory();
     var subObserver                                 =
@@ -959,7 +844,8 @@ return {
     };
 });}();
 !function()
-{"use strict";root.define("atomic.htmlCompositionRoot", function htmlCompositionRoot()
+{"use strict";root.define("atomic.htmlCompositionRoot",
+function htmlCompositionRoot()
 {
 return {
         viewAdapterFactory:
