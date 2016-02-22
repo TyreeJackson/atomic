@@ -25,33 +25,28 @@
 }();
 !function()
 {"use strict";
-    function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
-    root.define("utilities.each", each);
-    function pubSub()
-    {
-        var listeners   = [];
-        function _pubSub() { for(var listenerCounter=0;listenerCounter<listeners.length;listenerCounter++) listeners[listenerCounter].apply(null, arguments); }
-        _pubSub.listen  = function(listener) { listeners.push(listener); }
-        _pubSub.ignore  = function(listener) { removeFromArray.call(listeners, listener); }
-        return _pubSub;
-    }
-    root.define("utilities.pubSub", pubSub);
-    function removeFromArray(array, from, to)
+    root.define("utilities.each", function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); });
+    root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
     {
         var rest        = array.slice((to || from) + 1 || array.length);
         array.length    = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
-    }
-    root.define("utilities.removeFromArray", removeFromArray);
-    function removeItemFromArray(array, item)
+    });
+    root.define("utilities.pubSub", function pubSub()
     {
-        removeFromArray(array, array.indexOf(item));
-    }
-    root.define("utilities.removeItemFromArray", removeItemFromArray);
+        var listeners   = [];
+        function _pubSub() { for(var listenerCounter=0;listenerCounter<listeners.length;listenerCounter++) listeners[listenerCounter].apply(null, arguments); }
+        _pubSub.listen  = function(listener) { listeners.push(listener); }
+        _pubSub.ignore  = function(listener) { root.utilities.removeFromArray.call(listeners, listener); }
+        return _pubSub;
+    });
+    root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item)
+    {
+        root.utilities.removeFromArray(array, array.indexOf(item));
+    });
 }();
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters",
-function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
+{"use strict";root.define("atomic.htmlAttachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
 {
     function bindRepeatedList(observer)
     {
@@ -72,10 +67,12 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 }
             }
         }
+        this.bindSourceData(this.boundSource);
         this.__reattach();
     }
     function unbindRepeatedList()
     {
+        this.unbindSourceData();
         if (this.__repeatedControls !== undefined)
         for(var repeatedControlKey in this.__repeatedControls)
         {
@@ -97,41 +94,105 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     }
     function bindSelectListSource()
     {
+        var selectedValue   = this.value();
         clearSelectList(this.__element);
-        var selectedValue   = this.value();// this.boundItem(this.__bindTo||"");
         var source          = this.boundSource(this.__bindSource||"");
         if (source === undefined)   return;
         for(var counter=0;counter<source().length;counter++)
         {
             var option      = document.createElement('option');
             var sourceItem  = source()[counter];
-            option.value    = sourceItem[this.__bindSourceValue];
+            option.rawValue = sourceItem[this.__bindSourceValue];
             option.text     = sourceItem[this.__bindSourceText];
             option.selected = sourceItem[this.__bindSourceValue] == selectedValue;
             this.__element.appendChild(option);
         }
     }
+    function clearRadioGroup(radioGroup)
+    {
+        for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--)
+        {
+            radioGroup.removeChild(radioGroup.childNodes[counter]);
+        }
+    }
+    function bindRadioGroupSource()
+    {
+        var selectedValue   = this.value();
+        clearRadioGroup(this.__element);
+        var source          = this.boundSource(this.__bindSource||"");
+        if (source === undefined)   return;
+        for(var counter=0;counter<source().length;counter++)
+        {
+            var radioGroupItem                      = this.__templateElement.cloneNode(true);
+            var sourceItem                          = source()[counter];
+            radioGroupItem.__radioElement           = radioGroupItem.querySelector(this.__radioButtonSelector);
+            radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
+            radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
+            radioGroupItem.__radioElement.rawValue  = sourceItem[this.__bindSourceValue];
+            radioGroupItem.__radioLabel.innerHTML   = sourceItem[this.__bindSourceText];
+            radioGroupItem.__radioElement.checked   = sourceItem[this.__bindSourceValue] == selectedValue;
+            this.__element.appendChild(radioGroupItem);
+        }
+    }
     var bindSourceFunctions     =
     {
-        "default":
+        "default":          function(sources){},
+        "container":
         function(sources)
         {
-            this.boundSource            = sources;
-            for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(sources(this.__bindSource||""));
+            if (sources !== undefined)
+            {
+                this.boundSource            = sources;
+                for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+            }
+            return this;
+        },
+        "repeater":
+        function(sources)
+        {
+            if (sources !== undefined)
+            {
+                this.boundSource            = sources;
+                for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+            }
             return this;
         },
         "select:select-one":
         function(sources)
         {
-            this.boundSource            = sources;
-            this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
-            sources.listen(this.__bindSourceListener);
+            if (sources !== undefined)
+            {
+                this.boundSource            = sources;
+                this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
+                this.boundSource.listen(this.__bindSourceListener);
+            }
+            return this;
+        },
+        "radiogroup":
+        function(sources)
+        {
+            if (sources !== undefined)
+            {
+                this.boundSource            = sources;
+                if (this.__templateElement === undefined)
+                {
+					this.__radioButtonSelector	= this.__element.getAttribute("data-atomic-radiobutton")||"input[type='radio']";
+                    this.__radioLabelSelector   = this.__element.getAttribute("data-atomic-radiolabel")||"label";
+                    this.__templateElement      = this.__element.querySelector("radiogroupitem");
+                    this.__templateElement.parentNode.removeChild(this.__templateElement);
+                    clearRadioGroup(this.__element);
+                }
+                this.__bindSourceListener   = (function(){bindRadioGroupSource.call(this);}).bind(this);
+                this.boundSource.listen(this.__bindSourceListener);
+            }
+            return this;
         }
     };
     var unbindSourceFunctions   =
     {
-        "default":
-        function(sources)
+        "default":          function(sources){},
+        "container":
+        function()
         {
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
@@ -142,14 +203,39 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             }
             return this;
         },
-        "select:select-one":
-        function(sources)
+        "repeater":
+        function()
         {
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
                 this.boundSource.ignore(this.__bindSourceListener);
                 delete this.__bindSourceListener;
                 delete this.boundSource;
+                for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].unbindSourceData();
+            }
+            return this;
+        },
+        "select:select-one":
+        function()
+        {
+            if (this.boundSource !== undefined && this.__bindSource !== undefined)
+            {
+                this.boundSource.ignore(this.__bindSourceListener);
+                delete this.__bindSourceListener;
+                delete this.boundSource;
+                clearSelectList(this.__element);
+            }
+            return this;
+        },
+        "radiogroup":
+        function()
+        {
+            if (this.boundSource !== undefined && this.__bindSource !== undefined)
+            {
+                this.boundSource.ignore(this.__bindSourceListener);
+                delete this.__bindSourceListener;
+                delete this.boundSource;
+                clearRadioGroup(this.__element);
             }
             return this;
         }
@@ -258,6 +344,26 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         if (value !== undefined || forceSet)    this.__element.innerHTML=value;
         else                                    return this.__element.innerHTML;
     }
+    function setSelectListValue(value)
+    {
+        this.__rawValue = value;
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
+    }
+    function getSelectListValue()
+    {
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   return this.__rawValue = this.__element.options[counter].rawValue;
+        return this.__rawValue;
+    }
+    function setRadioGroupValue(value)
+    {
+        this.__rawValue = value;
+        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) this.__element.childNodes[counter].__radioElement.checked = this.__element.childNodes[counter].__radioElement.rawValue == value;
+    }
+    function getRadioGroupValue()
+    {
+        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) if (this.__element.childNodes[counter].__radioElement.checked)  return this.rawValue = this.__element.childNodes[counter].__radioElement.rawValue;
+        return this.__rawValue;
+    }
     var valueFunctions          =
     {
         "default":
@@ -281,9 +387,15 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         "select:select-one":
         function(value, forceSet)
         {
-            if (value !== undefined || forceSet)    this.__element.value    = value;
-            else                                    return this.__element.value;
+            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
+            else                                    return getSelectListValue.call(this);
         },
+        "radiogroup":
+        function(value, forceSet)
+        {
+            if (value !== undefined || forceSet)    setRadioGroupValue.call(this, value);
+            else                                    return getRadioGroupValue.call(this);
+        }
     };
     each(["a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
@@ -312,9 +424,13 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
         element.className = classNames.join(" ");
     }
+    function triggerEvent()
+    {
+        for(var listenerCounter=0;listenerCounter<this.listeners.length;listenerCounter++)   this.listeners[listenerCounter].apply(null, arguments);
+    }
     function createElementListener(listeners)
     {
-        return function() { for(var listenerCounter=0;listenerCounter<listeners.listeners.length;listenerCounter++)   listeners.listeners[listenerCounter].apply(null, arguments); };
+        return function() { triggerEvent.apply(listeners, arguments); };
     }
     function addListener(viewAdapter, eventName, listeners, listener, withCapture, notifyEarly)
     {
@@ -336,8 +452,6 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
                 viewAdapter.__element.removeEventListener(eventName, listeners.elementListener, withCapture);
                 delete listeners.elementListener;
             }
-            listeners.elementListener   = createElementListener(listeners);
-            viewAdapter.__element.addEventListener(eventName, listeners.elementListener, withCapture);
         }
     }
     function selectContents(element)
@@ -370,7 +484,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
             if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
             this.__element.setAttribute("data-" + attributeName, value);
         };
-        viewAdapter.bindSourceData      = bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
+        viewAdapter.bindSourceData      = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
         viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
         if (viewAdapter.__templateKeys)
         {
@@ -421,8 +535,9 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
         viewAdapter.toggleClass         = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
         viewAdapter.toggleEdit          = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
         viewAdapter.toggleDisplay       = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
+        viewAdapter.triggerEvent        = function(eventName){ triggerEvent.call(getListeners(eventName, true)); triggerEvent.call(getListeners(eventName, false)); };
         viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData    = unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
+        viewAdapter.unbindSourceData    = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
         viewAdapter.value               = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
         if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
         {
@@ -438,8 +553,7 @@ function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, set
     };
 });}();
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter",
-function(each)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each)
 {
     function cancelEvent(event)
     {
@@ -477,8 +591,7 @@ function(each)
     };
 });}();
 !function()
-{"use strict";root.define("atomic.isolatedFunctionFactory",
-function isolatedFunctionFactory(document)
+{"use strict";root.define("atomic.isolatedFunctionFactory", function isolatedFunctionFactory(document)
 {
     return function()
     {
@@ -503,8 +616,7 @@ function isolatedFunctionFactory(document)
     }
 });}();
 !function()
-{"use strict";root.define("atomic.htmlViewAdapterFactorySupport",
-function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
+{"use strict";root.define("atomic.htmlViewAdapterFactorySupport", function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
 {
     var typeHintMap         = {};
     var missingElements;
@@ -525,6 +637,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             missingElements.appendChild(container);
             element.style.border    = "solid 1px black";
         }
+        element.__selectorPath  = selectorPath;
         return element;
     };
     var querySelectorAll    =
@@ -656,8 +769,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
     return internalFunctions;
 });}();
 !function()
-{"use strict";root.define("atomic.viewAdapterFactory",
-function(internalFunctions)
+{"use strict";root.define("atomic.viewAdapterFactory", function(internalFunctions)
 {
 return {
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent, (viewElement.id?("#"+viewElement.id):("."+viewElement.className))); },
@@ -680,8 +792,7 @@ return {
     };
 });}();
 !function()
-{"use strict";root.define("atomic.observerFactory",
-function(removeFromArray, isolatedFunctionFactory)
+{"use strict";root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory)
 {
     var functionFactory = new isolatedFunctionFactory();
     var subObserver                                 =
@@ -844,8 +955,7 @@ function(removeFromArray, isolatedFunctionFactory)
     };
 });}();
 !function()
-{"use strict";root.define("atomic.htmlCompositionRoot",
-function htmlCompositionRoot()
+{"use strict";root.define("atomic.htmlCompositionRoot", function htmlCompositionRoot()
 {
 return {
         viewAdapterFactory:

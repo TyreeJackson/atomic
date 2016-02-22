@@ -1,6 +1,5 @@
 !function()
-{"use strict";root.define("atomic.viewAdapterFactory",
-function(internalFunctions)
+{"use strict";root.define("atomic.viewAdapterFactory", function(internalFunctions)
 {
 return {
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent, (viewElement.id?("#"+viewElement.id):("."+viewElement.className))); },

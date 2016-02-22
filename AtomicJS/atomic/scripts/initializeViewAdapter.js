@@ -1,6 +1,5 @@
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter",
-function(each)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each)
 {
     function cancelEvent(event)
     {

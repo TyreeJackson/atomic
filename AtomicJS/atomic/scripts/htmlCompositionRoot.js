@@ -1,6 +1,5 @@
 !function()
-{"use strict";root.define("atomic.htmlCompositionRoot",
-function htmlCompositionRoot()
+{"use strict";root.define("atomic.htmlCompositionRoot", function htmlCompositionRoot()
 {
 return {
         viewAdapterFactory:

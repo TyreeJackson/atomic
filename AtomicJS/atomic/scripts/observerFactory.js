@@ -4,8 +4,7 @@ support string key paths in observable
 add routing
 */
 !function()
-{"use strict";root.define("atomic.observerFactory",
-function(removeFromArray, isolatedFunctionFactory)
+{"use strict";root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory)
 {
     var functionFactory = new isolatedFunctionFactory();
     var subObserver                                 =

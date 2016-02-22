@@ -3,8 +3,7 @@ outstanding issues:
 support string key paths in observable
 */
 !function()
-{"use strict";root.define("atomic.htmlViewAdapterFactorySupport",
-function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
+{"use strict";root.define("atomic.htmlViewAdapterFactorySupport", function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
 {
     var typeHintMap         = {};
     var missingElements;
@@ -25,6 +24,7 @@ function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initi
             missingElements.appendChild(container);
             element.style.border    = "solid 1px black";
         }
+        element.__selectorPath  = selectorPath;
         return element;
     };
     var querySelectorAll    =
