@@ -464,8 +464,8 @@
     }
     return function(viewAdapter, viewAdapterDefinition)
     {
-        var listenersUsingCapture       = {};
-        var listenersNotUsingCapture    = {};
+        var listenersUsingCapture           = {};
+        var listenersNotUsingCapture        = {};
         function getListeners(eventName, withCapture)
         {
             var listeners       = withCapture ? listenersUsingCapture : listenersNotUsingCapture;
@@ -474,23 +474,24 @@
             return eventListeners;
         }
 
-        viewAdapter.addClass            = function(className){ addClass(this.__element, className); return this;}
-        viewAdapter.addClassFor         = function(className, milliseconds){ this.addClass(className); setTimeout((function(){this.removeClass(className);}).bind(this), milliseconds); return this;};
-        viewAdapter.addEventListener    = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); };
-        viewAdapter.appendControl       = function(childControl){ this.__element.appendChild(childControl.__element); };
-        viewAdapter.attribute           =
+        viewAdapter.addClass                = function(className){ addClass(this.__element, className); return this;}
+        viewAdapter.addClassFor             = function(className, milliseconds){ this.addClass(className); setTimeout((function(){this.removeClass(className);}).bind(this), milliseconds); return this;};
+        viewAdapter.addEventListener        = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); return this; };
+        viewAdapter.addEventsListener       = function(eventNames, listener, withCapture, notifyEarly){ each(eventNames, (function(eventName){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); }).bind(this)); return this; };
+        viewAdapter.appendControl           = function(childControl){ this.__element.appendChild(childControl.__element); };
+        viewAdapter.attribute               =
         function(attributeName, value)
         {
             if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
             this.__element.setAttribute("data-" + attributeName, value);
         };
-        viewAdapter.bindSourceData      = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
-        viewAdapter.bindData            = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
+        viewAdapter.bindSourceData          = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
+        viewAdapter.bindData                = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
         if (viewAdapter.__templateKeys)
         {
             viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); };
         }
-        viewAdapter.bindTo              =
+        viewAdapter.bindTo                  =
         function(value)
         {
             if(value === undefined) return this.__bindTo;
@@ -501,7 +502,7 @@
         each(["bindSource", "bindSourceValue", "bindSourceText"],
         function(name)
         {
-            viewAdapter[name]           =
+            viewAdapter[name]               =
             function(value)
             {
                 if(value === undefined) return this["__"+name];
@@ -510,46 +511,47 @@
                 if (this.boundItem !== undefined)   this.bindSourceData(this.boundSource);
             };
         });
-        viewAdapter.blur                = function(){this.__element.blur(); return this;};
-        viewAdapter.click               = function(){this.__element.click(); return this;};
-        viewAdapter.__detach            = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
-        viewAdapter.focus               = function(){this.__element.focus(); return this;};
-        viewAdapter.hasClass            = function(className){ return hasClass(this.__element, className); }
-        viewAdapter.height              = function(){return this.__element.offsetHeight;}
-        viewAdapter.hide                = function(){ this.__element.style.display="none"; return this;};
-        viewAdapter.hideFor             = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
-        viewAdapter.href                = function(value)
+        viewAdapter.blur                    = function(){this.__element.blur(); return this;};
+        viewAdapter.click                   = function(){this.__element.click(); return this;};
+        viewAdapter.__detach                = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
+        viewAdapter.focus                   = function(){this.__element.focus(); return this;};
+        viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
+        viewAdapter.height                  = function(){return this.__element.offsetHeight;}
+        viewAdapter.hide                    = function(){ this.__element.style.display="none"; return this;};
+        viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
+        viewAdapter.href                    = function(value)
         {
             if (value === undefined)    return this.__element.href;
             this.__element.href=value;
             return this;
         };
-        viewAdapter.removeClass         = function(className){ removeClass(this.__element, className); return this;}
-        viewAdapter.removeClassFor      = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
-        viewAdapter.removeControl       = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
-        viewAdapter.removeEventListener = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
-        viewAdapter.__reattach          = function(){this.__elementParent.appendChild(this.__element); return this;};
-        viewAdapter.show                = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};
-        viewAdapter.showFor             = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
-        viewAdapter.scrollIntoView      = function(){this.__element.scrollIntoView(); return this;};
-        viewAdapter.toggleClass         = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
-        viewAdapter.toggleEdit          = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
-        viewAdapter.toggleDisplay       = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent        = function(eventName){ triggerEvent.call(getListeners(eventName, true)); triggerEvent.call(getListeners(eventName, false)); };
-        viewAdapter.unbindData          = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData    = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
-        viewAdapter.value               = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
+        viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
+        viewAdapter.removeClassFor          = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
+        viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
+        viewAdapter.removeEventListener     = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
+        viewAdapter.removeEventsListener    = function(eventNames, listener, withCapture){ each(eventNames, (function(eventName){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); }).bind(this)); return this;};
+        viewAdapter.__reattach              = function(){this.__elementParent.appendChild(this.__element); return this;};
+        viewAdapter.show                    = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};
+        viewAdapter.showFor                 = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
+        viewAdapter.scrollIntoView          = function(){this.__element.scrollIntoView(); return this;};
+        viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
+        viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
+        viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
+        viewAdapter.triggerEvent            = function(eventName){ triggerEvent.call(getListeners(eventName, true)); triggerEvent.call(getListeners(eventName, false)); };
+        viewAdapter.unbindData              = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
+        viewAdapter.unbindSourceData        = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
+        viewAdapter.value                   = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
         if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
         {
-            viewAdapter.select          = function(){this.__element.select(); return this;};
+            viewAdapter.select              = function(){this.__element.select(); return this;};
         }
         else
         {
-            viewAdapter.select          = function(){selectContents(this.__element); return this; };
+            viewAdapter.select              = function(){selectContents(this.__element); return this; };
         }
-        viewAdapter.width               = function(){return this.__element.offsetWidth;}
+        viewAdapter.width                   = function(){return this.__element.offsetWidth;}
         if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)    viewAdapterDefinition.extensions[counter].extend(viewAdapter);
+        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)    if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
     };
 });}();
 !function()
@@ -561,11 +563,30 @@
         event.stopPropagation();
         return false;
     }
+    function notifyIfValueHasChanged(callback)
+    {
+        this.__lastChangingTimeout  = undefined;
+        callback(this.__lastChangingValueSeen);
+    }
+    
+    function notifyIfValueHasChangedOrDelay(callback)
+    {
+        if (this.__lastChangingValueSeen === this.value())  return;
+        this.__lastChangingValueSeen = this.value();
+        if (this.__onchangingdelay !== undefined)
+        {
+            if (this.__lastChangingTimeout !== undefined)   clearTimeout(this.__lastChangingTimeout);
+            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.__onchangingdelay);
+        }
+        else    notifyIfValueHasChanged.call(this, callback);
+    }
     var initializers    =
     {
-        onenter:    function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false); },
-        onescape:   function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false); },
-        hidden:     function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
+        onchangingdelay:    function(viewAdapter, value)    { viewAdapter.__onchangingdelay = parseInt(value); },
+        onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
+        onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
+        onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
+        hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindAs", "bindingRoot", "bindSource", "bindSourceValue", "bindSourceText", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
