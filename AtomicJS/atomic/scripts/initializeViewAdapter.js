@@ -10,7 +10,7 @@
     function notifyIfValueHasChanged(callback)
     {
         this.__lastChangingTimeout  = undefined;
-        callback(this.__lastChangingValueSeen);
+        callback.call(this, this.__lastChangingValueSeen);
     }
     
     function notifyIfValueHasChangedOrDelay(callback)

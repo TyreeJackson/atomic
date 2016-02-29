@@ -472,18 +472,17 @@
         viewAdapter.height                  = function(){return this.__element.offsetHeight;}
         viewAdapter.hide                    = function(){ this.__element.style.display="none"; return this;};
         viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
-        viewAdapter.href                    = function(value)
-        {
-            if (value === undefined)    return this.__element.href;
-            this.__element.href=value;
-            return this;
-        };
+        viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
         viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
         viewAdapter.removeClassFor          = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
         viewAdapter.removeEventListener     = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
         viewAdapter.removeEventsListener    = function(eventNames, listener, withCapture){ each(eventNames, (function(eventName){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); }).bind(this)); return this;};
         viewAdapter.__reattach              = function(){this.__elementParent.appendChild(this.__element); return this;};
+        if (viewAdapter.__element.nodeName.toLowerCase()=="select")
+        {
+            viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
+        }
         viewAdapter.show                    = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};
         viewAdapter.showFor                 = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
         viewAdapter.scrollIntoView          = function(){this.__element.scrollIntoView(); return this;};
