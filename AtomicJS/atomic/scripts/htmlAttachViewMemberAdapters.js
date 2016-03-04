@@ -4,7 +4,6 @@
     function bindRepeatedList(observer)
     {
         var documentFragment    = document.createDocumentFragment();
-        this.__detach(documentFragment);
         unbindRepeatedList.call(this);
         for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
         {
@@ -16,12 +15,12 @@
                 {
                     this.__repeatedControls[clone.key]  = clone.control;
                     clone.control.bindData(subDataItem);
-                    clone.parent.appendChild(clone.control.__element);
+                    documentFragment.appendChild(clone.control.__element);
                 }
             }
         }
         this.bindSourceData(this.boundSource);
-        this.__reattach();
+        this.__element.appendChild(documentFragment);
     }
     function unbindRepeatedList()
     {
@@ -468,11 +467,15 @@
         viewAdapter.click                   = function(){this.__element.click(); return this;};
         viewAdapter.__detach                = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
         viewAdapter.focus                   = function(){this.__element.focus(); return this;};
+        viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
         viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
+        viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
         viewAdapter.height                  = function(){return this.__element.offsetHeight;}
         viewAdapter.hide                    = function(){ this.__element.style.display="none"; return this;};
         viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
+        viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
+        viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
         viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
         viewAdapter.removeClassFor          = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
@@ -481,6 +484,8 @@
         viewAdapter.__reattach              = function(){this.__elementParent.appendChild(this.__element); return this;};
         if (viewAdapter.__element.nodeName.toLowerCase()=="select")
         {
+            viewAdapter.count               = function() { return this.__element.options.length; }
+            viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
             viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
         }
         viewAdapter.show                    = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};

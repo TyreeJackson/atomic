@@ -51,7 +51,6 @@
     function bindRepeatedList(observer)
     {
         var documentFragment    = document.createDocumentFragment();
-        this.__detach(documentFragment);
         unbindRepeatedList.call(this);
         for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
         {
@@ -63,12 +62,12 @@
                 {
                     this.__repeatedControls[clone.key]  = clone.control;
                     clone.control.bindData(subDataItem);
-                    clone.parent.appendChild(clone.control.__element);
+                    documentFragment.appendChild(clone.control.__element);
                 }
             }
         }
         this.bindSourceData(this.boundSource);
-        this.__reattach();
+        this.__element.appendChild(documentFragment);
     }
     function unbindRepeatedList()
     {
@@ -515,11 +514,15 @@
         viewAdapter.click                   = function(){this.__element.click(); return this;};
         viewAdapter.__detach                = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
         viewAdapter.focus                   = function(){this.__element.focus(); return this;};
+        viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
         viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
+        viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
         viewAdapter.height                  = function(){return this.__element.offsetHeight;}
         viewAdapter.hide                    = function(){ this.__element.style.display="none"; return this;};
         viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
+        viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
+        viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
         viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
         viewAdapter.removeClassFor          = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
         viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
@@ -528,6 +531,8 @@
         viewAdapter.__reattach              = function(){this.__elementParent.appendChild(this.__element); return this;};
         if (viewAdapter.__element.nodeName.toLowerCase()=="select")
         {
+            viewAdapter.count               = function() { return this.__element.options.length; }
+            viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
             viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
         }
         viewAdapter.show                    = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};
@@ -570,7 +575,7 @@
     
     function notifyIfValueHasChangedOrDelay(callback)
     {
-        if (this.__lastChangingValueSeen === this.value())  return;
+        if ((this.__lastChangingValueSeen||"") === this.value())  return;
         this.__lastChangingValueSeen = this.value();
         if (this.__onchangingdelay !== undefined)
         {
@@ -581,13 +586,14 @@
     }
     var initializers    =
     {
-        onchangingdelay:    function(viewAdapter, value)    { viewAdapter.__onchangingdelay = parseInt(value); },
+        onchangingdelay:    function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); },
         onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
         onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
-    each(["bindAs", "bindingRoot", "bindSource", "bindSourceValue", "bindSourceText", "bindTo", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindSource", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
+    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
@@ -606,8 +612,9 @@
         for(var initializerKey in initializers)
         if (viewAdapterDefinition.hasOwnProperty(initializerKey))    initializers[initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
 
-        if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)  initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, viewAdapterDefinition.extensions[counter]);
+        if (viewAdapter.__extensions !== undefined && viewAdapter.__extensions.length !== undefined)
+        for(var counter=0;counter<viewAdapter.__extensions.length;counter++)  initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, viewAdapter.__extensions[counter]);
+        delete viewAdapter.__extensions;
     };
 });}();
 !function()
@@ -780,9 +787,11 @@
                 viewAdapter.__controlKeys.push(controlKey);
                 viewAdapter.controls[controlKey]    = internalFunctions.createControl(controlDeclaration, undefined, viewAdapter, "#" + controlKey);
                 viewAdapter.controls[controlKey].__element.setAttribute("id", controlKey);
+                return viewAdapter.controls[controlKey];
             }
 
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
+            if(viewAdapterDefinition.extensions !== undefined)  viewAdapter.__extensions    = viewAdapterDefinition.extensions;
             return viewAdapter;
         }
     };

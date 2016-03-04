@@ -147,9 +147,11 @@ support string key paths in observable
                 viewAdapter.__controlKeys.push(controlKey);
                 viewAdapter.controls[controlKey]    = internalFunctions.createControl(controlDeclaration, undefined, viewAdapter, "#" + controlKey);
                 viewAdapter.controls[controlKey].__element.setAttribute("id", controlKey);
+                return viewAdapter.controls[controlKey];
             }
 
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
+            if(viewAdapterDefinition.extensions !== undefined)  viewAdapter.__extensions    = viewAdapterDefinition.extensions;
             return viewAdapter;
         }
     };
