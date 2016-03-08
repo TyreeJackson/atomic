@@ -128,7 +128,7 @@
             radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
             radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
             radioGroupItem.__radioElement.rawValue  = sourceItem[this.__bindSourceValue];
-            radioGroupItem.__radioLabel.innerHTML   = sourceItem[this.__bindSourceText];
+            if(radioGroupItem.__radioLabel) radioGroupItem.__radioLabel.innerHTML   = sourceItem[this.__bindSourceText];
             radioGroupItem.__radioElement.checked   = sourceItem[this.__bindSourceValue] == selectedValue;
             this.__element.appendChild(radioGroupItem);
         }
@@ -265,10 +265,10 @@
             this.boundItem          = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
-                if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
+                if(this.__bindAs)   this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true); notifyOnboundedUpdate.call(this, observer);}).bind(this);
+                    this.__bindListener     = (function(){ var value = observer(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
@@ -826,7 +826,7 @@ return {
     var functionFactory = new isolatedFunctionFactory();
     var subObserver                                 =
     functionFactory.create
-    (function subObserverFactory(basePath, bag)
+    (function subObserverFactory(basePath, bag, isArray)
     {
         function subObserver(path, value)
         {
@@ -834,6 +834,15 @@ return {
         }
         Object.defineProperty(subObserver, "__basePath", {get:function(){return basePath;}});
         Object.defineProperty(subObserver, "__bag", {get:function(){return bag;}});
+        if (isArray)
+        {
+            Object.defineProperty(subObserver, "push", {get:function(){return function(item){ var items = this(); items.push(item); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); items.pop(); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "shift", {get:function(){return function(item){ var items = this(); items.shift(item); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
+        }
+        //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
         return subObserver;
     });
     functionFactory.root.prototype.__invoke         =
@@ -847,12 +856,25 @@ return {
         {
             if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (typeof returnValue == "object")                 return new subObserver(revisedPath, this.__bag);
+            if (returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         if (this.__bag.rollingback)    return;
         navDataPath(this.__bag, pathSegments, value);
         notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+    }
+    functionFactory.root.prototype.__remove         =
+    function(value)
+    {
+        var items   = this();
+        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+        removeFromArray(items, items.indexOf(value));
+        this.__notify(this.__basePath, items);
+    }
+    functionFactory.root.prototype.__notify         =
+    function(path, value)
+    {
+        notifyPropertyListeners.call(this, path, value, this.__bag);
     }
     functionFactory.root.prototype.listen           =
     function(callback)
@@ -980,7 +1002,7 @@ return {
             updating:       [],
             rollingback:    false
         };
-        return new subObserver("", bag);
+        return new subObserver("", bag, Array.isArray(_item));
     };
 });}();
 !function()

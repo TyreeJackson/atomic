@@ -81,7 +81,7 @@
             radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
             radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
             radioGroupItem.__radioElement.rawValue  = sourceItem[this.__bindSourceValue];
-            radioGroupItem.__radioLabel.innerHTML   = sourceItem[this.__bindSourceText];
+            if(radioGroupItem.__radioLabel) radioGroupItem.__radioLabel.innerHTML   = sourceItem[this.__bindSourceText];
             radioGroupItem.__radioElement.checked   = sourceItem[this.__bindSourceValue] == selectedValue;
             this.__element.appendChild(radioGroupItem);
         }
@@ -218,10 +218,10 @@
             this.boundItem          = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
-                if(this.__bindAs)   this.__bindListener     = (function(){this.value(this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer), true);}).bind(this);
+                if(this.__bindAs)   this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){if (!this.__notifyingObserver) this.value(observer(this.__bindTo), true); notifyOnboundedUpdate.call(this, observer);}).bind(this);
+                    this.__bindListener     = (function(){ var value = observer(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
