@@ -227,6 +227,11 @@
                 }
                 observer.listen(this.__bindListener);
             }
+            else if (this.__onboundedupdate)
+            {
+                this.__bindListener     = (function(){ notifyOnboundedUpdate.call(this, observer); }).bind(this);
+                observer.listen(this.__bindListener);
+            }
             notifyOnbind.call(this, observer);
             return this;
         },
@@ -255,12 +260,18 @@
         "default":
         function()
         {
-            if (this.boundItem !== undefined && this.__bindTo !== undefined)
+            if (this.boundItem !== undefined && (this.__bindTo !== undefined || this.__bindAs))
             {
                 this.boundItem.ignore(this.__bindListener);
                 delete this.__bindListener;
                 unbindUpdateEvents.call(this);
                 delete this.__inputListener;
+                delete this.boundItem;
+            }
+            else if (this.__onboundedupdate)
+            {
+                this.boundItem.ignore(this.__bindListener);
+                delete this.__bindListener;
                 delete this.boundItem;
             }
             notifyOnunbind.call(this);
