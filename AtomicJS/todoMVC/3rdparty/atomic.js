@@ -81,7 +81,7 @@
         }
         this.__repeatedControls     = {};
     }
-    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); notifyOnboundedUpdate.call(this, data); }
+    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
     function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     function clearSelectList(selectList)
@@ -529,7 +529,7 @@
         viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
         viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
         viewAdapter.height                  = function(){return this.__element.offsetHeight;}
-        viewAdapter.hide                    = function(){ this.__element.style.display="none"; return this;};
+        viewAdapter.hide                    = function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;};
         viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
         viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
@@ -546,7 +546,7 @@
             viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
             viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
         }
-        viewAdapter.show                    = function(){ this.__element.style.display=""; if(this.__onshow !== undefined) this.__onshow.call(this); return this;};
+        viewAdapter.show                    = function(){ this.__element.style.display=""; this.triggerEvent("show"); return this;};
         viewAdapter.showFor                 = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
         viewAdapter.scrollIntoView          = function(){this.__element.scrollIntoView(); return this;};
         viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
@@ -601,10 +601,12 @@
         onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
         onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
+        onshow:             function(viewAdapter, callback) { viewAdapter.addEventListener("show", function(event){ callback.call(viewAdapter); }, false, true); },
+        onhide:             function(viewAdapter, callback) { viewAdapter.addEventListener("hide", function(event){ callback.call(viewAdapter); }, false, true); },
         hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindSource", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onshow", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
