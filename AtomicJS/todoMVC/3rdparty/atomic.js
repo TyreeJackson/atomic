@@ -83,6 +83,7 @@
     }
     function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
     function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
+    function notifyOnboundedSourceUpdate(data) { if (this.__onboundedsourceupdate) this.__onboundedsourceupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     function clearSelectList(selectList)
     {
@@ -143,6 +144,8 @@
             {
                 this.boundSource            = sources;
                 for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+                this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
+                this.boundSource.listen(this.__bindSourceListener);
             }
             return this;
         },
@@ -153,6 +156,8 @@
             {
                 this.boundSource            = sources;
                 for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+                this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
+                this.boundSource.listen(this.__bindSourceListener);
             }
             return this;
         },
@@ -162,7 +167,7 @@
             if (sources !== undefined)
             {
                 this.boundSource            = sources;
-                this.__bindSourceListener   = (function(){bindSelectListSource.call(this);}).bind(this);
+                this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
                 this.boundSource.listen(this.__bindSourceListener);
             }
             return this;
@@ -181,7 +186,7 @@
                     this.__templateElement.parentNode.removeChild(this.__templateElement);
                     clearRadioGroup(this.__element);
                 }
-                this.__bindSourceListener   = (function(){bindRadioGroupSource.call(this);}).bind(this);
+                this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
                 this.boundSource.listen(this.__bindSourceListener);
             }
             return this;
@@ -265,10 +270,10 @@
             this.boundItem          = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
-                if(this.__bindAs)   this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
+                if(this.__bindAs)   this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? observer(this.__bindTo) : observer); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
                 else
                 {
-                    this.__bindListener     = (function(){ var value = observer(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, observer); }).bind(this);
+                    this.__bindListener     = (function(){ var value = observer(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
                     this.__inputListener    = (function(){this.__notifyingObserver=true; observer(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
                 }
@@ -276,7 +281,7 @@
             }
             else if (this.__onboundedupdate)
             {
-                this.__bindListener     = (function(){ notifyOnboundedUpdate.call(this, observer); }).bind(this);
+                this.__bindListener     = (function(){ notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
                 observer.listen(this.__bindListener);
             }
             notifyOnbind.call(this, observer);
@@ -285,11 +290,12 @@
         container:
         function(observer)
         {
+            if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
             this.boundItem  = observer;
             for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){if (this.boundItem === undefined) debugger; notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
-            if (this.boundItem === undefined) debugger;
+            this.__bindListener = (function(item){ if (this.boundItem === undefined) throw new Error("This control is not currently bound."); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); }).bind(this);
             observer.listen(this.__bindListener);
+            notifyOnbind.call(this, observer);
             return this;
         },
         repeater:
@@ -552,7 +558,7 @@
         viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
         viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
         viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent            = function(eventName){ triggerEvent.call(getListeners(eventName, true)); triggerEvent.call(getListeners(eventName, false)); };
+        viewAdapter.triggerEvent            = function(eventName){ var args = Array.prototype.slice.call(arguments, 1); triggerEvent.apply(getListeners(eventName, true), args); triggerEvent.apply(getListeners(eventName, false), args); };
         viewAdapter.unbindData              = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
         viewAdapter.unbindSourceData        = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
         viewAdapter.value                   = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
@@ -601,12 +607,11 @@
         onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
         onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        onshow:             function(viewAdapter, callback) { viewAdapter.addEventListener("show", function(event){ callback.call(viewAdapter); }, false, true); },
-        onhide:             function(viewAdapter, callback) { viewAdapter.addEventListener("hide", function(event){ callback.call(viewAdapter); }, false, true); },
         hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindSource", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onboundedsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)

@@ -30,12 +30,11 @@
         onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
         onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        onshow:             function(viewAdapter, callback) { viewAdapter.addEventListener("show", function(event){ callback.call(viewAdapter); }, false, true); },
-        onhide:             function(viewAdapter, callback) { viewAdapter.addEventListener("hide", function(event){ callback.call(viewAdapter); }, false, true); },
         hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindSource", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onboundedsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
