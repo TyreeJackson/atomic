@@ -46,6 +46,7 @@ add routing
         navDataPath(this.__bag, pathSegments, value);
         notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
     }
+    functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
     functionFactory.root.prototype.__remove         =
     function(value)
     {

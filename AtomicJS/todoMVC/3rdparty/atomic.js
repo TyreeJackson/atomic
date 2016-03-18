@@ -507,6 +507,7 @@
         {
             viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); };
         }
+        viewAdapter.bindingRoot             = function(){return this.__bindingRoot;};
         viewAdapter.bindTo                  =
         function(value)
         {
@@ -528,6 +529,7 @@
             };
         });
         viewAdapter.blur                    = function(){this.__element.blur(); return this;};
+        viewAdapter.children                = function(){return this.controls || this.__repeatedControls || null;};
         viewAdapter.click                   = function(){this.__element.click(); return this;};
         viewAdapter.__detach                = function(documentFragment){this.__elementParent = this.__element.parentNode; documentFragment.appendChild(this.__element); return this;};
         viewAdapter.focus                   = function(){this.__element.focus(); return this;};
@@ -539,6 +541,8 @@
         viewAdapter.hideFor                 = function(milliseconds){ this.hide(); setTimeout((function(){this.show();}).bind(this), milliseconds); return this;};
         viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
         viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
+        viewAdapter.insertBefore            = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; };
+        viewAdapter.insertAfter             = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; };
         viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
         viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
         viewAdapter.removeClassFor          = function(className, milliseconds){ this.removeClass(className); setTimeout((function(){this.addClass(className);}).bind(this), milliseconds); return this;};
@@ -572,7 +576,11 @@
         }
         viewAdapter.width                   = function(){return this.__element.offsetWidth;}
         if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)    if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
+        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)
+        {
+            if (viewAdapterDefinition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + viewAdapter.__element.__selectorPath+"-"+viewAdapter.__selector);
+            if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
+        }
     };
 });}();
 !function()
@@ -749,6 +757,7 @@
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector);
             initializeViewAdapter(control, controlDeclaration);
+            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
         extractDeferredControls:
@@ -881,6 +890,7 @@ return {
         navDataPath(this.__bag, pathSegments, value);
         notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
     }
+    functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
     functionFactory.root.prototype.__remove         =
     function(value)
     {

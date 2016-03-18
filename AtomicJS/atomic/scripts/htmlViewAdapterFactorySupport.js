@@ -91,6 +91,7 @@ support string key paths in observable
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector);
             initializeViewAdapter(control, controlDeclaration);
+            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
         extractDeferredControls:
