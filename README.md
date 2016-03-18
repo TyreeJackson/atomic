@@ -39,7 +39,7 @@ This visual studio project contains components written in HTML/CSS/JavaScript fo
 ## AtomicJS (MVVAC)
 This visual studio project contains lightweight alternative components written in HTML/CSS/JavaScript for the purpose of building web application clients.
 
-* Pure disconnected client side MVVAC (Model-View-View Adapter-Controller) implementation build using M:JSON / V: HTML 5 / VA: JSON/JavaScript 1.8.5(ECMAScript 5) / C: JSON/JavaScript 1.8.5(ECMAScript 5).
+* Pure disconnected client side MVVAC ([Model-View-View Adapter-Controller](http://tyreejackson.com/model-view-view-adapter-controller-with-atomicjs/)) implementation build using M:JSON / V: HTML 5 / VA: JSON/JavaScript 1.8.5(ECMAScript 5) / C: JSON/JavaScript 1.8.5(ECMAScript 5).
 * High Fidelity Functional Prototyping support provided by lightweight object data storage modules (comprising localStorage and optional remote persistence using services built upon Atomic.Net)
 * DOM abstraction via View Adapter definitions. (Dependency Injection adapter attachment options for headless and other alternative views)
 
