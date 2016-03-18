@@ -11,8 +11,6 @@ This folder also contains the `index.js` file which contains the todoMVC composi
 
 This folder also contains the `index.css` file which contains the css classes specific to this todoMVC demo implementation.
 
-Debug versions of these files are also included for working with the source AtomicJS files.
-
 ## 3rdparty folder
 Contains the assembled `atomic.js` script.  This is the only script dependency that this todoMVC demo depends on.
 
