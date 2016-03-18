@@ -3,6 +3,12 @@
 function()
 {return function todoMVCAppView(appViewAdapter)
 {
+    function getActiveTodos(todos)
+    {
+        var activeTodos = [];
+        for(var counter=0;counter<todos.length;counter++) if (!todos[counter].completed) activeTodos.push(todos[counter]);
+        return activeTodos;
+    }
     var adapterDefinition   =
     {
         controls:
@@ -52,7 +58,6 @@ function()
                                     },
                                     deleteTodoButton:
                                     {
-                                        bindTo:     "id",
                                         onclick:
                                         function()
                                         {
@@ -104,8 +109,8 @@ function()
             {
                 controls:
                 {
-                    todosCountLabel:        { bindAs: function(todos){return todos().length;} },
-                    todosCountDescription:  { bindAs: function(todos){return todos().length == 0 || todos().length > 1 ? " items left" : " item left";} },
+                    todosCountLabel:        { bindAs: function(todos){return getActiveTodos(todos()).length;} },
+                    todosCountDescription:  { bindAs: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
                     allTodosLink:           { onclick: function(){appViewAdapter.attribute("filter", "none");} },
                     activeTodosLink:        { onclick: function(){appViewAdapter.attribute("filter", "active");} },
                     completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} },

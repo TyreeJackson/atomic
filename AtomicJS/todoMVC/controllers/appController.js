@@ -1,57 +1,45 @@
-﻿!function()
+!function()
 {
     root.define
     (
         "todoMVC.appController",
         function todoMVCAppController(appView, appProxy, observer)
         {
-            // todosObserver is the model observer that wraps the todo list "model"
-            var todosObserver;
             function rebindTodoList(todos)
             {
-                //todosObserver   = new observer(todos);
-                //appView.unbindData();
-                //appView.bindData(todosObserver);
-                if (todosObserver === undefined)
-                {
-                    todosObserver   = new observer(todos);
-                    appView.bindData(todosObserver);
-                }
-                else                                todosObserver("", todos);
+                // Replace the array directly wrapped in the observer bound to the appView with the new array argument passed in the todos parameter
+                appView.boundItem("", todos);
             }
             appView.on.addNewTodo.listen
             (function(value)
             {
-                appProxy.addTodo({todo: value}, function(todos){rebindTodoList(todos);});
+                appProxy.addTodo({todo: value}, rebindTodoList);
             });
             appView.on.deleteTodo.listen
-            (function(value)
+            (function(todoId)
             {
-                appProxy.deleteTodo(value, function(todos){rebindTodoList(todos);});
+                appProxy.deleteTodo(todoId, rebindTodoList);
             });
             appView.on.saveTodo.listen
             (function(todo)
             {
-                appProxy.saveTodo(todo, function(todos){rebindTodoList(todos);});
+                appProxy.saveTodo(todo, rebindTodoList);
             });
             appView.on.toggleAllCompleted.listen
-            (function(value)
+            (function(flag)
             {
-                appProxy.toggleAllTodos(value, function(refreshedTodos){rebindTodoList(refreshedTodos);});
+                appProxy.toggleAllTodos(flag, rebindTodoList);
             });
             appView.on.deleteCompletedTodos.listen
             (function()
             {
-                appProxy.deleteCompletedTodos(function(refreshedTodos){rebindTodoList(refreshedTodos);});
+                appProxy.deleteCompletedTodos(rebindTodoList);
             });
             this.launch =
             function()
             {
-                appProxy.getTodos
-                (function(todos)
-                {
-                    rebindTodoList(todos);
-                });
+                appView.bindData(new observer([]));
+                appProxy.getTodos(rebindTodoList);
             }
         }
     );
