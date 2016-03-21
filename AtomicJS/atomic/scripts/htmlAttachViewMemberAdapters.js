@@ -3,6 +3,7 @@
 {
     function bindRepeatedList(observer)
     {
+        if (observer === undefined) return;
         var documentFragment    = document.createDocumentFragment();
         unbindRepeatedList.call(this);
         for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
@@ -245,6 +246,7 @@
         {
             if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
             this.boundItem  = observer;
+            if (this.boundItem(this.__bindTo||"") === undefined) this.boundItem(this.__bindTo||"", {});
             for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
             this.__bindListener = (function(item){ if (this.boundItem === undefined) throw new Error("This control is not currently bound."); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); }).bind(this);
             observer.listen(this.__bindListener);
@@ -255,6 +257,7 @@
         function(observer)
         {
             this.boundItem          = observer;
+            if (this.boundItem(this.__bindTo||"") === undefined) this.boundItem(this.__bindTo||"", []);
             this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
             observer.listen(this.__bindListener);
             notifyOnbind.call(this, observer);
