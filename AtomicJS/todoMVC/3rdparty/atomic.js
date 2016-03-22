@@ -50,6 +50,7 @@
 {
     function bindRepeatedList(observer)
     {
+        if (observer === undefined) return;
         var documentFragment    = document.createDocumentFragment();
         unbindRepeatedList.call(this);
         for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
@@ -85,6 +86,8 @@
     function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
     function notifyOnboundedSourceUpdate(data) { if (this.__onboundedsourceupdate) this.__onboundedsourceupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
+    function notifyOnbindSource(data) { if (this.__onbindsource) this.__onbindsource(data); }
+    function notifyOnunbindSource(data) { if (this.__onunbindsource) this.__onunbindsource(data); }
     function clearSelectList(selectList)
     {
         for(var counter=selectList.options.length-1;counter>=0;counter--)
@@ -134,6 +137,54 @@
             this.__element.appendChild(radioGroupItem);
         }
     }
+
+    function deferSourceBinding()
+    {
+        this.__bindSourceListener   = (function(){ var item = this.boundSource; if (item(this.__bindSource||"") === undefined) return; this.unbindSourceData().bindSourceData(item); }).bind(this);
+        this.boundSource.listen(this.__bindSourceListener);
+        return this;
+    }
+
+    function bindSourceContainerChildren()
+    {
+        for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+        this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
+        this.boundSource.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.boundSource);
+        return this;
+    }
+
+    function bindSourceRepeaterChildren()
+    {
+        for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
+        this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
+        this.boundSource.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.boundSource);
+        return this;
+    }
+
+    function bindSourceSelectList()
+    {
+        this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
+        this.boundSource.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.boundSource);
+        return this;
+    }
+
+    function bindSourceRadioGroup()
+    {
+        if (this.__templateElement === undefined)
+        {
+            this.__radioButtonSelector	= this.__element.getAttribute("data-atomic-radiobutton")||"input[type='radio']";
+            this.__radioLabelSelector   = this.__element.getAttribute("data-atomic-radiolabel")||"label";
+            this.__templateElement      = this.__element.querySelector("radiogroupitem");
+            this.__templateElement.parentNode.removeChild(this.__templateElement);
+            clearRadioGroup(this.__element);
+        }
+        this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
+        this.boundSource.listen(this.__bindSourceListener);
+    }
+
     var bindSourceFunctions     =
     {
         "default":          function(sources){},
@@ -143,9 +194,8 @@
             if (sources !== undefined)
             {
                 this.boundSource            = sources;
-                for(var controlKey in this.controls)    this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
-                this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
-                this.boundSource.listen(this.__bindSourceListener);
+                if (this.boundSource(this.__bindSource||"") === undefined)  return deferSourceBinding.call(this);
+                else                                                        return bindSourceContainerChildren.call(this);
             }
             return this;
         },
@@ -155,9 +205,8 @@
             if (sources !== undefined)
             {
                 this.boundSource            = sources;
-                for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
-                this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
-                this.boundSource.listen(this.__bindSourceListener);
+                if (this.boundSource(this.__bindSource||"") === undefined)  return deferSourceBinding.call(this);
+                else                                                        return bindSourceRepeaterChildren.call(this);
             }
             return this;
         },
@@ -167,8 +216,8 @@
             if (sources !== undefined)
             {
                 this.boundSource            = sources;
-                this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
-                this.boundSource.listen(this.__bindSourceListener);
+                if (this.boundSource(this.__bindSource||"") === undefined)  return deferSourceBinding.call(this);
+                else                                                        return bindSourceSelectList.call(this);
             }
             return this;
         },
@@ -178,16 +227,8 @@
             if (sources !== undefined)
             {
                 this.boundSource            = sources;
-                if (this.__templateElement === undefined)
-                {
-					this.__radioButtonSelector	= this.__element.getAttribute("data-atomic-radiobutton")||"input[type='radio']";
-                    this.__radioLabelSelector   = this.__element.getAttribute("data-atomic-radiolabel")||"label";
-                    this.__templateElement      = this.__element.querySelector("radiogroupitem");
-                    this.__templateElement.parentNode.removeChild(this.__templateElement);
-                    clearRadioGroup(this.__element);
-                }
-                this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
-                this.boundSource.listen(this.__bindSourceListener);
+                if (this.boundSource(this.__bindSource||"") === undefined)  return deferSourceBinding.call(this);
+                else                                                        return bindSourceRadioGroup.call(this);
             }
             return this;
         }
@@ -201,6 +242,7 @@
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
                 this.boundSource.ignore(this.__bindSourceListener);
+                this.__bindSourceListener.ignore    = true;
                 delete this.__bindSourceListener;
                 delete this.boundSource;
                 for(var controlKey in this.controls)    this.controls[controlKey].unbindSourceData();
@@ -213,6 +255,7 @@
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
                 this.boundSource.ignore(this.__bindSourceListener);
+                this.__bindSourceListener.ignore    = true;
                 delete this.__bindSourceListener;
                 delete this.boundSource;
                 for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].unbindSourceData();
@@ -225,6 +268,7 @@
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
                 this.boundSource.ignore(this.__bindSourceListener);
+                this.__bindSourceListener.ignore    = true;
                 delete this.__bindSourceListener;
                 delete this.boundSource;
                 clearSelectList(this.__element);
@@ -237,9 +281,10 @@
             if (this.boundSource !== undefined && this.__bindSource !== undefined)
             {
                 this.boundSource.ignore(this.__bindSourceListener);
+                this.__bindSourceListener.ignore    = true;
                 delete this.__bindSourceListener;
                 delete this.boundSource;
-                clearRadioGroup(this.__element);
+                if (this.__templateElement !== undefined) clearRadioGroup(this.__element);
             }
             return this;
         }
@@ -262,6 +307,31 @@
         }
         for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.removeEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
     }
+
+    function deferBinding()
+    {
+        this.__bindListener = (function(){ var item = this.boundItem; if ( item(this.__bindTo||"") === undefined) return; this.unbindData().bindData(item); }).bind(this);
+        this.boundItem.listen(this.__bindListener);
+        return this;
+    }
+
+    function bindContainerChildren()
+    {
+        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
+        this.__bindListener = (function(item){ if (this.boundItem === undefined) {debugger; throw new Error("This control is not currently bound.");} notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); }).bind(this);
+        this.boundItem.listen(this.__bindListener);
+        notifyOnbind.call(this, this.boundItem);
+        return this;
+    }
+
+    function bindRepeaterChildren()
+    {
+        this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
+        this.boundItem.listen(this.__bindListener);
+        notifyOnbind.call(this, this.boundItem);
+        return this;
+    }
+
     var bindDataFunctions  =
     {
         "default":
@@ -292,20 +362,18 @@
         {
             if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
             this.boundItem  = observer;
-            for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-            this.__bindListener = (function(item){ if (this.boundItem === undefined) throw new Error("This control is not currently bound."); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); }).bind(this);
-            observer.listen(this.__bindListener);
-            notifyOnbind.call(this, observer);
-            return this;
+
+            if (this.boundItem(this.__bindTo||"") === undefined)    return deferBinding.call(this);
+            else                                                    return bindContainerChildren.call(this);
         },
         repeater:
         function(observer)
         {
+            if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
             this.boundItem          = observer;
-            this.__bindListener = (function(item){bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||""));}).bind(this);
-            observer.listen(this.__bindListener);
-            notifyOnbind.call(this, observer);
-            return this;
+
+            if (this.boundItem(this.__bindTo||"") === undefined)    return deferBinding.call(this);
+            else                                                    return bindRepeaterChildren.call(this);
         }
     };
     var unbindDataFunctions  =
@@ -313,27 +381,31 @@
         "default":
         function()
         {
-            if (this.boundItem !== undefined && (this.__bindTo !== undefined || this.__bindAs))
+            if (this.boundItem !== undefined)
+            if (this.__bindTo !== undefined || this.__bindAs)
             {
                 this.boundItem.ignore(this.__bindListener);
+                this.__bindListener.ignore  = true;
                 delete this.__bindListener;
                 unbindUpdateEvents.call(this);
                 delete this.__inputListener;
-                delete this.boundItem;
             }
             else if (this.__onboundedupdate)
             {
                 this.boundItem.ignore(this.__bindListener);
+                this.__bindListener.ignore  = true;
                 delete this.__bindListener;
-                delete this.boundItem;
             }
+            delete this.boundItem;
             notifyOnunbind.call(this);
             return this;
         },
         container:
         function()
         {
-            this.boundItem.ignore(this.__bindListener);
+            if (this.boundItem !== undefined)       this.boundItem.ignore(this.__bindListener);
+
+            this.__bindListener.ignore  = true;
             delete this.__bindListener;
             delete this.boundItem;
             for(var controlKey in this.controls)    this.controls[controlKey].unbindData();
@@ -343,8 +415,9 @@
         repeater:
         function()
         {
-            if (this.boundItem === undefined)   return;
-            this.boundItem.ignore(this.__bindListener);
+            if (this.boundItem !== undefined)   this.boundItem.ignore(this.__bindListener);
+
+            this.__bindListener.ignore  = true;
             delete this.__bindListener;
             delete this.boundItem;
             var documentFragment    = document.createDocumentFragment();
@@ -558,7 +631,7 @@
         }
         viewAdapter.show                    = function(){ this.__element.style.display=""; this.triggerEvent("show"); return this;};
         viewAdapter.showFor                 = function(milliseconds){ this.show(); setTimeout((function(){this.hide();}).bind(this), milliseconds); return this;};
-        viewAdapter.scrollIntoView          = function(){this.__element.scrollIntoView(); return this;};
+        viewAdapter.scrollIntoView          = function(){this.__element.scrollTop = 0; return this;};
         viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
         viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
         viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
@@ -618,7 +691,7 @@
         hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
     };
     each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onboundedupdate", "onboundedsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["bindAs", "bindingRoot", "onbind", "onbindsource", "onboundedupdate", "onboundedsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
 
@@ -985,7 +1058,11 @@ return {
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
-            if (current[path.value] === undefined)    current[path.value]   = path.type===0?{}:[];
+            if (current[path.value] === undefined)
+            {
+                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
+                else                        return undefined;
+            }
             current     = current[path.value];
         }
         if (value === undefined)    return current[paths[paths.length-1].value];
@@ -1008,7 +1085,7 @@ return {
     }
     function notifyPropertyListener(propertyKey, listener, bag)
     {
-        if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+        if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
         {
             bag.updating.push(listener);
             listener.properties = {};
@@ -1018,7 +1095,8 @@ return {
     }
     function notifyPropertyListeners(propertyKey, value, bag)
     {
-        for(var listenerCounter=0;listenerCounter<bag.itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, bag.itemListeners[listenerCounter], bag);
+        var itemListeners   = bag.itemListeners.slice();
+        for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
     }
     return function observer(_item)
     {
