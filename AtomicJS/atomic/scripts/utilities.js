@@ -15,8 +15,5 @@
         _pubSub.ignore  = function(listener) { root.utilities.removeFromArray.call(listeners, listener); }
         return _pubSub;
     });
-    root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item)
-    {
-        root.utilities.removeFromArray(array, array.indexOf(item));
-    });
+    root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item){ root.utilities.removeFromArray(array, array.indexOf(item)); });
 }();

@@ -28,23 +28,29 @@ add routing
         //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
         return subObserver;
     });
+    function getValue(pathSegments, revisedPath)
+    {
+        pathSegments    = pathSegments || [""];
+        if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+        var returnValue = navDataPath(this.__bag, pathSegments);
+        if (revisedPath !== undefined && returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+        return returnValue;
+    }
     functionFactory.root.prototype.__invoke         =
     function(path, value)
     {
-        if (path === undefined) return navDataPath(this.__bag, extractPathSegments(this.__basePath));
-        if (path === null)      path    = "";
+        if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath));
+        if (path === undefined || path === null)        path    = "";
         var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
         var revisedPath     = getFullPath(pathSegments);
-        if (value === undefined)
+        if (value === undefined)    return getValue.call(this, pathSegments, revisedPath);
+        if (this.__bag.rollingback) return;
+        var currentValue = navDataPath(this.__bag, pathSegments);
+        if (value !== currentValue)
         {
-            if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-            var returnValue = navDataPath(this.__bag, pathSegments);
-            if (returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
-            return returnValue;
+            navDataPath(this.__bag, pathSegments, value);
+            notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
         }
-        if (this.__bag.rollingback)    return;
-        navDataPath(this.__bag, pathSegments, value);
-        notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
     }
     functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
     functionFactory.root.prototype.__remove         =
@@ -141,7 +147,11 @@ add routing
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
-            if (current[path.value] === undefined)    current[path.value]   = path.type===0?{}:[];
+            if (current[path.value] === undefined)
+            {
+                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
+                else                        return undefined;
+            }
             current     = current[path.value];
         }
         if (value === undefined)    return current[paths[paths.length-1].value];
@@ -164,17 +174,19 @@ add routing
     }
     function notifyPropertyListener(propertyKey, listener, bag)
     {
-        if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+        if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
         {
             bag.updating.push(listener);
             listener.properties = {};
-            listener.callback();
+            var postCallback = listener.callback();
             bag.updating.pop();
+            if (postCallback !== undefined) postCallback();
         }
     }
     function notifyPropertyListeners(propertyKey, value, bag)
     {
-        for(var listenerCounter=0;listenerCounter<bag.itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, bag.itemListeners[listenerCounter], bag);
+        var itemListeners   = bag.itemListeners.slice();
+        for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
     }
     return function observer(_item)
     {
