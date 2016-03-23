@@ -856,21 +856,23 @@ return {
         //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
         return subObserver;
     });
+    function getValue(pathSegments, revisedPath)
+    {
+        pathSegments    = pathSegments || [""];
+        if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+        var returnValue = navDataPath(this.__bag, pathSegments);
+        if (revisedPath !== undefined && returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+        return returnValue;
+    }
     functionFactory.root.prototype.__invoke         =
     function(path, value)
     {
-        if (path === undefined) return navDataPath(this.__bag, extractPathSegments(this.__basePath));
-        if (path === null)      path    = "";
+        if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath));
+        if (path === undefined || path === null)        path    = "";
         var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
         var revisedPath     = getFullPath(pathSegments);
-        if (value === undefined)
-        {
-            if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-            var returnValue = navDataPath(this.__bag, pathSegments);
-            if (returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
-            return returnValue;
-        }
-        if (this.__bag.rollingback)    return;
+        if (value === undefined)    return getValue.call(this, pathSegments, revisedPath);
+        if (this.__bag.rollingback) return;
         var currentValue = navDataPath(this.__bag, pathSegments);
         if (value !== currentValue)
         {
