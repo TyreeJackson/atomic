@@ -1,8 +1,8 @@
 !function()
 {"use strict";
-    var __root              = new __namespace();
     function __namespace(){}
     __namespace.prototype.define    = function(fullName, item) { namespace(this, fullName, item); }
+    var __root                      = new __namespace();
     function getNamespace(root, paths)
     {
         var current     = root;

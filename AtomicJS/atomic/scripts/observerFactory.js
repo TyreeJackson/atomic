@@ -43,8 +43,12 @@ add routing
             return returnValue;
         }
         if (this.__bag.rollingback)    return;
-        navDataPath(this.__bag, pathSegments, value);
-        notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+        var currentValue = navDataPath(this.__bag, pathSegments);
+        if (value !== currentValue)
+        {
+            navDataPath(this.__bag, pathSegments, value);
+            notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+        }
     }
     functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
     functionFactory.root.prototype.__remove         =
@@ -141,7 +145,11 @@ add routing
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
-            if (current[path.value] === undefined)    current[path.value]   = path.type===0?{}:[];
+            if (current[path.value] === undefined)
+            {
+                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
+                else                        return undefined;
+            }
             current     = current[path.value];
         }
         if (value === undefined)    return current[paths[paths.length-1].value];
@@ -164,17 +172,19 @@ add routing
     }
     function notifyPropertyListener(propertyKey, listener, bag)
     {
-        if (listener.callback !== undefined && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+        if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
         {
             bag.updating.push(listener);
             listener.properties = {};
-            listener.callback();
+            var postCallback = listener.callback();
             bag.updating.pop();
+            if (postCallback !== undefined) postCallback();
         }
     }
     function notifyPropertyListeners(propertyKey, value, bag)
     {
-        for(var listenerCounter=0;listenerCounter<bag.itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, bag.itemListeners[listenerCounter], bag);
+        var itemListeners   = bag.itemListeners.slice();
+        for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
     }
     return function observer(_item)
     {
