@@ -3,8 +3,8 @@ module.exports  =
     name:       "storymanagement",
     methods:
     {
-        editStory:  function(storyId){return {id: storyId, title: "The Butter and the Apple", originalAuthor: "Sammy Smith"}; },
-        saveStory:  function(story){},
-        deleteUser: function(storyId){}
+        editStory:  function(){return {id: this.arguments.storyId, title: "The Butter and the Apple", originalAuthor: "Sammy Smith"}; },
+        saveStory:  function(){},
+        deleteUser: function(){}
     }
 }

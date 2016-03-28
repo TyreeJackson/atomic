@@ -1,5 +1,11 @@
-var http            = require("http");
-var atomicRouter    = require("../atomic/scripts/router.js")(http, require("url"), require("fs"));
+var atomicRouter    = 
+require("../atomic/scripts/router.js")
+(
+    require("http"),
+    require("url"),
+    require("../atomic/scripts/staticHandler.js")(require("fs")),
+    require("../atomic/scripts/requestParameterParser.js")(require("url"))
+);
 var services        = 
 [
     require("./api/userManagement.js"),

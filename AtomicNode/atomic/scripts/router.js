@@ -1,31 +1,7 @@
 module.exports  =
-function atomic_router(http, urlParser, fileSystem)
+function atomic_router(http, urlParser, staticHandler, parameterParser)
 {
     function notFound(request, response){response.statusCode=404;response.statusMessage="Path not found.";response.write("Path not found");response.end();};
-    function routeWWW(urlPath, request, response, next)
-    {
-        return fileSystem.readFile(urlPath, "utf8", function(error, data)
-        {
-            if (error || data===undefined)
-            return fileSystem.readFile(urlPath+".html", "utf8", function(error2, data2)
-            {
-                if (error2 || data===undefined)
-                return fileSystem.readFile(urlPath+"/index.html", "utf8", function(error3, data3)
-                {
-                    if (error3 || data===undefined) return next();
-                    response.write(data);
-                    response.end();
-                    return;
-                });
-                response.write(data);
-                response.end();
-                return;
-            });
-            response.write(data);
-            response.end();
-            return;
-        });
-    }
 
     function BaseService(request, response){ Object.defineProperties(this, {request: {writable: false, value: request, enumerable: false, configurable: false}, response:{writable: false, value: response, enumerable: false, configurable: false}}); };
     BaseService.prototype.notFound  = function(){notFound(this.response, this.request);}
@@ -42,13 +18,17 @@ function atomic_router(http, urlParser, fileSystem)
     function invokeServiceMethod(methodName)
     {
         // todo: rehydrate parameters for the method and call the method with them
-        var result  = this[methodName]();
-        if (result !== undefined)
+        parameterParser(this.request, (function(requestArguments)
         {
-            this.response.writeHead(200, {"Content-Type": "application/json"});
-            this.response.write(JSON.stringify(result));
-            this.response.end();
-        }
+            Object.defineProperty(this, "arguments", {writable: false, value: requestArguments, enumerable: false, configurable: false});
+            var result      = this[methodName]();
+            if (result !== undefined)
+            {
+                this.response.writeHead(200, {"Content-Type": "application/json"});
+                this.response.write(JSON.stringify(result));
+                this.response.end();
+            }
+        }).bind(this));
     }
     function createServiceMethodHandler(factory, methodName) { return function(request, response){ invokeServiceMethod.call(factory.create(request, response), methodName); }; }
     function registerServiceMethods(serviceDefinition)
@@ -75,7 +55,7 @@ function atomic_router(http, urlParser, fileSystem)
         http.createServer((function(request, response)
         {
             var url     = urlParser.parse(request.url);
-            routeWWW.call(this, this.__staticPath + "/" + url.pathname, request, response, (function()
+            staticHandler(this.__staticPath + url.pathname, request, response, (function()
             {
                 var handler = this.__routes[url.pathname.toLowerCase()]||this.__rescue||notFound;
                 handler.call(this, request, response);
