@@ -1,0 +1,8 @@
+.todoapp[data-filter="active"] .todo-list li.completed { display: none; }
+.todoapp[data-filter="completed"] .todo-list li { display: none; }
+.todoapp[data-filter="completed"] .todo-list li.completed { display: block; }
+
+.todoapp[data-filter="none"] footer.footer a.nofilter { border-color: rgba(175, 47, 47, 0.2); }
+.todoapp[data-filter="active"] footer.footer a.activeonly { border-color: rgba(175, 47, 47, 0.2); }
+.todoapp[data-filter="completed"] footer.footer a.completedonly { border-color: rgba(175, 47, 47, 0.2); }
+.footer { display: block; }
