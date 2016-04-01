@@ -9,7 +9,7 @@ require("../atomic/scripts/router.js")
 var services        = 
 [
     require("./api/userManagement.js"),
-    require("./api/todoManagement.js")
+    require("./api/todoManagement.js")(require("monk"))
 ];
 var router          = new atomicRouter(8888, "www", "api", services);
 router.rescue(function(request, response){response.write("WTF!");response.end();});

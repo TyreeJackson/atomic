@@ -1,20 +1,23 @@
-﻿!function()
+imports.init
+({
+    atomicLib:      "3rdparty/atomic.js",
+    appViewLib:     "views/appView.js",
+    proxyLib:       "proxies/appProtoProxy.js",
+    controllerLib:  "controllers/appController.js"
+})
+(function(libs)
 {
-    window.onload   =
-    function ComposeApp()
-    {
-        var atomic  = root.atomic.htmlCompositionRoot();
-        var app =
-        new root.todoMVC.appController
+    var atomic  = libs.atomicLib.atomic.htmlCompositionRoot();
+    var app =
+    new libs.controllerLib.todoMVC.appController
+    (
+        atomic.viewAdapterFactory.create
         (
-            atomic.viewAdapterFactory.create
-            (
-                new root.todoMVC.appView(), 
-                document.querySelector("#todoMVCApp")
-            ),
-            new root.todoMVC.appProxy(window.localStorage, root.utilities.removeFromArray),
-            atomic.observer
-        );
-        app.launch();
-    };
-}();
+            new libs.appViewLib.todoMVC.appView(), 
+            document.querySelector("#todoMVCApp")
+        ),
+        new libs.proxyLib.todoMVC.appProxy(window.localStorage, libs.atomicLib.utilities.removeFromArray),
+        atomic.observer
+    );
+    app.launch();
+});

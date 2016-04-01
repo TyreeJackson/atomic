@@ -96,4 +96,5 @@
             callback(todos.items);
         }
     };
+    return proxy;
 });}();

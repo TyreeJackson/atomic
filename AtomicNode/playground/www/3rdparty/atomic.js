@@ -16,6 +16,7 @@
     }
     function namespace(root, fullName, value)
     {
+        if (imports && typeof imports.define === "function")    imports.define(fullName, value);
         var paths                           = fullName.split(".");
         var namespace                       = getNamespace(root, paths);
         if (value === undefined)            return namespace[paths[paths.length-1]];
