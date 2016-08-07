@@ -26,3 +26,21 @@ return {
         new root.atomic.observerFactory(root.utilities.removeFromArray, new root.atomic.isolatedFunctionFactory(document))
     }
 });}();
+!function(window, document)
+{"use strict";root.define("atomic.adaptHtml", function adaptHtml(controlsOrAdapter)
+{
+    var callback;
+    window.onload = function()
+    {
+        var atomic  = root.atomic.htmlCompositionRoot();
+        var adapter =
+        atomic.viewAdapterFactory.create
+        (
+            typeof controlsOrAdapter !== "function" ? function(appViewAdapter){return {controls: controlsOrAdapter}; } : controlsOrAdapter, 
+            document.body
+        );
+        adapter.bindData(new atomic.observer({}));
+        if (typeof callback === "function") callback(adapter);
+    };
+    return function(callbackFunction){ callback = callbackFunction; };
+});}(window, document);

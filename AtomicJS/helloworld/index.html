@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Atomic • Hello World Demo</title>
+    <script type="text/javascript" src="3rdparty/atomic.js"></script>
+    <script type="text/javascript">
+        root.atomic.adaptHtml
+        ({
+            nameTextbox:
+            {
+                focused:    true,
+                bindTo:     "nameValue",
+                onescape:   function(){this.value("");},
+                updateon:   ["keydown", "keyup", "change"]
+            },
+            helloMessage:   { onboundedupdate: function(data){this.toggleDisplay(data("nameValue.length") > 0);} },
+            nameLabels:     { selector: ".name", multipresent: true, bindTo: "nameValue" }
+        });
+    </script>
+</head>
+<body>
+    <div><label>Enter your name:</label> <input id="nameTextbox" autocomplete="off" /></div>
+    <div id="helloMessage">
+        <p>Hello <span class="name"></span>!</p>
+        <p>Pardon me <span class="name"></span>, but do you have any grey poupon?</p>
+    </div>
+</body>
+</html>

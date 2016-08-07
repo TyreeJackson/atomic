@@ -30,7 +30,8 @@
         onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
         onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
         onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); }
+        hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); },
+        focused:            function(viewAdapter, value)    { if (value) viewAdapter.focus(); }
     };
     each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText", "bindTo"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
     each(["bindAs", "bindingRoot", "onbind", "onbindsource", "onboundedupdate", "onboundedsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
