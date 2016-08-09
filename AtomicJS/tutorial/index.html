@@ -73,7 +73,15 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                                     }
                                                 },
                                                 worldLabel2:     {bindTo: "worldValue"},
-                                                sayHelloButton: { onclick: function(){this.boundItem("worldValue","World");}}
+                                                sayHelloButton:
+                                                {
+                                                    onclick:        function(){this.boundItem("worldValue","World");}, 
+                                                    onboundedupdate:
+                                                    function(data)
+                                                    {
+                                                        this.toggleDisplay(!(data("worldValue.length")>0));
+                                                    }
+                                                }
                                             }
                                         );
                                     </script>
@@ -95,7 +103,15 @@ root.atomic.adaptHtml
             }
         },
         worldLabel2:     {bindTo: "worldValue"},
-        sayHelloButton: { onclick: function(){this.boundItem("worldValue","World");}}
+        sayHelloButton:
+        {
+            onclick:        function(){this.boundItem("worldValue","World");}, 
+            onboundedupdate:
+            function(data)
+            {
+                this.toggleDisplay(!(data("worldValue.length")>0));
+            }
+        }
     }
 );
                                         </code>
