@@ -19,6 +19,10 @@
                 },
                 {
                     pageNumber: 2,
+                    title:      "Hello World Revisited"
+                },
+                {
+                    pageNumber: 3,
                     title:      "Hello Friend"
                 }
             ]

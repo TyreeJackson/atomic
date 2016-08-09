@@ -42,13 +42,28 @@
                             <div id="example1">
                                 <div class="example">
                                     <h1 id="greeting">Hello <span id="worldLabel"></span>!</h1>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value: "World"}} );
+                                    </script>
+                                </div>
+                                <figure class="highlight">
+                                    <pre>
+                                        <code class="language-javascript">
+root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value: "World"}} );
+                                        </code>
+                                    </pre>
+                                </figure>
+                            </div>
+                            <div id="example2">
+                                <div class="example">
+                                    <h1 id="greeting2">Hello <span id="worldLabel2"></span>!</h1>
                                     <button id="sayHelloButton">Say Hello</button>
                                     <script type="text/javascript">
                                         root.atomic.adaptHtml
                                         (
-                                            document.querySelector("example1"),
+                                            document.querySelector("example2"),
                                             {
-                                                greeting:
+                                                greeting2:
                                                 {
                                                     hidden:             true, 
                                                     onboundedupdate:
@@ -57,7 +72,7 @@
                                                         this.toggleDisplay(data("worldValue.length")>0);
                                                     }
                                                 },
-                                                worldLabel:     {bindTo: "worldValue"},
+                                                worldLabel2:     {bindTo: "worldValue"},
                                                 sayHelloButton: { onclick: function(){this.boundItem("worldValue","World");}}
                                             }
                                         );
@@ -68,9 +83,9 @@
                                         <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example1"),
+    document.querySelector("example2"),
     {
-        greeting:
+        greeting2:
         {
             hidden:             true, 
             onboundedupdate:
@@ -79,7 +94,7 @@ root.atomic.adaptHtml
                 this.toggleDisplay(data("worldValue.length")>0);
             }
         },
-        worldLabel:     {bindTo: "worldValue"},
+        worldLabel2:     {bindTo: "worldValue"},
         sayHelloButton: { onclick: function(){this.boundItem("worldValue","World");}}
     }
 );
@@ -87,7 +102,7 @@ root.atomic.adaptHtml
                                     </pre>
                                 </figure>
                             </div>
-                            <div id="example2">
+                            <div id="example3">
                                 <div class="example">
                                     <div><label>Enter your name:</label> <input id="nameTextbox" autocomplete="off" /></div>
                                     <div id="helloMessage">
@@ -97,7 +112,7 @@ root.atomic.adaptHtml
                                     <script type="text/javascript">
                                         root.atomic.adaptHtml
                                         (
-                                            document.querySelector("example2"),
+                                            document.querySelector("example3"),
                                             {
                                                 nameTextbox:
                                                 {
@@ -129,7 +144,7 @@ root.atomic.adaptHtml
                                         <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example2"),
+    document.querySelector("example3"),
     {
         nameTextbox:
         {

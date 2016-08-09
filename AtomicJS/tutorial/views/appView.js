@@ -8,6 +8,7 @@
         appViewAdapter.on.pageChanged(pageNumber);
         appViewAdapter.controls.example1.toggleDisplay(pageNumber==1);
         appViewAdapter.controls.example2.toggleDisplay(pageNumber==2);
+        appViewAdapter.controls.example3.toggleDisplay(pageNumber==3);
     }
     var adapterDefinition   =
     {
@@ -45,7 +46,8 @@
                 bindTo: "examples"
             },
             example1: {},
-            example2: { hidden: true }
+            example2: { hidden: true },
+            example3: { hidden: true }
         },
         events:["pageChanged"]
     };
