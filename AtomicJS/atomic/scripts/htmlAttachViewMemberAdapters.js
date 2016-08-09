@@ -472,6 +472,8 @@
         viewAdapter.children                = function(){return this.controls || this.__repeatedControls || null;};
         viewAdapter.click                   = function(){this.__element.click(); return this;};
         viewAdapter.__detach                = function(documentFragment){this.__elementPlaceholder = document.createElement("placeholder"); this.__element.parentNode.replaceChild(this.__elementPlaceholder, this.__element); documentFragment.appendChild(this.__element); return this;};
+        viewAdapter.disable                 = function(value){this.__element.disabled=!(!value);};
+        viewAdapter.enable                  = function(value){this.__element.disabled=!value;};
         viewAdapter.focus                   = function(){this.__element.focus(); return this;};
         viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
         viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
@@ -481,6 +483,8 @@
         viewAdapter.hideFor                 = function(milliseconds, onComplete){ this.hide(); setTimeout((function(){this.show(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
         viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
         viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
+        viewAdapter.isDisabled              = function() { return this.__element.disabled; };
+        viewAdapter.isEnabled               = function() { return !this.__element.disabled; };
         viewAdapter.insertBefore            = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; };
         viewAdapter.insertAfter             = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; };
         viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };

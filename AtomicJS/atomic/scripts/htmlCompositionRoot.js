@@ -27,20 +27,29 @@ return {
     }
 });}();
 !function(window, document)
-{"use strict";root.define("atomic.adaptHtml", function adaptHtml(controlsOrAdapter)
+{"use strict";root.define("atomic.adaptHtml", function adaptHtml(viewElement, controlsOrAdapter)
 {
+    if (arguments.length == 1)
+    {
+        controlsOrAdapter   = viewElement;
+        viewElement         = document.body;
+    }
     var callback;
-    window.onload = function()
+    var deferOrExecute  =
+    function()
     {
         var atomic  = root.atomic.htmlCompositionRoot();
         var adapter =
         atomic.viewAdapterFactory.create
         (
             typeof controlsOrAdapter !== "function" ? function(appViewAdapter){return {controls: controlsOrAdapter}; } : controlsOrAdapter, 
-            document.body
+            viewElement||document.body
         );
         adapter.bindData(new atomic.observer({}));
         if (typeof callback === "function") callback(adapter);
-    };
+    }
+    if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
+    else                                    deferOrExecute();
+
     return function(callbackFunction){ callback = callbackFunction; };
 });}(window, document);
