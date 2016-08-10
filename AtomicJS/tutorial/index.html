@@ -12,33 +12,27 @@
     <script type="text/javascript" src="index.js"></script>
 </head>
 <body id="tutorialApp">
-    <div class="jumbotron">
-        <div class="container">
-            <h1>Tutorials</h1>
-            <p>Here are a few examples on how to get started using AtomicJS.</p>
-        </div>
-    </div>
     <div id="screens">
         <div id="tutorialScreen">
             <div class="container">
                 <div class="row">
+                    <div class="jumbotron">
+                        <div class="container">
+                            <h1>Tutorials</h1>
+                            <p>Here are a few examples on how to get started using AtomicJS.</p>
+                        </div>
+                    </div>
                     <div class="col-md-9" role="main">
+                        <a id="/example/1"></a><a id="/example/2"></a><a id="/example/3"></a><a id="/example/4"></a><a id="/example/5"></a><a id="/example/6"></a>
                         <div class="docs-section">
                             <h1 class="page-header">Examples</h1>
                             <p class="lead">It is the goal of this tutorial to show you how to build web applications using AtomicJS.  Each page contains a new example.</p>
-                            <nav aria-label="Page navigation">
-                              <ul class="pagination">
-                                <li><a href="#/example/1">Hello World</a></li>
-                                <li><a href="#/example/2">Hello World Revisited</a></li>
-                                <li><a href="#/example/3">Hello Friend</a></li>
-                                <li><a href="#/example/4">Click Counter</a></li>
-                                <li><a href="#/example/5">Simple List</a></li>
-                              </ul>
-                            </nav>
                             <div id="examples">
                                 <div id="example1">
                                     <div class="example">
-                                        <h1 id="greeting">Hello <span id="worldLabel"></span>!</h1>
+                                        <div class="well">
+                                            <h1 id="greeting">Hello <span id="worldLabel"></span>!</h1>
+                                        </div>
                                         <script type="text/javascript">
                                             root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value: "World"}} );
                                         </script>
@@ -55,7 +49,9 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                             <code class="language-html">
 &lt;div id="example1"&gt;
     &lt;div class="example"&gt;
-        &lt;h1 id="greeting"&gt;Hello &lt;span id="worldLabel"&gt;&lt;/span&gt;!&lt;/h1&gt;
+        &lt;div class="well"&gt;
+            &lt;h1 id="greeting"&gt;Hello &lt;span id="worldLabel"&gt;&lt;/span&gt;!&lt;/h1&gt;
+        &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;
                                             </code>
@@ -64,35 +60,37 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                 </div>
                                 <div id="example2">
                                     <div class="example">
-                                        <h1 id="greeting2">Hello <span id="worldLabel2"></span>!</h1>
-                                        <button id="sayHelloButton">Say Hello</button>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example2"),
-                                                {
-                                                    greeting2:
+                                        <div class="well form-group">
+                                            <h1 id="greeting2">Hello <span id="worldLabel2"></span>!</h1>
+                                            <button id="sayHelloButton" class="btn">Say Hello</button>
+                                            <script type="text/javascript">
+                                                root.atomic.adaptHtml
+                                                (
+                                                    document.querySelector("example2"),
                                                     {
-                                                        hidden:             true, 
-                                                        onboundedupdate:
-                                                        function(data)
+                                                        greeting2:
                                                         {
-                                                            this.toggleDisplay(data("worldValue.length")>0);
-                                                        }
-                                                    },
-                                                    worldLabel2:     {bindTo: "worldValue"},
-                                                    sayHelloButton:
-                                                    {
-                                                        onclick:        function(){this.boundItem("worldValue","World");}, 
-                                                        onboundedupdate:
-                                                        function(data)
+                                                            hidden:             true, 
+                                                            onboundedupdate:
+                                                            function(data)
+                                                            {
+                                                                this.toggleDisplay(data("worldValue.length")>0);
+                                                            }
+                                                        },
+                                                        worldLabel2:     {bindTo: "worldValue"},
+                                                        sayHelloButton:
                                                         {
-                                                            this.toggleDisplay(!(data("worldValue.length")>0));
+                                                            onclick:        function(){this.boundItem("worldValue","World");}, 
+                                                            onboundedupdate:
+                                                            function(data)
+                                                            {
+                                                                this.toggleDisplay(!(data("worldValue.length")>0));
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            );
-                                        </script>
+                                                );
+                                            </script>
+                                        </div>
                                     </div>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
@@ -130,8 +128,10 @@ root.atomic.adaptHtml
                                             <code class="language-html">
 &lt;div id="example2"&gt;
     &lt;div class="example"&gt;
-        &lt;h1 id="greeting2"&gt;Hello &lt;span id="worldLabel2"&gt;&lt;/span&gt;!&lt;/h1&gt;
-        &lt;button id="sayHelloButton"&gt;Say Hello&lt;/button&gt;
+        &lt;div class="well"&gt;
+            &lt;h1 id="greeting2"&gt;Hello &lt;span id="worldLabel2"&gt;&lt;/span&gt;!&lt;/h1&gt;
+            &lt;button id="sayHelloButton"&gt;Say Hello&lt;/button&gt;
+        &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;
                                             </code>
@@ -140,11 +140,13 @@ root.atomic.adaptHtml
                                 </div>
                                 <div id="example3">
                                     <div class="example">
-                                        <div><label>Enter your first name:</label> <input id="firstNameTextbox" autocomplete="off" /></div>
-                                        <div><label>Enter your last name:</label> <input id="lastNameTextbox" autocomplete="off" /></div>
-                                        <div id="helloMessage">
-                                            <p>Hello <span class="name"></span>!</p>
-                                            <p>Pardon me <span class="name"></span>, but do you have any grey poupon?</p>
+                                        <div class="well form-group">
+                                            <div><input id="firstNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your first name:" /></div>
+                                            <div><input id="lastNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /></div>
+                                            <div id="helloMessage">
+                                                <p>Hello <span class="name"></span>!</p>
+                                                <p>Pardon me <span class="name"></span>, but do you have any grey poupon?</p>
+                                            </div>
                                         </div>
                                         <script type="text/javascript">
                                             root.atomic.adaptHtml
@@ -228,11 +230,13 @@ root.atomic.adaptHtml
                                             <code class="language-html">
 &lt;div id="example3"&gt;
     &lt;div class="example"&gt;
-        &lt;div&gt;&lt;label&gt;Enter your first name:&lt;/label&gt; &lt;input id="nameTextbox" autocomplete="off" /&gt;&lt;/div&gt;
-        &lt;div&gt;&lt;label&gt;Enter your last name:&lt;/label&gt; &lt;input id="nameTextbox" autocomplete="off" /&gt;&lt;/div&gt;
-        &lt;div id="helloMessage"&gt;
-            &lt;p&gt;Hello &lt;span class="name"&gt;&lt;/span&gt;!&lt;/p&gt;
-            &lt;p&gt;Pardon me &lt;span class="name"&gt;&lt;/span&gt;, but do you have any grey poupon?&lt;/p&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;div&gt;&lt;input id="nameTextbox" autocomplete="off" class="form-control" placeholder="Enter your first name:" /&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;input id="nameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /&gt;&lt;/div&gt;
+            &lt;div id="helloMessage"&gt;
+                &lt;p&gt;Hello &lt;span class="name"&gt;&lt;/span&gt;!&lt;/p&gt;
+                &lt;p&gt;Pardon me &lt;span class="name"&gt;&lt;/span&gt;, but do you have any grey poupon?&lt;/p&gt;
+            &lt;/div&gt;
         &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;
@@ -242,13 +246,15 @@ root.atomic.adaptHtml
                                 </div>
                                 <div id="example4">
                                     <div class="example">
-                                        <div>You've clicked <span id="numberOfClicks">&nbsp;</span> times</div>
+                                        <div class="well form-group">
+                                            <div>You've clicked <span id="numberOfClicks">&nbsp;</span> times</div>
 
-                                        <button id="countClickButton">Click me</button>
+                                            <button id="countClickButton" class="btn">Click me</button>
 
-                                        <div id="tooManyClicksMessage">
-                                            That's too many clicks! Please stop before you wear out your fingers.
-                                            <button id="resetClickCountButton">Reset clicks</button>
+                                            <div id="tooManyClicksMessage">
+                                                That's too many clicks! Please stop before you wear out your fingers.
+                                                <button id="resetClickCountButton" class="btn">Reset clicks</button>
+                                            </div>
                                         </div>
                                         <script type="text/javascript">
                                             root.atomic.adaptHtml
@@ -344,13 +350,15 @@ root.atomic.adaptHtml
                                             <code class="language-html">
 &lt;div id="example4"&gt;
     &lt;div class="example"&gt;
-        &lt;div&gt;You've clicked &lt;span id="numberOfClicks"&gt;&nbsp;&lt;/span&gt; times&lt;/div&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;div&gt;You've clicked &lt;span id="numberOfClicks"&gt;&nbsp;&lt;/span&gt; times&lt;/div&gt;
 
-        &lt;button id="incrementClickCounterButton"&gt;Click me&lt;/button&gt;
+            &lt;button id="incrementClickCounterButton" class="btn"&gt;Click me&lt;/button&gt;
 
-        &lt;div id="tooManyClicksMessage"&gt;
-            That's too many clicks! Please stop before you wear out your fingers.
-            &lt;button id="resetClickCounterButton"&gt;Reset clicks&lt;/button&gt;
+            &lt;div id="tooManyClicksMessage"&gt;
+                That's too many clicks! Please stop before you wear out your fingers.
+                &lt;button id="resetClickCounterButton" class="btn"&gt;Reset clicks&lt;/button&gt;
+            &lt;/div&gt;
         &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;
@@ -360,11 +368,15 @@ root.atomic.adaptHtml
                                 </div>
                                 <div id="example5">
                                     <div class="example">
-                                        <div>
-                                            New item: <input id="newItem" />
-                                            <button id="addNewItemButton" type="button">Add</button>
-                                            <p>Your items:</p>
-                                            <select id="itemsList" multiple="multiple" width="50"> </select>
+                                        <div class="well form-group">
+                                            <div>
+                                                <div class="form-group"><input id="newItem" class="form-control" placeholder="New item" /></div>
+                                                <button id="addNewItemButton" type="button" class="btn">Add</button>
+                                                <p>Your items:</p>
+                                                <div class="form-group">
+                                                    <select id="itemsList" multiple="multiple" class="form-control"> </select>
+                                                </div>
+                                            </div>
                                         </div>
                                         <script type="text/javascript">
                                             root.atomic.adaptHtml
@@ -442,11 +454,153 @@ root.atomic.adaptHtml
                                         <h2>View</h2>
                                         <pre>
                                             <code class="language-html">
-&lt;div&gt;
-    New item: &lt;input id="newItem" /&gt;
-    &lt;button id="addNewItemButton" type="button"&gt;Add&lt;/button&gt;
-    &lt;p&gt;Your items:&lt;/p&gt;
-    &lt;select id="itemsList" multiple="multiple" width="50"&gt; &lt;/select&gt;
+&lt;div id="example5"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;div&gt;
+                &lt;div class="form-group"&gt;&lt;input id="newItem" class="form-control" /&gt;&lt;/div&gt;
+                &lt;button id="addNewItemButton" type="button" class="btn"&gt;Add&lt;/button&gt;
+                &lt;p&gt;Your items:&lt;/p&gt;
+                &lt;div class="form-group"&gt;
+                    &lt;select id="itemsList" multiple="multiple" class="form-control"&gt; &lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example6">
+                                    <div class="example">
+                                        <div class="well form-group">
+                                            <div>
+                                                <div class="form-group"><input id="betterNewItem" class="form-control" placeholder="New item" /></div>
+                                                <button id="betterAddNewItemButton" type="button" class="btn">Add</button>
+                                            </div>
+                                            <p>Your items:</p>
+                                            <div class="form-group">
+                                                <select id="betterItemsList" multiple="multiple" class="form-control"> </select>
+                                            </div>
+                                            <div>
+                                                <button id="removeItemButton" class="btn">Remove</button>
+                                                <button id="sortItemsButton" class="btn">Sort</button>
+                                            </div>
+                                        </div>
+                                        <script type="text/javascript">
+                                            root.atomic.adaptHtml
+                                            (
+                                                document.querySelector("example6"),
+                                                {
+                                                    betterNewItem:
+                                                    {
+                                                        bindTo:     "newItem",
+                                                        onenter:    function(){this.parent.controls.betterAddNewItemButton.click();},
+                                                        updateon: ["keydown", "keyup", "change"]
+                                                    },
+                                                    betterAddNewItemButton:
+                                                    {
+                                                        onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+                                                        onclick:
+                                                        function()
+                                                        {
+                                                            if (this.boundItem("newItem.length")>0)
+                                                            this.boundSource("items").push(this.boundItem("newItem"));
+                                                            this.boundItem("newItem","");
+                                                        }
+                                                    },
+                                                    betterItemsList:
+                                                    {
+                                                        bindSource: "items"
+                                                    },
+                                                    removeItemButton:
+                                                    {
+                                                        onboundedsourceupdate:  function(data){this.enable(data("items.length")>0);},
+                                                        onclick:                function(){this.boundSource("items").remove(this.parent.controls.betterItemsList.value());}
+                                                    },
+                                                    sortItemsButton:
+                                                    {
+                                                        onboundedsourceupdate:  function(data){this.enable(data("items.length")>1);},
+                                                        onclick:                function(){this.boundSource("items").sort();}
+                                                    }
+                                                }
+                                            )
+                                            (function(adapter)
+                                            {
+                                                adapter.boundItem("", {newItem:""});
+                                                adapter.boundSource("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                            });
+                                        </script>
+                                    </div>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    document.querySelector("example6"),
+    {
+        betterNewItem:
+        {
+            bindTo:     "newItem",
+            onenter:    function(){this.parent.controls.addNewItemButton.click();},
+            updateon: ["keydown", "keyup", "change"]
+        },
+        betterAddNewItemButton:
+        {
+            onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+            onclick:
+            function()
+            {
+                if (this.boundItem("newItem.length")>0)
+                this.boundSource("items").push(this.boundItem("newItem"));
+                this.boundItem("newItem","");
+            }
+        },
+        betterItemsList:
+        {
+            bindSource: "items"
+        },
+        removeItemButton:
+        {
+            onboundedsourceupdate:  function(data){this.enable(data("items.length")>0);},
+            onclick:                function(){this.boundSource("items").remove(this.parent.controls.betterItemsList.value());}
+        },
+        sortItemsButton:
+        {
+            onboundedsourceupdate:  function(data){this.enable(data("items.length")>1);},
+            onclick:                function(){this.boundSource("items").sort();}
+        }
+    }
+)
+(function(adapter)
+{
+    adapter.boundItem("", {newItem:""});
+    adapter.boundSource("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+});
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example4"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;div&gt;
+                &lt;div class="form-group"&gt;&lt;input id="newItem" class="form-control" /&gt;&lt;/div&gt;
+                &lt;button id="addNewItemButton" type="button" class="btn"&gt;Add&lt;/button&gt;
+                &lt;p&gt;Your items:&lt;/p&gt;
+                &lt;div class="form-group"&gt;
+                    &lt;select id="itemsList" multiple="multiple" class="form-control"&gt; &lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+                &lt;button id="removeItemButton" class="btn"&gt;Remove&lt;/button&gt;
+                &lt;button id="sortItemsButton" class="btn"&gt;Sort&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
 &lt;/div&gt;
                                             </code>
                                         </pre>
@@ -456,6 +610,16 @@ root.atomic.adaptHtml
                         </div>
                     </div>
                     <div class="col-md-3" role="complementary">
+                        <div class="navigation affix">
+                            <ul id="exampleLinks" class="nav nav-pills nav-stacked">
+                                <li id="exampleLink1"><a href="#/example/1">Hello World</a></li>
+                                <li id="exampleLink2"><a href="#/example/2">Hello World Revisited</a></li>
+                                <li id="exampleLink3"><a href="#/example/3">Hello Friend</a></li>
+                                <li id="exampleLink4"><a href="#/example/4">Click Counter</a></li>
+                                <li id="exampleLink5"><a href="#/example/5">Simple List</a></li>
+                                <li id="exampleLink6"><a href="#/example/6">A Better List</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

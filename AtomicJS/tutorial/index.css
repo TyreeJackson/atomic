@@ -17,3 +17,7 @@
   letter-spacing: 1px;
   content: "Example";
 }
+.navigation.affix
+{
+    position: absolute;
+}
