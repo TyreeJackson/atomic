@@ -46,6 +46,7 @@ return {
             viewElement||document.body
         );
         adapter.bindData(new atomic.observer({}));
+        adapter.bindSourceData(new atomic.observer({}));
         if (typeof callback === "function") callback(adapter);
     }
     if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);

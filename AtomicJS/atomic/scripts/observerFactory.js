@@ -25,6 +25,11 @@ add routing
             Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
         }
+        else
+        {
+            Object.defineProperty(subObserver, "isDefined", {get:function(){return function(propertyName){return this(propertyName)!==undefined;}}})
+            Object.defineProperty(subObserver, "hasValue", {get:function(){return function(propertyName){var value=this(propertyName); return value!==undefined && value;}}})
+        }
         //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
         return subObserver;
     });

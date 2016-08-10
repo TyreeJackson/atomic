@@ -131,11 +131,12 @@
     }
     var bindSourceFunctions     =
     {
-        "default":              function(sources){ return deferSourceBindingCheck.call(this, sources); },
-        "container":            function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceContainerChildren); },
-        "repeater":             function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRepeaterChildren); },
-        "select:select-one":    function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
-        "radiogroup":           function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRadioGroup); }
+        "default":                  function(sources){ return deferSourceBindingCheck.call(this, sources); },
+        "container":                function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceContainerChildren); },
+        "repeater":                 function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRepeaterChildren); },
+        "select:select-multiple":   function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
+        "select:select-one":        function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
+        "radiogroup":               function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRadioGroup); }
     };
     function unbindSources(extendedUnbindFunction)
     {
@@ -148,11 +149,12 @@
     }
     var unbindSourceFunctions   =
     {
-        "default":              function(){ return unbindSources.call(this); },
-        "container":            function(){ return unbindSources.call(this, function(){ for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindSourceData(); }); },
-        "repeater":             function(){ return unbindSources.call(this, function(){ for(var controlKey in this.__repeatedControls)  this.__repeatedControls[controlKey].unbindSourceData(); }); },
-        "select:select-one":    function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
-        "radiogroup":           function(){ return unbindSources.call(this, function(){ if (this.__templateElement !== undefined) clearRadioGroup(this.__element); }); }
+        "default":                  function(){ return unbindSources.call(this); },
+        "container":                function(){ return unbindSources.call(this, function(){ for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindSourceData(); }); },
+        "repeater":                 function(){ return unbindSources.call(this, function(){ for(var controlKey in this.__repeatedControls)  this.__repeatedControls[controlKey].unbindSourceData(); }); },
+        "select:select-multiple":   function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
+        "select:select-one":        function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
+        "radiogroup":               function(){ return unbindSources.call(this, function(){ if (this.__templateElement !== undefined) clearRadioGroup(this.__element); }); }
     };
     function bindUpdateEvents()
     {
@@ -335,6 +337,12 @@
         {
             if (value !== undefined || forceSet)    this.__element.src  = value;
             else                                    return this.__element.src;
+        },
+        "select:select-multiple":
+        function(value, forceSet)
+        {
+            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
+            else                                    return getSelectListValue.call(this);
         },
         "select:select-one":
         function(value, forceSet)
