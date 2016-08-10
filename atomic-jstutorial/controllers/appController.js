@@ -1,31 +1,12 @@
 !function()
-{"use strict";root.define("tutorial.appController", function tutorialAppController(appView, appProxy, observer)
+{"use strict";root.define("tutorial.appController", function tutorialAppController(appView, appProxy, observer, path)
 {
-    appView.on.pageChanged.listen
-    (function(pageNumber)
-    {
-    });
     this.launch =
     function()
     {
-        appView.bindData(new observer(
-        {
-            currentPageNumber:  1,
-            examples:
-            [
-                {
-                    pageNumber: 1,
-                    title:      "Hello World"
-                },
-                {
-                    pageNumber: 2,
-                    title:      "Hello World Revisited"
-                },
-                {
-                    pageNumber: 3,
-                    title:      "Hello Friend"
-                }
-            ]
-        }));
+        appView.bindData(new observer({currentPageNumber: 0}));
+        path.map("#/example/(:id)").to(function(){appView.showExample(this.params["id"]);});
+        path.root("#/example/1");
+        path.listen();
     }
 });}();

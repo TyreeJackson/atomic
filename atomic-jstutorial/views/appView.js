@@ -4,52 +4,32 @@
 {
     function setPage(pageNumber)
     {
-        appViewAdapter.boundItem("currentPageNumber", pageNumber);
-        appViewAdapter.on.pageChanged(pageNumber);
-        appViewAdapter.controls.example1.toggleDisplay(pageNumber==1);
-        appViewAdapter.controls.example2.toggleDisplay(pageNumber==2);
-        appViewAdapter.controls.example3.toggleDisplay(pageNumber==3);
     }
     var adapterDefinition   =
     {
         controls:
         {
-            prevousExampleButton:
+            examples:
             {
-                onboundedupdate:    function(data){ this.toggleDisplay(data("examples.length")>0); this.toggleClass("disabled", data("currentPageNumber") <= 1); }, 
-                onclick:            function(){ if(this.boundItem("currentPageNumber") > 1) setPage(this.boundItem("currentPageNumber") - 1); }
-            },
-            nextExampleButton:
-            {
-                onboundedupdate:    function(data){this.toggleDisplay(data("examples.length")>0); this.toggleClass("disabled", data("currentPageNumber") >= data("examples.length")); },
-                onclick:            function(){ if(this.boundItem("currentPageNumber")<this.boundItem("examples.length")) setPage(this.boundItem("currentPageNumber") + 1); }
-            },
-            examplePageList:
-            {
-                repeat:
+                controls:
                 {
-                    examplePageListItemTemplate:
-                    {
-                        getKey:     function(item){ return "example" + item().id; },
-                        onclick:    function(){ setPage(this.boundItem("pageNumber")); },
-                        controls:
-                        {
-                            examplePageNumberLabel: { bindTo: "title" }
-                        },
-                        onboundedupdate:
-                        function(data)
-                        {
-                            this.toggleClass("active", this.parent.parent.boundItem("currentPageNumber")==data("pageNumber"));
-                        }
-                    }
-                },
-                bindTo: "examples"
-            },
-            example1: {},
-            example2: { hidden: true },
-            example3: { hidden: true }
+                    example1: { hidden: true },
+                    example2: { hidden: true },
+                    example3: { hidden: true },
+                    example4: { hidden: true },
+                    example5: { hidden: true }
+                }
+            }
         },
-        events:["pageChanged"]
+        members:
+        {
+            showExample:
+            function(exampleNumber)
+            {
+                for(var example in this.controls.examples.controls) this.controls.examples.controls[example].hide();
+                this.controls.examples.controls["example"+exampleNumber].show();
+            }
+        }
     };
     return adapterDefinition;
 }});}();

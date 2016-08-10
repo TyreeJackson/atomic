@@ -175,11 +175,12 @@
     }
     var bindSourceFunctions     =
     {
-        "default":              function(sources){ return deferSourceBindingCheck.call(this, sources); },
-        "container":            function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceContainerChildren); },
-        "repeater":             function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRepeaterChildren); },
-        "select:select-one":    function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
-        "radiogroup":           function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRadioGroup); }
+        "default":                  function(sources){ return deferSourceBindingCheck.call(this, sources); },
+        "container":                function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceContainerChildren); },
+        "repeater":                 function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRepeaterChildren); },
+        "select:select-multiple":   function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
+        "select:select-one":        function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
+        "radiogroup":               function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRadioGroup); }
     };
     function unbindSources(extendedUnbindFunction)
     {
@@ -192,11 +193,12 @@
     }
     var unbindSourceFunctions   =
     {
-        "default":              function(){ return unbindSources.call(this); },
-        "container":            function(){ return unbindSources.call(this, function(){ for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindSourceData(); }); },
-        "repeater":             function(){ return unbindSources.call(this, function(){ for(var controlKey in this.__repeatedControls)  this.__repeatedControls[controlKey].unbindSourceData(); }); },
-        "select:select-one":    function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
-        "radiogroup":           function(){ return unbindSources.call(this, function(){ if (this.__templateElement !== undefined) clearRadioGroup(this.__element); }); }
+        "default":                  function(){ return unbindSources.call(this); },
+        "container":                function(){ return unbindSources.call(this, function(){ for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindSourceData(); }); },
+        "repeater":                 function(){ return unbindSources.call(this, function(){ for(var controlKey in this.__repeatedControls)  this.__repeatedControls[controlKey].unbindSourceData(); }); },
+        "select:select-multiple":   function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
+        "select:select-one":        function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
+        "radiogroup":               function(){ return unbindSources.call(this, function(){ if (this.__templateElement !== undefined) clearRadioGroup(this.__element); }); }
     };
     function bindUpdateEvents()
     {
@@ -379,6 +381,12 @@
         {
             if (value !== undefined || forceSet)    this.__element.src  = value;
             else                                    return this.__element.src;
+        },
+        "select:select-multiple":
+        function(value, forceSet)
+        {
+            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
+            else                                    return getSelectListValue.call(this);
         },
         "select:select-one":
         function(value, forceSet)
@@ -858,6 +866,11 @@ return {
             Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
         }
+        else
+        {
+            Object.defineProperty(subObserver, "isDefined", {get:function(){return function(propertyName){return this(propertyName)!==undefined;}}})
+            Object.defineProperty(subObserver, "hasValue", {get:function(){return function(propertyName){var value=this(propertyName); return value!==undefined && value;}}})
+        }
         //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
         return subObserver;
     });
@@ -1082,6 +1095,7 @@ return {
             viewElement||document.body
         );
         adapter.bindData(new atomic.observer({}));
+        adapter.bindSourceData(new atomic.observer({}));
         if (typeof callback === "function") callback(adapter);
     }
     if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
