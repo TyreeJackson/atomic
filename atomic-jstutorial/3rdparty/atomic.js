@@ -864,6 +864,7 @@ return {
             Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); items.pop(); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "shift", {get:function(){return function(item){ var items = this(); items.shift(item); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "sort", {get:function(){return function(sorter){ var items = this(); items.sort(sorter); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
         }
         else

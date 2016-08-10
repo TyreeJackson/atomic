@@ -17,7 +17,7 @@
   letter-spacing: 1px;
   content: "Example";
 }
-.clickable
+.navigation.affix
 {
-  cursor: pointer;
+    position: absolute;
 }
