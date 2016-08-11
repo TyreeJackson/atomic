@@ -796,6 +796,7 @@
             {
                 viewAdapter.__templateKeys.push(templateKey);
                 var templateDeclaration                         = templateDeclarations[templateKey];
+                if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return viewAdapter.parent.__selector+"-"+viewAdapter.__selector+"-"+this.index;}
                 var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), getSelectorPath(viewAdapter));
                 var templateElementParent                       = templateElement.parentNode;
                 templateElementParent.removeChild(templateElement);

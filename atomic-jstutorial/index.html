@@ -890,6 +890,7 @@ root.atomic.adaptHtml
                                             root.atomic.adaptHtml
                                             (
                                                 document.querySelector("example8"),
+                                                function(root){return {controls:
                                                 {
                                                     peopleList:
                                                     {
@@ -898,13 +899,12 @@ root.atomic.adaptHtml
                                                         {
                                                             peopleListItemTemplate:
                                                             {
-                                                                getKey:     function(data){return "person-"+this.index;},
                                                                 controls:
                                                                 {
                                                                     personNameLabel:    { bindTo: "name" },
                                                                     childCountLabel:    { bindAs: function(data){return data("children.length");} },
                                                                     addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
-                                                                    renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.data("showRenderTimes"));} },
+                                                                    renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
                                                                     renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
                                                                     childList:
                                                                     {
@@ -913,11 +913,10 @@ root.atomic.adaptHtml
                                                                         {
                                                                             childListItemTemplate:
                                                                             {
-                                                                                getKey: function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
                                                                                 controls:
                                                                                 {
                                                                                     childNameLabel:         { bindTo: "name" },
-                                                                                    childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.parent.parent.data("showRenderTimes"));} },
+                                                                                    childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
                                                                                     childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
                                                                                 }
                                                                             }
@@ -928,7 +927,7 @@ root.atomic.adaptHtml
                                                         }
                                                     },
                                                     showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
-                                                }
+                                                }};}
                                             )
                                             (function(adapter)
                                             {
@@ -953,6 +952,7 @@ root.atomic.adaptHtml
 root.atomic.adaptHtml
 (
     document.querySelector("example8"),
+    function(root){return {controls:
     {
         peopleList:
         {
@@ -961,13 +961,12 @@ root.atomic.adaptHtml
             {
                 peopleListItemTemplate:
                 {
-                    getKey:     function(data){return "person-"+this.index;},
                     controls:
                     {
                         personNameLabel:    { bindTo: "name" },
                         childCountLabel:    { bindAs: function(data){return data("children.length");} },
                         addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
-                        renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.data("showRenderTimes"));} },
+                        renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
                         renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
                         childList:
                         {
@@ -976,11 +975,10 @@ root.atomic.adaptHtml
                             {
                                 childListItemTemplate:
                                 {
-                                    getKey: function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
                                     controls:
                                     {
                                         childNameLabel:         { bindTo: "name" },
-                                        childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.parent.parent.data("showRenderTimes"));} },
+                                        childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
                                         childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
                                     }
                                 }
@@ -991,7 +989,7 @@ root.atomic.adaptHtml
             }
         },
         showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
-    }
+    }};}
 )
 (function(adapter)
 {
