@@ -879,13 +879,14 @@ return {
         if (isArray)
         {
             Object.defineProperty(subObserver, "push", {get:function(){return function(item){ var items = this(); items.push(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); items.pop(); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); var item = items.pop(); this.__notify(this.__basePath, items); return item; }}});
             Object.defineProperty(subObserver, "shift", {get:function(){return function(item){ var items = this(); items.shift(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
+            Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); var item = items.unshift(); this.__notify(this.__basePath, items); return item; }}});
             Object.defineProperty(subObserver, "sort", {get:function(){return function(sorter){ var items = this(); items.sort(sorter); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
             Object.defineProperty(subObserver, "removeAll", {get:function(){return function(items){ this.__removeAll(items); }}});
-            Object.defineProperty(subObserver, "join", {get:function(){return function(separator){ var items = this(); return items.join(separator); }}});
+            Object.defineProperty(subObserver, "join", {get:function(){return function(separator){ return this().join(separator); }}});
+            Object.defineProperty(subObserver, "indexOf", {get:function(){return function(item){ return this().indexOf(item); }}});
         }
         else
         {

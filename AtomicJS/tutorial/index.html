@@ -408,7 +408,7 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.data("newItem.length")>0)
+                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
                                                             this.source("items").push(this.data("newItem"));
                                                             this.data("newItem","");
                                                         }
@@ -446,7 +446,7 @@ root.atomic.adaptHtml
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0)
+                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
                 this.source("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
@@ -518,7 +518,7 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.data("newItem.length")>0)
+                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
                                                             this.source("items").push(this.data("newItem"));
                                                             this.data("newItem","");
                                                         }
@@ -566,7 +566,7 @@ root.atomic.adaptHtml
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0)
+                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
                 this.source("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
