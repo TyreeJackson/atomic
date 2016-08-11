@@ -735,6 +735,39 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    document.querySelector("example7"),
+    {
+        stringValueReadout:             { bindTo: "stringValue" },
+        passwordValueReadout:           { bindTo: "passwordValue" },
+        booleanValueReadout:            { bindTo: "booleanValue" },
+        selectedValueReadout:           { bindTo: "selectedValue" },
+        multipleSelectedValuesReadout:  { bindTo: "multipleSelectedValues", bindAs: function(data){ return data&&data.join();} },
+        radioSelectedOptionReadout:     { bindTo: "radioSelectedValue" },
+        onChangeTextboxControl:         { bindTo: "stringValue" },
+        onKeyStrokeTextboxControl:      { bindTo: "stringValue", updateon: ["keydown","keyup","change"] },
+        textAreaControl:                { bindTo: "stringValue" },
+        passwordControl:                { bindTo: "passwordValue" },
+        checkboxControl:                { bindTo: "booleanValue" },
+        singleDropdownListControl:      { bindTo: "selectedValue", bindSource: "items" },
+        multipleListControl:            { bindTo: "multipleSelectedValues", bindSource: "items" },
+        radioGroupControl:              { bindTo: "radioSelectedValue", bindSource: "items" }
+    }
+)
+(function(adapter)
+{
+    adapter.data("", 
+    {
+        stringValue:            "Hello", 
+        passwordValue:          "mypass", 
+        booleanValue:           true, 
+        selectedValue:          "Gamma", 
+        multipleSelectedValues: ["Beta"], 
+        radioSelectedValue:     "Alpha"
+    });
+    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+});
                                             </code>
                                         </pre>
                                         <h2>View</h2>
