@@ -22,8 +22,21 @@
                             <p>Here are a few examples on how to get started using AtomicJS.</p>
                         </div>
                     </div>
-                    <div class="col-md-9" role="main">
-                        <a id="/example/1"></a><a id="/example/2"></a><a id="/example/3"></a><a id="/example/4"></a><a id="/example/5"></a><a id="/example/6"></a>
+                    <div class="col-md-2" role="complementary">
+                        <div class="navigation affix">
+                            <ul id="exampleLinks" class="nav nav-pills nav-stacked">
+                                <li id="exampleLink1"><a href="#/example/1">Hello World</a></li>
+                                <li id="exampleLink2"><a href="#/example/2">Hello World Revisited</a></li>
+                                <li id="exampleLink3"><a href="#/example/3">Hello Friend</a></li>
+                                <li id="exampleLink4"><a href="#/example/4">Click Counter</a></li>
+                                <li id="exampleLink5"><a href="#/example/5">Simple List</a></li>
+                                <li id="exampleLink6"><a href="#/example/6">A Better List</a></li>
+                                <li id="exampleLink7"><a href="#/example/7">Control Types</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-10" role="main">
+                        <a id="/example/1"></a><a id="/example/2"></a><a id="/example/3"></a><a id="/example/4"></a><a id="/example/5"></a><a id="/example/6"></a><a id="/example/7"></a>
                         <div class="docs-section">
                             <h1 class="page-header">Examples</h1>
                             <p class="lead">It is the goal of this tutorial to show you how to build web applications using AtomicJS.  Each page contains a new example.</p>
@@ -71,7 +84,7 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                                         greeting2:
                                                         {
                                                             hidden:             true, 
-                                                            onboundedupdate:
+                                                            ondataupdate:
                                                             function(data)
                                                             {
                                                                 this.toggleDisplay(data("worldValue.length")>0);
@@ -80,8 +93,8 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                                         worldLabel2:     {bindTo: "worldValue"},
                                                         sayHelloButton:
                                                         {
-                                                            onclick:        function(){this.boundItem("worldValue","World");}, 
-                                                            onboundedupdate:
+                                                            onclick:        function(){this.data("worldValue","World");}, 
+                                                            ondataupdate:
                                                             function(data)
                                                             {
                                                                 this.toggleDisplay(!(data("worldValue.length")>0));
@@ -103,7 +116,7 @@ root.atomic.adaptHtml
         greeting2:
         {
             hidden:             true, 
-            onboundedupdate:
+            ondataupdate:
             function(data)
             {
                 this.toggleDisplay(data("worldValue.length")>0);
@@ -112,8 +125,8 @@ root.atomic.adaptHtml
         worldLabel2:     {bindTo: "worldValue"},
         sayHelloButton:
         {
-            onclick:        function(){this.boundItem("worldValue","World");}, 
-            onboundedupdate:
+            onclick:        function(){this.data("worldValue","World");}, 
+            ondataupdate:
             function(data)
             {
                 this.toggleDisplay(!(data("worldValue.length")>0));
@@ -169,7 +182,7 @@ root.atomic.adaptHtml
                                                     },
                                                     helloMessage:
                                                     {
-                                                        onboundedupdate:
+                                                        ondataupdate:
                                                         function(data)
                                                         {
                                                             this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
@@ -209,7 +222,7 @@ root.atomic.adaptHtml
         },
         helloMessage:
         {
-            onboundedupdate:
+            ondataupdate:
             function(data)
             {
                 this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
@@ -267,9 +280,9 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            this.boundItem("clickCount", this.boundItem("clickCount")+1);
+                                                            this.data("clickCount", this.data("clickCount")+1);
                                                         },
-                                                        onboundedupdate:
+                                                        ondataupdate:
                                                         function(data)
                                                         {
                                                             this.enable(data("clickCount")<3);
@@ -277,7 +290,7 @@ root.atomic.adaptHtml
                                                     },
                                                     tooManyClicksMessage:
                                                     {
-                                                        onboundedupdate:
+                                                        ondataupdate:
                                                         function(data)
                                                         {
                                                             this.toggleDisplay(data("clickCount")>=3);
@@ -288,14 +301,14 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            this.boundItem("clickCount",0);
+                                                            this.data("clickCount",0);
                                                         }
                                                     }
                                                 }
                                             )
                                             (function(adapter)
                                             {
-                                                adapter.boundItem("", {clickCount:0});
+                                                adapter.data("", {clickCount:0});
                                             });
                                         </script>
                                     </div>
@@ -313,9 +326,9 @@ root.atomic.adaptHtml
             onclick:
             function()
             {
-                this.boundItem("clickCount", this.boundItem("clickCount")+1);
+                this.data("clickCount", this.data("clickCount")+1);
             },
-            onboundedupdate:
+            ondataupdate:
             function(data)
             {
                 this.enable(data("clickCount")%lt;3);
@@ -323,7 +336,7 @@ root.atomic.adaptHtml
         },
         tooManyClicksMessage:
         {
-            onboundedupdate:
+            ondataupdate:
             function(data)
             {
                 this.toggleDisplay(data("clickCount")&gt;=3);
@@ -334,14 +347,14 @@ root.atomic.adaptHtml
             onclick:
             function()
             {
-                this.boundItem("clickCount",0);
+                this.data("clickCount",0);
             }
         }
     }
 )
 (function(adapter)
 {
-    adapter.boundItem("", {clickCount:0});
+    adapter.data("", {clickCount:0});
 });
                                             </code>
                                         </pre>
@@ -391,13 +404,13 @@ root.atomic.adaptHtml
                                                     },
                                                     addNewItemButton:
                                                     {
-                                                        onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+                                                        ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.boundItem("newItem.length")>0)
-                                                            this.boundSource("items").push(this.boundItem("newItem"));
-                                                            this.boundItem("newItem","");
+                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
+                                                            this.source("items").push(this.data("newItem"));
+                                                            this.data("newItem","");
                                                         }
                                                     },
                                                     itemsList:
@@ -408,8 +421,8 @@ root.atomic.adaptHtml
                                             )
                                             (function(adapter)
                                             {
-                                                adapter.boundItem("", {newItem:""});
-                                                adapter.boundSource("", {items: ["Alpha","Beta","Gamma"]});
+                                                adapter.data("", {newItem:""});
+                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
                                             });
                                         </script>
                                     </div>
@@ -429,13 +442,13 @@ root.atomic.adaptHtml
         },
         addNewItemButton:
         {
-            onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+            ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
             onclick:
             function()
             {
-                if (this.boundItem("newItem.length")>0)
-                this.boundSource("items").push(this.boundItem("newItem"));
-                this.boundItem("newItem","");
+                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
+                this.source("items").push(this.data("newItem"));
+                this.data("newItem","");
             }
         },
         itemsList:
@@ -446,8 +459,8 @@ root.atomic.adaptHtml
 )
 (function(adapter)
 {
-    adapter.boundItem("", {newItem:""});
-    adapter.boundSource("", {items: ["Alpha","Beta","Gamma"]});
+    adapter.data("", {newItem:""});
+    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
 });
                                             </code>
                                         </pre>
@@ -501,13 +514,13 @@ root.atomic.adaptHtml
                                                     },
                                                     betterAddNewItemButton:
                                                     {
-                                                        onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+                                                        ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.boundItem("newItem.length")>0)
-                                                            this.boundSource("items").push(this.boundItem("newItem"));
-                                                            this.boundItem("newItem","");
+                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
+                                                            this.source("items").push(this.data("newItem"));
+                                                            this.data("newItem","");
                                                         }
                                                     },
                                                     betterItemsList:
@@ -516,20 +529,20 @@ root.atomic.adaptHtml
                                                     },
                                                     removeItemButton:
                                                     {
-                                                        onboundedsourceupdate:  function(data){this.enable(data("items.length")>0);},
-                                                        onclick:                function(){this.boundSource("items").remove(this.parent.controls.betterItemsList.value());}
+                                                        onsourceupdate: function(data){this.enable(data("items.length")>0);},
+                                                        onclick:        function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
                                                     },
                                                     sortItemsButton:
                                                     {
-                                                        onboundedsourceupdate:  function(data){this.enable(data("items.length")>1);},
-                                                        onclick:                function(){this.boundSource("items").sort();}
+                                                        onsourceupdate: function(data){this.enable(data("items.length")>1);},
+                                                        onclick:        function(){this.source("items").sort();}
                                                     }
                                                 }
                                             )
                                             (function(adapter)
                                             {
-                                                adapter.boundItem("", {newItem:""});
-                                                adapter.boundSource("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                                adapter.data("", {newItem:""});
+                                                adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
                                             });
                                         </script>
                                     </div>
@@ -549,13 +562,13 @@ root.atomic.adaptHtml
         },
         betterAddNewItemButton:
         {
-            onboundedupdate: function(data){this.enable(data("newItem.length")>0);},
+            ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
             onclick:
             function()
             {
-                if (this.boundItem("newItem.length")>0)
-                this.boundSource("items").push(this.boundItem("newItem"));
-                this.boundItem("newItem","");
+                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
+                this.source("items").push(this.data("newItem"));
+                this.data("newItem","");
             }
         },
         betterItemsList:
@@ -564,20 +577,20 @@ root.atomic.adaptHtml
         },
         removeItemButton:
         {
-            onboundedsourceupdate:  function(data){this.enable(data("items.length")>0);},
-            onclick:                function(){this.boundSource("items").remove(this.parent.controls.betterItemsList.value());}
+            onsourceupdate: function(data){this.enable(data("items.length")>0);},
+            onclick:        function(){this.source("items").remove(this.parent.controls.betterItemsList.value());}
         },
         sortItemsButton:
         {
-            onboundedsourceupdate:  function(data){this.enable(data("items.length")>1);},
-            onclick:                function(){this.boundSource("items").sort();}
+            onsourceupdate: function(data){this.enable(data("items.length")>1);},
+            onclick:        function(){this.source("items").sort();}
         }
     }
 )
 (function(adapter)
 {
-    adapter.boundItem("", {newItem:""});
-    adapter.boundSource("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+    adapter.data("", {newItem:""});
+    adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
 });
                                             </code>
                                         </pre>
@@ -606,19 +619,212 @@ root.atomic.adaptHtml
                                         </pre>
                                     </figure>
                                 </div>
+                                <div id="example7">
+                                    <div class="example">
+                                        <div class="well">
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <h3>HTML controls</h3>
+                                                    <table class="table table-bordered">
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text value (updates on change):</td>
+                                                            <td class="table-cell"><input id="onChangeTextboxControl" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Text value (updates on keystroke):</td>
+                                                            <td class="table-cell"><input id="onKeyStrokeTextboxControl" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Text value (multi-line):</td>
+                                                            <td class="table-cell"><textarea id="textAreaControl"> </textarea></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Password:</td>
+                                                            <td class="table-cell"><input id="passwordControl" type="password" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Checkbox:</td>
+                                                            <td class="table-cell"><input id="checkboxControl" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Drop-down list:</td>
+                                                            <td class="table-cell"><select id="singleDropdownListControl"></select></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Multi-select drop-down list:</td>
+                                                            <td class="table-cell"><select id="multipleListControl" multiple="multiple"></select></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Radio buttons:</td>
+                                                            <td class="table-cell">
+                                                                <radiogroup id="radioGroupControl">
+                                                                    <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
+                                                                </radiogroup>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h3>What's in the model?</h3>
+                                                    <table class="table table-bordered">
+                                                        <tr>
+                                                            <td class="table-cell">Text value:</td>
+                                                            <td class="table-cell" id="stringValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Password:</td>
+                                                            <td class="table-cell" id="passwordValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Bool value:</td>
+                                                            <td class="table-cell" id="booleanValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Selected option:</td>
+                                                            <td class="table-cell" id="selectedValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Multi-selected options:</td>
+                                                            <td class="table-cell" id="multipleSelectedValuesReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Radio button selection:</td>
+                                                            <td class="table-cell" id="radioSelectedOptionReadout"></td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <script type="text/javascript">
+                                            root.atomic.adaptHtml
+                                            (
+                                                document.querySelector("example7"),
+                                                {
+                                                    stringValueReadout:             { bindTo: "stringValue" },
+                                                    passwordValueReadout:           { bindTo: "passwordValue" },
+                                                    booleanValueReadout:            { bindTo: "booleanValue" },
+                                                    selectedValueReadout:           { bindTo: "selectedValue" },
+                                                    multipleSelectedValuesReadout:  { bindTo: "multipleSelectedValues", bindAs: function(data){ return data&&data.join();} },
+                                                    radioSelectedOptionReadout:     { bindTo: "radioSelectedValue" },
+                                                    onChangeTextboxControl:         { bindTo: "stringValue" },
+                                                    onKeyStrokeTextboxControl:      { bindTo: "stringValue", updateon: ["keydown","keyup","change"] },
+                                                    textAreaControl:                { bindTo: "stringValue" },
+                                                    passwordControl:                { bindTo: "passwordValue" },
+                                                    checkboxControl:                { bindTo: "booleanValue" },
+                                                    singleDropdownListControl:      { bindTo: "selectedValue", bindSource: "items" },
+                                                    multipleListControl:            { bindTo: "multipleSelectedValues", bindSource: "items" },
+                                                    radioGroupControl:              { bindTo: "radioSelectedValue", bindSource: "items" }
+                                                }
+                                            )
+                                            (function(adapter)
+                                            {
+                                                adapter.data("", 
+                                                {
+                                                    stringValue:            "Hello", 
+                                                    passwordValue:          "mypass", 
+                                                    booleanValue:           true, 
+                                                    selectedValue:          "Gamma", 
+                                                    multipleSelectedValues: ["Beta"], 
+                                                    radioSelectedValue:     "Alpha"
+                                                });
+                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+                                            });
+                                        </script>
+                                    </div>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example1"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well"&gt;
+            &lt;div class="row"&gt;
+                &lt;div class="col-md-8"&gt;
+                    &lt;h3&gt;HTML controls&lt;/h3&gt;
+                    &lt;table class="table table-bordered"&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text value (updates on change):&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="onChangeTextboxControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Text value (updates on keystroke):&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="onKeyStrokeTextboxControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Text value (multi-line):&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;textarea id="textAreaControl"&gt; &lt;/textarea&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Password:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="passwordControl" type="password" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Checkbox:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="checkboxControl" type="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Drop-down list:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;select id="singleDropdownListControl"&gt;&lt;/select&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Multi-select drop-down list:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;select id="multipleListControl" multiple="multiple"&gt;&lt;/select&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Radio buttons:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;radiogroup id="radioGroupControl"&gt;
+                                    &lt;radiogroupitem class="radio-inline"&gt;
+                                        &lt;input type="radio" /&gt;&lt;label&gt;&lt;/label&gt;
+                                    &lt;/radiogroupitem&gt;
+                                &lt;/radiogroup&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+                &lt;div class="col-md-4"&gt;
+                    &lt;h3&gt;What's in the model?&lt;/h3&gt;
+                    &lt;table class="table table-bordered"&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Text value:&lt;/td&gt;
+                            &lt;td class="table-cell" id="stringValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Password:&lt;/td&gt;
+                            &lt;td class="table-cell" id="passwordValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Bool value:&lt;/td&gt;
+                            &lt;td class="table-cell" id="booleanValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Selected option:&lt;/td&gt;
+                            &lt;td class="table-cell" id="selectedValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Multi-selected options:&lt;/td&gt;
+                            &lt;td class="table-cell" id="multipleSelectedValuesReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Radio button selection:&lt;/td&gt;
+                            &lt;td class="table-cell" id="radioSelectedOptionReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3" role="complementary">
-                        <div class="navigation affix">
-                            <ul id="exampleLinks" class="nav nav-pills nav-stacked">
-                                <li id="exampleLink1"><a href="#/example/1">Hello World</a></li>
-                                <li id="exampleLink2"><a href="#/example/2">Hello World Revisited</a></li>
-                                <li id="exampleLink3"><a href="#/example/3">Hello Friend</a></li>
-                                <li id="exampleLink4"><a href="#/example/4">Click Counter</a></li>
-                                <li id="exampleLink5"><a href="#/example/5">Simple List</a></li>
-                                <li id="exampleLink6"><a href="#/example/6">A Better List</a></li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -627,3 +833,31 @@ root.atomic.adaptHtml
     </div>
 </body>
 </html>
+<!--
+                                <div id="example">
+                                    <div class="example">
+                                        <div class="well">
+                                        </div>
+                                        <script type="text/javascript">
+                                        </script>
+                                    </div>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example1"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well"&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+-->

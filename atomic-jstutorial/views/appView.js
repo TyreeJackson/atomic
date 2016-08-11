@@ -15,7 +15,8 @@
                     exampleLink3:   {},
                     exampleLink4:   {},
                     exampleLink5:   {},
-                    exampleLink6:   {}
+                    exampleLink6:   {},
+                    exampleLink7:   {}
                 }
             },
             examples:
@@ -27,7 +28,8 @@
                     example3: { hidden: true },
                     example4: { hidden: true },
                     example5: { hidden: true },
-                    example6: { hidden: true }
+                    example6: { hidden: true },
+                    example7: { hidden: true }
                 }
             }
         },

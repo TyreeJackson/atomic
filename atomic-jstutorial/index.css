@@ -21,3 +21,7 @@
 {
     position: absolute;
 }
+.radio,.radio-inline,.radio input[type="radio"], .radio label, .radio-inline input[type="radio"], .radio-inline label, .checkbox
+{
+    cursor: pointer;
+}
