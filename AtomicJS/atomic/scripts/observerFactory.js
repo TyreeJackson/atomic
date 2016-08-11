@@ -25,6 +25,8 @@ add routing
             Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); items.unshift(); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "sort", {get:function(){return function(sorter){ var items = this(); items.sort(sorter); this.__notify(this.__basePath, items); }}});
             Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
+            Object.defineProperty(subObserver, "removeAll", {get:function(){return function(items){ this.__removeAll(items); }}});
+            Object.defineProperty(subObserver, "join", {get:function(){return function(separator){ var items = this(); return items.join(separator); }}});
         }
         else
         {
@@ -65,6 +67,21 @@ add routing
         var items   = this();
         if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
         removeFromArray(items, items.indexOf(value));
+        this.__notify(this.__basePath, items);
+    }
+    functionFactory.root.prototype.__removeAll      =
+    function(values)
+    {
+        var items   = this();
+        var keepers = [];
+        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+        for(var itemCounter=0;itemCounter<items.length;itemCounter++)
+        {
+            var item    = items[itemCounter];
+            if (values.indexOf(item) == -1) keepers.push(item);
+        }
+        items.length = 0;
+        items.push.apply(items, keepers);
         this.__notify(this.__basePath, items);
     }
     functionFactory.root.prototype.__notify         =

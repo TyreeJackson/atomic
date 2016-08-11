@@ -5,7 +5,7 @@
     {
         if (observer === undefined) return;
         var documentFragment    = document.createDocumentFragment();
-        var sourceData          = this.boundSource;
+        var source              = this.source;
         unbindRepeatedList.call(this);
         for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
         {
@@ -21,7 +21,7 @@
                 }
             }
         }
-        if (sourceData !== undefined)   this.bindSourceData(sourceData);
+        if (source !== undefined)   this.bindSourceData(source);
         this.__element.appendChild(documentFragment);
     }
     function unbindRepeatedList()
@@ -37,8 +37,8 @@
         this.__repeatedControls     = {};
     }
     function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
-    function notifyOnboundedUpdate(data) { if (this.__onboundedupdate) this.__onboundedupdate(data); }
-    function notifyOnboundedSourceUpdate(data) { if (this.__onboundedsourceupdate) this.__onboundedsourceupdate(data); }
+    function notifyOnDataUpdate(data) { if (this.__ondataupdate) this.__ondataupdate(data); }
+    function notifyOnSourceUpdate(data) { if (this.__onsourceupdate) this.__onsourceupdate(data); }
     function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
     function notifyOnbindSource(data) { if (this.__onbindsource) this.__onbindsource(data); }
     function notifyOnunbindSource(data) { if (this.__onunbindsource) this.__onunbindsource(data); }
@@ -46,15 +46,17 @@
     function bindSelectListSource()
     {
         var selectedValue   = this.value();
+        var isArray         = Array.isArray(typeof selectedValue === "function" ? selectedValue() : selectedValue);
         clearSelectList(this.__element);
-        var source          = this.boundSource(this.__bindSource||"");
+        var source          = this.source(this.__bindSource||"");
         if (source === undefined)   return;
         for(var counter=0;counter<source().length;counter++)
         {
             var option      = document.createElement('option');
             var sourceItem  = source()[counter];
             option.text     = this.__bindSourceText !== undefined ? sourceItem[this.__bindSourceText] : sourceItem;
-            option.selected = (option.rawValue = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
+            if (!isArray)   option.selected = (option.rawValue = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
+            else            option.selected = selectedValue.indexOf(option.rawValue = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) > -1;
             this.__element.appendChild(option);
         }
     }
@@ -63,14 +65,16 @@
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
-        var source          = this.boundSource(this.__bindSource||"");
+        var source          = this.source(this.__bindSource||"");
         if (source === undefined)   return;
         for(var counter=0;counter<source().length;counter++)
         {
             var radioGroupItem                      = this.__templateElement.cloneNode(true);
             var sourceItem                          = source()[counter];
+            radioGroupItem.parent                   = this;
             radioGroupItem.__radioElement           = radioGroupItem.querySelector(this.__radioButtonSelector);
             radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
+            radioGroupItem.__radioLabel.addEventListener("click", (function(){this.parent.value(this.__radioElement.rawValue);this.parent.triggerEvent("change");}).bind(radioGroupItem),false)
             radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
             radioGroupItem.__radioElement.checked   = (radioGroupItem.__radioElement.rawValue  = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
             if(radioGroupItem.__radioLabel) radioGroupItem.__radioLabel.innerHTML   = this.__bindSourceText !== undefined ? sourceItem[this.__bindSourceText] : sourceItem;
@@ -79,31 +83,31 @@
     }
     function deferSourceBinding()
     {
-        this.__bindSourceListener   = (function(){ var item = this.boundSource; if (item(this.__bindSource||"") === undefined) return; this.boundSource.ignore(this.__bindSourceListener); this.__bindSourceListener.ignore=true; delete this.__bindSourceListener; this.bindSourceData(item); }).bind(this);
-        this.boundSource.listen(this.__bindSourceListener);
+        this.__bindSourceListener   = (function(){ var item = this.source; if (item(this.__bindSource||"") === undefined) return; this.source.ignore(this.__bindSourceListener); this.__bindSourceListener.ignore=true; delete this.__bindSourceListener; this.bindSourceData(item); }).bind(this);
+        this.source.listen(this.__bindSourceListener);
         return this;
     }
     function bindSourceContainerChildren()
     {
-        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
-        this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
-        this.boundSource.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.boundSource);
+        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindSourceData(this.source(this.__bindSource||""));
+        this.__bindSourceListener   = (function(){ notifyOnSourceUpdate.call(this, this.source(this.__bindSource||"")); }).bind(this);
+        this.source.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.source);
         return this;
     }
     function bindSourceRepeaterChildren()
     {
-        for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.boundSource(this.__bindSource||""));
-        this.__bindSourceListener   = (function(){ notifyOnboundedSourceUpdate.call(this, this.boundSource(this.__bindSource||"")); }).bind(this);
-        this.boundSource.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.boundSource);
+        for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.source(this.__bindSource||""));
+        this.__bindSourceListener   = (function(){ notifyOnSourceUpdate.call(this, this.source(this.__bindSource||"")); }).bind(this);
+        this.source.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.source);
         return this;
     }
     function bindSourceSelectList()
     {
-        this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
-        this.boundSource.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.boundSource);
+        this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnSourceUpdate.call(this, this.source); }).bind(this);
+        this.source.listen(this.__bindSourceListener);
+        notifyOnbindSource.call(this, this.source);
         return this;
     }
     function bindSourceRadioGroup()
@@ -116,16 +120,16 @@
             this.__templateElement.parentNode.removeChild(this.__templateElement);
             clearRadioGroup(this.__element);
         }
-        this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnboundedSourceUpdate.call(this, this.boundSource); }).bind(this);
-        this.boundSource.listen(this.__bindSourceListener);
+        this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnSourceUpdate.call(this, this.source); }).bind(this);
+        this.source.listen(this.__bindSourceListener);
     }
     function deferSourceBindingCheck(sources, bindSourceFunction)
     {
         if (sources !== undefined)
         {
-            this.boundSource            = sources;
-            if (this.boundSource(this.__bindSource||"") === undefined)  return deferSourceBinding.call(this);
-            else                                                        return bindSourceFunction !== undefined ? bindSourceFunction.call(this) : this;
+            this.source = sources;
+            if (this.source(this.__bindSource||"") === undefined)   return deferSourceBinding.call(this);
+            else                                                    return bindSourceFunction !== undefined ? bindSourceFunction.call(this) : this;
         }
         return this;
     }
@@ -140,10 +144,10 @@
     };
     function unbindSources(extendedUnbindFunction)
     {
-        if (this.boundSource !== undefined)             this.boundSource.ignore(this.__bindSourceListener);
+        if (this.source !== undefined)                  this.source.ignore(this.__bindSourceListener);
         if (this.__bindSourceListener !== undefined)    this.__bindSourceListener.ignore    = true;
         delete this.__bindSourceListener;
-        delete this.boundSource;
+        delete this.source;
         if (extendedUnbindFunction !== undefined)       extendedUnbindFunction.call(this);
         return this;
     }
@@ -176,38 +180,38 @@
     }
     function deferBinding()
     {
-        this.__bindListener = (function(){ var item = this.boundItem; if ( item(this.__bindTo||"") === undefined) return; this.boundItem.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
-        this.boundItem.listen(this.__bindListener);
+        this.__bindListener = (function(){ var item = this.data; if ( item(this.__bindTo||"") === undefined) return; this.data.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
+        this.data.listen(this.__bindListener);
         return this;
     }
     function bindDefault()
     {
-        this.__bindListener     = (function(){ var value = this.boundItem(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
-        this.boundItem.listen(this.__bindListener);
-        notifyOnbind.call(this, this.boundItem);
+        this.__bindListener     = (function(){ var value = this.data(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnDataUpdate.call(this, this.data); }).bind(this);
+        this.data.listen(this.__bindListener);
+        notifyOnbind.call(this, this.data);
         return this;
     }
     function bindContainerChildren()
     {
-        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.boundItem(this.__bindTo||""));
-        this.__bindListener = (function(){ if (this.boundItem === undefined) throw new Error("This control is not currently bound."); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); }).bind(this);
-        this.boundItem.listen(this.__bindListener);
-        notifyOnbind.call(this, this.boundItem);
+        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.data(this.__bindTo||""));
+        this.__bindListener = (function(){ if (this.data === undefined) throw new Error("This control is not currently bound."); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); }).bind(this);
+        this.data.listen(this.__bindListener);
+        notifyOnbind.call(this, this.data);
         return this;
     }
     function bindRepeaterChildren()
     {
-        this.__bindListener = (function(){ var item = this.boundItem(this.__bindTo||""); return (function(){ bindRepeatedList.call(this, item); notifyOnboundedUpdate.call(this, item); }).bind(this); }).bind(this);
-        this.boundItem.listen(this.__bindListener);
-        notifyOnbind.call(this, this.boundItem);
+        this.__bindListener = (function(){ var item = this.data(this.__bindTo||""); return (function(){ bindRepeatedList.call(this, item); notifyOnDataUpdate.call(this, item); }).bind(this); }).bind(this);
+        this.data.listen(this.__bindListener);
+        notifyOnbind.call(this, this.data);
         return this;
     }
     function deferBindingCheck(observer, bindFunction)
     {
         if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
-        this.boundItem  = observer;
-        if (this.boundItem(this.__bindTo||"") === undefined)    return deferBinding.call(this);
-        else                                                    return bindFunction.call(this);
+        this.data   = observer;
+        if (this.data(this.__bindTo||"") === undefined) return deferBinding.call(this);
+        else                                            return bindFunction.call(this);
     }
     var bindDataFunctions  =
     {
@@ -215,29 +219,29 @@
         function(observer)
         {
             if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
-            this.boundItem          = observer;
+            this.data                       = observer;
             if (this.__bindTo !== undefined || this.__bindAs)
             {
                 if(this.__bindAs)
                 {
-                    this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? this.boundItem(this.__bindTo) : this.boundItem); if (!this.__notifyingObserver) this.value(value, true); notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
-                    this.boundItem.listen(this.__bindListener);
-                    notifyOnbind.call(this, this.boundItem);
+                    this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? this.data(this.__bindTo) : this.data); if (!this.__notifyingObserver) this.value(value, true); notifyOnDataUpdate.call(this, this.data); }).bind(this);
+                    this.data.listen(this.__bindListener);
+                    notifyOnbind.call(this, this.data);
                 }
                 else
                 {
-                    this.__inputListener    = (function(){this.__notifyingObserver=true; this.boundItem(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
+                    this.__inputListener    = (function(){this.__notifyingObserver=true; this.data(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
                     bindUpdateEvents.call(this);
 
-                    if (this.boundItem(this.__bindTo||"") === undefined)    return deferBinding.call(this);
-                    else                                                    return bindDefault.call(this);
+                    if (this.data(this.__bindTo||"") === undefined) return deferBinding.call(this);
+                    else                                            return bindDefault.call(this);
                 }
             }
-            else if (this.__onboundedupdate)
+            else if (this.__ondataupdate)
             {
-                this.__bindListener     = (function(){ notifyOnboundedUpdate.call(this, this.boundItem); }).bind(this);
-                this.boundItem.listen(this.__bindListener);
-                notifyOnbind.call(this, this.boundItem);
+                this.__bindListener     = (function(){ notifyOnDataUpdate.call(this, this.data); }).bind(this);
+                this.data.listen(this.__bindListener);
+                notifyOnbind.call(this, this.data);
             }
             return this;
         },
@@ -246,10 +250,10 @@
     };
     function unbindData(extendedUnbindFunction)
     {
-        if (this.boundItem !== undefined)       this.boundItem.ignore(this.__bindListener);
+        if (this.data !== undefined)            this.data.ignore(this.__bindListener);
         if (this.__bindListener !== undefined)  this.__bindListener.ignore  = true;
         delete this.__bindListener;
-        delete this.boundItem;
+        delete this.data;
         if (extendedUnbindFunction !== undefined)   extendedUnbindFunction.call(this);
         return this;
     }
@@ -258,7 +262,7 @@
         "default":
         function()
         {
-            if (this.boundItem === undefined)                   return this;
+            if (this.data === undefined)                        return this;
 
             if (this.__bindTo !== undefined || this.__bindAs)
             {
@@ -269,7 +273,7 @@
                     notifyOnunbind.call(this);
                 });
             }
-            else if (this.__onboundedupdate)                    return unbindData.call(this, function(){ notifyOnunbind.call(this); });
+            else if (this.__ondataupdate)                       return unbindData.call(this, function(){ notifyOnunbind.call(this); });
         },
         container:
         function()
@@ -303,10 +307,24 @@
         this.__rawValue = value;
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
     }
+    function setSelectListValues(values)
+    {
+        if (typeof values === "function")   values = values();
+        if ( !Array.isArray(values)) values  = [values];
+        this.__rawValue = values;
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = values.indexOf(this.__element.options[counter].rawValue) > -1;
+    }
     function getSelectListValue()
     {
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   return this.__rawValue = this.__element.options[counter].rawValue;
         return this.__rawValue;
+    }
+    function getSelectListValues()
+    {
+        if (this.__element.options.length == 0) return this.__rawValue;
+        var values  = [];
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   values.push(this.__element.options[counter].rawValue);
+        return this.__rawValue = values;
     }
     function setRadioGroupValue(value)
     {
@@ -341,8 +359,8 @@
         "select:select-multiple":
         function(value, forceSet)
         {
-            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
-            else                                    return getSelectListValue.call(this);
+            if (value !== undefined || forceSet)    setSelectListValues.call(this, value);
+            else                                    return getSelectListValues.call(this);
         },
         "select:select-one":
         function(value, forceSet)
@@ -449,17 +467,17 @@
         viewAdapter.bindData                = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
         if (viewAdapter.__templateKeys)
         {
-            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.boundItem(this.__bindTo||"")); notifyOnboundedUpdate.call(this, this.boundItem(this.__bindTo||"")); };
+            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.data(this.__bindTo||"")); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); };
         }
         viewAdapter.bindingRoot             = function(){return this.__bindingRoot;};
         viewAdapter.bindTo                  =
         function(value)
         {
-            if(value === undefined)         return this.__bindTo;
-            var boundItem   = this.boundItem;
-            if (boundItem !== undefined)    this.unbindData();
+            if(value === undefined) return this.__bindTo;
+            var data    = this.data;
+            if (data !== undefined) this.unbindData();
             this.__bindTo = value;
-            if (boundItem !== undefined)    this.bindData(boundItem);
+            if (data !== undefined) this.bindData(data);
             this.triggerEvent("bindToUpdated");
         };
         each(["bindSource", "bindSourceValue", "bindSourceText"],
@@ -468,11 +486,11 @@
             viewAdapter[name]               =
             function(value)
             {
-                if(value === undefined)         return this["__"+name];
-                var boundSource = this.boundSource;
-                if (boundSource !== undefined)  this.unbindSourceData();
+                if(value === undefined)     return this["__"+name];
+                var source  = this.source;
+                if (source !== undefined)   this.unbindSourceData();
                 this["__"+name] = value;
-                if (boundSource !== undefined)  this.bindSourceData(boundSource);
+                if (source !== undefined)   this.bindSourceData(source);
                 this.triggerEvent(name+"Updated");
             };
         });

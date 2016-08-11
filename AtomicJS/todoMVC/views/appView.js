@@ -42,7 +42,7 @@ function()
                                         onchange:
                                         function()
                                         {
-                                            appViewAdapter.on.saveTodo(this.boundItem());
+                                            appViewAdapter.on.saveTodo(this.data());
                                         } 
                                     },
                                     todoLabel:
@@ -51,7 +51,7 @@ function()
                                         ondblclick:
                                         function()
                                         {
-                                            this.boundItem.beginTransaction();
+                                            this.data.beginTransaction();
                                             this.parent.addClass("editing");
                                             this.parent.controls.editTodoTextbox.focus().select();
                                         } 
@@ -61,7 +61,7 @@ function()
                                         onclick:
                                         function()
                                         {
-                                            appViewAdapter.on.deleteTodo(this.boundItem().id);
+                                            appViewAdapter.on.deleteTodo(this.data().id);
                                         }
                                     },
                                     editTodoTextbox:
@@ -71,20 +71,20 @@ function()
                                         function()
                                         {
                                             this.value(this.value().trim());
-                                            this.boundItem.commit();
-                                            if (this.value() == "") appViewAdapter.on.deleteTodo(this.boundItem().id);
-                                            else                    appViewAdapter.on.saveTodo(this.boundItem());
+                                            this.data.commit();
+                                            if (this.value() == "") appViewAdapter.on.deleteTodo(this.data().id);
+                                            else                    appViewAdapter.on.saveTodo(this.data());
                                         },
                                         onescape:
                                         function()
                                         {
-                                            this.boundItem.rollback();
+                                            this.data.rollback();
                                             this.parent.removeClass("editing");
                                         },
                                         updateon:   ["change", "keyup"]
                                     }
                                 },
-                                onboundedupdate:
+                                ondataupdate:
                                 function(data)
                                 {
                                     this.toggleClass("completed", data().completed||false);
@@ -93,8 +93,8 @@ function()
                         }
                     }
                 },
-                hidden:     true,
-                onboundedupdate:     function(data)
+                hidden:         true,
+                ondataupdate:   function(data)
                 {
                     var items           = data();
                     this.toggleDisplay(items.length>0);
@@ -103,7 +103,7 @@ function()
                     allCompleted = allCompleted && (items[itemCounter].completed||false);
                     this.controls.toggleAllCompleted.value(allCompleted);
                 },
-                onunbind:   function(data) { this.hide(); }
+                onunbind:       function(data) { this.hide(); }
             },
             todosFooter:
             {
@@ -117,7 +117,7 @@ function()
                     deleteCompletedTodos:   { onclick: function(){appViewAdapter.on.deleteCompletedTodos();} },
                 },
                 hidden: true,
-                onboundedupdate: function(data)
+                ondataupdate:   function(data)
                 {
                     this.toggleDisplay(data().length>0);
                 }

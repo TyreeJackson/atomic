@@ -8,7 +8,7 @@
             function rebindTodoList(todos)
             {
                 // Replace the array directly wrapped in the observer bound to the appView with the new array argument passed in the todos parameter
-                appView.boundItem("", todos);
+                appView.data("", todos);
             }
             appView.on.addNewTodo.listen
             (function(value)
