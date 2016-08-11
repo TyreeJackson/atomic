@@ -101,12 +101,12 @@ support string key paths in observable
             viewAdapter.__templateKeys          = [];
             viewAdapter.__templateElements      = {};
             viewAdapter.__createTemplateCopy    =
-            function(templateKey, subDataItem)
+            function(templateKey, subDataItem, counter)
             {
                 var templateElement = this.__templateElements[templateKey];
 
                 if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
-                var key             = templateElement.declaration.getKey(subDataItem);
+                var key             = templateElement.declaration.getKey.call({parent: viewAdapter, index: counter}, subDataItem);
                 var elementCopy     = templateElement.element.cloneNode(true);
                 elementCopy.setAttribute("id", key);
                 return { key: key, parent: templateElement.parent, control: internalFunctions.createControl(templateElement.declaration, elementCopy, viewAdapter, "#" + key) };

@@ -32,6 +32,7 @@
                                 <li id="exampleLink5"><a href="#/example/5">Simple List</a></li>
                                 <li id="exampleLink6"><a href="#/example/6">A Better List</a></li>
                                 <li id="exampleLink7"><a href="#/example/7">Control Types</a></li>
+                                <li id="exampleLink8"><a href="#/example/8">Working with Lists</a></li>
                             </ul>
                         </div>
                     </div>
@@ -850,6 +851,191 @@ root.atomic.adaptHtml
                     &lt;/table&gt;
                 &lt;/div&gt;
             &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example8">
+                                    <style type="text/css">
+                                        .renderTime { color: #777; font-style: italic; font-size: 0.8em; }
+                                    </style>
+                                    <div class="example">
+                                        <div class="well">
+                                            <h2>People</h2>
+                                            <ul id="peopleList">
+                                                <li id="peopleListItemTemplate">
+                                                    <div>
+                                                        <span id="personNameLabel"> </span> has <span id="childCountLabel">&nbsp;</span> children:
+                                                        <a id="addChildLink" class="clickable">Add child</a>
+                                                        <span id="renderTimeSection" class="renderTime">
+                                                            (person rendered at <span id="renderTimeLabel"> </span>)
+                                                        </span>
+                                                    </div>
+                                                    <ul id="childList">
+                                                        <li id="childListItemTemplate">
+                                                            <span id="childNameLabel"> </span>
+                                                            <span id="childRenderTimeSection" class="renderTime">
+                                                                (child rendered at <span id="childRenderTimeLabel"> </span>)
+                                                            </span>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                            <label><input id="showRenderTimesCheckbox" type='checkbox' /> Show render times</label> 
+                                        </div>
+                                        <script type="text/javascript">
+                                            root.atomic.adaptHtml
+                                            (
+                                                document.querySelector("example8"),
+                                                {
+                                                    peopleList:
+                                                    {
+                                                        bindTo: "people",
+                                                        repeat:
+                                                        {
+                                                            peopleListItemTemplate:
+                                                            {
+                                                                getKey:     function(data){return "person-"+this.index;},
+                                                                controls:
+                                                                {
+                                                                    personNameLabel:    { bindTo: "name" },
+                                                                    childCountLabel:    { bindAs: function(data){return data("children.length");} },
+                                                                    addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
+                                                                    renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.data("showRenderTimes"));} },
+                                                                    renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
+                                                                    childList:
+                                                                    {
+                                                                        bindTo: "children",
+                                                                        repeat:
+                                                                        {
+                                                                            childListItemTemplate:
+                                                                            {
+                                                                                getKey: function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
+                                                                                controls:
+                                                                                {
+                                                                                    childNameLabel:         { bindTo: "name" },
+                                                                                    childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.parent.parent.data("showRenderTimes"));} },
+                                                                                    childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
+                                                }
+                                            )
+                                            (function(adapter)
+                                            {
+                                                adapter.data
+                                                ("",
+                                                {
+                                                    showRenderTimes:    false,
+                                                    people:
+                                                    [
+                                                        {name:"Anabelle",   children: [{name: "Arnie"},{name: "Anders"},{name: "Apple"}]},
+                                                        {name:"Bertie",     children: [{name: "Boutros-Boutros"},{name: "Brianna"},{name: "Barbie"},{name: "Bee-bop"}]},
+                                                        {name:"Charles",    children: [{name: "Cayenne"},{name: "Cleopatra"}]}
+                                                    ]
+                                                });
+                                            });
+                                        </script>
+                                    </div>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    document.querySelector("example8"),
+    {
+        peopleList:
+        {
+            bindTo: "people",
+            repeat:
+            {
+                peopleListItemTemplate:
+                {
+                    getKey:     function(data){return "person-"+this.index;},
+                    controls:
+                    {
+                        personNameLabel:    { bindTo: "name" },
+                        childCountLabel:    { bindAs: function(data){return data("children.length");} },
+                        addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
+                        renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.data("showRenderTimes"));} },
+                        renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
+                        childList:
+                        {
+                            bindTo: "children",
+                            repeat:
+                            {
+                                childListItemTemplate:
+                                {
+                                    getKey: function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
+                                    controls:
+                                    {
+                                        childNameLabel:         { bindTo: "name" },
+                                        childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(this.parent.parent.parent.parent.data("showRenderTimes"));} },
+                                        childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
+    }
+)
+(function(adapter)
+{
+    adapter.data
+    ("",
+    {
+        showRenderTimes:    false,
+        people:
+        [
+            {name:"Anabelle",   children: [{name: "Arnie"},{name: "Anders"},{name: "Apple"}]},
+            {name:"Bertie",     children: [{name: "Boutros-Boutros"},{name: "Brianna"},{name: "Barbie"},{name: "Bee-bop"}]},
+            {name:"Charles",    children: [{name: "Cayenne"},{name: "Cleopatra"}]}
+        ]
+    });
+});
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example1"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well"&gt;
+            &lt;h2&gt;People&lt;/h2&gt;
+            &lt;ul id="peopleList"&gt;
+                &lt;li id="peopleListItemTemplate"&gt;
+                    &lt;div&gt;
+                        &lt;span id="personNameLabel"&gt; &lt;/span&gt; has &lt;span id="childCountLabel"&gt;&nbsp;&lt;/span&gt; children:
+                        &lt;a id="addChildLink" class="clickable"&gt;Add child&lt;/a&gt;
+                        &lt;span id="renderTimeSection" class="renderTime"&gt;
+                            (person rendered at &lt;span id="renderTimeLabel"&gt; &lt;/span&gt;)
+                        &lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;ul id="childList"&gt;
+                        &lt;li id="childListItemTemplate"&gt;
+                            &lt;span id="childNameLabel"&gt; &lt;/span&gt;
+                            &lt;span id="childRenderTimeSection" class="renderTime"&gt;
+                                (child rendered at &lt;span id="childRenderTimeLabel"&gt; &lt;/span&gt;)
+                            &lt;/span&gt;
+                        &lt;/li&gt;
+                    &lt;/ul&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+            &lt;label&gt;&lt;input id="showRenderTimesCheckbox" type='checkbox' /&gt; Show render times&lt;/label&gt; 
         &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;

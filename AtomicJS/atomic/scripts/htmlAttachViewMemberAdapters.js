@@ -12,7 +12,7 @@
             var subDataItem = observer(dataItemCounter);
             for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
             {
-                var clone                           = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter], subDataItem);
+                var clone                           = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter], subDataItem, dataItemCounter);
                 if (clone !== undefined)
                 {
                     this.__repeatedControls[clone.key]  = clone.control;
