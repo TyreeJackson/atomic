@@ -24,20 +24,49 @@
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
-    var initializers    =
+    function bindProperty(viewAdapter, name, binding)
     {
-        onchangingdelay:    function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); },
-        onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
-        onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); },
-        focused:            function(viewAdapter, value)    { if (value) viewAdapter.focus(); }
-    };
-    each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText", "bindTo", "value"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+        if(viewAdapter[name] === undefined) debugger;
+        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind = binding;
+        else
+        {
+            if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
+        }
+    }
+    function bindMultipleProperties(viewAdapter, bindings)
+    {
+        for(var name in bindings) bindProperty(viewAdapter, name, bindings[name]);
+    }
+    var initializers    =   {};
+    Object.defineProperties(initializers,
+    {
+        onchangingdelay:    {enumerable: true, value: function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); }},
+        onchanging:         {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); }},
+        onenter:            {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
+        onescape:           {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
+        hidden:             {enumerable: true, value: function(viewAdapter, value)    { if (value) viewAdapter.hide(); }},
+        focused:            {enumerable: true, value: function(viewAdapter, value)    { if (value) viewAdapter.focus(); }},
+        bind:               {enumerable: true, value: function(viewAdapter, value)
+        {
+            if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
+            else                            {viewAdapter.value.bind  = value;}
+        }},
+        updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
+    });
+    each(["data","source"], function(val){ Object.defineProperty(initializers, val, {enumerable: true, value: function(viewAdapter, value)
+    { 
+        if (typeof value === "function")    viewAdapter[name] = value.call(viewAdapter);
+        else                                viewAdapter[name] = value;
+    }});});
+    each(["value"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + typeof(viewAdapter) + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
+    each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText","isRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
+    each(["onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
-    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
-
+    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val)
+    {
+        initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
+    });
     function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
     {
         for(var initializerSetKey in extension.initializers)

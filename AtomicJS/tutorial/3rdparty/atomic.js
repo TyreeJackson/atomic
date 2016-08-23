@@ -1,25 +1,26 @@
 !function()
 {"use strict";
-    function __namespace(){}
-    __namespace.prototype.define    = function(fullName, item) { namespace(this, fullName, item); }
-    var __root                      = new __namespace();
+    function __namespace() {}
+    function define(fullName, item) { namespace(this, fullName, item); }
+    Object.defineProperty(__namespace.prototype, "define", {value:define});
+    var __root  = new __namespace();
     function getNamespace(root, paths)
     {
         var current     = root;
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
-            if (current[path] === undefined)    current[path]   = new __namespace();
+            if (current[path] === undefined)    Object.defineProperty(current, path, {value: new __namespace()});
             current     = current[path];
         }
         return current;
     }
     function namespace(root, fullName, value)
     {
-        var paths                           = fullName.split(".");
-        var namespace                       = getNamespace(root, paths);
-        if (value === undefined)            return namespace[paths[paths.length-1]];
-        namespace[paths[paths.length-1]]    = value;
+        var paths                   = fullName.split(".");
+        var namespace               = getNamespace(root, paths);
+        if (value === undefined)    return namespace[paths[paths.length-1]];
+        Object.defineProperty(namespace, [paths[paths.length-1]], {value: value});
     }
     window.root = window.root || __root;
 }();
@@ -32,19 +33,24 @@
         array.length    = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
     });
-    root.define("utilities.pubSub", function pubSub()
+    root.define("utilities.pubSub", function pubSub(isolatedFunctionFactory, removeFromArray)
     {
-        var listeners   = [];
-        function _pubSub() { for(var listenerCounter=0;listenerCounter<listeners.length;listenerCounter++) listeners[listenerCounter].apply(null, arguments); }
-        _pubSub.listen  = function(listener) { listeners.push(listener); }
-        _pubSub.ignore  = function(listener) { root.utilities.removeFromArray.call(listeners, listener); }
-        return _pubSub;
+        var functionFactory = new isolatedFunctionFactory();
+        var pubSub          =
+        functionFactory.create
+        {
+            {
+                {
     });
     root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item){ root.utilities.removeFromArray(array, array.indexOf(item)); });
 }();
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
 {
+        });
+    }
+    {
+        {
+            {
     function bindRepeatedList(observer)
     {
         if (observer === undefined) return;
@@ -224,7 +230,6 @@
     }
     function deferBinding()
     {
-        this.__bindListener = (function(){ var item = this.data; if ( item(this.__bindTo||"") === undefined) return; this.data.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
         this.data.listen(this.__bindListener);
         return this;
     }
@@ -424,12 +429,6 @@
     {
         valueFunctions[name]    = htmlBasedValueFunc;
     });
-    function addClass(element, className)
-    {
-        var classNames  = element.className.split(" ");
-        if (classNames.indexOf(className) === -1) classNames.push(className);
-        element.className = classNames.join(" ").trim();
-    }
     function hasClass(element, className)
     {
         var classNames  = element.className.split(" ");
@@ -445,24 +444,6 @@
         var classNames  = element.className.split(" ");
         if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
         element.className = classNames.join(" ");
-    }
-    function triggerEvent()
-    {
-        for(var listenerCounter=0;listenerCounter<this.listeners.length;listenerCounter++)   this.listeners[listenerCounter].apply(null, arguments);
-    }
-    function createElementListener(listeners)
-    {
-        return function() { triggerEvent.apply(listeners, arguments); };
-    }
-    function addListener(viewAdapter, eventName, listeners, listener, withCapture, notifyEarly)
-    {
-        if (listeners.elementListener === undefined)
-        {
-            listeners.elementListener   = createElementListener(listeners);
-            viewAdapter.__element.addEventListener(eventName, listeners.elementListener, withCapture);
-        }
-        if (notifyEarly)    listeners.listeners.unshift(listener);
-        else                listeners.listeners.push(listener);
     }
     function removeListener(viewAdapter, eventName, listeners, listener, withCapture)
     {
@@ -488,113 +469,7 @@
     {
         var listenersUsingCapture           = {};
         var listenersNotUsingCapture        = {};
-        function getListeners(eventName, withCapture)
-        {
-            var listeners       = withCapture ? listenersUsingCapture : listenersNotUsingCapture;
-            var eventListeners  = listeners[eventName];
-            if (eventListeners === undefined)   eventListeners  = listeners[eventName]  = {listeners: []};
-            return eventListeners;
-        }
 
-        viewAdapter.addClass                = function(className){ addClass(this.__element, className); return this;}
-        viewAdapter.addClassFor             = function(className, milliseconds, onComplete){ this.addClass(className); setTimeout((function(){this.removeClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.addEventListener        = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); return this; };
-        viewAdapter.addEventsListener       = function(eventNames, listener, withCapture, notifyEarly){ each(eventNames, (function(eventName){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); }).bind(this)); return this; };
-        viewAdapter.appendControl           = function(childControl){ this.__element.appendChild(childControl.__element); };
-        viewAdapter.attribute               =
-        function(attributeName, value)
-        {
-            if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
-            this.__element.setAttribute("data-" + attributeName, value);
-        };
-        viewAdapter.bindSourceData          = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
-        viewAdapter.bindData                = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
-        if (viewAdapter.__templateKeys)
-        {
-            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.data(this.__bindTo||"")); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); };
-        }
-        viewAdapter.bindingRoot             = function(){return this.__bindingRoot;};
-        viewAdapter.bindTo                  =
-        function(value)
-        {
-            if(value === undefined) return this.__bindTo;
-            var data    = this.data;
-            if (data !== undefined) this.unbindData();
-            this.__bindTo = value;
-            if (data !== undefined) this.bindData(data);
-            this.triggerEvent("bindToUpdated");
-        };
-        each(["bindSource", "bindSourceValue", "bindSourceText"],
-        function(name)
-        {
-            viewAdapter[name]               =
-            function(value)
-            {
-                if(value === undefined)     return this["__"+name];
-                var source  = this.source;
-                if (source !== undefined)   this.unbindSourceData();
-                this["__"+name] = value;
-                if (source !== undefined)   this.bindSourceData(source);
-                this.triggerEvent(name+"Updated");
-            };
-        });
-        viewAdapter.blur                    = function(){this.__element.blur(); return this;};
-        viewAdapter.children                = function(){return this.controls || this.__repeatedControls || null;};
-        viewAdapter.click                   = function(){this.__element.click(); return this;};
-        viewAdapter.__detach                = function(documentFragment){this.__elementPlaceholder = document.createElement("placeholder"); this.__element.parentNode.replaceChild(this.__elementPlaceholder, this.__element); documentFragment.appendChild(this.__element); return this;};
-        viewAdapter.disable                 = function(value){this.__element.disabled=!(!value);};
-        viewAdapter.enable                  = function(value){this.__element.disabled=!value;};
-        viewAdapter.focus                   = function(){this.__element.focus(); return this;};
-        viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
-        viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
-        viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
-        viewAdapter.height                  = function(){return this.__element.offsetHeight;}
-        viewAdapter.hide                    = function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;};
-        viewAdapter.hideFor                 = function(milliseconds, onComplete){ this.hide(); setTimeout((function(){this.show(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
-        viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
-        viewAdapter.isDisabled              = function() { return this.__element.disabled; };
-        viewAdapter.isEnabled               = function() { return !this.__element.disabled; };
-        viewAdapter.insertBefore            = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; };
-        viewAdapter.insertAfter             = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; };
-        viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
-        viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
-        viewAdapter.removeClassFor          = function(className, milliseconds, onComplete){ this.removeClass(className); setTimeout((function(){this.addClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
-        viewAdapter.removeEventListener     = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
-        viewAdapter.removeEventsListener    = function(eventNames, listener, withCapture){ each(eventNames, (function(eventName){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); }).bind(this)); return this;};
-        viewAdapter.__reattach              = function(){this.__elementPlaceholder.parentNode.replaceChild(this.__element, this.__elementPlaceholder); delete this.__elementPlaceholder; return this;};
-        if (viewAdapter.__element.nodeName.toLowerCase()=="select")
-        {
-            viewAdapter.count               = function() { return this.__element.options.length; }
-            viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
-            viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
-        }
-        viewAdapter.show                    = function(){ this.__element.style.display=""; this.triggerEvent("show"); return this;};
-        viewAdapter.showFor                 = function(milliseconds, onComplete){ this.show(); setTimeout((function(){this.hide(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.scrollIntoView          = function(){this.__element.scrollTop = 0; return this;};
-        viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
-        viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
-        viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent            = function(eventName){ var args = Array.prototype.slice.call(arguments, 1); triggerEvent.apply(getListeners(eventName, true), args); triggerEvent.apply(getListeners(eventName, false), args); };
-        viewAdapter.unbindData              = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData        = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
-        viewAdapter.value                   = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
-        if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
-        {
-            viewAdapter.select              = function(){this.__element.select(); return this;};
-        }
-        else
-        {
-            viewAdapter.select              = function(){selectContents(this.__element); return this; };
-        }
-        viewAdapter.width                   = function(){return this.__element.offsetWidth;}
-        if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)
-        {
-            if (viewAdapterDefinition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + viewAdapter.__element.__selectorPath+"-"+viewAdapter.__selector);
-            if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
-        }
     };
 });}();
 !function()
@@ -863,227 +738,39 @@ return {
     };
 });}();
 !function()
-{"use strict";root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory)
 {
-    var functionFactory = new isolatedFunctionFactory();
-    var subObserver                                 =
-    functionFactory.create
-    (function subObserverFactory(basePath, bag, isArray)
-    {
-        function subObserver(path, value)
         {
-            return subObserver.__invoke(path, value);
         }
-        Object.defineProperty(subObserver, "__basePath", {get:function(){return basePath;}});
-        Object.defineProperty(subObserver, "__bag", {get:function(){return bag;}});
-        if (isArray)
-        {
-            Object.defineProperty(subObserver, "push", {get:function(){return function(item){ var items = this(); items.push(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); var item = items.pop(); this.__notify(this.__basePath, items); return item; }}});
-            Object.defineProperty(subObserver, "shift", {get:function(){return function(item){ var items = this(); items.shift(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); var item = items.unshift(); this.__notify(this.__basePath, items); return item; }}});
-            Object.defineProperty(subObserver, "sort", {get:function(){return function(sorter){ var items = this(); items.sort(sorter); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
-            Object.defineProperty(subObserver, "removeAll", {get:function(){return function(items){ this.__removeAll(items); }}});
-            Object.defineProperty(subObserver, "join", {get:function(){return function(separator){ return this().join(separator); }}});
-            Object.defineProperty(subObserver, "indexOf", {get:function(){return function(item){ return this().indexOf(item); }}});
         }
-        else
         {
-            Object.defineProperty(subObserver, "isDefined", {get:function(){return function(propertyName){return this(propertyName)!==undefined;}}})
-            Object.defineProperty(subObserver, "hasValue", {get:function(){return function(propertyName){var value=this(propertyName); return value!==undefined && value;}}})
         }
-        //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
-        return subObserver;
-    });
-    function getValue(pathSegments, revisedPath)
-    {
-        pathSegments    = pathSegments || [""];
-        if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-        var returnValue = navDataPath(this.__bag, pathSegments);
-        if (revisedPath !== undefined && returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
-        return returnValue;
-    }
-    functionFactory.root.prototype.__invoke         =
-    function(path, value)
-    {
-        if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath));
-        if (path === undefined || path === null)        path    = "";
-        var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
-        var revisedPath     = getFullPath(pathSegments);
-        if (value === undefined)    return getValue.call(this, pathSegments, revisedPath);
-        if (this.__bag.rollingback) return;
-        var currentValue = navDataPath(this.__bag, pathSegments);
-        if (value !== currentValue)
-        {
-            navDataPath(this.__bag, pathSegments, value);
-            notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
         }
-    }
-    functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
-    functionFactory.root.prototype.__remove         =
-    function(value)
-    {
-        var items   = this();
-        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
-        removeFromArray(items, items.indexOf(value));
-        this.__notify(this.__basePath, items);
-    }
-    functionFactory.root.prototype.__removeAll      =
-    function(values)
-    {
-        var items   = this();
-        var keepers = [];
-        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
-        for(var itemCounter=0;itemCounter<items.length;itemCounter++)
         {
-            var item    = items[itemCounter];
-            if (values.indexOf(item) == -1) keepers.push(item);
         }
-        items.length = 0;
-        items.push.apply(items, keepers);
-        this.__notify(this.__basePath, items);
-    }
-    functionFactory.root.prototype.__notify         =
-    function(path, value)
-    {
-        notifyPropertyListeners.call(this, path, value, this.__bag);
-    }
-    functionFactory.root.prototype.listen           =
-    function(callback)
-    {
-        var listener    = {callback: callback};
-        this.__bag.itemListeners.push(listener);
-        notifyPropertyListener.call(this, "", listener, this.__bag);
-    }
-    functionFactory.root.prototype.ignore           =
-    function(callback)
-    {
-        for(var listenerCounter=0;listenerCounter<this.__bag.itemListeners.length;listenerCounter++)
-        if (this.__bag.itemListeners[listenerCounter].callback === callback)
-        removeFromArray(this.__bag.itemListeners, listenerCounter);
-    }
-    functionFactory.root.prototype.beginTransaction =
-    function()
-    {
-        this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));
-    }
-    functionFactory.root.prototype.commit           =
-    function()
-    {
-        delete this.__bag.backup;
-    }
-    functionFactory.root.prototype.rollback         =
-    function()
-    {
-        this.__bag.rollingback  = true;
-        this.__bag.item         = this.__bag.backup;
-        delete this.__bag.backup;
-        notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
-        this.__bag.rollingback  = false;
-    }
-    function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
-    {
-        for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
         {
-            var subSegment  = subSegments[subSegmentCounter];
-            // warning: string subsegments are not currently supported
-            if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
-            returnSegments.push({type:1, value: parseInt(subSegment)});
         }
-    }
-    function extractPathSegments(path)
-    {
-        var pathSegments    = path.split(".");
-        var returnSegments  = [];
-        for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
         {
-            var pathSegment = pathSegments[segmentCounter];
-            var bracket     = pathSegment.indexOf("[");
-            if (bracket > -1)
             {
-                var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
-                pathSegment     = pathSegment.substring(0, bracket);
-                if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
-                extractArrayPathSegmentsInto(subSegments, returnSegments, path);
             }
-            else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
         }
-        return returnSegments;
-    }
-    function getFullPath(paths)
-    {
-        if (paths.length == 0) return "";
-        var path    = paths[0].value;
-        for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
-        return path;
-    }
-    function navDataPath(root, paths, value)
-    {
-        if (paths.length == 0)
         {
-            if(value === undefined) return root.item;
-            root.item   = value;
-            return;
         }
-        var current     = root.item;
-        for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
-            var path    = paths[pathCounter];
-            if (current[path.value] === undefined)
             {
-                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
-                else                        return undefined;
+            {
             }
-            current     = current[path.value];
         }
-        if (value === undefined)    return current[paths[paths.length-1].value];
-        current[paths[paths.length-1].value]    = value;
-    }
-    function addPropertyPath(properties, path, remainingPath)
-    {
-        properties[path]    = remainingPath !== undefined ? remainingPath : "";
-    }
-    function addProperties(properties, pathSegments)
-    {
-        addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
-        var path    = pathSegments[0].value;
-        addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
-        for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
         {
-            path    += "." + pathSegments[segmentCounter].value;
-            addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
+        }
+        {
         }
     }
-    function notifyPropertyListener(propertyKey, listener, bag)
     {
-        if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
         {
-            bag.updating.push(listener);
-            listener.properties = {};
-            var postCallback = listener.callback();
-            bag.updating.pop();
-            if (postCallback !== undefined) postCallback();
-        }
-    }
-    function notifyPropertyListeners(propertyKey, value, bag)
-    {
-        var itemListeners   = bag.itemListeners.slice();
-        for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
-    }
-    return function observer(_item)
-    {
-        var bag             =
-        {
-            item:           _item,
-            itemListeners:  [],
-            propertyKeys:   [],
-            updating:       [],
-            rollingback:    false
         };
-        return new subObserver("", bag, Array.isArray(_item));
-    };
-});}();
+        {
+            {
+            }
 !function()
 {"use strict";root.define("atomic.htmlCompositionRoot", function htmlCompositionRoot()
 {
@@ -1101,10 +788,8 @@ return {
                     root.utilities.removeItemFromArray,
                     window.setTimeout,
                     window.clearTimeout,
-                    root.utilities.each
                 ),
                 new root.atomic.initializeViewAdapter(root.utilities.each),
-                root.utilities.pubSub,
                 function(message){console.log(message);}
             )
         ),
@@ -1129,7 +814,6 @@ return {
         atomic.viewAdapterFactory.create
         (
             typeof controlsOrAdapter !== "function" ? function(appViewAdapter){return {controls: controlsOrAdapter}; } : controlsOrAdapter, 
-            viewElement||document.body
         );
         adapter.bindData(new atomic.observer({}));
         adapter.bindSourceData(new atomic.observer({}));

@@ -1,6 +1,27 @@
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
+{"use strict";root.define("atomic.html.attachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each, defineDataProperties, pubSub)
 {
+
+
+/*    defineDataProperties
+    (input,
+    {
+        value:
+        {
+            get:        valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default,
+            set:        valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default,
+            onchange:   valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default
+        }
+    });*/
+
+
+/*    if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
+    for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)
+    {
+        if (viewAdapterDefinition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + viewAdapter.__element.__selectorPath+"-"+viewAdapter.__selector);
+        if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
+    }*/
+
     function bindRepeatedList(observer)
     {
         if (observer === undefined) return;
@@ -180,7 +201,7 @@
     }
     function deferBinding()
     {
-        this.__bindListener = (function(){ var item = this.data; if ( item(this.__bindTo||"") === undefined) return; this.data.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
+        this.__bindListener = (function(){ var item = this.data; if ( item(this.__bindTobindTo||"") === undefined) return; this.data.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
         this.data.listen(this.__bindListener);
         return this;
     }
@@ -380,46 +401,6 @@
     {
         valueFunctions[name]    = htmlBasedValueFunc;
     });
-    function addClass(element, className)
-    {
-        var classNames  = element.className.split(" ");
-        if (classNames.indexOf(className) === -1) classNames.push(className);
-        element.className = classNames.join(" ").trim();
-    }
-    function hasClass(element, className)
-    {
-        var classNames  = element.className.split(" ");
-        return classNames.indexOf(className) > -1;
-    }
-    function removeClass(element, className)
-    {
-        if (className === undefined)
-        {
-            element.className   = "";
-            return;
-        }
-        var classNames  = element.className.split(" ");
-        if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
-        element.className = classNames.join(" ");
-    }
-    function triggerEvent()
-    {
-        for(var listenerCounter=0;listenerCounter<this.listeners.length;listenerCounter++)   this.listeners[listenerCounter].apply(null, arguments);
-    }
-    function createElementListener(listeners)
-    {
-        return function() { triggerEvent.apply(listeners, arguments); };
-    }
-    function addListener(viewAdapter, eventName, listeners, listener, withCapture, notifyEarly)
-    {
-        if (listeners.elementListener === undefined)
-        {
-            listeners.elementListener   = createElementListener(listeners);
-            viewAdapter.__element.addEventListener(eventName, listeners.elementListener, withCapture);
-        }
-        if (notifyEarly)    listeners.listeners.unshift(listener);
-        else                listeners.listeners.push(listener);
-    }
     function removeListener(viewAdapter, eventName, listeners, listener, withCapture)
     {
         if (listeners.elementListener !== undefined)
@@ -444,112 +425,6 @@
     {
         var listenersUsingCapture           = {};
         var listenersNotUsingCapture        = {};
-        function getListeners(eventName, withCapture)
-        {
-            var listeners       = withCapture ? listenersUsingCapture : listenersNotUsingCapture;
-            var eventListeners  = listeners[eventName];
-            if (eventListeners === undefined)   eventListeners  = listeners[eventName]  = {listeners: []};
-            return eventListeners;
-        }
 
-        viewAdapter.addClass                = function(className){ addClass(this.__element, className); return this;}
-        viewAdapter.addClassFor             = function(className, milliseconds, onComplete){ this.addClass(className); setTimeout((function(){this.removeClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.addEventListener        = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); return this; };
-        viewAdapter.addEventsListener       = function(eventNames, listener, withCapture, notifyEarly){ each(eventNames, (function(eventName){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); }).bind(this)); return this; };
-        viewAdapter.appendControl           = function(childControl){ this.__element.appendChild(childControl.__element); };
-        viewAdapter.attribute               =
-        function(attributeName, value)
-        {
-            if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
-            this.__element.setAttribute("data-" + attributeName, value);
-        };
-        viewAdapter.bindSourceData          = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
-        viewAdapter.bindData                = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
-        if (viewAdapter.__templateKeys)
-        {
-            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.data(this.__bindTo||"")); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); };
-        }
-        viewAdapter.bindingRoot             = function(){return this.__bindingRoot;};
-        viewAdapter.bindTo                  =
-        function(value)
-        {
-            if(value === undefined) return this.__bindTo;
-            var data    = this.data;
-            if (data !== undefined) this.unbindData();
-            this.__bindTo = value;
-            if (data !== undefined) this.bindData(data);
-            this.triggerEvent("bindToUpdated");
-        };
-        each(["bindSource", "bindSourceValue", "bindSourceText"],
-        function(name)
-        {
-            viewAdapter[name]               =
-            function(value)
-            {
-                if(value === undefined)     return this["__"+name];
-                var source  = this.source;
-                if (source !== undefined)   this.unbindSourceData();
-                this["__"+name] = value;
-                if (source !== undefined)   this.bindSourceData(source);
-                this.triggerEvent(name+"Updated");
-            };
-        });
-        viewAdapter.blur                    = function(){this.__element.blur(); return this;};
-        viewAdapter.children                = function(){return this.controls || this.__repeatedControls || null;};
-        viewAdapter.click                   = function(){this.__element.click(); return this;};
-        viewAdapter.__detach                = function(documentFragment){this.__elementPlaceholder = document.createElement("placeholder"); this.__element.parentNode.replaceChild(this.__elementPlaceholder, this.__element); documentFragment.appendChild(this.__element); return this;};
-        viewAdapter.disable                 = function(value){this.__element.disabled=!(!value);};
-        viewAdapter.enable                  = function(value){this.__element.disabled=!value;};
-        viewAdapter.focus                   = function(){this.__element.focus(); return this;};
-        viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
-        viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
-        viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
-        viewAdapter.height                  = function(){return this.__element.offsetHeight;}
-        viewAdapter.hide                    = function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;};
-        viewAdapter.hideFor                 = function(milliseconds, onComplete){ this.hide(); setTimeout((function(){this.show(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
-        viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
-        viewAdapter.isDisabled              = function() { return this.__element.disabled; };
-        viewAdapter.isEnabled               = function() { return !this.__element.disabled; };
-        viewAdapter.insertBefore            = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; };
-        viewAdapter.insertAfter             = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; };
-        viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
-        viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
-        viewAdapter.removeClassFor          = function(className, milliseconds, onComplete){ this.removeClass(className); setTimeout((function(){this.addClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
-        viewAdapter.removeEventListener     = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
-        viewAdapter.removeEventsListener    = function(eventNames, listener, withCapture){ each(eventNames, (function(eventName){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); }).bind(this)); return this;};
-        viewAdapter.__reattach              = function(){this.__elementPlaceholder.parentNode.replaceChild(this.__element, this.__elementPlaceholder); delete this.__elementPlaceholder; return this;};
-        if (viewAdapter.__element.nodeName.toLowerCase()=="select")
-        {
-            viewAdapter.count               = function() { return this.__element.options.length; }
-            viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
-            viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
-        }
-        viewAdapter.show                    = function(){ this.__element.style.display=""; this.triggerEvent("show"); return this;};
-        viewAdapter.showFor                 = function(milliseconds, onComplete){ this.show(); setTimeout((function(){this.hide(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.scrollIntoView          = function(){this.__element.scrollTop = 0; return this;};
-        viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
-        viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
-        viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent            = function(eventName){ var args = Array.prototype.slice.call(arguments, 1); triggerEvent.apply(getListeners(eventName, true), args); triggerEvent.apply(getListeners(eventName, false), args); };
-        viewAdapter.unbindData              = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData        = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
-        viewAdapter.value                   = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
-        if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
-        {
-            viewAdapter.select              = function(){this.__element.select(); return this;};
-        }
-        else
-        {
-            viewAdapter.select              = function(){selectContents(this.__element); return this; };
-        }
-        viewAdapter.width                   = function(){return this.__element.offsetWidth;}
-        if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)
-        {
-            if (viewAdapterDefinition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + viewAdapter.__element.__selectorPath+"-"+viewAdapter.__selector);
-            if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
-        }
     };
 });}();

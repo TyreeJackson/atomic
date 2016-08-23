@@ -4,7 +4,26 @@
     <title>Atomic • Tutorial</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="index.css" />
-    <script type="text/javascript" src="3rdparty/atomic.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/namespaces.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/utilities.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/eventsSet.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/control.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/readonly.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/container.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/panel.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/repeater.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/input.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/checkbox.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/select.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/radiogroup.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/multiselect.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/initializeViewAdapter.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/isolatedFunctionFactory.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/viewAdapterFactory.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/observerFactory.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/dataBinder.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/dataPropertyFactory.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/compositionRoot.js"></script>
     <script type="text/javascript" src="3rdparty/path.min.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
@@ -82,24 +101,12 @@ root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
                                                 (
                                                     "#example2",
                                                     {
-                                                        greeting2:
-                                                        {
-                                                            hidden:             true, 
-                                                            ondataupdate:
-                                                            function(data)
-                                                            {
-                                                                this.toggleDisplay(data("worldValue.length")>0);
-                                                            }
-                                                        },
-                                                        worldLabel2:     {bind: "worldValue"},
+                                                        greeting2:      {bind: { display: "worldValue.length" }},
+                                                        worldLabel2:    {bind: "worldValue"},
                                                         sayHelloButton:
                                                         {
-                                                            onclick:        function(){this.data("worldValue","World");}, 
-                                                            ondataupdate:
-                                                            function(data)
-                                                            {
-                                                                this.toggleDisplay(!(data("worldValue.length")>0));
-                                                            }
+                                                            onclick:    function(){this.data("worldValue","World");}, 
+                                                            bind:       { display: function(){return !this.data("worldValue.length");} }
                                                         }
                                                     }
                                                 );
@@ -114,24 +121,12 @@ root.atomic.adaptHtml
 (
     "#example2",
     {
-        greeting2:
-        {
-            hidden:             true, 
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(data("worldValue.length")>0);
-            }
-        },
-        worldLabel2:     {bind: "worldValue"},
+        greeting2:      {bind: { display: "worldValue.length" }},
+        worldLabel2:    {bind: "worldValue"},
         sayHelloButton:
         {
-            onclick:        function(){this.data("worldValue","World");}, 
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(!(data("worldValue.length")>0));
-            }
+            onclick:    function(){this.data("worldValue","World");}, 
+            bind:       { display: function(){return !this.data("worldValue.length");} }
         }
     }
 );
@@ -170,28 +165,22 @@ root.atomic.adaptHtml
                                                     firstNameTextbox:
                                                     {
                                                         focused:    true,
-                                                        bind:       { value: { path: "firstName", updateon: ["keydown", "keyup", "change"] } },
-                                                        onescape:   function(){ this.value = ""; }
+                                                        bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+                                                        onescape:   function(){ this.value(""); }
                                                     },
                                                     lastNameTextbox:
                                                     {
-                                                        focused:    true,
-                                                        bind:       { value: { path: "lastName", updateon: ["keydown", "keyup", "change"] } },
-                                                        onescape:   function(){this.value.bindTo = ""; this.value.data = ""; this.value.onbind = function(){}; this.value("");}
+                                                        bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+                                                        onescape:   function(){this.value("");}
                                                     },
                                                     helloMessage:
                                                     {
-                                                        ondataupdate:
-                                                        function(data)
-                                                        {
-                                                            this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
-                                                        }
+                                                        bind:   { display: function(){return this.data.hasValue("firstName") || this.data.hasValue("lastName");} }
                                                     },
                                                     nameLabels:
                                                     {
-                                                        selector:       ".name",
-                                                        multipresent:   true,
-                                                        bindAs:         function(data){return (data("firstName")||"") + (data("firstName") && data("lastName")?" ":"") + (data("lastName")||"");}
+                                                        selector:   ".name",
+                                                        bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
                                                     }
                                                 }
                                             );
@@ -208,28 +197,22 @@ root.atomic.adaptHtml
         firstNameTextbox:
         {
             focused:    true,
-            bind:       { value: { path: "firstName", updateon: ["keydown", "keyup", "change"] } },
-            onescape:   function(){ this.value = ""; }
+            bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+            onescape:   function(){ this.value(""); }
         },
         lastNameTextbox:
         {
-            focused:    true,
-            bind:       { value: { path: "lastName", updateon: ["keydown", "keyup", "change"] } },
-            onescape:   function(){this.value = "";}
+            bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+            onescape:   function(){this.value("");}
         },
         helloMessage:
         {
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
-            }
+            bind:   { display: function(){return this.data.hasValue("firstName") || this.data.hasValue("lastName");} }
         },
         nameLabels:
         {
-            selector:       ".name",
-            multipresent:   true,
-            bindAs:         function(data){return (data("firstName")||"") + (data("firstName") && data("lastName")?" ":"") + (data("lastName")||"");}
+            selector:   ".name",
+            bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
         }
     }
 );
@@ -279,11 +262,7 @@ root.atomic.adaptHtml
                                                         {
                                                             this.data("clickCount", this.data("clickCount")+1);
                                                         },
-                                                        ondataupdate:
-                                                        function(data)
-                                                        {
-                                                            this.enable(data("clickCount")<3);
-                                                        }
+                                                        bind:       {enabled: function(){return this.data("clickCount")<3;}}
                                                     },
                                                     tooManyClicksMessage:
                                                     {
@@ -321,19 +300,19 @@ root.atomic.adaptHtml
             {
                 this.data("clickCount", this.data("clickCount")+1);
             },
-            ondataupdate:
-            function(data)
-            {
-                this.enable(data("clickCount")%lt;3);
-            }
+            bind:       {enabled: function(){return this.data("clickCount")<3;}}
         },
         tooManyClicksMessage:
         {
-            bind: { display: function(data){return data("clickCount")>=3;} }
+            bind:   { display: function(data){return data("clickCount")>=3;} }
         },
         resetClickCountButton:
         {
-            onclick: function(){ this.data("clickCount",0); }
+            onclick:
+            function()
+            {
+                this.data("clickCount",0);
+            }
         }
     }
 )
@@ -383,7 +362,7 @@ root.atomic.adaptHtml
                                                 {
                                                     newItem:
                                                     {
-                                                        bind:       { value: { path: "newItem", updateon:   ["keydown", "keyup", "change"] } },
+                                                        bind:       { value: { to: "newItem", updateon:   ["keydown", "keyup", "change"] } },
                                                         onenter:    function(){this.parent.controls.addNewItemButton.click();}
                                                     },
                                                     addNewItemButton:
@@ -420,7 +399,7 @@ root.atomic.adaptHtml
     {
         newItem:
         {
-            bind:       { value: { path: "newItem", updateon:   ["keydown", "keyup", "change"] } },
+            bind:       { value: { to: "newItem", updateon:   ["keydown", "keyup", "change"] } },
             onenter:    function(){this.parent.controls.addNewItemButton.click();}
         },
         addNewItemButton:
@@ -491,12 +470,12 @@ root.atomic.adaptHtml
                                                 {
                                                     betterNewItem:
                                                     {
-                                                        bind:       { value: { path: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                                                        bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
                                                         onenter:    function(){this.parent.controls.betterAddNewItemButton.click();}
                                                     },
                                                     betterAddNewItemButton:
                                                     {
-                                                        bind:       { data: function(){return this.source;}, path: "newItem.length" },
+                                                        bind:       { enabled: {binder: function(){return this.source;}, to: "newItem.length" }},
                                                         onclick:
                                                         function()
                                                         {
@@ -538,12 +517,12 @@ root.atomic.adaptHtml
     {
         betterNewItem:
         {
-            bind:       { value: { path: "newItem", updateon: ["keydown", "keyup", "change"] } },
+            bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
             onenter:    function(){this.parent.controls.betterAddNewItemButton.click();}
         },
         betterAddNewItemButton:
         {
-            bind:       { data: function(){return this.source;}, path: "newItem.length" },
+            bind:       { data: function(){return this.source;}, to: "newItem.length" },
             onclick:
             function()
             {
@@ -688,13 +667,13 @@ root.atomic.adaptHtml
                                                     multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
                                                     radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
                                                     onChangeTextboxControl:         { bind: "stringValue" },
-                                                    onKeyStrokeTextboxControl:      { bind: { value: { path: "stringValue", updateon: ["keydown","keyup","change"] } } },
+                                                    onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
                                                     textAreaControl:                { bind: "stringValue" },
                                                     passwordControl:                { bind: "passwordValue" },
                                                     checkboxControl:                { bind: "booleanValue" },
-                                                    singleDropdownListControl:      { bind: { value: "selectedValue",           source: "items" } },
-                                                    multipleListControl:            { bind: { value: "multipleSelectedValues",  source: "items" } },
-                                                    radioGroupControl:              { bind: { value: "radioSelectedValue",      source: "items" } }
+                                                    singleDropdownListControl:      { bind: { value: {to: "selectedValue",           source: "items" } } },
+                                                    multipleListControl:            { bind: { value: {to: "multipleSelectedValues",  source: "items" } } },
+                                                    radioGroupControl:              { bind: { value: {to: "radioSelectedValue",      source: "items" } } }
                                                 }
                                             )
                                             (function(adapter)
@@ -727,7 +706,7 @@ root.atomic.adaptHtml
         multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
         radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
         onChangeTextboxControl:         { bind: "stringValue" },
-        onKeyStrokeTextboxControl:      { bind: { value: { path: "stringValue", updateon: ["keydown","keyup","change"] } } },
+        onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
         textAreaControl:                { bind: "stringValue" },
         passwordControl:                { bind: "passwordValue" },
         checkboxControl:                { bind: "booleanValue" },
