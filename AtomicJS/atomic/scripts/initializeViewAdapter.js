@@ -52,13 +52,13 @@
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
             else                            {viewAdapter.value.bind  = value;}
         }},
+        data:               {enumerable: true, value: function(viewAdapter, value)
+        { 
+            if (typeof value === "function")    viewAdapter[name] = value.call(viewAdapter);
+            else                                viewAdapter[name] = value;
+        }},
         updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
-    each(["data","source"], function(val){ Object.defineProperty(initializers, val, {enumerable: true, value: function(viewAdapter, value)
-    { 
-        if (typeof value === "function")    viewAdapter[name] = value.call(viewAdapter);
-        else                                viewAdapter[name] = value;
-    }});});
     each(["value"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + typeof(viewAdapter) + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
     each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText","isRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
     each(["onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });

@@ -32,8 +32,7 @@
             "__attributes":         {value: {}, writable: true},
             "__selector":           {value: selector},
             "parent":               {value: parent},
-            "__binder":             {value: new dataBinder()},
-            "__sourceBinder":       {value: new dataBinder()}
+            "__binder":             {value: new dataBinder()}
         });
         defineDataProperties(this, this.__binder,
         {
@@ -96,7 +95,6 @@
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
         isRoot:             {get:   function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot=value===true;}},
-        isSourceRoot:       {get:   function(){return this.__sourceBinder.isRoot;}, set: function(value){this.__sourceBinder.isRoot=value===true;}},
         removeClass:        {value: function(className)
         {
             if (className === undefined)
@@ -119,8 +117,6 @@
         scrollIntoView:     {value: function(){this.__element.scrollTop = 0; return this;}},
         select:             {value: function(){selectContents(this.__element); return this;}},
         show:               {value: function(){this.__element.style.display=""; this.triggerEvent("show"); return this;}},
-        source:             {get:   function(){return this.__sourceBinder.data;}, set: function(value){this.__sourceBinder.data = value;}},
-        sourceRoot:         {get:   function(){return !this.isSourceRoot && this.parent ? this.parent.sourceRoot : this;}},
         toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
         toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
         toggleEdit:         {value: function(condition){if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;}},

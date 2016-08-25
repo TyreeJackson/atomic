@@ -72,8 +72,7 @@
             removeItemFromArray(this.__controlKeys, childControl.key);
             delete this.controls[childControl.key];
             return this;
-        }},
-        source:             {get: function(){return this.__sourceBinder.data;},   set: function(value){this.__sourceBinder.data = value; each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isSourceRoot) this.controls[controlKey].source = value;}).bind(this));}}
+        }}
     });
     return container;
 });}();

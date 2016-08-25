@@ -371,8 +371,8 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                                                            this.source("items").push(this.data("newItem"));
+                                                            if (this.data("newItem.length")>0 && this.data("...items").indexOf(this.data("newItem"))==-1)
+                                                            this.data("items").push(this.data("newItem"));
                                                             this.data("newItem","");
                                                         }
                                                     },
@@ -384,8 +384,7 @@ root.atomic.adaptHtml
                                             )
                                             (function(adapter)
                                             {
-                                                adapter.data("", {newItem:""});
-                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+                                                adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
                                             });
                                         </script>
                                     </div>
@@ -408,21 +407,20 @@ root.atomic.adaptHtml
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                this.source("items").push(this.data("newItem"));
+                if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                this.data("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
         },
         itemsList:
         {
-            bindSource: "items"
+            bind: "items"
         }
     }
 )
 (function(adapter)
 {
-    adapter.data("", {newItem:""});
-    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+    adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
 });
                                             </code>
                                         </pre>
@@ -479,8 +477,8 @@ root.atomic.adaptHtml
                                                         onclick:
                                                         function()
                                                         {
-                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                                                            this.source("items").push(this.data("newItem"));
+                                                            if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                                                            this.data("items").push(this.data("newItem"));
                                                             this.data("newItem","");
                                                         }
                                                     },
@@ -491,19 +489,18 @@ root.atomic.adaptHtml
                                                     removeItemButton:
                                                     {
                                                         bind:       {enabled: "items.length"},
-                                                        onclick:    function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
+                                                        onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList.value());}
                                                     },
                                                     sortItemsButton:
                                                     {
-                                                        bind:       {enabled: function(){debugger; return this.source("items.length")>1}},
-                                                        onclick:    function(){this.source("items").sort();}
+                                                        bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                        onclick:    function(){this.data("items").sort();}
                                                     }
                                                 }
                                             )
                                             (function(adapter)
                                             {
-                                                adapter.data("", {newItem:""});
-                                                adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                                adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
                                             });
                                         </script>
                                     </div>
@@ -522,12 +519,12 @@ root.atomic.adaptHtml
         },
         betterAddNewItemButton:
         {
-            bind:       { enabled: {binder: function(){return this.source;}, to: "newItem.length" }},
+            bind:       { enabled: "newItem.length" },
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                this.source("items").push(this.data("newItem"));
+                if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                this.data("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
         },
@@ -537,20 +534,19 @@ root.atomic.adaptHtml
         },
         removeItemButton:
         {
-            onsourceupdate: function(data){this.enable(data("items.length")>0);},
-            onclick:        function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
+            bind:       {enabled: "items.length"},
+            onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList.value());}
         },
         sortItemsButton:
         {
-            onsourceupdate: function(data){this.enable(data("items.length")>1);},
-            onclick:        function(){this.source("items").sort();}
+            bind:       {enabled: function(){return this.data("items.length")>1}},
+            onclick:    function(){this.data("items").sort();}
         }
     }
 )
 (function(adapter)
 {
-    adapter.data("", {newItem:""});
-    adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
 });
                                             </code>
                                         </pre>
@@ -685,10 +681,8 @@ root.atomic.adaptHtml
                                                     booleanValue:           true, 
                                                     selectedValue:          "Gamma", 
                                                     multipleSelectedValues: ["Beta"], 
-                                                    radioSelectedValue:     "Alpha"
-                                                });
-                                                //debugger;
-                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+                                                    radioSelectedValue:     "Alpha",
+                                                    items:                  ["Alpha","Beta","Gamma"]});
                                             });
                                         </script>
                                     </div>
@@ -711,9 +705,9 @@ root.atomic.adaptHtml
         textAreaControl:                { bind: "stringValue" },
         passwordControl:                { bind: "passwordValue" },
         checkboxControl:                { bind: "booleanValue" },
-        singleDropdownListControl:      { bind: { value: "selectedValue",           source: "items" } },
-        multipleListControl:            { bind: { value: "multipleSelectedValues",  source: "items" } },
-        radioGroupControl:              { bind: { value: "radioSelectedValue",      source: "items" } }
+        singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
+        multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
+        radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } }
     }
 )
 (function(adapter)
@@ -725,9 +719,8 @@ root.atomic.adaptHtml
         booleanValue:           true, 
         selectedValue:          "Gamma", 
         multipleSelectedValues: ["Beta"], 
-        radioSelectedValue:     "Alpha"
-    });
-    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+        radioSelectedValue:     "Alpha",
+        items:                  ["Alpha","Beta","Gamma"]});
 });
                                             </code>
                                         </pre>

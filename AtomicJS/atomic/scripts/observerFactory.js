@@ -199,7 +199,10 @@ add routing
             {
                 if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
                 if (path === undefined || path === null)        path    = "";
-                var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
+                var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
+                                        ?   path.substr(3)
+                                        :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
+                var pathSegments    = extractPathSegments(resolvedPath);
                 var revisedPath     = getFullPath(pathSegments);
                 if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
                 if (this.__bag.rollingback) return;

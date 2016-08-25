@@ -64,7 +64,6 @@
             typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
         );
         adapter.data    = new atomic.observer({});
-        adapter.source  = new atomic.observer({});
         if (typeof callback === "function") callback(adapter);
     }
     if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);

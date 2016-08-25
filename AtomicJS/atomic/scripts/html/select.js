@@ -53,7 +53,7 @@
         {
             value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        defineDataProperties(this, this.__binder,
         {
             items:
             {

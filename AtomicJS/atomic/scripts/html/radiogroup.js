@@ -85,7 +85,7 @@
         {
             value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        defineDataProperties(this, this.__binder,
         {
             items:
             {
