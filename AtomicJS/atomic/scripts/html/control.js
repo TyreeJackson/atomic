@@ -11,6 +11,14 @@
         if (members)
         for(var memberKey in members)   Object.defineProperty(this, memberKey, {value: members[memberKey]});
     }
+    function selectContents(element)
+    {
+        var range = document.createRange();
+        range.selectNodeContents(element);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
     function control(element, selector, parent)
     {
         if (element === undefined)  throw new Error("View element not provided for control with selector " + selector);

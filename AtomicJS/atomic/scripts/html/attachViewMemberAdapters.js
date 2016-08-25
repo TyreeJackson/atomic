@@ -81,27 +81,6 @@
             this.__element.appendChild(option);
         }
     }
-    function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
-    function bindRadioGroupSource()
-    {
-        var selectedValue   = this.value();
-        clearRadioGroup(this.__element);
-        var source          = this.source(this.__bindSource||"");
-        if (source === undefined)   return;
-        for(var counter=0;counter<source().length;counter++)
-        {
-            var radioGroupItem                      = this.__templateElement.cloneNode(true);
-            var sourceItem                          = source()[counter];
-            radioGroupItem.parent                   = this;
-            radioGroupItem.__radioElement           = radioGroupItem.querySelector(this.__radioButtonSelector);
-            radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
-            radioGroupItem.__radioLabel.addEventListener("click", (function(){this.parent.value(this.__radioElement.rawValue);this.parent.triggerEvent("change");}).bind(radioGroupItem),false)
-            radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
-            radioGroupItem.__radioElement.checked   = (radioGroupItem.__radioElement.rawValue  = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
-            if(radioGroupItem.__radioLabel) radioGroupItem.__radioLabel.innerHTML   = this.__bindSourceText !== undefined ? sourceItem[this.__bindSourceText] : sourceItem;
-            this.__element.appendChild(radioGroupItem);
-        }
-    }
     function deferSourceBinding()
     {
         this.__bindSourceListener   = (function(){ var item = this.source; if (item(this.__bindSource||"") === undefined) return; this.source.ignore(this.__bindSourceListener); this.__bindSourceListener.ignore=true; delete this.__bindSourceListener; this.bindSourceData(item); }).bind(this);
@@ -318,89 +297,6 @@
             });
         }
     };
-    function htmlBasedValueFunc(value, forceSet)
-    {
-        if (value !== undefined || forceSet)    this.__element.innerHTML=value;
-        else                                    return this.__element.innerHTML;
-    }
-    function setSelectListValue(value)
-    {
-        this.__rawValue = value;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
-    }
-    function setSelectListValues(values)
-    {
-        if (typeof values === "function")   values = values();
-        if ( !Array.isArray(values)) values  = [values];
-        this.__rawValue = values;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = values.indexOf(this.__element.options[counter].rawValue) > -1;
-    }
-    function getSelectListValue()
-    {
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   return this.__rawValue = this.__element.options[counter].rawValue;
-        return this.__rawValue;
-    }
-    function getSelectListValues()
-    {
-        if (this.__element.options.length == 0) return this.__rawValue;
-        var values  = [];
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   values.push(this.__element.options[counter].rawValue);
-        return this.__rawValue = values;
-    }
-    function setRadioGroupValue(value)
-    {
-        this.__rawValue = value;
-        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) this.__element.childNodes[counter].__radioElement.checked = this.__element.childNodes[counter].__radioElement.rawValue == value;
-    }
-    function getRadioGroupValue()
-    {
-        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) if (this.__element.childNodes[counter].__radioElement.checked)  return this.rawValue = this.__element.childNodes[counter].__radioElement.rawValue;
-        return this.__rawValue;
-    }
-    var valueFunctions          =
-    {
-        "default":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.value    = value;
-            else                                    return this.__element.value;
-        },
-        "input:checkbox":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.checked  = value===true;
-            else                                    return this.__element.checked;
-        },
-        "img":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.src  = value;
-            else                                    return this.__element.src;
-        },
-        "select:select-multiple":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setSelectListValues.call(this, value);
-            else                                    return getSelectListValues.call(this);
-        },
-        "select:select-one":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
-            else                                    return getSelectListValue.call(this);
-        },
-        "radiogroup":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setRadioGroupValue.call(this, value);
-            else                                    return getRadioGroupValue.call(this);
-        }
-    };
-    each(["a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
-    function(name)
-    {
-        valueFunctions[name]    = htmlBasedValueFunc;
-    });
     function removeListener(viewAdapter, eventName, listeners, listener, withCapture)
     {
         if (listeners.elementListener !== undefined)
@@ -412,14 +308,6 @@
                 delete listeners.elementListener;
             }
         }
-    }
-    function selectContents(element)
-    {
-        var range = document.createRange();
-        range.selectNodeContents(element);
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
     }
     return function(viewAdapter, viewAdapterDefinition)
     {

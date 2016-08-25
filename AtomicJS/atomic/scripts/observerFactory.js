@@ -14,10 +14,9 @@ add routing
         objectObserverFunctionFactory.create
         (function objectObserverFactory(basePath, bag)
         {
-            function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             function objectObserver(path, value)
             {
-                return objectObserver.__invoke(path, value);
+                return objectObserver.__invoke(path, value, false);
             }
             Object.defineProperties(objectObserver,
             {
@@ -36,7 +35,7 @@ add routing
             function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             function arrayObserver(path, value)
             {
-                return arrayObserver.__invoke(path, value);
+                return arrayObserver.__invoke(path, value, false);
             }
             Object.defineProperties(arrayObserver,
             {
@@ -70,7 +69,8 @@ add routing
                         value: function()
                         {
                             var result = this["__"+name].apply(this, arguments); 
-                            this.__notify(this.__basePath, items); return result; 
+                            this.__notify(this.__basePath, this());
+                            return result; 
                         }
                     }
                 );
@@ -96,12 +96,12 @@ add routing
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath)
+        function getValue(pathSegments, revisedPath, getObserver)
         {
             pathSegments    = pathSegments || [""];
             if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (revisedPath !== undefined && returnValue !== null && typeof returnValue == "object") return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
@@ -115,7 +115,7 @@ add routing
             }
         }
         function extractPathSegments(path)
-        {
+        {if(typeof path.split !== "function") debugger;
             var pathSegments    = path.split(".");
             var returnSegments  = [];
             for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
@@ -195,13 +195,13 @@ add routing
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value)
+            __invoke:           {value: function(path, value, getObserver)
             {
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath));
+                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
                 if (path === undefined || path === null)        path    = "";
                 var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
                 var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath);
+                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
                 if (this.__bag.rollingback) return;
                 var currentValue = navDataPath(this.__bag, pathSegments);
                 if (value !== currentValue)
@@ -211,6 +211,7 @@ add routing
                 }
             }},
             __notify:           {value: function(path, value){notifyPropertyListeners.call(this, path, value, this.__bag);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, true);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -257,7 +258,8 @@ add routing
                 items.length = 0;
                 items.push.apply(items, keepers);
             }},
-            isArrayObserver:    {value: true}
+            isArrayObserver:    {value: true},
+            count:              {get: function(){return this().length;}}
         });
         return createObserver;
     }

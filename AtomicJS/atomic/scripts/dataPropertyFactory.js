@@ -20,61 +20,38 @@
             };
             Object.defineProperties(property,
             {
-                "__getter":             {value: function(){return getter.call(owner);}},
-                "__setter":             {value: function(value){setter.call(owner, value);}},
-                "__notifyingObserver":  {value: undefined, writable: true},
-                "__onchange":           {value: {}},
-                "__inputListener":      {value: function(){property.___inputListener();}}
+                __owner:                {value: owner},
+                __getter:               {value: function(){return getter.call(owner);}},
+                __setter:               {value: function(value){setter.call(owner, value);}},
+                __notifyingObserver:    {value: undefined, writable: true},
+                __onchange:             {value: {}},
+                __inputListener:        {value: function(){property.___inputListener();}}
             });
             if (typeof onchange === "string") debugger;
             property.onchange = onchange;
             if (binder) binder.register(property);
             return property;
         });
-        function deferBinding()
-        {
-            Object.defineProperty(this, "__bindListener", 
-            {
-                configurable:   true, 
-                value:          (function(){var item = this.data; if ( item(this.__bind||"") === undefined) return; this.data = item; }).bind(this)});
-            this.data.listen(this.__bindListener);
-            return this;
-        }
-        function bindDefault()
-        {
-            Object.defineProperty(this, "__bindListener", {configurable: true, value: (function(){var value = this.data(this.__bind); if (!this.__notifyingObserver) this.__setter(value); notifyOnDataUpdate.call(this, this.data); }).bind(this)});
-            this.data.listen(this.__bindListener);
-            notifyOnbind.call(this, this.data);
-            return this;
-        }
         function bindData()
         {
             if (this.__data === undefined || this.__data == null)   return;
             Object.defineProperty(this,"__bounded", {value: true, configurable: true});
             if (this.__bind !== undefined)
             {
-                if(typeof this.__bind === "function")
+                Object.defineProperty(this, "__bindListener", 
                 {
-                    Object.defineProperty(this, "__bindListener", 
+                    configurable:   true, 
+                    value:          (function()
                     {
-                        configurable:   true, 
-                        value:          (function()
-                        {
-                            var value = this.__bind(this.data);
-                            if (!this.__notifyingObserver) this.__setter(value);
-                            notifyOnDataUpdate.call(this, this.data); 
-                        }).bind(this)
-                    });
-                    this.data.listen(this.__bindListener);
-                    notifyOnbind.call(this, this.data);
-                }
-                else
-                {
-                    each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener);}).bind(this));
-
-                    /*if (this.data(this.__bind||"") === undefined)   return deferBinding.call(this);
-                    else                                            */return bindDefault.call(this);
-                }
+                        var value = this.__getDataValue();
+                        if (!this.__notifyingObserver) this.__setter(value);
+                        notifyOnDataUpdate.call(this, this.data); 
+                    }).bind(this)
+                });
+                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener);}).bind(this));
+                this.data.listen(this.__bindListener);
+                notifyOnbind.call(this, this.data);
+                return this;
             }
             else if (this.__ondataupdate)
             {
@@ -108,15 +85,34 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            "___inputListener":
+            ___inputListener:
             {
                 value:  function()
                 {
                     if (this.__bounded===false) return;
                     this.__notifyingObserver    = true;
-                    if (typeof this.__bind === "function")  this.__bind(this.data, this.__getter());
-                    else                                    this.data(this.__bind, this.__getter()); 
+                    this.__setDataValue();
                     this.__notifyingObserver    = false;
+                }
+            },
+            __getDataValue:
+            {
+                value:  function()
+                {
+                    if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
+                    else if (typeof this.__bind === "string")                       return this.data(this.__bind);
+                    else if (this.__bind && typeof this.__bind.get === "function")  {debugger;return this.__bind.get.call(this.owner, this.data);}
+                    debugger;
+                    return this.data();
+                }
+            },
+            __setDataValue:
+            {
+                value:  function()
+                {
+                    if (typeof this.__bind === "string")                                this.data(this.__bind, this.__getter());
+                    else if (this.__bind && typeof this.__bind.set === "function")      this.__bind.set.call(this.owner, this.data, this.__getter());
+                    else throw new Error("Unable to set back two way bound value to model.");
                 }
             },
             onchange:

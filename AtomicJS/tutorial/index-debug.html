@@ -378,7 +378,7 @@ root.atomic.adaptHtml
                                                     },
                                                     itemsList:
                                                     {
-                                                        bindSource: "items"
+                                                        bind: {items: "items"}
                                                     }
                                                 }
                                             )
@@ -475,7 +475,7 @@ root.atomic.adaptHtml
                                                     },
                                                     betterAddNewItemButton:
                                                     {
-                                                        bind:       { enabled: {binder: function(){return this.source;}, to: "newItem.length" }},
+                                                        bind:       { enabled: "newItem.length" },
                                                         onclick:
                                                         function()
                                                         {
@@ -486,17 +486,17 @@ root.atomic.adaptHtml
                                                     },
                                                     betterItemsList:
                                                     {
-                                                        bindSource: "items"
+                                                        bind: {items: "items"}
                                                     },
                                                     removeItemButton:
                                                     {
-                                                        onsourceupdate: function(data){this.enable(data("items.length")>0);},
-                                                        onclick:        function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
+                                                        bind:       {enabled: "items.length"},
+                                                        onclick:    function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
                                                     },
                                                     sortItemsButton:
                                                     {
-                                                        onsourceupdate: function(data){this.enable(data("items.length")>1);},
-                                                        onclick:        function(){this.source("items").sort();}
+                                                        bind:       {enabled: function(){debugger; return this.source("items.length")>1}},
+                                                        onclick:    function(){this.source("items").sort();}
                                                     }
                                                 }
                                             )
@@ -522,7 +522,7 @@ root.atomic.adaptHtml
         },
         betterAddNewItemButton:
         {
-            bind:       { data: function(){return this.source;}, to: "newItem.length" },
+            bind:       { enabled: {binder: function(){return this.source;}, to: "newItem.length" }},
             onclick:
             function()
             {
@@ -533,7 +533,7 @@ root.atomic.adaptHtml
         },
         betterItemsList:
         {
-            bindSource: "items"
+            bind: {items: "items"}
         },
         removeItemButton:
         {
@@ -671,9 +671,9 @@ root.atomic.adaptHtml
                                                     textAreaControl:                { bind: "stringValue" },
                                                     passwordControl:                { bind: "passwordValue" },
                                                     checkboxControl:                { bind: "booleanValue" },
-                                                    singleDropdownListControl:      { bind: { value: {to: "selectedValue",           source: "items" } } },
-                                                    multipleListControl:            { bind: { value: {to: "multipleSelectedValues",  source: "items" } } },
-                                                    radioGroupControl:              { bind: { value: {to: "radioSelectedValue",      source: "items" } } }
+                                                    singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
+                                                    multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
+                                                    radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } }
                                                 }
                                             )
                                             (function(adapter)
@@ -687,6 +687,7 @@ root.atomic.adaptHtml
                                                     multipleSelectedValues: ["Beta"], 
                                                     radioSelectedValue:     "Alpha"
                                                 });
+                                                //debugger;
                                                 adapter.source("", {items: ["Alpha","Beta","Gamma"]});
                                             });
                                         </script>

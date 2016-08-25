@@ -25,9 +25,9 @@
     var repeater                = new root.atomic.html.repeater(container);
     var input                   = new root.atomic.html.input(control, defineDataProperties);
     var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
-    var select                  = new root.atomic.html.select(input, defineDataProperties);
-    var radiogroup              = new root.atomic.html.radiogroup(input);
-    var multiselect             = new root.atomic.html.multiselect(input);
+    var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
+    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
+    var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
 
     Object.defineProperties(controlTypes,
     {
