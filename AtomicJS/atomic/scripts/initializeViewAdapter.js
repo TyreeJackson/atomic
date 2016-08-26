@@ -31,6 +31,7 @@
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            if (binding.root !== undefined)                                 viewAdapter[name].root      = binding.root;
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }
     }

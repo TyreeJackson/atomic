@@ -99,7 +99,7 @@ add routing
         function getValue(pathSegments, revisedPath, getObserver)
         {
             pathSegments    = pathSegments || [""];
-            if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
             if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
             return returnValue;
@@ -169,6 +169,7 @@ add routing
         function addProperties(properties, pathSegments)
         {
             addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
+            if (pathSegments.length === 0)  return;
             var path    = pathSegments[0].value;
             addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
@@ -179,7 +180,7 @@ add routing
         }
         function notifyPropertyListener(propertyKey, listener, bag)
         {
-            if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+            if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.nestedUpdatesRootPath !== undefined && propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath) || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
             {
                 bag.updating.push(listener);
                 listener.properties = {};
@@ -197,6 +198,7 @@ add routing
         {
             __invoke:           {value: function(path, value, getObserver)
             {
+                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver);}
                 if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
                 if (path === undefined || path === null)        path    = "";
                 var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
@@ -225,9 +227,9 @@ add routing
                 removeFromArray(this.__bag.itemListeners, listenerCounter);
             }},
             isObserver:         {value: true},
-            listen:             {value: function(callback)
+            listen:             {value: function(callback, nestedUpdatesRootPath)
             {
-                var listener    = {callback: callback};
+                var listener    = {callback: callback, nestedUpdatesRootPath: nestedUpdatesRootPath!==undefined?((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath):undefined};
                 this.__bag.itemListeners.push(listener);
                 notifyPropertyListener.call(this, "", listener, this.__bag);
             }},
@@ -275,6 +277,7 @@ add routing
             {
                 item:           _item,
                 itemListeners:  [],
+                rootListeners:  [],
                 propertyKeys:   [],
                 updating:       [],
                 rollingback:    false

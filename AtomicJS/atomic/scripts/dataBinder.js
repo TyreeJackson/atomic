@@ -25,7 +25,7 @@
             get:    function(){return this.__data;},
             set:    function(value)
             {
-                if (value.isBinder && !this.__forceRoot)
+                if (value !== undefined && value !== null && value.isBinder && !this.__forceRoot)
                 {
                     Object.defineProperty(this,"__parentBinder", {value: value, configurable: true});
                     value.register(this);

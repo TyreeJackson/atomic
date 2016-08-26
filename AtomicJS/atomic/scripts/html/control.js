@@ -4,7 +4,7 @@
     function addEvents(eventNames)
     {
         if (eventNames)
-        for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   Object.defineProperty(this.on, eventNames[eventNameCounter], this.__events.getOrAdd(eventNames[eventNameCounter]));
+        for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   Object.defineProperty(this.on, eventNames[eventNameCounter], {value: this.__events.getOrAdd(eventNames[eventNameCounter])});
     }
     function addCustomMembers(members)
     {
@@ -32,7 +32,8 @@
             "__attributes":         {value: {}, writable: true},
             "__selector":           {value: selector},
             "parent":               {value: parent},
-            "__binder":             {value: new dataBinder()}
+            "__binder":             {value: new dataBinder()},
+            "isRoot":               {value: false, writable: true}
         });
         defineDataProperties(this, this.__binder,
         {
@@ -94,7 +95,7 @@
         insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
-        isRoot:             {get:   function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot=value===true;}},
+        isRoot:             {get:   function(){return this.__isRoot;}, set: function(value){this.__isRoot=value===true;}},
         removeClass:        {value: function(className)
         {
             if (className === undefined)

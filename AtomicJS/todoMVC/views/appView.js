@@ -1,7 +1,7 @@
 !function()
 {"use strict";root.define("todoMVC.appView",
 function()
-{return function todoMVCAppView(appViewAdapter)
+{return function todoMVCAppView()
 {
     function getActiveTodos(todos)
     {
@@ -18,7 +18,7 @@ function()
                 onenter:
                 function()
                 {
-                    if (this.value().trim() !== "") appViewAdapter.on.addNewTodo(this.value().trim());
+                    if (this.value().trim() !== "") this.root.on.addNewTodo(this.value().trim());
                     this.value("");
                 }
             },
@@ -26,7 +26,7 @@ function()
             {
                 controls:
                 {
-                    toggleAllCompleted: { onchange: function() { appViewAdapter.on.toggleAllCompleted(this.value()); } },
+                    toggleAllCompleted: { onchange: function() { this.root.on.toggleAllCompleted(this.value()); } },
                     todoList:
                     {
                         repeat:
@@ -42,7 +42,7 @@ function()
                                         onchange:
                                         function()
                                         {
-                                            appViewAdapter.on.saveTodo(this.data());
+                                            this.root.on.saveTodo(this.data());
                                         } 
                                     },
                                     todoLabel:
@@ -61,7 +61,7 @@ function()
                                         onclick:
                                         function()
                                         {
-                                            appViewAdapter.on.deleteTodo(this.data().id);
+                                            this.root.on.deleteTodo(this.data().id);
                                         }
                                     },
                                     editTodoTextbox:
@@ -72,8 +72,8 @@ function()
                                         {
                                             this.value(this.value().trim());
                                             this.data.commit();
-                                            if (this.value() == "") appViewAdapter.on.deleteTodo(this.data().id);
-                                            else                    appViewAdapter.on.saveTodo(this.data());
+                                            if (this.value() == "") this.root.on.deleteTodo(this.data().id);
+                                            else                    this.root.on.saveTodo(this.data());
                                         },
                                         onescape:
                                         function()
@@ -111,10 +111,10 @@ function()
                 {
                     todosCountLabel:        { bindAs: function(todos){return getActiveTodos(todos()).length;} },
                     todosCountDescription:  { bindAs: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
-                    allTodosLink:           { onclick: function(){appViewAdapter.attribute("filter", "none");} },
-                    activeTodosLink:        { onclick: function(){appViewAdapter.attribute("filter", "active");} },
-                    completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} },
-                    deleteCompletedTodos:   { onclick: function(){appViewAdapter.on.deleteCompletedTodos();} },
+                    allTodosLink:           { onclick: function(){this.root.attribute("filter", "none");} },
+                    activeTodosLink:        { onclick: function(){this.root.attribute("filter", "active");} },
+                    completedTodosLink:     { onclick: function(){this.root.attribute("filter", "completed");} },
+                    deleteCompletedTodos:   { onclick: function(){this.root.on.deleteCompletedTodos();} },
                 },
                 hidden: true,
                 ondataupdate:   function(data)

@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control)
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, defineDataProperties, viewAdapterFactory, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -25,15 +25,30 @@
     {
         while(element.lastChild)    element.removeChild(element.lastChild);
     }
-    function createTemplateCopy(templateKey, subDataItem, counter)
+    function locate(item, retained)
+    {
+        for(var counter=0;counter<retained.length;counter++) if (retained[counter].data() === item)
+        {
+            var retainedControl = retained[counter];
+            removeFromArray(retained, counter);
+            return retainedControl;
+        }
+        return null;
+    }
+    function createTemplateCopy(templateKey, subDataItem, counter, retained)
     {
         var templateElement = this.__templateElements[templateKey];
-
         if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
         var key             = templateElement.declaration.getKey.call({parent: this, index: counter}, subDataItem);
+
+        var retainedControl = locate(subDataItem(), retained);
+        if (retainedControl !== null)   return { key: key, parent: templateElement.parent, control: retainedControl };
+
         var elementCopy     = templateElement.element.cloneNode(true);
         elementCopy.setAttribute("id", key);
-        return { key: key, parent: templateElement.parent, control: internalFunctions.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        var clone           = { key: key, parent: templateElement.parent, control: viewAdapterFactory.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        clone.control.data  = subDataItem;
+        return clone;
     };
     function extractDeferredControls(templateDeclarations, viewElement)
     {
@@ -57,6 +72,41 @@
         removeAllElementChildren(this.__templateElements[templateKey].parent);
     }
 
+    function bindRepeatedList(observer)
+    {
+        if (observer() === undefined) return;
+        var documentFragment    = document.createDocumentFragment();
+        var retained            = unbindRepeatedList.call(this, observer());
+        for(var dataItemCounter=0;dataItemCounter<observer.count;dataItemCounter++)
+        {
+            for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+            {
+                var subDataItem                     = observer.observe(dataItemCounter);
+                var clone                           = createTemplateCopy.call(this, this.__templateKeys[templateKeyCounter], subDataItem, dataItemCounter, retained);
+                if (clone !== undefined)
+                {
+                    this.__repeatedControls[clone.key]  = clone.control;
+                    documentFragment.appendChild(clone.control.__element);
+                }
+            }
+        }
+        this.__element.appendChild(documentFragment);
+    }
+    function unbindRepeatedList(keepList)
+    {
+        var retain  = [];
+        if (this.__repeatedControls !== undefined)
+        for(var repeatedControlKey in this.__repeatedControls)
+        {
+            var repeatedControl     = this.__repeatedControls[repeatedControlKey];
+            if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
+            else                                                repeatedControl.data    = undefined;
+            repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+        }
+        this.__repeatedControls     = {};
+        return retain;
+    }
+
     function repeater(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
@@ -65,6 +115,11 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
+        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
+        {
+            bindRepeatedList.call(this, this.data.observe(this.bind));
+        }}});
+        this.bind   = "";
     }
     Object.defineProperty(repeater, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(repeater.prototype,

@@ -21,8 +21,8 @@
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, defineDataProperties, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, defineDataProperties);
     var container               = new root.atomic.html.container(control, each);
-    var panel                   = new root.atomic.html.panel(container, defineDataProperties, viewAdapterFactory);
-    var repeater                = new root.atomic.html.repeater(container);
+    var panel                   = new root.atomic.html.panel(container, defineDataProperties, viewAdapterFactory, each);
+    var repeater                = new root.atomic.html.repeater(container, defineDataProperties, viewAdapterFactory, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control, defineDataProperties);
     var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
     var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);

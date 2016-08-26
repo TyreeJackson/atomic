@@ -65,7 +65,6 @@
             if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
-        data:               {get: function(){return this.__binder.data;},   set: function(value){this.__binder.data = value; each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isRoot) this.controls[controlKey].data = value;}).bind(this));}},
         removeControl:      {value: function(childControl)
         {
             this.__element.removeChild(childControl.__element);

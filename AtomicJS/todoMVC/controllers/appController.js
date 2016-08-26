@@ -38,7 +38,7 @@
             this.launch =
             function()
             {
-                appView.bindData(new observer([]));
+                appView.data = new observer([]);
                 appProxy.getTodos(rebindTodoList);
             }
         }

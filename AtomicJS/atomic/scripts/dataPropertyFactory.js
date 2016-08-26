@@ -13,7 +13,7 @@
             {
                 if (value !== undefined || forceSet)
                 {
-                    setter.call(owner, value);
+                    if (typeof setter === "function")   setter.call(owner, value);
                     if (Object.keys(property.__onchange).length===0)    property.__inputListener();
                 }
                 else                                    return getter.call(owner);
@@ -21,8 +21,9 @@
             Object.defineProperties(property,
             {
                 __owner:                {value: owner},
+                __binder:               {value: binder, configurable: true},
                 __getter:               {value: function(){return getter.call(owner);}},
-                __setter:               {value: function(value){setter.call(owner, value);}},
+                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
                 __onchange:             {value: {}},
                 __inputListener:        {value: function(){property.___inputListener();}}
@@ -49,14 +50,14 @@
                     }).bind(this)
                 });
                 each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener);}).bind(this));
-                this.data.listen(this.__bindListener);
+                this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
                 return this;
             }
             else if (this.__ondataupdate)
             {
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
-                this.data.listen(this.__bindListener);
+                this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
             }
             return this;
@@ -74,9 +75,9 @@
             each(this.__onchange, (function(onchange){onchange.ignore(this.__inputListener);}).bind(this));
             if (notify)                                 notifyOnunbind.call(this);
         }
-        function notifyOnbind(data)         { if (this.__onbind) this.__onbind(data); }
-        function notifyOnDataUpdate(data)   { if (this.__ondataupdate) this.__ondataupdate(data); }
-        function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind(data); }
+        function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
+        function notifyOnDataUpdate(data)   { if (this.__ondataupdate) this.__ondataupdate.call(this.__owner, data); }
+        function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind.call(this.__owner, data); }
         function rebind(callback)
         {
             unbindData.call(this);
@@ -85,6 +86,15 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
+            __destroy:
+            {
+                value:  function()
+                {
+                    if (this.__binder)  this.__binder.unregister(this);
+                    Object.defineProperty(this, "__binder", {value: undefined, writable: true});
+                    delete this.__binder;
+                }
+            },
             ___inputListener:
             {
                 value:  function()
@@ -101,7 +111,7 @@
                 {
                     if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
                     else if (typeof this.__bind === "string")                       return this.data(this.__bind);
-                    else if (this.__bind && typeof this.__bind.get === "function")  {debugger;return this.__bind.get.call(this.owner, this.data);}
+                    else if (this.__bind && typeof this.__bind.get === "function")  {return this.__bind.get.call(this.owner, this.data);}
                     debugger;
                     return this.data();
                 }
@@ -110,9 +120,11 @@
             {
                 value:  function()
                 {
-                    if (typeof this.__bind === "string")                                this.data(this.__bind, this.__getter());
-                    else if (this.__bind && typeof this.__bind.set === "function")      this.__bind.set.call(this.owner, this.data, this.__getter());
-                    else throw new Error("Unable to set back two way bound value to model.");
+                    if (this.__getter === undefined)                                return;
+
+                    if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
+                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.owner, this.data, this.__getter());
+                    else                                                            throw new Error("Unable to set back two way bound value to model.");
                 }
             },
             onchange:
@@ -125,7 +137,7 @@
                 });}
             }
         });
-        each(["data","bind"],function(name)
+        each(["data","bind","root"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -150,11 +162,12 @@
         });
         function defineDataProperties(target, binder, properties)
         {
-            for(var propertyName in properties)
+            each(properties, function(property, propertyName)
             {
-                var property = properties[propertyName];
+                if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
                 Object.defineProperty(target, propertyName, {value: createProperty(target, property.get, property.set, property.onchange, binder), configurable: true})
-            }
+                each(["onbind","ondataupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+            });
         }
         return defineDataProperties;
     }

@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.panel", function htmlPanel(container, defineDataProperties, viewAdapterFactory)
+{"use strict";root.define("atomic.html.panel", function htmlPanel(container, defineDataProperties, viewAdapterFactory, each)
 {
     function attachControls(controlDeclarations, viewElement)
     {
@@ -16,13 +16,11 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        Object.defineProperties(this,
+        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
         {
-        });
-        defineDataProperties(this, this.__binder,
-        {
-            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value;}}
-        });
+            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+        }}});
+        this.bind   = "";
     }
     Object.defineProperty(panel, "prototype", {value: Object.create(container.prototype)});
     Object.defineProperties(panel.prototype,

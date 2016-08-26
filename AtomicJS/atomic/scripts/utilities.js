@@ -16,52 +16,61 @@
         array.length    = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
     });
-    root.define("utilities.pubSub", function pubSub(isolatedFunctionFactory, removeItemFromArray)
+    (function pubSubContext()
     {
-        var functionFactory = new isolatedFunctionFactory();
-        var pubSub          =
-        functionFactory.create
-        (function(listenersChanged)
+        var pubSub;
+        function buildConstructor(isolatedFunctionFactory, removeItemFromArray)
         {
-            function pubSub()
+            var functionFactory = new isolatedFunctionFactory();
+            var pubSub          =
+            functionFactory.create
+            (function(listenersChanged)
             {
-                var publish = (function(args)
+                function pubSub()
                 {
-                    this.__publishTimeoutId = null;
-                    this.__lastPublished    = new Number(new Date());
-                    if (this.__listeners === undefined) debugger;
-                    for(var listenerCounter=0;listenerCounter<this.__listeners.length;listenerCounter++) this.__listeners[listenerCounter].apply(null, args);
-                }).bind(pubSub, arguments);
+                    var publish = (function(args)
+                    {
+                        this.__publishTimeoutId = null;
+                        this.__lastPublished    = new Number(new Date());
+                        if (this.__listeners === undefined) debugger;
+                        for(var listenerCounter=0;listenerCounter<this.__listeners.length;listenerCounter++) this.__listeners[listenerCounter].apply(null, args);
+                    }).bind(pubSub, arguments);
 
-                if (this.__publishTimeoutId != null)
-                {
-                    clearTimeout(this.__publishTimeoutId);
-                    this.__publishTimeoutId = null;
+                    if (this.__publishTimeoutId != null)
+                    {
+                        clearTimeout(this.__publishTimeoutId);
+                        this.__publishTimeoutId = null;
+                    }
+                    var now         = new Number(new Date());
+                    var limitOffset = (this.__lastPublished||0) + (this.limit||0);
+
+                    if (now>=limitOffset)   publish();
+                    else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
                 }
-                var now         = new Number(new Date());
-                var limitOffset = (this.__lastPublished||0) + (this.limit||0);
-
-                if (now>=limitOffset)   publish();
-                else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
-            }
-            Object.defineProperties(pubSub, 
+                Object.defineProperties(pubSub, 
+                {
+                    "__listenersChanged":   {value: listenersChanged},
+                    "__listeners":          {value: []},
+                    "__lastPublished":      {writeble: true, value: null},
+                    "__publishTimeoutId":   {writable: true, value: null},
+                    "limit":                {writable: true, value: null}
+                });
+                return pubSub;
+            });
+            Object.defineProperties(functionFactory.root.prototype,
             {
-                "__listenersChanged":   {value: listenersChanged},
-                "__listeners":          {value: []},
-                "__lastPublished":      {writeble: true, value: null},
-                "__publishTimeoutId":   {writable: true, value: null},
-                "limit":                {writable: true, value: null}
+                "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
+                listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
+                ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
+                invoke:                     {value: function(){this.apply(this, arguments);}}
             });
             return pubSub;
-        });
-        Object.defineProperties(functionFactory.root.prototype,
+        }
+        root.define("utilities.pubSub", function(isolatedFunctionFactory, removeItemFromArray)
         {
-            "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
-            listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
-            ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
-            invoke:                     {value: function(){this.apply(this, arguments);}}
+            if (pubSub === undefined)   pubSub = buildConstructor(isolatedFunctionFactory, removeItemFromArray);
+            return pubSub;
         });
-        return pubSub;
-    });
+    })();
     root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item){ root.utilities.removeFromArray(array, array.indexOf(item)); });
 }();

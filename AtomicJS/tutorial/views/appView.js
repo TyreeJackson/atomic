@@ -1,6 +1,6 @@
 !function()
-{"use strict";root.define("tutorial.appView", function()
-{return function tutorialAppView(appViewAdapter)
+{"use strict";root.define("tutorial.appView", function(each)
+{return function tutorialAppView()
 {
     var adapterDefinition   =
     {
@@ -8,31 +8,11 @@
         {
             exampleLinks:
             {
-                controls:
-                {
-                    exampleLink1:   {},
-                    exampleLink2:   {},
-                    exampleLink3:   {},
-                    exampleLink4:   {},
-                    exampleLink5:   {},
-                    exampleLink6:   {},
-                    exampleLink7:   {},
-                    exampleLink8:   {}
-                }
+                controls:   {}
             },
             examples:
             {
-                controls:
-                {
-                    example1: { hidden: true },
-                    example2: { hidden: true },
-                    example3: { hidden: true },
-                    example4: { hidden: true },
-                    example5: { hidden: true },
-                    example6: { hidden: true },
-                    example7: { hidden: true },
-                    example8: { hidden: true }
-                }
+                controls:   {}
             }
         },
         members:
@@ -47,5 +27,10 @@
             }
         }
     };
+    each([1,2,3,4,5,6,7,8,9], function(val)
+    {
+        adapterDefinition.controls.exampleLinks.controls["exampleLink"+val] = {};
+        adapterDefinition.controls.examples.controls["example"+val]         = {hidden: true};
+    });
     return adapterDefinition;
 }});}();
