@@ -1,480 +1,169 @@
 !function()
 {"use strict";
-    function __namespace(){}
-    __namespace.prototype.define    = function(fullName, item) { namespace(this, fullName, item); }
-    var __root                      = new __namespace();
+    function __namespace() {}
+    function define(fullName, item) { namespace(this, fullName, item); }
+    Object.defineProperty(__namespace.prototype, "define", {value:define});
+    var __root  = new __namespace();
     function getNamespace(root, paths)
     {
         var current     = root;
         for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
         {
             var path    = paths[pathCounter];
-            if (current[path] === undefined)    current[path]   = new __namespace();
+            if (current[path] === undefined)    Object.defineProperty(current, path, {value: new __namespace()});
             current     = current[path];
         }
         return current;
     }
     function namespace(root, fullName, value)
     {
-        var paths                           = fullName.split(".");
-        var namespace                       = getNamespace(root, paths);
-        if (value === undefined)            return namespace[paths[paths.length-1]];
-        namespace[paths[paths.length-1]]    = value;
+        var paths                   = fullName.split(".");
+        var namespace               = getNamespace(root, paths);
+        if (value === undefined)    return namespace[paths[paths.length-1]];
+        Object.defineProperty(namespace, [paths[paths.length-1]], {value: value});
     }
     window.root = window.root || __root;
 }();
 !function()
 {"use strict";
-    root.define("utilities.each", function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); });
+    root.define("utilities.each", function each(array, callback)
+    {
+        if      (Array.isArray(array))  for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++)    callback(array[arrayCounter], arrayCounter);
+        else if (array !== undefined)
+        {
+            var keys    = Object.keys(array);
+            for(var keyCounter=0;keyCounter<keys.length;keyCounter++)                                       callback(array[keys[keyCounter]], keys[keyCounter]);
+        }
+    });
     root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
     {
+        if (from == -1) return;
         var rest        = array.slice((to || from) + 1 || array.length);
         array.length    = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
     });
-    root.define("utilities.pubSub", function pubSub()
+    (function pubSubContext()
     {
-        var listeners   = [];
-        function _pubSub() { for(var listenerCounter=0;listenerCounter<listeners.length;listenerCounter++) listeners[listenerCounter].apply(null, arguments); }
-        _pubSub.listen  = function(listener) { listeners.push(listener); }
-        _pubSub.ignore  = function(listener) { root.utilities.removeFromArray.call(listeners, listener); }
-        return _pubSub;
-    });
+        var pubSub;
+        function buildConstructor(isolatedFunctionFactory, removeItemFromArray)
+        {
+            var functionFactory = new isolatedFunctionFactory();
+            var pubSub          =
+            functionFactory.create
+            (function(listenersChanged)
+            {
+                function pubSub()
+                {
+                    var publish = (function(args)
+                    {
+                        this.__publishTimeoutId = null;
+                        this.__lastPublished    = new Number(new Date());
+                        if (this.__listeners === undefined) debugger;
+                        for(var listenerCounter=0;listenerCounter<this.__listeners.length;listenerCounter++) this.__listeners[listenerCounter].apply(null, args);
+                    }).bind(pubSub, arguments);
+
+                    if (this.__publishTimeoutId != null)
+                    {
+                        clearTimeout(this.__publishTimeoutId);
+                        this.__publishTimeoutId = null;
+                    }
+                    var now         = new Number(new Date());
+                    var limitOffset = (this.__lastPublished||0) + (this.limit||0);
+
+                    if (now>=limitOffset)   publish();
+                    else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
+                }
+                Object.defineProperties(pubSub, 
+                {
+                    "__listenersChanged":   {value: listenersChanged},
+                    "__listeners":          {value: []},
+                    "__lastPublished":      {writeble: true, value: null},
+                    "__publishTimeoutId":   {writable: true, value: null},
+                    "limit":                {writable: true, value: null}
+                });
+                return pubSub;
+            });
+            Object.defineProperties(functionFactory.root.prototype,
+            {
+                "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
+                listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
+                ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
+                invoke:                     {value: function(){this.apply(this, arguments);}}
+            });
+            return pubSub;
+        }
+        root.define("utilities.pubSub", function(isolatedFunctionFactory, removeItemFromArray)
+        {
+            if (pubSub === undefined)   pubSub = buildConstructor(isolatedFunctionFactory, removeItemFromArray);
+            return pubSub;
+        });
+    })();
     root.define("utilities.removeItemFromArray", function removeItemFromArray(array, item){ root.utilities.removeFromArray(array, array.indexOf(item)); });
 }();
 !function()
-{"use strict";root.define("atomic.htmlAttachViewMemberAdapters", function htmlAttachViewMemberAdapters(window, document, removeItemFromArray, setTimeout, clearTimeout, each)
+{"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, each)
 {
-    function bindRepeatedList(observer)
+    function listenerList(target, eventName, withCapture)
     {
-        if (observer === undefined) return;
-        var documentFragment    = document.createDocumentFragment();
-        var source              = this.source;
-        unbindRepeatedList.call(this);
-        for(var dataItemCounter=0;dataItemCounter<observer().length;dataItemCounter++)
+        Object.defineProperties(this,
         {
-            var subDataItem = observer(dataItemCounter);
-            for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+            "__eventName":      {value: eventName},
+            "__target":         {value: target},
+            "__withCapture":    {value: withCapture},
+            pubSub:             {value: new pubSub((this.__listenersChanged).bind(this))}
+        });
+    }
+    Object.defineProperties(listenerList.prototype,
+    {
+        "__listenersChanged":   {value: function(listenerCount)
+        {
+            if (listenerCount > 0 && !this.__isAttached)
             {
-                var clone                           = this.__createTemplateCopy(this.__templateKeys[templateKeyCounter], subDataItem, dataItemCounter);
-                if (clone !== undefined)
-                {
-                    this.__repeatedControls[clone.key]  = clone.control;
-                    clone.control.bindData(subDataItem);
-                    documentFragment.appendChild(clone.control.__element);
-                }
+                this.__target.__element.addEventListener(this.__eventName, this.pubSub, this.__withCapture);
+                Object.defineProperty(this, "__isAttached", {value: true, configurable: true});
             }
-        }
-        if (source !== undefined)   this.bindSourceData(source);
-        this.__element.appendChild(documentFragment);
-    }
-    function unbindRepeatedList()
-    {
-        this.unbindSourceData();
-        if (this.__repeatedControls !== undefined)
-        for(var repeatedControlKey in this.__repeatedControls)
-        {
-            var repeatedControl     = this.__repeatedControls[repeatedControlKey];
-            repeatedControl.unbindData();
-            repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
-        }
-        this.__repeatedControls     = {};
-    }
-    function notifyOnbind(data) { if (this.__onbind) this.__onbind(data); }
-    function notifyOnDataUpdate(data) { if (this.__ondataupdate) this.__ondataupdate(data); }
-    function notifyOnSourceUpdate(data) { if (this.__onsourceupdate) this.__onsourceupdate(data); }
-    function notifyOnunbind(data) { if (this.__onunbind) this.__onunbind(data); }
-    function notifyOnbindSource(data) { if (this.__onbindsource) this.__onbindsource(data); }
-    function notifyOnunbindSource(data) { if (this.__onunbindsource) this.__onunbindsource(data); }
-    function clearSelectList(selectList){ for(var counter=selectList.options.length-1;counter>=0;counter--) selectList.remove(counter); }
-    function bindSelectListSource()
-    {
-        var selectedValue   = this.value();
-        var isArray         = Array.isArray(typeof selectedValue === "function" ? selectedValue() : selectedValue);
-        clearSelectList(this.__element);
-        var source          = this.source(this.__bindSource||"");
-        if (source === undefined)   return;
-        for(var counter=0;counter<source().length;counter++)
-        {
-            var option      = document.createElement('option');
-            var sourceItem  = source()[counter];
-            option.text     = this.__bindSourceText !== undefined ? sourceItem[this.__bindSourceText] : sourceItem;
-            if (!isArray)   option.selected = (option.rawValue = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
-            else            option.selected = selectedValue.indexOf(option.rawValue = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) > -1;
-            this.__element.appendChild(option);
-        }
-    }
-    function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
-    function bindRadioGroupSource()
-    {
-        var selectedValue   = this.value();
-        clearRadioGroup(this.__element);
-        var source          = this.source(this.__bindSource||"");
-        if (source === undefined)   return;
-        for(var counter=0;counter<source().length;counter++)
-        {
-            var radioGroupItem                      = this.__templateElement.cloneNode(true);
-            var sourceItem                          = source()[counter];
-            radioGroupItem.parent                   = this;
-            radioGroupItem.__radioElement           = radioGroupItem.querySelector(this.__radioButtonSelector);
-            radioGroupItem.__radioLabel             = radioGroupItem.querySelector(this.__radioLabelSelector);
-            radioGroupItem.__radioLabel.addEventListener("click", (function(){this.parent.value(this.__radioElement.rawValue);this.parent.triggerEvent("change");}).bind(radioGroupItem),false)
-            radioGroupItem.__radioElement.name      = this.__element.__selectorPath + (this.__element.id||"unknown");
-            radioGroupItem.__radioElement.checked   = (radioGroupItem.__radioElement.rawValue  = this.__bindSourceValue !== undefined ? sourceItem[this.__bindSourceValue] : sourceItem) == selectedValue;
-            if(radioGroupItem.__radioLabel) radioGroupItem.__radioLabel.innerHTML   = this.__bindSourceText !== undefined ? sourceItem[this.__bindSourceText] : sourceItem;
-            this.__element.appendChild(radioGroupItem);
-        }
-    }
-    function deferSourceBinding()
-    {
-        this.__bindSourceListener   = (function(){ var item = this.source; if (item(this.__bindSource||"") === undefined) return; this.source.ignore(this.__bindSourceListener); this.__bindSourceListener.ignore=true; delete this.__bindSourceListener; this.bindSourceData(item); }).bind(this);
-        this.source.listen(this.__bindSourceListener);
-        return this;
-    }
-    function bindSourceContainerChildren()
-    {
-        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindSourceData(this.source(this.__bindSource||""));
-        this.__bindSourceListener   = (function(){ notifyOnSourceUpdate.call(this, this.source(this.__bindSource||"")); }).bind(this);
-        this.source.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.source);
-        return this;
-    }
-    function bindSourceRepeaterChildren()
-    {
-        for(var controlKey in this.__repeatedControls)    this.__repeatedControls[controlKey].bindSourceData(this.source(this.__bindSource||""));
-        this.__bindSourceListener   = (function(){ notifyOnSourceUpdate.call(this, this.source(this.__bindSource||"")); }).bind(this);
-        this.source.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.source);
-        return this;
-    }
-    function bindSourceSelectList()
-    {
-        this.__bindSourceListener   = (function(){ bindSelectListSource.call(this); notifyOnSourceUpdate.call(this, this.source); }).bind(this);
-        this.source.listen(this.__bindSourceListener);
-        notifyOnbindSource.call(this, this.source);
-        return this;
-    }
-    function bindSourceRadioGroup()
-    {
-        if (this.__templateElement === undefined)
-        {
-            this.__radioButtonSelector	= this.__element.getAttribute("data-atomic-radiobutton")||"input[type='radio']";
-            this.__radioLabelSelector   = this.__element.getAttribute("data-atomic-radiolabel")||"label";
-            this.__templateElement      = this.__element.querySelector("radiogroupitem");
-            this.__templateElement.parentNode.removeChild(this.__templateElement);
-            clearRadioGroup(this.__element);
-        }
-        this.__bindSourceListener   = (function(){ bindRadioGroupSource.call(this); notifyOnSourceUpdate.call(this, this.source); }).bind(this);
-        this.source.listen(this.__bindSourceListener);
-    }
-    function deferSourceBindingCheck(sources, bindSourceFunction)
-    {
-        if (sources !== undefined)
-        {
-            this.source = sources;
-            if (this.source(this.__bindSource||"") === undefined)   return deferSourceBinding.call(this);
-            else                                                    return bindSourceFunction !== undefined ? bindSourceFunction.call(this) : this;
-        }
-        return this;
-    }
-    var bindSourceFunctions     =
-    {
-        "default":                  function(sources){ return deferSourceBindingCheck.call(this, sources); },
-        "container":                function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceContainerChildren); },
-        "repeater":                 function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRepeaterChildren); },
-        "select:select-multiple":   function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
-        "select:select-one":        function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceSelectList); },
-        "radiogroup":               function(sources){ return deferSourceBindingCheck.call(this, sources, bindSourceRadioGroup); }
-    };
-    function unbindSources(extendedUnbindFunction)
-    {
-        if (this.source !== undefined)                  this.source.ignore(this.__bindSourceListener);
-        if (this.__bindSourceListener !== undefined)    this.__bindSourceListener.ignore    = true;
-        delete this.__bindSourceListener;
-        delete this.source;
-        if (extendedUnbindFunction !== undefined)       extendedUnbindFunction.call(this);
-        return this;
-    }
-    var unbindSourceFunctions   =
-    {
-        "default":                  function(){ return unbindSources.call(this); },
-        "container":                function(){ return unbindSources.call(this, function(){ for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindSourceData(); }); },
-        "repeater":                 function(){ return unbindSources.call(this, function(){ for(var controlKey in this.__repeatedControls)  this.__repeatedControls[controlKey].unbindSourceData(); }); },
-        "select:select-multiple":   function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
-        "select:select-one":        function(){ return unbindSources.call(this, function(){ clearSelectList(this.__element); }); },
-        "radiogroup":               function(){ return unbindSources.call(this, function(){ if (this.__templateElement !== undefined) clearRadioGroup(this.__element); }); }
-    };
-    function bindUpdateEvents()
-    {
-        if (this.__updateon===undefined)
-        {
-            this.addEventListener("change", this.__inputListener, false, true);
-            return;
-        }
-        for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.addEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
-    }
-    function unbindUpdateEvents()
-    {
-        if (this.__updateon===undefined)
-        {
-            this.removeEventListener("change", this.__inputListener, false, true);
-            return;
-        }
-        for(var eventNameCounter=0;eventNameCounter<this.__updateon.length;eventNameCounter++)  this.removeEventListener(this.__updateon[eventNameCounter], this.__inputListener, false, true);
-    }
-    function deferBinding()
-    {
-        this.__bindListener = (function(){ var item = this.data; if ( item(this.__bindTo||"") === undefined) return; this.data.ignore(this.__bindListener); this.__bindListener.ignore=true; delete this.__bindListener; this.bindData(item); }).bind(this);
-        this.data.listen(this.__bindListener);
-        return this;
-    }
-    function bindDefault()
-    {
-        this.__bindListener     = (function(){ var value = this.data(this.__bindTo); if (!this.__notifyingObserver) this.value(value, true); notifyOnDataUpdate.call(this, this.data); }).bind(this);
-        this.data.listen(this.__bindListener);
-        notifyOnbind.call(this, this.data);
-        return this;
-    }
-    function bindContainerChildren()
-    {
-        for(var controlKey in this.controls)    if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].bindData(this.data(this.__bindTo||""));
-        this.__bindListener = (function(){ if (this.data === undefined) throw new Error("This control is not currently bound."); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); }).bind(this);
-        this.data.listen(this.__bindListener);
-        notifyOnbind.call(this, this.data);
-        return this;
-    }
-    function bindRepeaterChildren()
-    {
-        this.__bindListener = (function(){ var item = this.data(this.__bindTo||""); return (function(){ bindRepeatedList.call(this, item); notifyOnDataUpdate.call(this, item); }).bind(this); }).bind(this);
-        this.data.listen(this.__bindListener);
-        notifyOnbind.call(this, this.data);
-        return this;
-    }
-    function deferBindingCheck(observer, bindFunction)
-    {
-        if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
-        this.data   = observer;
-        if (this.data(this.__bindTo||"") === undefined) return deferBinding.call(this);
-        else                                            return bindFunction.call(this);
-    }
-    var bindDataFunctions  =
-    {
-        "default":
-        function(observer)
-        {
-            if (observer === undefined) throw new Error("Unable to bind container control to an undefined observer");
-            this.data                       = observer;
-            if (this.__bindTo !== undefined || this.__bindAs)
+            else    if(listenerCount == 0 && this.__isAttached)
             {
-                if(this.__bindAs)
-                {
-                    this.__bindListener     = (function(){var value = this.__bindAs(this.__bindTo !== undefined ? this.data(this.__bindTo) : this.data); if (!this.__notifyingObserver) this.value(value, true); notifyOnDataUpdate.call(this, this.data); }).bind(this);
-                    this.data.listen(this.__bindListener);
-                    notifyOnbind.call(this, this.data);
-                }
-                else
-                {
-                    this.__inputListener    = (function(){this.__notifyingObserver=true; this.data(this.__bindTo, this.value()); this.__notifyingObserver=false;}).bind(this);
-                    bindUpdateEvents.call(this);
-
-                    if (this.data(this.__bindTo||"") === undefined) return deferBinding.call(this);
-                    else                                            return bindDefault.call(this);
-                }
+                this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+                Object.defineProperty(this, "__isAttached", {value: false, configurable: true});
             }
-            else if (this.__ondataupdate)
-            {
-                this.__bindListener     = (function(){ notifyOnDataUpdate.call(this, this.data); }).bind(this);
-                this.data.listen(this.__bindListener);
-                notifyOnbind.call(this, this.data);
-            }
-            return this;
-        },
-        container:        function(observer){ return deferBindingCheck.call(this, observer, bindContainerChildren); },
-        repeater:         function(observer){ return deferBindingCheck.call(this, observer, bindRepeaterChildren); }
-    };
-    function unbindData(extendedUnbindFunction)
-    {
-        if (this.data !== undefined)            this.data.ignore(this.__bindListener);
-        if (this.__bindListener !== undefined)  this.__bindListener.ignore  = true;
-        delete this.__bindListener;
-        delete this.data;
-        if (extendedUnbindFunction !== undefined)   extendedUnbindFunction.call(this);
-        return this;
-    }
-    var unbindDataFunctions  =
-    {
-        "default":
-        function()
-        {
-            if (this.data === undefined)                        return this;
-
-            if (this.__bindTo !== undefined || this.__bindAs)
-            {
-                return unbindData.call(this, function()
-                {
-                    unbindUpdateEvents.call(this);
-                    delete this.__inputListener;
-                    notifyOnunbind.call(this);
-                });
-            }
-            else if (this.__ondataupdate)                       return unbindData.call(this, function(){ notifyOnunbind.call(this); });
-        },
-        container:
-        function()
-        {
-            return unbindData.call(this, function()
-            {
-                for(var controlKey in this.controls) if (!this.controls[controlKey].__bindingRoot) this.controls[controlKey].unbindData();
-                notifyOnunbind.call(this);
-            });
-        },
-        repeater:
-        function()
-        {
-            return unbindData.call(this, function()
-            {
-                var documentFragment    = document.createDocumentFragment();
-                this.__detach(documentFragment);
-                unbindRepeatedList.call(this);
-                this.__reattach();
-                notifyOnunbind.call(this);
-            });
-        }
-    };
-    function htmlBasedValueFunc(value, forceSet)
-    {
-        if (value !== undefined || forceSet)    this.__element.innerHTML=value;
-        else                                    return this.__element.innerHTML;
-    }
-    function setSelectListValue(value)
-    {
-        this.__rawValue = value;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
-    }
-    function setSelectListValues(values)
-    {
-        if (typeof values === "function")   values = values();
-        if ( !Array.isArray(values)) values  = [values];
-        this.__rawValue = values;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = values.indexOf(this.__element.options[counter].rawValue) > -1;
-    }
-    function getSelectListValue()
-    {
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   return this.__rawValue = this.__element.options[counter].rawValue;
-        return this.__rawValue;
-    }
-    function getSelectListValues()
-    {
-        if (this.__element.options.length == 0) return this.__rawValue;
-        var values  = [];
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   values.push(this.__element.options[counter].rawValue);
-        return this.__rawValue = values;
-    }
-    function setRadioGroupValue(value)
-    {
-        this.__rawValue = value;
-        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) this.__element.childNodes[counter].__radioElement.checked = this.__element.childNodes[counter].__radioElement.rawValue == value;
-    }
-    function getRadioGroupValue()
-    {
-        if (this.__templateElement !== undefined && this.__element.childNodes.length > 0) for(var counter=0;counter<this.__element.childNodes.length;counter++) if (this.__element.childNodes[counter].__radioElement.checked)  return this.rawValue = this.__element.childNodes[counter].__radioElement.rawValue;
-        return this.__rawValue;
-    }
-    var valueFunctions          =
-    {
-        "default":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.value    = value;
-            else                                    return this.__element.value;
-        },
-        "input:checkbox":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.checked  = value===true;
-            else                                    return this.__element.checked;
-        },
-        "img":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    this.__element.src  = value;
-            else                                    return this.__element.src;
-        },
-        "select:select-multiple":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setSelectListValues.call(this, value);
-            else                                    return getSelectListValues.call(this);
-        },
-        "select:select-one":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setSelectListValue.call(this, value);
-            else                                    return getSelectListValue.call(this);
-        },
-        "radiogroup":
-        function(value, forceSet)
-        {
-            if (value !== undefined || forceSet)    setRadioGroupValue.call(this, value);
-            else                                    return getRadioGroupValue.call(this);
-        }
-    };
-    each(["a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
-    function(name)
-    {
-        valueFunctions[name]    = htmlBasedValueFunc;
+        }}
     });
-    function addClass(element, className)
+    function eventsSet(target)
     {
-        var classNames  = element.className.split(" ");
-        if (classNames.indexOf(className) === -1) classNames.push(className);
-        element.className = classNames.join(" ").trim();
-    }
-    function hasClass(element, className)
-    {
-        var classNames  = element.className.split(" ");
-        return classNames.indexOf(className) > -1;
-    }
-    function removeClass(element, className)
-    {
-        if (className === undefined)
+        Object.defineProperties(this,
         {
-            element.className   = "";
-            return;
-        }
-        var classNames  = element.className.split(" ");
-        if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
-        element.className = classNames.join(" ");
+            "__target":                     {value: target}, 
+            "__listenersUsingCapture":      {value:{}}, 
+            "__listenersNotUsingCapture":   {value:{}}
+        });
     }
-    function triggerEvent()
+    function getListener(name, withCapture, add)
     {
-        for(var listenerCounter=0;listenerCounter<this.listeners.length;listenerCounter++)   this.listeners[listenerCounter].apply(null, arguments);
+        var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
+        var eventListeners  = listeners[name];
+        if (add && eventListeners === undefined)    Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
+        return eventListeners&&eventListeners.pubSub;
     }
-    function createElementListener(listeners)
+    Object.defineProperties(eventsSet.prototype,
     {
-        return function() { triggerEvent.apply(listeners, arguments); };
+        getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
+        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }}
+    });
+    return eventsSet;
+});}();
+!function()
+{"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, defineDataProperties, eventsSet, dataBinder)
+{
+    function addEvents(eventNames)
+    {
+        if (eventNames)
+        for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   Object.defineProperty(this.on, eventNames[eventNameCounter], {value: this.__events.getOrAdd(eventNames[eventNameCounter])});
     }
-    function addListener(viewAdapter, eventName, listeners, listener, withCapture, notifyEarly)
+    function addCustomMembers(members)
     {
-        if (listeners.elementListener === undefined)
-        {
-            listeners.elementListener   = createElementListener(listeners);
-            viewAdapter.__element.addEventListener(eventName, listeners.elementListener, withCapture);
-        }
-        if (notifyEarly)    listeners.listeners.unshift(listener);
-        else                listeners.listeners.push(listener);
-    }
-    function removeListener(viewAdapter, eventName, listeners, listener, withCapture)
-    {
-        if (listeners.elementListener !== undefined)
-        {
-            removeItemFromArray(listeners.listeners, listener);
-            if (listeners.listeners.length === 0)
-            {
-                viewAdapter.__element.removeEventListener(eventName, listeners.elementListener, withCapture);
-                delete listeners.elementListener;
-            }
-        }
+        if (members)
+        for(var memberKey in members)   Object.defineProperty(this, memberKey, {value: members[memberKey]});
     }
     function selectContents(element)
     {
@@ -484,182 +173,772 @@
         selection.removeAllRanges();
         selection.addRange(range);
     }
-    return function(viewAdapter, viewAdapterDefinition)
+    function control(element, selector, parent)
     {
-        var listenersUsingCapture           = {};
-        var listenersNotUsingCapture        = {};
-        function getListeners(eventName, withCapture)
+        if (element === undefined)  throw new Error("View element not provided for control with selector " + selector);
+        element.title = this.constructor.name;
+        Object.defineProperties(this, 
         {
-            var listeners       = withCapture ? listenersUsingCapture : listenersNotUsingCapture;
-            var eventListeners  = listeners[eventName];
-            if (eventListeners === undefined)   eventListeners  = listeners[eventName]  = {listeners: []};
-            return eventListeners;
-        }
-
-        viewAdapter.addClass                = function(className){ addClass(this.__element, className); return this;}
-        viewAdapter.addClassFor             = function(className, milliseconds, onComplete){ this.addClass(className); setTimeout((function(){this.removeClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.addEventListener        = function(eventName, listener, withCapture, notifyEarly){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); return this; };
-        viewAdapter.addEventsListener       = function(eventNames, listener, withCapture, notifyEarly){ each(eventNames, (function(eventName){ addListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture, notifyEarly); }).bind(this)); return this; };
-        viewAdapter.appendControl           = function(childControl){ this.__element.appendChild(childControl.__element); };
-        viewAdapter.attribute               =
-        function(attributeName, value)
-        {
-            if (value === undefined)    return this.__element.getAttribute("data-" + attributeName);
-            this.__element.setAttribute("data-" + attributeName, value);
-        };
-        viewAdapter.bindSourceData          = viewAdapter.__templateKeys ? bindSourceFunctions.repeater : viewAdapter.controls ? bindSourceFunctions.container : bindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||bindSourceFunctions.default;
-        viewAdapter.bindData                = viewAdapter.__templateKeys ? bindDataFunctions.repeater : viewAdapter.controls ? bindDataFunctions.container : bindDataFunctions.default;
-        if (viewAdapter.__templateKeys)
-        {
-            viewAdapter.refresh = function(){ bindRepeatedList.call(this, this.data(this.__bindTo||"")); notifyOnDataUpdate.call(this, this.data(this.__bindTo||"")); };
-        }
-        viewAdapter.bindingRoot             = function(){return this.__bindingRoot;};
-        viewAdapter.bindTo                  =
-        function(value)
-        {
-            if(value === undefined) return this.__bindTo;
-            var data    = this.data;
-            if (data !== undefined) this.unbindData();
-            this.__bindTo = value;
-            if (data !== undefined) this.bindData(data);
-            this.triggerEvent("bindToUpdated");
-        };
-        each(["bindSource", "bindSourceValue", "bindSourceText"],
-        function(name)
-        {
-            viewAdapter[name]               =
-            function(value)
-            {
-                if(value === undefined)     return this["__"+name];
-                var source  = this.source;
-                if (source !== undefined)   this.unbindSourceData();
-                this["__"+name] = value;
-                if (source !== undefined)   this.bindSourceData(source);
-                this.triggerEvent(name+"Updated");
-            };
+            __element:              {value: element, configurable: true},
+            __elementPlaceholder:   {value: []},
+            __events:               {value: new eventsSet(this)},
+            on:                     {value: {}},
+            __attributes:           {value: {}, writable: true},
+            __selector:             {value: selector},
+            parent:                 {value: parent},
+            __binder:               {value: new dataBinder()},
+            __forceRoot:            {value: false, configurable: true},
+            classes:                {value: {}}
         });
-        viewAdapter.blur                    = function(){this.__element.blur(); return this;};
-        viewAdapter.children                = function(){return this.controls || this.__repeatedControls || null;};
-        viewAdapter.click                   = function(){this.__element.click(); return this;};
-        viewAdapter.__detach                = function(documentFragment){this.__elementPlaceholder = document.createElement("placeholder"); this.__element.parentNode.replaceChild(this.__elementPlaceholder, this.__element); documentFragment.appendChild(this.__element); return this;};
-        viewAdapter.disable                 = function(value){this.__element.disabled=!(!value);};
-        viewAdapter.enable                  = function(value){this.__element.disabled=!value;};
-        viewAdapter.focus                   = function(){this.__element.focus(); return this;};
-        viewAdapter.for                     = function(value){ if (value === undefined) return this.__element.getAttribute("for"); this.__element.setAttribute("for", value); return this; };
-        viewAdapter.hasClass                = function(className){ return hasClass(this.__element, className); }
-        viewAdapter.hasFocus                = function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}
-        viewAdapter.height                  = function(){return this.__element.offsetHeight;}
-        viewAdapter.hide                    = function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;};
-        viewAdapter.hideFor                 = function(milliseconds, onComplete){ this.hide(); setTimeout((function(){this.show(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.href                    = function(value){ if (value === undefined) return this.__element.href; this.__element.href=value; return this; };
-        viewAdapter.id                      = function(value){ if (value === undefined) return this.__element.id; this.__element.id=value; return this; };
-        viewAdapter.isDisabled              = function() { return this.__element.disabled; };
-        viewAdapter.isEnabled               = function() { return !this.__element.disabled; };
-        viewAdapter.insertBefore            = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; };
-        viewAdapter.insertAfter             = function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; };
-        viewAdapter.onchangingdelay         = function(value){ if (value === undefined) return this.__onchangingdelay; this.__onchangingdelay = value; return this; };
-        viewAdapter.removeClass             = function(className){ removeClass(this.__element, className); return this;}
-        viewAdapter.removeClassFor          = function(className, milliseconds, onComplete){ this.removeClass(className); setTimeout((function(){this.addClass(className); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.removeControl           = function(childControl){ this.__element.removeChild(childControl.__element); return this;};
-        viewAdapter.removeEventListener     = function(eventName, listener, withCapture){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); return this;};
-        viewAdapter.removeEventsListener    = function(eventNames, listener, withCapture){ each(eventNames, (function(eventName){ removeListener(this, eventName, getListeners(eventName, withCapture), listener, withCapture); }).bind(this)); return this;};
-        viewAdapter.__reattach              = function(){this.__elementPlaceholder.parentNode.replaceChild(this.__element, this.__elementPlaceholder); delete this.__elementPlaceholder; return this;};
-        if (viewAdapter.__element.nodeName.toLowerCase()=="select")
+        defineDataProperties(this, this.__binder,
         {
-            viewAdapter.count               = function() { return this.__element.options.length; }
-            viewAdapter.selectedIndex       = function(value) { if (value === undefined) return this.__element.selectedIndex; this.__element.selectedIndex=value; return this; }
-            viewAdapter.size                = function(value) { if (value === undefined) return this.__element.size; this.__element.size=value; return this; }
-        }
-        viewAdapter.show                    = function(){ this.__element.style.display=""; this.triggerEvent("show"); return this;};
-        viewAdapter.showFor                 = function(milliseconds, onComplete){ this.show(); setTimeout((function(){this.hide(); if (onComplete !== undefined) onComplete();}).bind(this), milliseconds); return this;};
-        viewAdapter.scrollIntoView          = function(){this.__element.scrollTop = 0; return this;};
-        viewAdapter.toggleClass             = function(className, condition){ if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className); };
-        viewAdapter.toggleEdit              = function(condition){ if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;};
-        viewAdapter.toggleDisplay           = function(condition){ if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;};
-        viewAdapter.triggerEvent            = function(eventName){ var args = Array.prototype.slice.call(arguments, 1); triggerEvent.apply(getListeners(eventName, true), args); triggerEvent.apply(getListeners(eventName, false), args); };
-        viewAdapter.unbindData              = viewAdapter.__templateKeys ? unbindDataFunctions.repeater : viewAdapter.controls ? unbindDataFunctions.container : unbindDataFunctions.default;
-        viewAdapter.unbindSourceData        = viewAdapter.__templateKeys ? unbindSourceFunctions.repeater : viewAdapter.controls ? unbindSourceFunctions.container : unbindSourceFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||unbindSourceFunctions.default;
-        viewAdapter.value                   = valueFunctions[viewAdapter.__element.nodeName.toLowerCase() + (viewAdapter.__element.type ? ":" + viewAdapter.__element.type.toLowerCase() : "")]||valueFunctions.default;
-        if (viewAdapter.__element.nodeName.toLowerCase()=="input" && viewAdapter.__element.type.toLowerCase()=="text")
+            attributes:         
+            {
+                get:    function(){return this.__attributes;}, 
+                set:    function(value)
+                {
+                    if (value!==undefined&&value.isObserver) value=value(); 
+                    this.__attributes=value;
+
+                    if (value!==undefined)
+                    for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
+                }
+            },
+            disabled:           {get: function(){return this.__element.disabled;},              set: function(value){this.__element.disabled=!(!value);}},
+            display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
+            enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
+            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
+            href:               {get: function(){return this.__element.href;},                  set: function(value){this.__element.href=value;}},
+            id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
+            value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
+        });
+    }
+    function notifyClassEvent(className, exists)
+    {
+        var event = this.__events.get("class-"+className);
+        if (event !== undefined)    event(exists);
+    }
+    Object.defineProperties(control.prototype,
+    {
+        getSelectorPath:    {value: function()
         {
-            viewAdapter.select              = function(){this.__element.select(); return this;};
-        }
-        else
+            return this.parent === undefined ? "" : this.parent.getSelectorPath() + "-" + (this.__selector||"root");
+        }},
+        constructor:        {value: control},
+        init:               {value: function(definition)
         {
-            viewAdapter.select              = function(){selectContents(this.__element); return this; };
-        }
-        viewAdapter.width                   = function(){return this.__element.offsetWidth;}
-        if (viewAdapterDefinition.extensions !== undefined && viewAdapterDefinition.extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapterDefinition.extensions.length;counter++)
+            addEvents.call(this, definition.events);
+            addCustomMembers.call(this, definition.members);
+            this.__extensions   = definition.extensions;
+        }},
+        addClass:           {value: function(className, silent)
         {
-            if (viewAdapterDefinition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + viewAdapter.__element.__selectorPath+"-"+viewAdapter.__selector);
-            if (viewAdapterDefinition.extensions[counter].extend !== undefined) viewAdapterDefinition.extensions[counter].extend(viewAdapter);
+            var classNames              = this.__element.className.split(" ");
+            if (classNames.indexOf(className) === -1) classNames.push(className);
+            this.__element.className    = classNames.join(" ").trim();
+            if (!silent)    notifyClassEvent.call(this, className, true);
+            return this;
+        }},
+        bind:               {get:   function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
+        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        bindClass:          {value: function(className)
+        {
+            defineDataProperties(this.classes, this.__binder, className, 
+            {
+                owner:      this,
+                get:        function(){return this.hasClass(className);}, 
+                set:        function(value){this.toggleClass(className, value===true, true);}, 
+                onchange:   [this.__events.getOrAdd("class-"+className)]
+            })
+        }},
+        getEvents:          {value: function(eventNames)
+        {
+            if (!Array.isArray(eventNames)) eventNames  = [eventNames];
+            var events  = {};
+            each(eventNames, (function(eventName){events[eventName] = this.__events.getOrAdd(eventName);}).bind(this));
+            return events;
+        }},
+        hasClass:           {value: function(className){return this.__element.className.split(" ").indexOf(className) > -1;}},
+        hasFocus:           {value: function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}},
+        height:             {get:   function(){return this.__element.offsetHeight;}},
+        hide:               {value: function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
+        //TODO: ensure that this control is moved to the siblingControl's parent controls set
+        insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
+        //TODO: ensure that this control is moved to the siblingControl's parent controls set
+        insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
+        isDataRoot:         {get: function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot = value===true;}},
+        isRoot:
+        {
+            get:    function(){return this.__forceRoot||this.parent===undefined;}, 
+            set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}
+        },
+        removeClass:        {value: function(className, silent)
+        {
+            if (className === undefined)
+            {
+                this.__element.className    = "";
+                return;
+            }
+            var classNames              = this.__element.className.split(" ");
+            if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
+            this.__element.className    = classNames.join(" ");
+            if (!silent)    notifyClassEvent.call(this, className, false);
+            return this;
+        }},
+        "__reattach":       {value: function()
+        {
+            this.__elementPlaceholder.parentNode.replaceChild(this.__element, this.__elementPlaceholder); 
+            delete this.__elementPlaceholder;
+            return this;
+        }},
+        root:               {get:   function(){return !this.isRoot && this.parent ? this.parent.root : this;}},
+        scrollIntoView:     {value: function(){this.__element.scrollTop = 0; return this;}},
+        select:             {value: function(){selectContents(this.__element); return this;}},
+        show:               {value: function(){this.__element.style.display=""; this.triggerEvent("show"); return this;}},
+        toggleClass:        {value: function(className, condition, silent){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent);}},
+        toggleEdit:         {value: function(condition){if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;}},
+        toggleDisplay:      {value: function(condition){if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;}},
+        triggerEvent:       {value: function(eventName){var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this;}},
+        updateon:
+        {
+            get: function()
+            {
+                var names = [];
+                each(this.value.onchange,function(event, name){names.push(name);});
+                return names;
+            },
+            set: function(eventNames){ this.value.onchange = this.getEvents(eventNames); }
         }
-    };
+    });
+    each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
+    function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
+    {
+        var args            = Array.prototype.slice.apply(arguments, 0, arguments.length-2),
+            milliseconds    = arguments[arguments.length-2],
+            onComplete      = arguments[arguments.length-1];
+        this[on].apply(this, args);
+        setTimeout
+        (
+            (function()
+            {
+                this[off].apply(this, args);
+                if (onComplete !== undefined) onComplete();
+            }).bind(this),
+            milliseconds
+        ); 
+        return this;
+    }});}
+    each([["addClass","removeClass"],["show","hide"]],function(names){defineFor(names[0], names[1]);defineFor(names[1],names[0]);});
+    each(["addEvent","removeEvent"],function(name)
+    {
+        Object.defineProperty
+        (
+            control.prototype,
+            name+"Listener",
+            {value: function(eventName, listener, withCapture, notifyEarly)
+            {
+                this.__events.getOrAdd(eventName, withCapture).listen(listener, notifyEarly);
+                return this;
+            }}
+        );
+        Object.defineProperty
+        (
+            control.prototype,
+            name+"sListener",
+            {value: function(eventNames, listener, withCapture, notifyEarly)
+            {
+                each(eventNames, (function(eventName)
+                {
+                    this.addEventListener(eventName, listener, withCapture, notifyEarly); 
+                }).bind(this));
+                return this;
+            }}
+        );
+    });
+    return control;
 });}();
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter", function(each)
+{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, defineDataProperties)
 {
-    function cancelEvent(event)
+    function readonly(elements, selector, parent)
     {
-        event.preventDefault();
-        event.stopPropagation();
-        return false;
-    }
-    function notifyIfValueHasChanged(callback)
-    {
-        this.__lastChangingTimeout  = undefined;
-        callback.call(this, this.__lastChangingValueSeen);
-    }
-    
-    function notifyIfValueHasChangedOrDelay(callback)
-    {
-        if ((this.__lastChangingValueSeen||"") === this.value())  return;
-        this.__lastChangingValueSeen = this.value();
-        if (this.__onchangingdelay !== undefined)
+        control.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder,
         {
-            if (this.__lastChangingTimeout !== undefined)   clearTimeout(this.__lastChangingTimeout);
-            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.__onchangingdelay);
-        }
-        else    notifyIfValueHasChanged.call(this, callback);
+            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value;}}
+        });
     }
-    var initializers    =
+    Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(readonly.prototype,
     {
-        onchangingdelay:    function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); },
-        onchanging:         function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); },
-        onenter:            function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        onescape:           function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); },
-        hidden:             function(viewAdapter, value)    { if (value) viewAdapter.hide(); },
-        focused:            function(viewAdapter, value)    { if (value) viewAdapter.focus(); }
-    };
-    each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText", "bindTo", "value"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val](value); }; });
-    each(["bindAs", "bindingRoot", "onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind", "updateon"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
-    each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
-    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val){ initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); }; });
-
-    function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
-    {
-        for(var initializerSetKey in extension.initializers)
-        if (viewAdapterDefinition.hasOwnProperty(initializerSetKey))
-        {
-            var initializerSet  = viewAdapterDefinition[initializerSetKey];
-            for(var initializerKey in extension.initializers[initializerSetKey])
-            if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
-        }
-    }
-
-    return function initializeViewAdapter(viewAdapter, viewAdapterDefinition)
-    {
-        for(var initializerKey in initializers)
-        if (viewAdapterDefinition.hasOwnProperty(initializerKey))    initializers[initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
-
-        if (viewAdapter.__extensions !== undefined && viewAdapter.__extensions.length !== undefined)
-        for(var counter=0;counter<viewAdapter.__extensions.length;counter++)  initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, viewAdapter.__extensions[counter]);
-        delete viewAdapter.__extensions;
-    };
+        constructor:        {value: readonly}
+    });
+    return readonly;
 });}();
 !function()
-{"use strict";root.define("atomic.isolatedFunctionFactory", function isolatedFunctionFactory(document)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each)
+{
+    var querySelector       =
+    function(uiElement, selector, selectorPath, typeHint)
+    {
+        var element = uiElement.querySelector(selector);
+        if (element === null)
+        {
+            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
+            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
+            var label               = document.createElement("span");
+            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
+            var container           = document.createElement("div");
+            missingElements         = missingElements||createMissingElementsContainer();
+            container.appendChild(element);
+            missingElements.appendChild(label);
+            missingElements.appendChild(container);
+            element.style.border    = "solid 1px black";
+        }
+        element.__selectorPath  = selectorPath;
+        return element;
+    };
+    function container(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        Object.defineProperties(this,
+        {
+            "__controlKeys":    {value: []},
+            controls:           {value: {}}
+        });
+    }
+    Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(container.prototype,
+    {
+        constructor:        {value: container},
+        init:               {value: function(definition)
+        {
+            control.prototype.init.call(this, definition);
+        }},
+        appendControl:      {value: function(childControl)
+        {
+            this.__element.appendChild(childControl.__element); 
+            this.controlKeys.push(childControl.key);
+            this.controls[childControl.key] = childControl;
+        }},
+        addControl:         {value: function(controlKey, controlDeclaration)
+        {
+            if (controlDeclaration === undefined)  return;
+            this.__controlKeys.push(controlKey);
+            this.controls[controlKey]       = createControl(controlDeclaration, undefined, this, "#" + controlKey);
+            this.controls[controlKey].data  = this.data;
+            return this.controls[controlKey];
+        }},
+        createControl:
+        function(controlDeclaration, controlElement, parent, selector)
+        {
+            var control;
+            if (controlDeclaration.factory !== undefined)
+            {
+                control = controlDeclaration.factory(parent, controlElement, selector);
+            }
+            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||querySelector(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector);
+            initializeViewAdapter(control, controlDeclaration);
+            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
+            return control;
+        },
+        removeControl:      {value: function(childControl)
+        {
+            this.__element.removeChild(childControl.__element);
+            removeItemFromArray(this.__controlKeys, childControl.key);
+            delete this.controls[childControl.key];
+            return this;
+        }}
+    });
+    return container;
+});}();
+!function()
+{"use strict";root.define("atomic.html.panel", function htmlPanel(container, defineDataProperties, viewAdapterFactory, each)
+{
+    function attachControls(controlDeclarations, viewElement)
+    {
+        if (controlDeclarations === undefined)  return;
+        var selectorPath                = this.getSelectorPath();
+        for(var controlKey in controlDeclarations)
+        {
+            this.__controlKeys.push(controlKey);
+            var declaration             = controlDeclarations[controlKey];
+            var selector                = (declaration.selector||("#"+controlKey));
+            this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(viewElement, selector, selectorPath), this, selector);
+        }
+    }
+    function panel(elements, selector, parent)
+    {
+        container.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
+        {
+            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+        }}});
+        this.bind   = "";
+    }
+    Object.defineProperty(panel, "prototype", {value: Object.create(container.prototype)});
+    Object.defineProperties(panel.prototype,
+    {
+        constructor:        {value: panel},
+        init:               {value: function(definition)
+        {
+            container.prototype.init.call(this, definition);
+            attachControls.call(this, definition.controls, this.__element);
+        }},
+        children:           {value: function(){return this.controls || null;}},
+        appendControl:      {value: function(childControl){ this.__element.appendChild(childControl.__element); }},
+        addControl:         {value: function(controlKey, controlDeclaration)
+        {
+            if (controlDeclaration === undefined)  return;
+            this.__controlKeys.push(controlKey);
+            this.controls[controlKey]   = createControl(controlDeclaration, undefined, this, "#" + controlKey);
+            return this.controls[controlKey];
+        }},
+        removeControl:      {value: function(childControl)
+        {
+            each(this.__elements, function(element){each(childControl.__elements, function(childElement)
+            {
+                element.removeChild(childElement);
+            });});
+            return this;
+        }}
+    });
+    return panel;
+});}();
+!function()
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, defineDataProperties, viewAdapterFactory, removeFromArray)
+{
+    var querySelector       =
+    function(uiElement, selector, selectorPath, typeHint)
+    {
+        var element = uiElement.querySelector(selector);
+        if (element === null)
+        {
+            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
+            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
+            var label               = document.createElement("span");
+            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
+            var container           = document.createElement("div");
+            missingElements         = missingElements||createMissingElementsContainer();
+            container.appendChild(element);
+            missingElements.appendChild(label);
+            missingElements.appendChild(container);
+            element.style.border    = "solid 1px black";
+        }
+        element.__selectorPath  = selectorPath;
+        return element;
+    };
+    function removeAllElementChildren(element)
+    {
+        while(element.lastChild)    element.removeChild(element.lastChild);
+    }
+    function locate(item, retained)
+    {
+        for(var counter=0;counter<retained.length;counter++) if (retained[counter].data() === item)
+        {
+            var retainedControl = retained[counter];
+            removeFromArray(retained, counter);
+            return retainedControl;
+        }
+        return null;
+    }
+    function createTemplateCopy(templateKey, subDataItem, counter, retained)
+    {
+        var templateElement = this.__templateElements[templateKey];
+        if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
+        var key             = templateElement.declaration.getKey.call({parent: this, index: counter}, subDataItem);
+
+        var retainedControl = locate(subDataItem(), retained);
+        if (retainedControl !== null)   return { key: key, parent: templateElement.parent, control: retainedControl };
+
+        var elementCopy     = templateElement.element.cloneNode(true);
+        elementCopy.setAttribute("id", key);
+        var clone           = { key: key, parent: templateElement.parent, control: viewAdapterFactory.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        clone.control.data  = subDataItem;
+        return clone;
+    };
+    function extractDeferredControls(templateDeclarations, viewElement)
+    {
+        if (templateDeclarations === undefined) return;
+        for(var templateKey in templateDeclarations)
+        {
+            this.__templateKeys.push(templateKey);
+            var templateDeclaration                         = templateDeclarations[templateKey];
+            if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return this.parent.__selector+"-"+this.__selector+"-"+this.index;}
+            var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), this.getSelectorPath());
+            var templateElementParent                       = templateElement.parentNode;
+            templateElementParent.removeChild(templateElement);
+            this.__templateElements[templateKey]     =
+            {
+                parent:         templateElementParent,
+                declaration:    templateDeclaration,
+                element:        templateElement
+            };
+        }
+        for(var templateKey in templateDeclarations)
+        removeAllElementChildren(this.__templateElements[templateKey].parent);
+    }
+
+    function bindRepeatedList(observer)
+    {
+        if (observer() === undefined) return;
+        var documentFragment    = document.createDocumentFragment();
+        var retained            = unbindRepeatedList.call(this, observer());
+        for(var dataItemCounter=0;dataItemCounter<observer.count;dataItemCounter++)
+        {
+            for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+            {
+                var subDataItem                     = observer.observe(dataItemCounter);
+                var clone                           = createTemplateCopy.call(this, this.__templateKeys[templateKeyCounter], subDataItem, dataItemCounter, retained);
+                if (clone !== undefined)
+                {
+                    this.__repeatedControls[clone.key]  = clone.control;
+                    documentFragment.appendChild(clone.control.__element);
+                }
+            }
+        }
+        this.__element.appendChild(documentFragment);
+    }
+    function unbindRepeatedList(keepList)
+    {
+        var retain  = [];
+        if (this.__repeatedControls !== undefined)
+        for(var repeatedControlKey in this.__repeatedControls)
+        {
+            var repeatedControl     = this.__repeatedControls[repeatedControlKey];
+            if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
+            else                                                {repeatedControl.data    = undefined;}
+            repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+        }
+        this.__repeatedControls     = {};
+        return retain;
+    }
+
+    function repeater(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        Object.defineProperties(this,
+        {
+            "__templateKeys":       {value: []},
+            "__templateElements":   {value: {}}
+        });
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
+        {
+            bindRepeatedList.call(this, this.data.observe(this.bind));
+        }}});
+        this.bind   = "";
+    }
+    Object.defineProperty(repeater, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(repeater.prototype,
+    {
+        constructor:        {value: repeater},
+        init:               {value: function(definition)
+        {
+            extractDeferredControls.call(this, definition.repeat, this.__element);
+            control.prototype.init.call(this, definition);
+        }},
+        children:   {value: function(){return this.__repeatedControls || null;}},
+        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}}
+    });
+    return repeater;
+});}();
+!function()
+{"use strict";root.define("atomic.html.input", function htmlInput(control, defineDataProperties)
+{
+    function input(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||"";},  onchange: this.getEvents("change")}
+        });
+    }
+    Object.defineProperty(input, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(input.prototype,
+    {
+        constructor:    {value: input},
+        select:         {value: function(){this.__element.select(); return this;}}
+    });
+    return input;
+});}();
+!function()
+{"use strict";root.define("atomic.html.checkbox", function htmlCheckbox(control, defineDataProperties)
+{
+    function checkbox(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return this.__element.checked;}, set: function(value){this.__element.checked = value===true;},  onchange: this.getEvents("change")}
+        });
+    }
+    Object.defineProperty(checkbox, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(checkbox.prototype,
+    {
+        constructor:    {value: checkbox}
+    });
+    return checkbox;
+});}();
+!function()
+{"use strict";root.define("atomic.html.select", function htmlSelect(input, defineDataProperties, dataBinder)
+{
+    function getSelectListValue()
+    {
+        if (this.__element.options.length > 0)
+        for(var counter=0;counter<this.__element.options.length;counter++)  if (this.__element.options[counter].selected)
+        {
+            return this.__rawValue = this.__element.options[counter].rawValue;
+        }
+        return this.__rawValue;
+    }
+    function setSelectListValue(value)
+    {
+        this.__rawValue = value;
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
+    }
+    function selectoption(element, selector, parent)
+    {
+        Object.defineProperties(this, 
+        {
+            "__element":        {value: element},
+            "__sourceBinder":   {value: new dataBinder()}
+        });
+        defineDataProperties(this, this.__sourceBinder,
+        {
+            text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value;}},
+            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value;}}
+        });
+    }
+    Object.defineProperties(selectoption.prototype,
+    {
+        source:     {get: function(){return this.__sourceBinder.data;}, set: function(value){this.__sourceBinder.data = value;}},
+        selected:   {get: function(){return this.__element.selected;}, set: function(value){this.__element.selected = !(!value);}}
+    });
+    function createOption(sourceItem, index)
+    {
+        var option          = new selectoption(document.createElement('option'), this.selector+"-"+index, this);
+        option.text.bind    = this.__sourceText||"";
+        option.value.bind   = this.__sourceValue||"";
+        option.source       = sourceItem;
+        return option;
+    }
+    function select(element, selector, parent)
+    {
+        input.call(this, element, selector, parent);
+        Object.defineProperties(this, 
+        {
+            "__items":      {value: null, configurable: true},
+            "__options":    {value: []}
+        });
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")}
+        });
+        defineDataProperties(this, this.__binder,
+        {
+            items:
+            {
+                get:        function() {return this.__items;},
+                set:        function(value)
+                {
+                    Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
+
+                    if (value!==undefined)
+                    bindSelectListSource.call(this, value);
+                }
+            }
+        });
+    }
+    Object.defineProperty(select, "prototype", {value: Object.create(input.prototype)});
+    Object.defineProperties(select.prototype,
+    {
+        constructor:        {value: select},
+        count:              {get:   function(){ return this.__elements[0].options.length; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+    });
+    function clearOptions(){ for(var counter=this.__element.options.length-1;counter>=0;counter--) this.__element.remove(counter); }
+    function bindSelectListSource(items)
+    {
+        var selectedValue   = this.value();
+        clearOptions.call(this);
+        if (items === undefined)   return;
+        for(var counter=0;counter<items.count;counter++)
+        {
+            var sourceItem  = items.observe(counter);
+            var option      = createOption.call(this, sourceItem, counter);
+            this.__options.push(option);
+            this.__element.appendChild(option.__element);
+            option.selected = this.__isValueSelected(option.value());
+        }
+    }
+    return select;
+});}();
+!function()
+{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder)
+{
+    function setRadioGroupValue(value)
+    {
+        Object.defineProperty(this, "__rawValue", {value: value, configurable: true});
+        if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) this.__options[counter].selected = this.__options[counter].value() == value;
+    }
+    function getRadioGroupValue()
+    {
+        if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) if (this.__options[counter].selected)
+        {
+            Object.defineProperty(this, "__rawValue", {value: this.__options[counter].value(), configurable: true});
+            break;
+        }
+        return this.__rawValue;
+    }
+    function captureTemplateIfNeeded()
+    {
+        if (this.__templateElement === undefined)
+        {
+            this.__radioButtonSelector	= this.__element.getAttribute("data-atomic-radiobutton")||"input[type='radio']";
+            this.__radioLabelSelector   = this.__element.getAttribute("data-atomic-radiolabel")||"label";
+            this.__templateElement      = this.__element.querySelector("radiogroupitem");
+            this.__templateElement.parentNode.removeChild(this.__templateElement);
+            clearRadioGroup(this.__element);
+        }
+    }
+    function radiooption(element, selector, name, parent)
+    {
+        Object.defineProperties(this, 
+        {
+            "parent":           {value: parent},
+            "__element":        {value: element},
+            "__sourceBinder":   {value: new dataBinder()},
+            "__parent":         {value: parent},
+            "__radioElement":   {value: element.querySelector(parent.__radioButtonSelector)},
+            "__radioLabel":     {value: element.querySelector(parent.__radioLabelSelector)},
+            "__text":           {value: null, configurable: true},
+            "__value":          {value: null, configurable: true}
+        });
+        defineDataProperties(this, this.__sourceBinder,
+        {
+            text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value;}},
+            value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value;}}
+        });
+        this.__radioElement.name = name;
+        this.__element.addEventListener
+        (
+            "click", 
+            (function(event)
+            {
+                event=event||window.event; 
+                this.parent.value(this.value());
+                this.parent.triggerEvent("change");
+                event.cancelBubble=true;
+                if (event.stopPropagation) event.stopPropagation();
+                return false;
+            }).bind(this),
+            true
+        );
+    }
+    Object.defineProperties(radiooption.prototype,
+    {
+        source:     {get: function(){return this.__sourceBinder.data;}, set: function(value){this.__sourceBinder.data = value;}},
+        selected:   {get: function(){return this.__radioElement.checked;}, set: function(value){this.__radioElement.checked = !(!value);}}
+    });
+    function createOption(sourceItem, index)
+    {
+        var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__element.__selectorPath + (this.__element.id||"unknown"), this);
+        option.text.bind    = this.__sourceText||"";
+        option.value.bind   = this.__sourceValue||"";
+        option.source       = sourceItem;
+        return option;
+    }
+    function radiogroup(elements, selector, parent)
+    {
+        input.call(this, elements, selector, parent);
+        Object.defineProperties(this, 
+        {
+            "__items":      {value: null, configurable: true},
+            "__options":    {value: []}
+        });
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")}
+        });
+        defineDataProperties(this, this.__binder,
+        {
+            items:
+            {
+                get:        function() {return this.__items;},
+                set:        function(value)
+                {
+                    Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
+                    captureTemplateIfNeeded.call(this);
+                    if (value!==undefined)
+                    bindRadioGroupSource.call(this, value);
+                }
+            }
+        });
+    }
+    Object.defineProperty(radiogroup, "prototype", {value: Object.create(input.prototype)});
+    Object.defineProperties(radiogroup.prototype,
+    {
+        constructor:        {value: radiogroup},
+        count:              {get:   function(){ return this.__elements[0].options.length; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+    });
+    function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
+    function bindRadioGroupSource(items)
+    {
+        var selectedValue   = this.value();
+        clearRadioGroup(this.__element);
+        if (items === undefined)   return;
+        for(var counter=0;counter<items.count;counter++)
+        {
+            var sourceItem  = items.observe(counter);
+            var option      = createOption.call(this, sourceItem, counter);
+            this.__options.push(option);
+            this.__element.appendChild(option.__element);
+            option.selected = this.__isValueSelected(option.value());
+        }
+    }
+    return radiogroup;
+});}();
+!function()
+{"use strict";root.define("atomic.html.multiselect", function htmlMultiSelect(base, defineDataProperties)
+{
+    function setSelectListValues(values)
+    {
+        if (typeof values === "function")   values = values();
+        if ( !Array.isArray(values)) values  = [values];
+        this.__rawValue = values;
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = values.indexOf(this.__element.options[counter].rawValue) > -1;
+    }
+    function getSelectListValues()
+    {
+        if (this.__element.options.length == 0) return this.__rawValue;
+        var values  = [];
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   values.push(this.__element.options[counter].rawValue);
+        return this.__rawValue = values;
+    }
+    function multiselect(elements, selector, parent)
+    {
+        base.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value||null);},  onchange: this.getEvents("change")}
+        });
+    }
+    Object.defineProperty(multiselect, "prototype", {value: Object.create(base.prototype)});
+    Object.defineProperties(multiselect.prototype,
+    {
+        constructor:        {value: multiselect},
+        count:              {get:   function(){ return this.__element.options.length; }},
+        selectedIndexes:    {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        size:               {get:   function(){ return this.__element.size; },            set: function(value){ this.__elements[0].size=value; }},
+        __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValue) && this.__rawValue.indexOf(value) > -1;}}
+    });
+    return multiselect;
+});}();
+!function()
+{"use strict";root.define("atomic.html.isolatedFunctionFactory", function isolatedFunctionFactory(document)
 {
     return function()
     {
@@ -684,166 +963,63 @@
     }
 });}();
 !function()
-{"use strict";root.define("atomic.htmlViewAdapterFactorySupport", function htmlViewAdapterFactorySupport(document, attachViewMemberAdapters, initializeViewAdapter, pubSub, logger)
+{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each)
 {
     var typeHintMap         = {};
     var missingElements;
-    var querySelector       =
-    function(uiElement, selector, selectorPath, typeHint)
-    {
-        var element = uiElement.querySelector(selector);
-        if (element === null)
-        {
-            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-            var label               = document.createElement("span");
-            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-            var container           = document.createElement("div");
-            missingElements         = missingElements||createMissingElementsContainer();
-            container.appendChild(element);
-            missingElements.appendChild(label);
-            missingElements.appendChild(container);
-            element.style.border    = "solid 1px black";
-        }
-        element.__selectorPath  = selectorPath;
-        return element;
-    };
-    var querySelectorAll    =
-    function(uiElement, selector, selectorPath, typeHint)
-    {
-        return uiElement.querySelectorAll(selector);
-    };
     function createMissingElementsContainer()
     {
         var missingElements = document.createElement("div");
         document.body.appendChild(missingElements);
         return missingElements;
     }
-    function removeAllElementChildren(element)
+    var elementControlTypes =
     {
-        while(element.lastChild)    element.removeChild(element.lastChild);
+        "input":                    "input",
+        "input:checkbox":           "checkbox",
+        "textarea":                 "input",
+        "img":                      "panel",
+        "select:select-multiple":   "multiselect",
+        "select:select-one":        "select",
+        "radiogroup":               "radiogroup"
+    };
+    each(["default","a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    function(name)
+    {
+        elementControlTypes[name]   = "readonly";
+    });
+    function getControlTypeForElement(definition, element)
+    {
+        return  definition.controls
+                ?   "panel"
+                :   definition.repeat
+                    ?   "repeater"
+                    :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default;
     }
-    function getSelectorPath(viewAdapter)
+    var viewAdapterFactory  =
     {
-        return viewAdapter === undefined ? "" : getSelectorPath(viewAdapter.parent) + "-" + (viewAdapter.__selector||"root");
-    }
-    var internalFunctions   =
-    {
-        addEvents:
-        function(viewAdapter, eventNames)
-        {
-            viewAdapter.on  = {};
-            if (eventNames)
-            for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   viewAdapter.on[eventNames[eventNameCounter]]   = new pubSub();
-        },
-        addCustomMembers:
-        function(viewAdapter, members)
-        {
-            for(var memberKey in members) viewAdapter[memberKey]    = members[memberKey].bind(viewAdapter);
-        },
-        attachControls:
-        function (viewAdapter, controlDeclarations, viewElement)
-        {
-            if (controlDeclarations === undefined)  return;
-            var selectorPath            = getSelectorPath(viewAdapter);
-            viewAdapter.__controlKeys   = [];
-            viewAdapter.controls        = {};
-            for(var controlKey in controlDeclarations)
-            {
-                viewAdapter.__controlKeys.push(controlKey);
-                var declaration = controlDeclarations[controlKey];
-                var selector    = (declaration.selector||("#"+controlKey));
-                if (declaration.multipresent)
-                {
-                    var elements    = querySelectorAll(viewElement, selector, selectorPath);
-                    for(var elementCounter=0;elementCounter<elements.length;elementCounter++)
-                    viewAdapter.controls[controlKey+elementCounter] = this.createControl(declaration, elements[elementCounter], viewAdapter, selector);
-                }
-                else    viewAdapter.controls[controlKey] = this.createControl(declaration, querySelector(viewElement, selector, selectorPath), viewAdapter, selector);
-            }
-        },
-        createControl:
-        function(controlDeclaration, controlElement, parent, selector)
+        createControl:  function(controlDeclaration, controlElement, parent, selector)
         {
             var control;
             if (controlDeclaration.factory !== undefined)
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector);
+            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||viewAdapterFactory.select(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector, controlDeclaration.type);
             initializeViewAdapter(control, controlDeclaration);
             if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
-        extractDeferredControls:
-        function(viewAdapter, templateDeclarations, viewElement)
+        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
         {
-            if (templateDeclarations === undefined) return;
-            viewAdapter.__templateKeys          = [];
-            viewAdapter.__templateElements      = {};
-            viewAdapter.__createTemplateCopy    =
-            function(templateKey, subDataItem, counter)
-            {
-                var templateElement = this.__templateElements[templateKey];
-
-                if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
-                var key             = templateElement.declaration.getKey.call({parent: viewAdapter, index: counter}, subDataItem);
-                var elementCopy     = templateElement.element.cloneNode(true);
-                elementCopy.setAttribute("id", key);
-                return { key: key, parent: templateElement.parent, control: internalFunctions.createControl(templateElement.declaration, elementCopy, viewAdapter, "#" + key) };
-            };
-            for(var templateKey in templateDeclarations)
-            {
-                viewAdapter.__templateKeys.push(templateKey);
-                var templateDeclaration                         = templateDeclarations[templateKey];
-                var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), getSelectorPath(viewAdapter));
-                var templateElementParent                       = templateElement.parentNode;
-                templateElementParent.removeChild(templateElement);
-                viewAdapter.__templateElements[templateKey]     =
-                {
-                    parent:         templateElementParent,
-                    declaration:    templateDeclaration,
-                    element:        templateElement
-                };
-            }
-            for(var templateKey in templateDeclarations)
-            removeAllElementChildren(viewAdapter.__templateElements[templateKey].parent);
-        },
-        create:
-        function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector)
-        {
-            var viewAdapter             = {__element: viewElement, __selector: selector, parent: parent};
-            var viewAdapterDefinition   = new viewAdapterDefinitionConstructor(viewAdapter);
-            this.attachControls(viewAdapter, viewAdapterDefinition.controls, viewElement);
-            this.extractDeferredControls(viewAdapter, viewAdapterDefinition.repeat, viewElement);
-            attachViewMemberAdapters(viewAdapter, viewAdapterDefinition);
-            this.addEvents(viewAdapter, viewAdapterDefinition.events);
-            this.addCustomMembers(viewAdapter, viewAdapterDefinition.members);
-
-            viewAdapter.addControl  =
-            function(controlKey, controlDeclaration)
-            {
-                if (controlDeclaration === undefined)  return;
-                viewAdapter.__controlKeys           = viewAdapter.__controlKeys || [];
-                viewAdapter.controls                = viewAdapter.controls      || {};
-                viewAdapter.__controlKeys.push(controlKey);
-                viewAdapter.controls[controlKey]    = internalFunctions.createControl(controlDeclaration, undefined, viewAdapter, "#" + controlKey);
-                viewAdapter.controls[controlKey].__element.setAttribute("id", controlKey);
-                return viewAdapter.controls[controlKey];
-            }
-
+            selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
+            var viewAdapterDefinition   = new viewAdapterDefinitionConstructor();
+            controlType                 = controlType || getControlTypeForElement(viewAdapterDefinition, viewElement);
+            var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
+            viewAdapter.init(viewAdapterDefinition);
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
-            if(viewAdapterDefinition.extensions !== undefined)  viewAdapter.__extensions    = viewAdapterDefinition.extensions;
             return viewAdapter;
-        }
-    };
-    return internalFunctions;
-});}();
-!function()
-{"use strict";root.define("atomic.viewAdapterFactory", function(internalFunctions)
-{
-return {
-        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent) { return internalFunctions.create(viewAdapterDefinitionConstructor, viewElement, parent, (viewElement.id?("#"+viewElement.id):("."+viewElement.className))); },
+        },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate, selector)
         {
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
@@ -859,258 +1035,708 @@ return {
                 container.appendControl(view);
                 return view;
             }).bind(this);
+        },
+        select:         function(uiElement, selector, selectorPath, typeHint)
+        {
+            var element = uiElement.querySelector(selector);
+            if (element === null)
+            {
+                logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
+                element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
+                var label               = document.createElement("span");
+                label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
+                var container           = document.createElement("div");
+                missingElements         = missingElements||createMissingElementsContainer();
+                container.appendChild(element);
+                missingElements.appendChild(label);
+                missingElements.appendChild(container);
+                element.style.border    = "solid 1px black";
+            }
+            element.__selectorPath  = selectorPath;
+            return element;
+        },
+        selectAll:      function(uiElement, selector, selectorPath, typeHint)
+        {
+            return uiElement.querySelectorAll(selector);
         }
     };
+    return viewAdapterFactory;
 });}();
 !function()
-{"use strict";root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each, defineDataProperties)
 {
-    var functionFactory = new isolatedFunctionFactory();
-    var subObserver                                 =
-    functionFactory.create
-    (function subObserverFactory(basePath, bag, isArray)
+    function cancelEvent(event)
     {
-        function subObserver(path, value)
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    }
+    function notifyIfValueHasChanged(callback)
+    {
+        this.__lastChangingTimeout  = undefined;
+        callback.call(this, this.__lastChangingValueSeen);
+    }
+    
+    function notifyIfValueHasChangedOrDelay(callback)
+    {
+        if ((this.__lastChangingValueSeen||"") === this.value())  return;
+        this.__lastChangingValueSeen = this.value();
+        if (this.__onchangingdelay !== undefined)
         {
-            return subObserver.__invoke(path, value);
+            if (this.__lastChangingTimeout !== undefined)   clearTimeout(this.__lastChangingTimeout);
+            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.__onchangingdelay);
         }
-        Object.defineProperty(subObserver, "__basePath", {get:function(){return basePath;}});
-        Object.defineProperty(subObserver, "__bag", {get:function(){return bag;}});
-        if (isArray)
-        {
-            Object.defineProperty(subObserver, "push", {get:function(){return function(item){ var items = this(); items.push(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "pop", {get:function(){return function(){ var items = this(); var item = items.pop(); this.__notify(this.__basePath, items); return item; }}});
-            Object.defineProperty(subObserver, "shift", {get:function(){return function(item){ var items = this(); items.shift(item); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "unshift", {get:function(){return function(){ var items = this(); var item = items.unshift(); this.__notify(this.__basePath, items); return item; }}});
-            Object.defineProperty(subObserver, "sort", {get:function(){return function(sorter){ var items = this(); items.sort(sorter); this.__notify(this.__basePath, items); }}});
-            Object.defineProperty(subObserver, "remove", {get:function(){return function(item){ this.__remove(item); }}});
-            Object.defineProperty(subObserver, "removeAll", {get:function(){return function(items){ this.__removeAll(items); }}});
-            Object.defineProperty(subObserver, "join", {get:function(){return function(separator){ return this().join(separator); }}});
-            Object.defineProperty(subObserver, "indexOf", {get:function(){return function(item){ return this().indexOf(item); }}});
-        }
+        else    notifyIfValueHasChanged.call(this, callback);
+    }
+    function bindProperty(viewAdapter, name, binding)
+    {
+        if(viewAdapter[name] === undefined) debugger;
+        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind = binding;
         else
         {
-            Object.defineProperty(subObserver, "isDefined", {get:function(){return function(propertyName){return this(propertyName)!==undefined;}}})
-            Object.defineProperty(subObserver, "hasValue", {get:function(){return function(propertyName){var value=this(propertyName); return value!==undefined && value;}}})
+            if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            if (binding.root !== undefined)                                 viewAdapter[name].root      = binding.root;
+            if (binding.onupdate !== undefined)                             viewAdapter[name].onupdate  = binding.onupdate;
+            if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }
-        //Object.defineProperty(subObserver, "toString", {get:function(){debugger; throw new Error("You shouldn't be here.");}});
-        return subObserver;
+    }
+    function bindClassProperty(viewAdapter, name, binding)
+    {
+        viewAdapter.bindClass(name);
+        bindProperty(viewAdapter.classes, name, binding);
+    }
+    function bindClassProperties(viewAdapter, classBindings)
+    {
+        for(var name in classBindings)  bindClassProperty(viewAdapter, name, classBindings[name]);
+    }
+    function bindMultipleProperties(viewAdapter, bindings)
+    {
+        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
+    }
+    var initializers    =   {};
+    Object.defineProperties(initializers,
+    {
+        onchangingdelay:    {enumerable: true, value: function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); }},
+        onchanging:         {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); }},
+        onenter:            {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
+        onescape:           {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
+        hidden:             {enumerable: true, value: function(viewAdapter, value)    { if (value) viewAdapter.hide(); }},
+        focused:            {enumerable: true, value: function(viewAdapter, value)    { if (value) viewAdapter.focus(); }},
+        bind:               {enumerable: true, value: function(viewAdapter, value)
+        {
+            if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
+            else                            {viewAdapter.value.bind  = value;}
+        }},
+        data:               {enumerable: true, value: function(viewAdapter, value)
+        { 
+            if (typeof value === "function")    viewAdapter[name] = value.call(viewAdapter);
+            else                                viewAdapter[name] = value;
+        }},
+        updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
-    function getValue(pathSegments, revisedPath)
+    each(["value"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + typeof(viewAdapter) + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
+    each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText","isRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
+    each(["onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
+    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val)
     {
-        pathSegments    = pathSegments || [""];
-        if (this.__bag.updating.length > 0 && pathSegments.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-        var returnValue = navDataPath(this.__bag, pathSegments);
-        if (revisedPath !== undefined && returnValue !== null && typeof returnValue == "object") return new subObserver(revisedPath, this.__bag, Array.isArray(returnValue));
-        return returnValue;
-    }
-    functionFactory.root.prototype.__invoke         =
-    function(path, value)
+        initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
+    });
+    function initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, extension)
     {
-        if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath));
-        if (path === undefined || path === null)        path    = "";
-        var pathSegments    = extractPathSegments(this.__basePath+"."+path.toString());
-        var revisedPath     = getFullPath(pathSegments);
-        if (value === undefined)    return getValue.call(this, pathSegments, revisedPath);
-        if (this.__bag.rollingback) return;
-        var currentValue = navDataPath(this.__bag, pathSegments);
-        if (value !== currentValue)
+        for(var initializerSetKey in extension.initializers)
+        if (viewAdapterDefinition.hasOwnProperty(initializerSetKey))
         {
-            navDataPath(this.__bag, pathSegments, value);
-            notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+            var initializerSet  = viewAdapterDefinition[initializerSetKey];
+            for(var initializerKey in extension.initializers[initializerSetKey])
+            if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
         }
     }
-    functionFactory.root.prototype.basePath         = function(){return this.__basePath;};
-    functionFactory.root.prototype.__remove         =
-    function(value)
+
+    return function initializeViewAdapter(viewAdapter, viewAdapterDefinition)
     {
-        var items   = this();
-        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
-        removeFromArray(items, items.indexOf(value));
-        this.__notify(this.__basePath, items);
-    }
-    functionFactory.root.prototype.__removeAll      =
-    function(values)
-    {
-        var items   = this();
-        var keepers = [];
-        if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
-        for(var itemCounter=0;itemCounter<items.length;itemCounter++)
-        {
-            var item    = items[itemCounter];
-            if (values.indexOf(item) == -1) keepers.push(item);
-        }
-        items.length = 0;
-        items.push.apply(items, keepers);
-        this.__notify(this.__basePath, items);
-    }
-    functionFactory.root.prototype.__notify         =
-    function(path, value)
-    {
-        notifyPropertyListeners.call(this, path, value, this.__bag);
-    }
-    functionFactory.root.prototype.listen           =
-    function(callback)
-    {
-        var listener    = {callback: callback};
-        this.__bag.itemListeners.push(listener);
-        notifyPropertyListener.call(this, "", listener, this.__bag);
-    }
-    functionFactory.root.prototype.ignore           =
-    function(callback)
-    {
-        for(var listenerCounter=0;listenerCounter<this.__bag.itemListeners.length;listenerCounter++)
-        if (this.__bag.itemListeners[listenerCounter].callback === callback)
-        removeFromArray(this.__bag.itemListeners, listenerCounter);
-    }
-    functionFactory.root.prototype.beginTransaction =
-    function()
-    {
-        this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));
-    }
-    functionFactory.root.prototype.commit           =
-    function()
-    {
-        delete this.__bag.backup;
-    }
-    functionFactory.root.prototype.rollback         =
-    function()
-    {
-        this.__bag.rollingback  = true;
-        this.__bag.item         = this.__bag.backup;
-        delete this.__bag.backup;
-        notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
-        this.__bag.rollingback  = false;
-    }
-    function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
-    {
-        for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
-        {
-            var subSegment  = subSegments[subSegmentCounter];
-            // warning: string subsegments are not currently supported
-            if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
-            returnSegments.push({type:1, value: parseInt(subSegment)});
-        }
-    }
-    function extractPathSegments(path)
-    {
-        var pathSegments    = path.split(".");
-        var returnSegments  = [];
-        for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
-        {
-            var pathSegment = pathSegments[segmentCounter];
-            var bracket     = pathSegment.indexOf("[");
-            if (bracket > -1)
-            {
-                var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
-                pathSegment     = pathSegment.substring(0, bracket);
-                if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
-                extractArrayPathSegmentsInto(subSegments, returnSegments, path);
-            }
-            else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
-        }
-        return returnSegments;
-    }
-    function getFullPath(paths)
-    {
-        if (paths.length == 0) return "";
-        var path    = paths[0].value;
-        for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
-        return path;
-    }
-    function navDataPath(root, paths, value)
-    {
-        if (paths.length == 0)
-        {
-            if(value === undefined) return root.item;
-            root.item   = value;
-            return;
-        }
-        var current     = root.item;
-        for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
-        {
-            var path    = paths[pathCounter];
-            if (current[path.value] === undefined)
-            {
-                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
-                else                        return undefined;
-            }
-            current     = current[path.value];
-        }
-        if (value === undefined)    return current[paths[paths.length-1].value];
-        current[paths[paths.length-1].value]    = value;
-    }
-    function addPropertyPath(properties, path, remainingPath)
-    {
-        properties[path]    = remainingPath !== undefined ? remainingPath : "";
-    }
-    function addProperties(properties, pathSegments)
-    {
-        addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
-        var path    = pathSegments[0].value;
-        addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
-        for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
-        {
-            path    += "." + pathSegments[segmentCounter].value;
-            addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
-        }
-    }
-    function notifyPropertyListener(propertyKey, listener, bag)
-    {
-        if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
-        {
-            bag.updating.push(listener);
-            listener.properties = {};
-            var postCallback = listener.callback();
-            bag.updating.pop();
-            if (postCallback !== undefined) postCallback();
-        }
-    }
-    function notifyPropertyListeners(propertyKey, value, bag)
-    {
-        var itemListeners   = bag.itemListeners.slice();
-        for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
-    }
-    return function observer(_item)
-    {
-        var bag             =
-        {
-            item:           _item,
-            itemListeners:  [],
-            propertyKeys:   [],
-            updating:       [],
-            rollingback:    false
-        };
-        return new subObserver("", bag, Array.isArray(_item));
+        for(var initializerKey in initializers)
+        if (viewAdapterDefinition.hasOwnProperty(initializerKey))    initializers[initializerKey](viewAdapter, viewAdapterDefinition[initializerKey]);
+
+        if (viewAdapter.__extensions !== undefined && viewAdapter.__extensions.length !== undefined)
+        for(var counter=0;counter<viewAdapter.__extensions.length;counter++)  initializeViewAdapterExtension(viewAdapter, viewAdapterDefinition, viewAdapter.__extensions[counter]);
+        delete viewAdapter.__extensions;
     };
 });}();
 !function()
-{"use strict";root.define("atomic.htmlCompositionRoot", function htmlCompositionRoot()
 {
-return {
-        viewAdapterFactory:
-        new root.atomic.viewAdapterFactory
-        (
-            new root.atomic.htmlViewAdapterFactorySupport
-            (
-                document,
-                new root.atomic.htmlAttachViewMemberAdapters
+    "use strict";
+    var createObserver;
+    function buildConstructor(removeFromArray, isolatedFunctionFactory, each)
+    {
+        var objectObserverFunctionFactory               = new isolatedFunctionFactory();
+        var objectObserver                              =
+        objectObserverFunctionFactory.create
+        (function objectObserverFactory(basePath, bag)
+        {
+            function objectObserver(path, value)
+            {
+                return objectObserver.__invoke(path, value, false);
+            }
+            Object.defineProperties(objectObserver,
+            {
+                "__basePath":   {get:   function(){return basePath;}},
+                "__bag":        {get:   function(){return bag;}},
+                "isDefined":    {value: function(propertyName){return this(propertyName)!==undefined;}},
+                "hasValue":     {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
+            });
+            return objectObserver;
+        });
+        var arrayObserverFunctionFactory                = new isolatedFunctionFactory();
+        var arrayObserver                               =
+        arrayObserverFunctionFactory.create
+        (function arrayObserverFactory(basePath, bag)
+        {
+            function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
+            function arrayObserver(path, value)
+            {
+                return arrayObserver.__invoke(path, value, false);
+            }
+            Object.defineProperties(arrayObserver,
+            {
+                "__basePath":   {get:   function(){return basePath;}},
+                "__bag":        {get:   function(){return bag;}}
+            });
+            each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
+            {
+                Object.defineProperty
                 (
-                    window,
-                    document,
-                    root.utilities.removeItemFromArray,
-                    window.setTimeout,
-                    window.clearTimeout,
-                    root.utilities.each
-                ),
-                new root.atomic.initializeViewAdapter(root.utilities.each),
-                root.utilities.pubSub,
-                function(message){console.log(message);}
-            )
-        ),
-        observer:
-        new root.atomic.observerFactory(root.utilities.removeFromArray, new root.atomic.isolatedFunctionFactory(document))
+                    arrayObserver, 
+                    name, 
+                    {
+                        value: function()
+                        {
+                            var items   = this(); 
+                            var result  = items[name].apply(items, arguments);
+                            this.__notify(this.__basePath, items); 
+                            return result === items ? this : result; 
+                        }
+                    }
+                );
+            });
+            each(["remove","removeAll"], function(name)
+            {
+                Object.defineProperty
+                (
+                    arrayObserver,
+                    name, 
+                    {
+                        value: function()
+                        {
+                            var result = this["__"+name].apply(this, arguments); 
+                            this.__notify(this.__basePath, this());
+                            return result; 
+                        }
+                    }
+                );
+            });
+            each(["join","indexOf","slice"], function(name)
+            {
+                Object.defineProperty
+                (
+                    arrayObserver, 
+                    name, 
+                    {
+                        value: function()
+                        {
+                            var items   = this(); 
+                            return items[name].apply(items, arguments);
+                        }
+                    }
+                );
+            });
+            return arrayObserver;
+        });
+        function createObserver(revisedPath, bag, isArray)
+        {
+            return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
+        }
+        function getValue(pathSegments, revisedPath, getObserver)
+        {
+            pathSegments    = pathSegments || [""];
+            if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            var returnValue = navDataPath(this.__bag, pathSegments);
+            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+            return returnValue;
+        }
+        function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
+        {
+            for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
+            {
+                var subSegment  = subSegments[subSegmentCounter];
+                // warning: string subsegments are not currently supported
+                if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
+                returnSegments.push({type:1, value: parseInt(subSegment)});
+            }
+        }
+        function extractPathSegments(path)
+        {if(typeof path.split !== "function") debugger;
+            var pathSegments    = path.split(".");
+            var returnSegments  = [];
+            for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
+            {
+                var pathSegment = pathSegments[segmentCounter];
+                var bracket     = pathSegment.indexOf("[");
+                if (bracket > -1)
+                {
+                    var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
+                    pathSegment     = pathSegment.substring(0, bracket);
+                    if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
+                    extractArrayPathSegmentsInto(subSegments, returnSegments, path);
+                }
+                else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
+            }
+            return returnSegments;
+        }
+        function getFullPath(paths)
+        {
+            if (paths.length == 0) return "";
+            var path    = paths[0].value;
+            for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
+            return path;
+        }
+        function navDataPath(root, paths, value)
+        {
+            if (paths.length == 0)
+            {
+                if(value === undefined) return root.item;
+                root.item   = value;
+                return;
+            }
+            var current     = root.item;
+            for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
+            {
+                var path    = paths[pathCounter];
+                if (current[path.value] === undefined)
+                {
+                    if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
+                    else                        return undefined;
+                }
+                current     = current[path.value];
+            }
+            if (value === undefined)    return current[paths[paths.length-1].value];
+            current[paths[paths.length-1].value]    = value;
+        }
+        function addPropertyPath(properties, path, remainingPath)
+        {
+            properties[path]    = remainingPath !== undefined ? remainingPath : "";
+        }
+        function addProperties(properties, pathSegments)
+        {
+            addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
+            if (pathSegments.length === 0)  return;
+            var path    = pathSegments[0].value;
+            addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
+            for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
+            {
+                path    += "." + pathSegments[segmentCounter].value;
+                addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
+            }
+        }
+        function notifyPropertyListener(propertyKey, listener, bag)
+        {
+            if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.nestedUpdatesRootPath !== undefined && propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath) || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+            {
+                bag.updating.push(listener);
+                listener.properties = {};
+                var postCallback = listener.callback();
+                bag.updating.pop();
+                if (postCallback !== undefined) postCallback();
+            }
+        }
+        function notifyPropertyListeners(propertyKey, value, bag)
+        {
+            var itemListeners   = bag.itemListeners.slice();
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
+        }
+        each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
+        {
+            __invoke:           {value: function(path, value, getObserver)
+            {
+                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver);}
+                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
+                if (path === undefined || path === null)        path    = "";
+                var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
+                                        ?   path.substr(3)
+                                        :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
+                var pathSegments    = extractPathSegments(resolvedPath);
+                var revisedPath     = getFullPath(pathSegments);
+                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
+                if (this.__bag.rollingback) return;
+                var currentValue = navDataPath(this.__bag, pathSegments);
+                if (value !== currentValue)
+                {
+                    navDataPath(this.__bag, pathSegments, value);
+                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+                }
+            }},
+            __notify:           {value: function(path, value){notifyPropertyListeners.call(this, path, value, this.__bag);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, true);}},
+            basePath:           {value: function(){return this.__basePath;}},
+            beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
+            commit:             {value: function(){delete this.__bag.backup;}},
+            ignore:             {value: function(callback)
+            {
+                for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
+                if (this.__bag.itemListeners[listenerCounter].callback === callback)
+                removeFromArray(this.__bag.itemListeners, listenerCounter);
+            }},
+            isObserver:         {value: true},
+            listen:             {value: function(callback, nestedUpdatesRootPath)
+            {
+                var listener    = {callback: callback, nestedUpdatesRootPath: nestedUpdatesRootPath!==undefined?((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath):undefined};
+                this.__bag.itemListeners.push(listener);
+                notifyPropertyListener.call(this, "", listener, this.__bag);
+            }},
+            rollback:           {value: function()
+            {
+                this.__bag.rollingback  = true;
+                this.__bag.item         = this.__bag.backup;
+                delete this.__bag.backup;
+                notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
+                this.__bag.rollingback  = false;
+            }}
+        });});
+        Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
+        {
+            __remove:           {value: function(value)
+            {
+                var items   = this();
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                removeFromArray(items, items.indexOf(value));
+            }},
+            __removeAll:        {value: function(values)
+            {
+                var items   = this();
+                var keepers = [];
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                for(var itemCounter=0;itemCounter<items.length;itemCounter++)
+                {
+                    var item    = items[itemCounter];
+                    if (values.indexOf(item) == -1) keepers.push(item);
+                }
+                items.length = 0;
+                items.push.apply(items, keepers);
+            }},
+            isArrayObserver:    {value: true},
+            count:              {get: function(){return this().length;}}
+        });
+        return createObserver;
     }
+    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each)
+    {
+        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each);
+        return function observer(_item)
+        {
+            var bag             =
+            {
+                item:           _item,
+                itemListeners:  [],
+                rootListeners:  [],
+                propertyKeys:   [],
+                updating:       [],
+                rollingback:    false
+            };
+            return createObserver("", bag, Array.isArray(_item));
+        };
+    });
+}();
+!function()
+{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray)
+{
+    function notifyProperties()
+    {
+        each(this.__properties,(function(property)
+        {
+            property.data = this.data||null;
+        }).bind(this));
+    }
+    function dataBinder(data)
+    {
+        Object.defineProperties(this,
+        {
+            "__properties": {value: []},
+            "__forceRoot":  {value: false, configurable: true}
+        });
+        this.__makeRoot();
+        if (data) this.data = data;
+    };
+    Object.defineProperties(dataBinder.prototype,
+    {
+        data:
+        {
+            get:    function(){return this.__data;},
+            set:    function(value)
+            {
+                if (value !== undefined && value !== null && value.isBinder && !this.__forceRoot)
+                {
+                    Object.defineProperty(this,"__parentBinder", {value: value, configurable: true});
+                    value.register(this);
+                    return;
+                }
+
+                if (this.__parentBinder !== null && value !== this.__parentBinder.data)
+                {
+                    Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
+                    return;
+                }
+
+                Object.defineProperty(this, "__data", {value: value, configurable: true});
+                notifyProperties.call(this);
+            }
+        },
+        __makeRoot:   {value: function()
+        {
+            var parent  = this.__parentBinder;
+            Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
+            if(parent)   parent.unregister(this);
+        }},
+        isBinder:   {value: true},
+        isRoot:
+        {
+            get: function(){return this.__forceRoot || (this.__parentBinder==null&&this.__data!=null);}, 
+            set: function(value)
+            {
+                if (value===true)   this.__makeRoot();
+                Object.defineProperty(this, "__forceRoot", {value: value, configurable: true});
+            }
+        },
+        register:   {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.data = this.data;}},
+        unregister: {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
+    });
+    return dataBinder;
+});}()
+!function()
+{
+    "use strict";
+    var defineDataProperties;
+    function buildFunction(isolatedFunctionFactory, each)
+    {
+        var functionFactory = new isolatedFunctionFactory();
+        var createProperty  =
+        functionFactory.create
+        (function createProperty(owner, getter, setter, onchange, binder)
+        {
+            function property(value, forceSet)
+            {
+                if (value !== undefined || forceSet)
+                {
+                    if (typeof setter === "function")   setter.call(owner, value);
+                    if (Object.keys(property.__onchange).length===0)    property.__inputListener();
+                }
+                else                                    return getter.call(owner);
+            };
+            Object.defineProperties(property,
+            {
+                __owner:                {value: owner},
+                __binder:               {value: binder, configurable: true},
+                __getter:               {value: function(){return getter.call(owner);}},
+                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
+                __notifyingObserver:    {value: undefined, writable: true},
+                __onchange:             {value: {}},
+                __inputListener:        {value: function(){property.___inputListener();}}
+            });
+            if (typeof onchange === "string") debugger;
+            property.onchange = onchange;
+            if (binder) binder.register(property);
+            return property;
+        });
+        function bindData()
+        {
+            if (this.__data === undefined || this.__data == null)   return;
+            Object.defineProperty(this,"__bounded", {value: true, configurable: true});
+            if (this.__bind !== undefined)
+            {
+                Object.defineProperty(this, "__bindListener", 
+                {
+                    configurable:   true, 
+                    value:          (function()
+                    {
+                        var value = this.__getDataValue();
+                        if (!this.__notifyingObserver) this.__setter(value);
+                        notifyOnDataUpdate.call(this, this.data); 
+                    }).bind(this)
+                });
+                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
+                this.data.listen(this.__bindListener, this.__root);
+                notifyOnbind.call(this, this.data);
+                return this;
+            }
+            else if (this.__onupdate)
+            {
+                Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
+                this.data.listen(this.__bindListener, this.__root);
+                notifyOnbind.call(this, this.data);
+            }
+            return this;
+        }
+        function unbindData()
+        {
+            Object.defineProperty(this,"__bounded", {value: false, configurable: true});
+            var notify = false;
+            if (this.__bindListener !== undefined)
+            {
+                if (notify = this.data !== undefined)   this.data.ignore(this.__bindListener);
+                this.__bindListener.ignore = true;
+                Object.defineProperty(this, "__bindListener", {configurable: true, value: undefined});
+            }
+            each(this.__onchange, (function(onchange){onchange.ignore(this.__inputListener);}).bind(this));
+            if (notify)                                 notifyOnunbind.call(this);
+        }
+        function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
+        function notifyOnDataUpdate(data)   { if (this.__onupdate) this.__onupdate.call(this.__owner, data); }
+        function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind.call(this.__owner, data); }
+        function rebind(callback)
+        {
+            unbindData.call(this);
+            callback.call(this);
+            bindData.call(this);
+        }
+        Object.defineProperties(functionFactory.root.prototype,
+        {
+            __destroy:
+            {
+                value:  function()
+                {
+                    if (this.__binder)  this.__binder.unregister(this);
+                    Object.defineProperty(this, "__binder", {value: undefined, writable: true});
+                    delete this.__binder;
+                }
+            },
+            ___inputListener:
+            {
+                value:  function()
+                {
+                    if (this.__bounded===false) return;
+                    this.__notifyingObserver    = true;
+                    this.__setDataValue();
+                    this.__notifyingObserver    = false;
+                }
+            },
+            __getDataValue:
+            {
+                value:  function()
+                {
+                    if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
+                    else if (typeof this.__bind === "string")                       return this.data(this.__bind);
+                    else if (this.__bind && typeof this.__bind.get === "function")  return this.__bind.get.call(this.__owner, this.data);
+                    return this.data();
+                }
+            },
+            __setDataValue:
+            {
+                value:  function()
+                {
+                    if (this.__getter === undefined || this.__bind === undefined)   return;
+
+                    if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
+                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
+                    else                                                            {throw new Error("Unable to set back two way bound value to model.");}
+                }
+            },
+            onchange:
+            {
+                get:    function(){return this.__onchange;},
+                set:    function(value) {rebind.call(this,function()
+                {
+                    each(this.__onchange,   (function(event, name){Object.defineProperty(this.__onchange,name,{writable: true});delete this.__onchange[name];}).bind(this));
+                    each(value,             (function(event, name){Object.defineProperty(this.__onchange,name,{value: event, configurable: true, enumerable: true});}).bind(this));
+                });}
+            }
+        });
+        each(["data","bind","root"],function(name)
+        {
+            Object.defineProperty(functionFactory.root.prototype, name,
+            {
+                get:    function(){return this["__"+name];},
+                set:    function(value)
+                {
+                    rebind.call(this, function()
+                    {
+                        Object.defineProperty(this, "__"+name, {value: value, configurable: true});
+                    });
+                    if(typeof this[name+"updated"] === "function")  this[name+"updated"](value);
+                }
+            });
+        });
+        each(["onbind","onupdate","onunbind"],function(name)
+        {
+            Object.defineProperty(functionFactory.root.prototype, name,
+            {
+                get:    function(){return this["__"+name];},
+                set:    function(value){Object.defineProperty(this, "__"+name, {value: value, configurable: true});}
+            });
+        });
+        function defineDataProperty(target, binder, propertyName, property)
+        {
+            if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
+            Object.defineProperty(target, propertyName, {value: createProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
+            each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+        }
+        function defineDataProperties(target, binder, properties, singleProperty)
+        {
+            if (typeof properties === "string") defineDataProperty(target, binder, properties, singleProperty);
+            else                                each(properties, function(property, propertyName){defineDataProperty(target, binder, propertyName, property);});
+        }
+        return defineDataProperties;
+    }
+    root.define("atomic.defineDataProperties", function(isolatedFunctionFactory, each)
+    {
+        if (defineDataProperties === undefined) defineDataProperties    = buildFunction(isolatedFunctionFactory, each);
+        return defineDataProperties;
+    });
+}();
+!function()
+{"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customControlTypes)
+{
+    var each                    = root.utilities.each
+    var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
+    var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
+    var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray);
+    var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
+    var eventsSet               = new root.atomic.html.eventsSet(pubSub);
+    var controlTypes            = {};
+    var viewAdapterFactory      =   new root.atomic.html.viewAdapterFactory
+                                    (
+                                        document,
+                                        controlTypes,
+                                        new root.atomic.initializeViewAdapter(each),
+                                        pubSub,
+                                        function(message){console.log(message);},
+                                        each
+                                    );
+
+    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, defineDataProperties, eventsSet, dataBinder);
+    var readonly                = new root.atomic.html.readonly(control, defineDataProperties);
+    var container               = new root.atomic.html.container(control, each);
+    var panel                   = new root.atomic.html.panel(container, defineDataProperties, viewAdapterFactory, each);
+    var repeater                = new root.atomic.html.repeater(container, defineDataProperties, viewAdapterFactory, root.utilities.removeFromArray);
+    var input                   = new root.atomic.html.input(control, defineDataProperties);
+    var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
+    var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
+    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
+    var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
+
+    Object.defineProperties(controlTypes,
+    {
+        control:        {value: control},
+        readonly:       {value: readonly},
+        panel:          {value: panel},
+        repeater:       {value: repeater},
+        input:          {value: input},
+        checkbox:       {value: checkbox},
+        select:         {value: select},
+        radiogroup:     {value: radiogroup},
+        multiselect:    {value: multiselect}
+    });
+
+    return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
 });}();
 !function(window, document)
 {"use strict";root.define("atomic.adaptHtml", function adaptHtml(viewElement, controlsOrAdapter)
@@ -1124,15 +1750,14 @@ return {
     var deferOrExecute  =
     function()
     {
-        var atomic  = root.atomic.htmlCompositionRoot();
+        var atomic  = root.atomic.html.compositionRoot();
         var adapter =
         atomic.viewAdapterFactory.create
         (
             typeof controlsOrAdapter !== "function" ? function(appViewAdapter){return {controls: controlsOrAdapter}; } : controlsOrAdapter, 
-            viewElement||document.body
+            typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
         );
-        adapter.bindData(new atomic.observer({}));
-        adapter.bindSourceData(new atomic.observer({}));
+        adapter.data    = new atomic.observer({});
         if (typeof callback === "function") callback(adapter);
     }
     if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);

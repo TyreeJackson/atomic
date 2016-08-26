@@ -9,12 +9,12 @@
             nameTextbox:
             {
                 focused:    true,
-                bindTo:     "nameValue",
+                bind:       "nameValue",
                 onescape:   function(){this.value("");},
                 updateon:   ["keydown", "keyup", "change"]
             },
-            helloMessage:   { ondataupdate: function(data){this.toggleDisplay(data("nameValue.length") > 0);} },
-            nameLabels:     { selector: ".name", multipresent: true, bindTo: "nameValue" }
+            helloMessage:   { bind: {display: "nameValue.length"} },
+            nameLabels:     { selector: ".name", multipresent: true, bind: "nameValue" }
         });
     </script>
 </head>
