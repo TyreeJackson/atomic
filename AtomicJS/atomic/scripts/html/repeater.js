@@ -100,7 +100,7 @@
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
             if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
-            else                                                repeatedControl.data    = undefined;
+            else                                                {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
         }
         this.__repeatedControls     = {};
@@ -115,7 +115,7 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
         {
             bindRepeatedList.call(this, this.data.observe(this.bind));
         }}});
@@ -131,7 +131,7 @@
             control.prototype.init.call(this, definition);
         }},
         children:   {value: function(){return this.__repeatedControls || null;}},
-        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||"")); notifyOnDataUpdate.call(this, this.data(this.__bind||""));}}
+        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}}
     });
     return repeater;
 });}();

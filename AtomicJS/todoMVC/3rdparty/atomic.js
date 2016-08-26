@@ -138,15 +138,17 @@
             "__listenersNotUsingCapture":   {value:{}}
         });
     }
+    function getListener(name, withCapture, add)
+    {
+        var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
+        var eventListeners  = listeners[name];
+        if (add && eventListeners === undefined)    Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
+        return eventListeners&&eventListeners.pubSub;
+    }
     Object.defineProperties(eventsSet.prototype,
     {
-        getOrAdd:   {value: function(name, withCapture)
-        {
-            var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
-            var eventListeners  = listeners[name];
-            if (eventListeners === undefined)   Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
-            return eventListeners.pubSub;
-        }}
+        getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
+        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }}
     });
     return eventsSet;
 });}();
@@ -177,15 +179,16 @@
         element.title = this.constructor.name;
         Object.defineProperties(this, 
         {
-            "__element":            {value: element, configurable: true},
-            "__elementPlaceholder": {value: []},
-            "__events":             {value: new eventsSet(this)},
-            "on":                   {value: {}},
-            "__attributes":         {value: {}, writable: true},
-            "__selector":           {value: selector},
-            "parent":               {value: parent},
-            "__binder":             {value: new dataBinder()},
-            "isRoot":               {value: false, writable: true}
+            __element:              {value: element, configurable: true},
+            __elementPlaceholder:   {value: []},
+            __events:               {value: new eventsSet(this)},
+            on:                     {value: {}},
+            __attributes:           {value: {}, writable: true},
+            __selector:             {value: selector},
+            parent:                 {value: parent},
+            __binder:               {value: new dataBinder()},
+            __forceRoot:            {value: false, configurable: true},
+            classes:                {value: {}}
         });
         defineDataProperties(this, this.__binder,
         {
@@ -210,6 +213,11 @@
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
+    function notifyClassEvent(className, exists)
+    {
+        var event = this.__events.get("class-"+className);
+        if (event !== undefined)    event(exists);
+    }
     Object.defineProperties(control.prototype,
     {
         getSelectorPath:    {value: function()
@@ -223,15 +231,26 @@
             addCustomMembers.call(this, definition.members);
             this.__extensions   = definition.extensions;
         }},
-        addClass:           {value: function(className)
+        addClass:           {value: function(className, silent)
         {
             var classNames              = this.__element.className.split(" ");
             if (classNames.indexOf(className) === -1) classNames.push(className);
             this.__element.className    = classNames.join(" ").trim();
+            if (!silent)    notifyClassEvent.call(this, className, true);
             return this;
         }},
-        bind:               {get: function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
-        data:               {get: function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        bind:               {get:   function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
+        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        bindClass:          {value: function(className)
+        {
+            defineDataProperties(this.classes, this.__binder, className, 
+            {
+                owner:      this,
+                get:        function(){return this.hasClass(className);}, 
+                set:        function(value){this.toggleClass(className, value===true, true);}, 
+                onchange:   [this.__events.getOrAdd("class-"+className)]
+            })
+        }},
         getEvents:          {value: function(eventNames)
         {
             if (!Array.isArray(eventNames)) eventNames  = [eventNames];
@@ -247,8 +266,13 @@
         insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
-        isRoot:             {get:   function(){return this.__isRoot;}, set: function(value){this.__isRoot=value===true;}},
-        removeClass:        {value: function(className)
+        isDataRoot:         {get: function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot = value===true;}},
+        isRoot:
+        {
+            get:    function(){return this.__forceRoot||this.parent===undefined;}, 
+            set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}
+        },
+        removeClass:        {value: function(className, silent)
         {
             if (className === undefined)
             {
@@ -258,6 +282,7 @@
             var classNames              = this.__element.className.split(" ");
             if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
             this.__element.className    = classNames.join(" ");
+            if (!silent)    notifyClassEvent.call(this, className, false);
             return this;
         }},
         "__reattach":       {value: function()
@@ -270,8 +295,7 @@
         scrollIntoView:     {value: function(){this.__element.scrollTop = 0; return this;}},
         select:             {value: function(){selectContents(this.__element); return this;}},
         show:               {value: function(){this.__element.style.display=""; this.triggerEvent("show"); return this;}},
-        toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
-        toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
+        toggleClass:        {value: function(className, condition, silent){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent);}},
         toggleEdit:         {value: function(condition){if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;}},
         toggleDisplay:      {value: function(condition){if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;}},
         triggerEvent:       {value: function(eventName){var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this;}},
@@ -446,9 +470,9 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
         {
-            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
         }}});
         this.bind   = "";
     }
@@ -583,7 +607,7 @@
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
             if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
-            else                                                repeatedControl.data    = undefined;
+            else                                                {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
         }
         this.__repeatedControls     = {};
@@ -598,7 +622,7 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
         {
             bindRepeatedList.call(this, this.data.observe(this.bind));
         }}});
@@ -614,7 +638,7 @@
             control.prototype.init.call(this, definition);
         }},
         children:   {value: function(){return this.__repeatedControls || null;}},
-        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||"")); notifyOnDataUpdate.call(this, this.data(this.__bind||""));}}
+        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}}
     });
     return repeater;
 });}();
@@ -1039,7 +1063,7 @@
     return viewAdapterFactory;
 });}();
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter", function(each)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each, defineDataProperties)
 {
     function cancelEvent(event)
     {
@@ -1072,12 +1096,23 @@
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
             if (binding.root !== undefined)                                 viewAdapter[name].root      = binding.root;
+            if (binding.onupdate !== undefined)                             viewAdapter[name].onupdate  = binding.onupdate;
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }
     }
+    function bindClassProperty(viewAdapter, name, binding)
+    {
+        viewAdapter.bindClass(name);
+        bindProperty(viewAdapter.classes, name, binding);
+    }
+    function bindClassProperties(viewAdapter, classBindings)
+    {
+        for(var name in classBindings)  bindClassProperty(viewAdapter, name, classBindings[name]);
+    }
     function bindMultipleProperties(viewAdapter, bindings)
     {
-        for(var name in bindings) bindProperty(viewAdapter, name, bindings[name]);
+        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
     }
     var initializers    =   {};
     Object.defineProperties(initializers,
@@ -1348,7 +1383,7 @@
             commit:             {value: function(){delete this.__bag.backup;}},
             ignore:             {value: function(callback)
             {
-                for(var listenerCounter=0;listenerCounter<this.__bag.itemListeners.length;listenerCounter++)
+                for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
                 if (this.__bag.itemListeners[listenerCounter].callback === callback)
                 removeFromArray(this.__bag.itemListeners, listenerCounter);
             }},
@@ -1470,7 +1505,8 @@
             {
                 if (value===true)   this.__makeRoot();
                 Object.defineProperty(this, "__forceRoot", {value: value, configurable: true});
-            }},
+            }
+        },
         register:   {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.data = this.data;}},
         unregister: {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
     });
@@ -1527,12 +1563,12 @@
                         notifyOnDataUpdate.call(this, this.data); 
                     }).bind(this)
                 });
-                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener);}).bind(this));
+                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
                 return this;
             }
-            else if (this.__ondataupdate)
+            else if (this.__onupdate)
             {
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
                 this.data.listen(this.__bindListener, this.__root);
@@ -1554,7 +1590,7 @@
             if (notify)                                 notifyOnunbind.call(this);
         }
         function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
-        function notifyOnDataUpdate(data)   { if (this.__ondataupdate) this.__ondataupdate.call(this.__owner, data); }
+        function notifyOnDataUpdate(data)   { if (this.__onupdate) this.__onupdate.call(this.__owner, data); }
         function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind.call(this.__owner, data); }
         function rebind(callback)
         {
@@ -1589,8 +1625,7 @@
                 {
                     if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
                     else if (typeof this.__bind === "string")                       return this.data(this.__bind);
-                    else if (this.__bind && typeof this.__bind.get === "function")  {return this.__bind.get.call(this.owner, this.data);}
-                    debugger;
+                    else if (this.__bind && typeof this.__bind.get === "function")  return this.__bind.get.call(this.__owner, this.data);
                     return this.data();
                 }
             },
@@ -1598,11 +1633,11 @@
             {
                 value:  function()
                 {
-                    if (this.__getter === undefined)                                return;
+                    if (this.__getter === undefined || this.__bind === undefined)   return;
 
                     if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
-                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.owner, this.data, this.__getter());
-                    else                                                            throw new Error("Unable to set back two way bound value to model.");
+                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
+                    else                                                            {throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
             onchange:
@@ -1630,7 +1665,7 @@
                 }
             });
         });
-        each(["onbind","ondataupdate","onunbind"],function(name)
+        each(["onbind","onupdate","onunbind"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -1638,14 +1673,16 @@
                 set:    function(value){Object.defineProperty(this, "__"+name, {value: value, configurable: true});}
             });
         });
-        function defineDataProperties(target, binder, properties)
+        function defineDataProperty(target, binder, propertyName, property)
         {
-            each(properties, function(property, propertyName)
-            {
-                if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-                Object.defineProperty(target, propertyName, {value: createProperty(target, property.get, property.set, property.onchange, binder), configurable: true})
-                each(["onbind","ondataupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
-            });
+            if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
+            Object.defineProperty(target, propertyName, {value: createProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
+            each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+        }
+        function defineDataProperties(target, binder, properties, singleProperty)
+        {
+            if (typeof properties === "string") defineDataProperty(target, binder, properties, singleProperty);
+            else                                each(properties, function(property, propertyName){defineDataProperty(target, binder, propertyName, property);});
         }
         return defineDataProperties;
     }

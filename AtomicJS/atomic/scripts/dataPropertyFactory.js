@@ -49,12 +49,12 @@
                         notifyOnDataUpdate.call(this, this.data); 
                     }).bind(this)
                 });
-                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener);}).bind(this));
+                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
                 return this;
             }
-            else if (this.__ondataupdate)
+            else if (this.__onupdate)
             {
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
                 this.data.listen(this.__bindListener, this.__root);
@@ -76,7 +76,7 @@
             if (notify)                                 notifyOnunbind.call(this);
         }
         function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
-        function notifyOnDataUpdate(data)   { if (this.__ondataupdate) this.__ondataupdate.call(this.__owner, data); }
+        function notifyOnDataUpdate(data)   { if (this.__onupdate) this.__onupdate.call(this.__owner, data); }
         function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind.call(this.__owner, data); }
         function rebind(callback)
         {
@@ -111,8 +111,7 @@
                 {
                     if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
                     else if (typeof this.__bind === "string")                       return this.data(this.__bind);
-                    else if (this.__bind && typeof this.__bind.get === "function")  {return this.__bind.get.call(this.owner, this.data);}
-                    debugger;
+                    else if (this.__bind && typeof this.__bind.get === "function")  return this.__bind.get.call(this.__owner, this.data);
                     return this.data();
                 }
             },
@@ -120,11 +119,11 @@
             {
                 value:  function()
                 {
-                    if (this.__getter === undefined)                                return;
+                    if (this.__getter === undefined || this.__bind === undefined)   return;
 
                     if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
-                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.owner, this.data, this.__getter());
-                    else                                                            throw new Error("Unable to set back two way bound value to model.");
+                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
+                    else                                                            {throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
             onchange:
@@ -152,7 +151,7 @@
                 }
             });
         });
-        each(["onbind","ondataupdate","onunbind"],function(name)
+        each(["onbind","onupdate","onunbind"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -160,14 +159,16 @@
                 set:    function(value){Object.defineProperty(this, "__"+name, {value: value, configurable: true});}
             });
         });
-        function defineDataProperties(target, binder, properties)
+        function defineDataProperty(target, binder, propertyName, property)
         {
-            each(properties, function(property, propertyName)
-            {
-                if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-                Object.defineProperty(target, propertyName, {value: createProperty(target, property.get, property.set, property.onchange, binder), configurable: true})
-                each(["onbind","ondataupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
-            });
+            if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
+            Object.defineProperty(target, propertyName, {value: createProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
+            each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+        }
+        function defineDataProperties(target, binder, properties, singleProperty)
+        {
+            if (typeof properties === "string") defineDataProperty(target, binder, properties, singleProperty);
+            else                                each(properties, function(property, propertyName){defineDataProperty(target, binder, propertyName, property);});
         }
         return defineDataProperties;
     }

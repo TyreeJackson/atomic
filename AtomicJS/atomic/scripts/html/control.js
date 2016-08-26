@@ -25,15 +25,16 @@
         element.title = this.constructor.name;
         Object.defineProperties(this, 
         {
-            "__element":            {value: element, configurable: true},
-            "__elementPlaceholder": {value: []},
-            "__events":             {value: new eventsSet(this)},
-            "on":                   {value: {}},
-            "__attributes":         {value: {}, writable: true},
-            "__selector":           {value: selector},
-            "parent":               {value: parent},
-            "__binder":             {value: new dataBinder()},
-            "isRoot":               {value: false, writable: true}
+            __element:              {value: element, configurable: true},
+            __elementPlaceholder:   {value: []},
+            __events:               {value: new eventsSet(this)},
+            on:                     {value: {}},
+            __attributes:           {value: {}, writable: true},
+            __selector:             {value: selector},
+            parent:                 {value: parent},
+            __binder:               {value: new dataBinder()},
+            __forceRoot:            {value: false, configurable: true},
+            classes:                {value: {}}
         });
         defineDataProperties(this, this.__binder,
         {
@@ -58,6 +59,11 @@
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
+    function notifyClassEvent(className, exists)
+    {
+        var event = this.__events.get("class-"+className);
+        if (event !== undefined)    event(exists);
+    }
     Object.defineProperties(control.prototype,
     {
         getSelectorPath:    {value: function()
@@ -71,15 +77,26 @@
             addCustomMembers.call(this, definition.members);
             this.__extensions   = definition.extensions;
         }},
-        addClass:           {value: function(className)
+        addClass:           {value: function(className, silent)
         {
             var classNames              = this.__element.className.split(" ");
             if (classNames.indexOf(className) === -1) classNames.push(className);
             this.__element.className    = classNames.join(" ").trim();
+            if (!silent)    notifyClassEvent.call(this, className, true);
             return this;
         }},
-        bind:               {get: function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
-        data:               {get: function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        bind:               {get:   function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
+        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        bindClass:          {value: function(className)
+        {
+            defineDataProperties(this.classes, this.__binder, className, 
+            {
+                owner:      this,
+                get:        function(){return this.hasClass(className);}, 
+                set:        function(value){this.toggleClass(className, value===true, true);}, 
+                onchange:   [this.__events.getOrAdd("class-"+className)]
+            })
+        }},
         getEvents:          {value: function(eventNames)
         {
             if (!Array.isArray(eventNames)) eventNames  = [eventNames];
@@ -95,8 +112,13 @@
         insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
-        isRoot:             {get:   function(){return this.__isRoot;}, set: function(value){this.__isRoot=value===true;}},
-        removeClass:        {value: function(className)
+        isDataRoot:         {get: function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot = value===true;}},
+        isRoot:
+        {
+            get:    function(){return this.__forceRoot||this.parent===undefined;}, 
+            set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}
+        },
+        removeClass:        {value: function(className, silent)
         {
             if (className === undefined)
             {
@@ -106,6 +128,7 @@
             var classNames              = this.__element.className.split(" ");
             if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
             this.__element.className    = classNames.join(" ");
+            if (!silent)    notifyClassEvent.call(this, className, false);
             return this;
         }},
         "__reattach":       {value: function()
@@ -118,8 +141,7 @@
         scrollIntoView:     {value: function(){this.__element.scrollTop = 0; return this;}},
         select:             {value: function(){selectContents(this.__element); return this;}},
         show:               {value: function(){this.__element.style.display=""; this.triggerEvent("show"); return this;}},
-        toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
-        toggleClass:        {value: function(className, condition){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className);}},
+        toggleClass:        {value: function(className, condition, silent){if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent);}},
         toggleEdit:         {value: function(condition){if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this;}},
         toggleDisplay:      {value: function(condition){if (condition === undefined) condition = this.__element.style.display=="none"; this[condition?"show":"hide"](); return this;}},
         triggerEvent:       {value: function(eventName){var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this;}},

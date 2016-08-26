@@ -16,9 +16,9 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder, {value: {ondataupdate: function(value)
+        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
         {
-            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
         }}});
         this.bind   = "";
     }

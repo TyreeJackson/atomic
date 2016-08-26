@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter", function(each)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each, defineDataProperties)
 {
     function cancelEvent(event)
     {
@@ -32,12 +32,23 @@
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
             if (binding.root !== undefined)                                 viewAdapter[name].root      = binding.root;
+            if (binding.onupdate !== undefined)                             viewAdapter[name].onupdate  = binding.onupdate;
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }
     }
+    function bindClassProperty(viewAdapter, name, binding)
+    {
+        viewAdapter.bindClass(name);
+        bindProperty(viewAdapter.classes, name, binding);
+    }
+    function bindClassProperties(viewAdapter, classBindings)
+    {
+        for(var name in classBindings)  bindClassProperty(viewAdapter, name, classBindings[name]);
+    }
     function bindMultipleProperties(viewAdapter, bindings)
     {
-        for(var name in bindings) bindProperty(viewAdapter, name, bindings[name]);
+        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
     }
     var initializers    =   {};
     Object.defineProperties(initializers,

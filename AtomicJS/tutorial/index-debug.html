@@ -922,7 +922,7 @@ root.atomic.adaptHtml
                                                                             {
                                                                                 childNameLabel:         { bind: "" },
                                                                                 childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
-                                                                                childRenderTimeLabel:   { bind: function(data){debugger;return new Date().getSeconds();} },
+                                                                                childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
                                                                             }
                                                                         }
                                                                     }

@@ -26,7 +26,30 @@ function()
             {
                 controls:
                 {
-                    toggleAllCompleted: { onchange: function() { this.root.on.toggleAllCompleted(this.value()); } },
+                    toggleAllCompleted: 
+                    {
+                        bind:
+                        {
+                            value:
+                            {
+                                to:
+                                {
+                                    get:    function(data)
+                                    {
+                                        var items           = data();
+                                        var allCompleted    = true;
+                                        for(var itemCounter=0;itemCounter<items.length;itemCounter++)
+                                        allCompleted = allCompleted && (items[itemCounter].completed||false);
+                                        return allCompleted;
+                                    },
+                                    set:    function(data, value)
+                                    {
+                                        this.root.on.toggleAllCompleted(value);
+                                    }
+                                }
+                            }
+                        }
+                    },
                     todoList:
                     {
                         repeat:
@@ -34,11 +57,12 @@ function()
                             todoListItemTemplate:
                             {
                                 getKey:     function(item){return "todoListItem-"+item().id},
+                                bind:       { classes: { completed:  "completed" } },
                                 controls:
                                 {
                                     toggleCompletedCheckbox:
                                     {
-                                        bindTo:     "completed",
+                                        bind:       "completed",
                                         onchange:
                                         function()
                                         {
@@ -47,7 +71,7 @@ function()
                                     },
                                     todoLabel:
                                     {
-                                        bindTo:     "todo",
+                                        bind:       "todo",
                                         ondblclick:
                                         function()
                                         {
@@ -66,7 +90,7 @@ function()
                                     },
                                     editTodoTextbox:
                                     {
-                                        bindTo:     "todo",
+                                        bind:       "todo",
                                         onenter:
                                         function()
                                         {
@@ -83,44 +107,26 @@ function()
                                         },
                                         updateon:   ["change", "keyup"]
                                     }
-                                },
-                                ondataupdate:
-                                function(data)
-                                {
-                                    this.toggleClass("completed", data().completed||false);
-                                },
+                                }
                             }
                         }
                     }
                 },
-                hidden:         true,
-                ondataupdate:   function(data)
-                {
-                    var items           = data();
-                    this.toggleDisplay(items.length>0);
-                    var allCompleted    = true;
-                    for(var itemCounter=0;itemCounter<items.length;itemCounter++)
-                    allCompleted = allCompleted && (items[itemCounter].completed||false);
-                    this.controls.toggleAllCompleted.value(allCompleted);
-                },
+                bind:           { display: "length" },
                 onunbind:       function(data) { this.hide(); }
             },
             todosFooter:
             {
                 controls:
                 {
-                    todosCountLabel:        { bindAs: function(todos){return getActiveTodos(todos()).length;} },
-                    todosCountDescription:  { bindAs: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
-                    allTodosLink:           { onclick: function(){this.root.attribute("filter", "none");} },
-                    activeTodosLink:        { onclick: function(){this.root.attribute("filter", "active");} },
-                    completedTodosLink:     { onclick: function(){this.root.attribute("filter", "completed");} },
+                    todosCountLabel:        { bind: function(todos){return getActiveTodos(todos()).length;} },
+                    todosCountDescription:  { bind: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
+                    allTodosLink:           { onclick: function(){this.root.attributes({filter: "none"});} },
+                    activeTodosLink:        { onclick: function(){this.root.attributes({filter: "active"});} },
+                    completedTodosLink:     { onclick: function(){this.root.attributes({filter: "completed"});} },
                     deleteCompletedTodos:   { onclick: function(){this.root.on.deleteCompletedTodos();} },
                 },
-                hidden: true,
-                ondataupdate:   function(data)
-                {
-                    this.toggleDisplay(data().length>0);
-                }
+                bind:       { display: "length" }
             }
         },
         events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted", "deleteCompletedTodos"]

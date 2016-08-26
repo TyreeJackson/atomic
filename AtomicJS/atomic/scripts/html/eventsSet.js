@@ -36,15 +36,17 @@
             "__listenersNotUsingCapture":   {value:{}}
         });
     }
+    function getListener(name, withCapture, add)
+    {
+        var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
+        var eventListeners  = listeners[name];
+        if (add && eventListeners === undefined)    Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
+        return eventListeners&&eventListeners.pubSub;
+    }
     Object.defineProperties(eventsSet.prototype,
     {
-        getOrAdd:   {value: function(name, withCapture)
-        {
-            var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
-            var eventListeners  = listeners[name];
-            if (eventListeners === undefined)   Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
-            return eventListeners.pubSub;
-        }}
+        getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
+        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }}
     });
     return eventsSet;
 });}();

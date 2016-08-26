@@ -1,8 +1,3 @@
-/*
-outstanding issues:
-support string key paths in observable
-add routing
-*/
 !function()
 {
     "use strict";
@@ -222,7 +217,7 @@ add routing
             commit:             {value: function(){delete this.__bag.backup;}},
             ignore:             {value: function(callback)
             {
-                for(var listenerCounter=0;listenerCounter<this.__bag.itemListeners.length;listenerCounter++)
+                for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
                 if (this.__bag.itemListeners[listenerCounter].callback === callback)
                 removeFromArray(this.__bag.itemListeners, listenerCounter);
             }},

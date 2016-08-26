@@ -56,7 +56,8 @@
             {
                 if (value===true)   this.__makeRoot();
                 Object.defineProperty(this, "__forceRoot", {value: value, configurable: true});
-            }},
+            }
+        },
         register:   {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.data = this.data;}},
         unregister: {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
     });
