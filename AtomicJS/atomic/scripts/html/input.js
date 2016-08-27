@@ -13,6 +13,7 @@
     Object.defineProperties(input.prototype,
     {
         constructor:    {value: input},
+        __createNode:   {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
         select:         {value: function(){this.__element.select(); return this;}}
     });
     return input;

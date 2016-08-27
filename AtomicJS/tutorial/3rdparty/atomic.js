@@ -176,7 +176,17 @@
     function control(element, selector, parent)
     {
         if (element === undefined)  throw new Error("View element not provided for control with selector " + selector);
-        element.title = this.constructor.name;
+        if (element.getAttribute("data-missing")==="true")
+        {
+            var container       = element;
+            element             = this.__createNode(selector);
+            container.appendChild(element);
+            element.id          = container.id;
+            element.className   = container.className;
+            container.id        = 
+            container.className = "";
+            element.title       = selector;
+        }
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
@@ -225,6 +235,7 @@
             return this.parent === undefined ? "" : this.parent.getSelectorPath() + "-" + (this.__selector||"root");
         }},
         constructor:        {value: control},
+        __createNode:       {value: function(selector){return document.createElement("div");}, configurable: true},
         init:               {value: function(definition)
         {
             addEvents.call(this, definition.events);
@@ -371,7 +382,8 @@
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(readonly.prototype,
     {
-        constructor:        {value: readonly}
+        constructor:    {value: readonly},
+        __createNode:   {value: function(){return document.createElement("span");}, configurable: true}
     });
     return readonly;
 });}();
@@ -439,7 +451,6 @@
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||querySelector(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector);
             initializeViewAdapter(control, controlDeclaration);
-            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
         removeControl:      {value: function(childControl)
@@ -657,6 +668,7 @@
     Object.defineProperties(input.prototype,
     {
         constructor:    {value: input},
+        __createNode:   {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
         select:         {value: function(){this.__element.select(); return this;}}
     });
     return input;
@@ -675,7 +687,8 @@
     Object.defineProperty(checkbox, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(checkbox.prototype,
     {
-        constructor:    {value: checkbox}
+        constructor:    {value: checkbox},
+        __createNode:   {value: function(){var element = document.createElement("input"); element.type="checkbox"; return element;}, configurable: true}
     });
     return checkbox;
 });}();
@@ -753,6 +766,7 @@
     Object.defineProperties(select.prototype,
     {
         constructor:        {value: select},
+        __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
@@ -880,6 +894,7 @@
     Object.defineProperties(radiogroup.prototype,
     {
         constructor:        {value: radiogroup},
+        __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
@@ -930,12 +945,47 @@
     Object.defineProperties(multiselect.prototype,
     {
         constructor:        {value: multiselect},
+        __createNode:       {value: function(){var element = document.createElement("select"); element.multiple="multiple"; return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
         selectedIndexes:    {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         size:               {get:   function(){ return this.__element.size; },            set: function(value){ this.__elements[0].size=value; }},
         __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValue) && this.__rawValue.indexOf(value) > -1;}}
     });
     return multiselect;
+});}();
+!function()
+{"use strict";root.define("atomic.html.image", function htmlImage(control, defineDataProperties)
+{
+    function image(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        defineDataProperties(this, this.__binder,
+        {
+            value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
+        });
+    }
+    Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(image.prototype,
+    {
+        constructor:    {value: image},
+        __createNode:   {value: function(){return document.createElement("image");}, configurable: true}
+    });
+    return image;
+});}();
+!function()
+{"use strict";root.define("atomic.html.button", function htmlButton(control)
+{
+    function button(element, selector, parent)
+    {
+        control.call(this, element, selector, parent);
+    }
+    Object.defineProperty(button, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(button.prototype,
+    {
+        constructor:    {value: button},
+        __createNode:   {value: function(selector){var element = document.createElement("button"); element.innerHTML = selector; return element;}, configurable: true}
+    });
+    return button;
 });}();
 !function()
 {"use strict";root.define("atomic.html.isolatedFunctionFactory", function isolatedFunctionFactory(document)
@@ -965,14 +1015,7 @@
 !function()
 {"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each)
 {
-    var typeHintMap         = {};
     var missingElements;
-    function createMissingElementsContainer()
-    {
-        var missingElements = document.createElement("div");
-        document.body.appendChild(missingElements);
-        return missingElements;
-    }
     var elementControlTypes =
     {
         "input":                    "input",
@@ -1007,7 +1050,6 @@
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||viewAdapterFactory.select(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector, controlDeclaration.type);
             initializeViewAdapter(control, controlDeclaration);
-            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
@@ -1036,21 +1078,17 @@
                 return view;
             }).bind(this);
         },
-        select:         function(uiElement, selector, selectorPath, typeHint)
+        select:         function(uiElement, selector, selectorPath)
         {
             var element = uiElement.querySelector(selector);
             if (element === null)
             {
                 logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-                element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-                var label               = document.createElement("span");
-                label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-                var container           = document.createElement("div");
-                missingElements         = missingElements||createMissingElementsContainer();
-                container.appendChild(element);
-                missingElements.appendChild(label);
-                missingElements.appendChild(container);
-                element.style.border    = "solid 1px black";
+                var element             = document.createElement("div");
+                uiElement.appendChild(element);
+                element.style.border    = "solid 2px red";
+                element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
+                element.setAttribute("data-missing", "true");
             }
             element.__selectorPath  = selectorPath;
             return element;
@@ -1722,6 +1760,8 @@
     var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
     var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
     var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
+    var image                   = new root.atomic.html.image(control, defineDataProperties);
+    var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
     {
@@ -1733,7 +1773,9 @@
         checkbox:       {value: checkbox},
         select:         {value: select},
         radiogroup:     {value: radiogroup},
-        multiselect:    {value: multiselect}
+        multiselect:    {value: multiselect},
+        image:          {value: image},
+        button:         {value: button}
     });
 
     return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };

@@ -17,6 +17,8 @@
     <script type="text/javascript" src="../atomic/scripts/html/select.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/radiogroup.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/multiselect.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/image.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/button.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/isolatedFunctionFactory.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/viewAdapterFactory.js"></script>
     <script type="text/javascript" src="../atomic/scripts/initializeViewAdapter.js"></script>
@@ -53,6 +55,7 @@
                                 <li id="exampleLink7"><a href="#/example/7">Control Types</a></li>
                                 <li id="exampleLink8"><a href="#/example/8">Working with Lists</a></li>
                                 <li id="exampleLink9"><a href="#/example/9">Hello Friend - container demo</a></li>
+                                <li id="exampleLink10"><a href="#/example/10">A Better List - control types demo</a></li>
                             </ul>
                         </div>
                     </div>
@@ -1173,6 +1176,188 @@ root.atomic.adaptHtml
                 &lt;p&gt;Pardon me &lt;span class="name"&gt;&lt;/span&gt;, but do you have any grey poupon?&lt;/p&gt;
             &lt;/div&gt;
         &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example10">
+                                    <div id="example10container" class="example">
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example10",
+                                            {
+                                                example10container:
+                                                {
+                                                    type:       "panel",
+                                                    classes:    "example",
+                                                    controls:
+                                                    {
+                                                        well:
+                                                        {
+                                                            selector:   ".well",
+                                                            type:       "panel",
+                                                            classes:    "well form-group",
+                                                            controls:
+                                                            {
+                                                                betterNewItem10:
+                                                                {
+                                                                    type:       "input",
+                                                                    bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                                                                    onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
+                                                                },
+                                                                betterAddNewItemButton10:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       { enabled: "newItem.length" },
+                                                                    onclick:
+                                                                    function()
+                                                                    {
+                                                                        if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                                                                        this.data("items").push(this.data("newItem"));
+                                                                        this.data("newItem","");
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        itemsTitle:
+                                                        {
+                                                            type:   "readonly",
+                                                            value:  "Your items:"
+                                                        },
+                                                        formgroup:
+                                                        {
+                                                            selector:   ".listContainer",
+                                                            type:       "panel",
+                                                            classes:    "listContainer form-group",
+                                                            controls:
+                                                            {
+                                                                betterItemsList10:
+                                                                {
+                                                                    type:   "multiselect",
+                                                                    bind:   {items: "items"}
+                                                                },
+                                                                removeItemButton10:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       {enabled: "items.length"},
+                                                                    onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
+                                                                },
+                                                                sortItemsButton:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                                    onclick:    function(){this.data("items").sort();}
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example10model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    "#example10",
+    {
+        example10container:
+        {
+            type:       "panel",
+            classes:    "example",
+            controls:
+            {
+                well:
+                {
+                    selector:   ".well",
+                    type:       "panel",
+                    classes:    "well form-group",
+                    controls:
+                    {
+                        betterNewItem10:
+                        {
+                            type:       "input",
+                            bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                            onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
+                        },
+                        betterAddNewItemButton10:
+                        {
+                            type:       "button",
+                            bind:       { enabled: "newItem.length" },
+                            onclick:
+                            function()
+                            {
+                                if (this.data("newItem.length")&gt;0 &amp;&amp; this.data("items").indexOf(this.data("newItem"))==-1)
+                                this.data("items").push(this.data("newItem"));
+                                this.data("newItem","");
+                            }
+                        }
+                    }
+                },
+                itemsTitle:
+                {
+                    type:   "readonly",
+                    value:  "Your items:"
+                },
+                formgroup:
+                {
+                    selector:   ".listContainer",
+                    type:       "panel",
+                    classes:    "listContainer form-group",
+                    controls:
+                    {
+                        betterItemsList10:
+                        {
+                            type:   "multiselect",
+                            bind:   {items: "items"}
+                        },
+                        removeItemButton10:
+                        {
+                            type:       "button",
+                            bind:       {enabled: "items.length"},
+                            onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
+                        },
+                        sortItemsButton:
+                        {
+                            type:       "button",
+                            bind:       {enabled: function(){return this.data("items.length")&gt;1}},
+                            onclick:    function(){this.data("items").sort();}
+                        }
+                    }
+                }
+            }
+        },
+        example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+    }
+)
+(function(adapter)
+{
+    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+});
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example10"&gt;
+    &lt;div id="example10container" class="example"&gt;
     &lt;/div&gt;
 &lt;/div&gt;
                                             </code>

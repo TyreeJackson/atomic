@@ -72,6 +72,7 @@
     Object.defineProperties(select.prototype,
     {
         constructor:        {value: select},
+        __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}

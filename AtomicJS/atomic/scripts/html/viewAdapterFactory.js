@@ -1,14 +1,7 @@
 !function()
 {"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each)
 {
-    var typeHintMap         = {};
     var missingElements;
-    function createMissingElementsContainer()
-    {
-        var missingElements = document.createElement("div");
-        document.body.appendChild(missingElements);
-        return missingElements;
-    }
     var elementControlTypes =
     {
         "input":                    "input",
@@ -43,7 +36,6 @@
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||viewAdapterFactory.select(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector, controlDeclaration.type);
             initializeViewAdapter(control, controlDeclaration);
-            if(controlDeclaration.multipresent){Object.defineProperty(control, "multipresent", {writable: false, value:true});}
             return control;
         },
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
@@ -72,21 +64,17 @@
                 return view;
             }).bind(this);
         },
-        select:         function(uiElement, selector, selectorPath, typeHint)
+        select:         function(uiElement, selector, selectorPath)
         {
             var element = uiElement.querySelector(selector);
             if (element === null)
             {
                 logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-                element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-                var label               = document.createElement("span");
-                label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-                var container           = document.createElement("div");
-                missingElements         = missingElements||createMissingElementsContainer();
-                container.appendChild(element);
-                missingElements.appendChild(label);
-                missingElements.appendChild(container);
-                element.style.border    = "solid 1px black";
+                var element             = document.createElement("div");
+                uiElement.appendChild(element);
+                element.style.border    = "solid 2px red";
+                element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
+                element.setAttribute("data-missing", "true");
             }
             element.__selectorPath  = selectorPath;
             return element;

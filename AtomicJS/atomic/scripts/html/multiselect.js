@@ -27,6 +27,7 @@
     Object.defineProperties(multiselect.prototype,
     {
         constructor:        {value: multiselect},
+        __createNode:       {value: function(){var element = document.createElement("select"); element.multiple="multiple"; return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
         selectedIndexes:    {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         size:               {get:   function(){ return this.__element.size; },            set: function(value){ this.__elements[0].size=value; }},

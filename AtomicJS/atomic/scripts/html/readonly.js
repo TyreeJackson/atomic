@@ -12,7 +12,8 @@
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(readonly.prototype,
     {
-        constructor:        {value: readonly}
+        constructor:    {value: readonly},
+        __createNode:   {value: function(){return document.createElement("span");}, configurable: true}
     });
     return readonly;
 });}();

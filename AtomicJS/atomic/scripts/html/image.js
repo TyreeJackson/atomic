@@ -12,7 +12,8 @@
     Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(image.prototype,
     {
-        constructor:    {value: image}
+        constructor:    {value: image},
+        __createNode:   {value: function(){return document.createElement("image");}, configurable: true}
     });
     return image;
 });}();

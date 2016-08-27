@@ -22,7 +22,17 @@
     function control(element, selector, parent)
     {
         if (element === undefined)  throw new Error("View element not provided for control with selector " + selector);
-        element.title = this.constructor.name;
+        if (element.getAttribute("data-missing")==="true")
+        {
+            var container       = element;
+            element             = this.__createNode(selector);
+            container.appendChild(element);
+            element.id          = container.id;
+            element.className   = container.className;
+            container.id        = 
+            container.className = "";
+            element.title       = selector;
+        }
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
@@ -71,6 +81,7 @@
             return this.parent === undefined ? "" : this.parent.getSelectorPath() + "-" + (this.__selector||"root");
         }},
         constructor:        {value: control},
+        __createNode:       {value: function(selector){return document.createElement("div");}, configurable: true},
         init:               {value: function(definition)
         {
             addEvents.call(this, definition.events);

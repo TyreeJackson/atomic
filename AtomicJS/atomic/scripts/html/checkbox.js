@@ -12,7 +12,8 @@
     Object.defineProperty(checkbox, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(checkbox.prototype,
     {
-        constructor:    {value: checkbox}
+        constructor:    {value: checkbox},
+        __createNode:   {value: function(){var element = document.createElement("input"); element.type="checkbox"; return element;}, configurable: true}
     });
     return checkbox;
 });}();

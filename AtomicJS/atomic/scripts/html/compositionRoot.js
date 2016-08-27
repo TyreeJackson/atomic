@@ -28,6 +28,8 @@
     var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
     var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
     var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
+    var image                   = new root.atomic.html.image(control, defineDataProperties);
+    var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
     {
@@ -39,7 +41,9 @@
         checkbox:       {value: checkbox},
         select:         {value: select},
         radiogroup:     {value: radiogroup},
-        multiselect:    {value: multiselect}
+        multiselect:    {value: multiselect},
+        image:          {value: image},
+        button:         {value: button}
     });
 
     return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
