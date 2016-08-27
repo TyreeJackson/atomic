@@ -33,6 +33,8 @@
                                 <li id="exampleLink6"><a href="#/example/6">A Better List</a></li>
                                 <li id="exampleLink7"><a href="#/example/7">Control Types</a></li>
                                 <li id="exampleLink8"><a href="#/example/8">Working with Lists</a></li>
+                                <li id="exampleLink9"><a href="#/example/9">Hello Friend - container demo</a></li>
+                                <li id="exampleLink10"><a href="#/example/10">A Better List - control types demo</a></li>
                             </ul>
                         </div>
                     </div>
@@ -48,14 +50,14 @@
                                             <h1 id="greeting">Hello <span id="worldLabel"></span>!</h1>
                                         </div>
                                         <script type="text/javascript">
-                                            root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value: "World"}} );
+                                            root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
                                         </script>
                                     </div>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value: "World"}} );
+root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -77,61 +79,44 @@ root.atomic.adaptHtml ( document.querySelector("example1"), {worldLabel: {value:
                                         <div class="well form-group">
                                             <h1 id="greeting2">Hello <span id="worldLabel2"></span>!</h1>
                                             <button id="sayHelloButton" class="btn">Say Hello</button>
-                                            <script type="text/javascript">
-                                                root.atomic.adaptHtml
-                                                (
-                                                    document.querySelector("example2"),
-                                                    {
-                                                        greeting2:
-                                                        {
-                                                            hidden:             true, 
-                                                            ondataupdate:
-                                                            function(data)
-                                                            {
-                                                                this.toggleDisplay(data("worldValue.length")>0);
-                                                            }
-                                                        },
-                                                        worldLabel2:     {bindTo: "worldValue"},
-                                                        sayHelloButton:
-                                                        {
-                                                            onclick:        function(){this.data("worldValue","World");}, 
-                                                            ondataupdate:
-                                                            function(data)
-                                                            {
-                                                                this.toggleDisplay(!(data("worldValue.length")>0));
-                                                            }
-                                                        }
-                                                    }
-                                                );
-                                            </script>
                                         </div>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example2",
+                                            {
+                                                greeting2:      {bind: { display: "worldValue.length" }},
+                                                worldLabel2:    {bind: "worldValue"},
+                                                sayHelloButton:
+                                                {
+                                                    onclick:    function(){this.data("worldValue","World");}, 
+                                                    bind:       { display: function(){return !this.data("worldValue.length");} }
+                                                },
+                                                example2model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        );
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example2model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example2"),
+    "#example2",
     {
-        greeting2:
-        {
-            hidden:             true, 
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(data("worldValue.length")>0);
-            }
-        },
-        worldLabel2:     {bindTo: "worldValue"},
+        greeting2:      {bind: { display: "worldValue.length" }},
+        worldLabel2:    {bind: "worldValue"},
         sayHelloButton:
         {
-            onclick:        function(){this.data("worldValue","World");}, 
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(!(data("worldValue.length")>0));
-            }
+            onclick:    function(){this.data("worldValue","World");}, 
+            bind:       { display: function(){return !this.data("worldValue.length");} }
         }
     }
 );
@@ -159,81 +144,71 @@ root.atomic.adaptHtml
                                             <div><input id="lastNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /></div>
                                             <div id="helloMessage">
                                                 <p>Hello <span class="name"></span>!</p>
-                                                <p>Pardon me <span class="name"></span>, but do you have any grey poupon?</p>
                                             </div>
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example3"),
-                                                {
-                                                    firstNameTextbox:
-                                                    {
-                                                        focused:    true,
-                                                        bindTo:     "firstName",
-                                                        onescape:   function(){this.value("");},
-                                                        updateon:   ["keydown", "keyup", "change"]
-                                                    },
-                                                    lastNameTextbox:
-                                                    {
-                                                        focused:    true,
-                                                        bindTo:     "lastName",
-                                                        onescape:   function(){this.value("");},
-                                                        updateon:   ["keydown", "keyup", "change"]
-                                                    },
-                                                    helloMessage:
-                                                    {
-                                                        ondataupdate:
-                                                        function(data)
-                                                        {
-                                                            this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
-                                                        }
-                                                    },
-                                                    nameLabels:
-                                                    {
-                                                        selector:       ".name",
-                                                        multipresent:   true,
-                                                        bindAs:         function(data){return (data("firstName")||"") + (data("firstName") && data("lastName")?" ":"") + (data("lastName")||"");}
-                                                    }
-                                                }
-                                            );
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example3",
+                                            {
+                                                firstNameTextbox:
+                                                {
+                                                    focused:    true,
+                                                    bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+                                                    onescape:   function(){ this.value(""); }
+                                                },
+                                                lastNameTextbox:
+                                                {
+                                                    bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+                                                    onescape:   function(){this.value("");}
+                                                },
+                                                helloMessage:
+                                                {
+                                                    bind:   { display: function(){return this.data.hasValue("firstName") || this.data.hasValue("lastName");} }
+                                                },
+                                                nameLabels:
+                                                {
+                                                    selector:   ".name",
+                                                    bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
+                                                },
+                                                example3model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        );
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example3model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example3"),
+    "#example3",
     {
         firstNameTextbox:
         {
             focused:    true,
-            bindTo:     "firstName",
-            onescape:   function(){this.value("");},
-            updateon:   ["keydown", "keyup", "change"]
+            bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+            onescape:   function(){ this.value(""); }
         },
         lastNameTextbox:
         {
-            focused:    true,
-            bindTo:     "lastName",
-            onescape:   function(){this.value("");},
-            updateon:   ["keydown", "keyup", "change"]
+            bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+            onescape:   function(){this.value("");}
         },
         helloMessage:
         {
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(data.hasValue("firstName") || data.hasValue("lastName"));
-            }
+            bind:   { display: function(){return this.data.hasValue("firstName") || this.data.hasValue("lastName");} }
         },
         nameLabels:
         {
-            selector:       ".name",
-            multipresent:   true,
-            bindAs:         function(data){return (data("firstName")||"") + (data("firstName") && data("lastName")?" ":"") + (data("lastName")||"");}
+            selector:   ".name",
+            bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
         }
     }
 );
@@ -245,8 +220,8 @@ root.atomic.adaptHtml
 &lt;div id="example3"&gt;
     &lt;div class="example"&gt;
         &lt;div class="well form-group"&gt;
-            &lt;div&gt;&lt;input id="nameTextbox" autocomplete="off" class="form-control" placeholder="Enter your first name:" /&gt;&lt;/div&gt;
-            &lt;div&gt;&lt;input id="nameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;input id="firstNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your first name:" /&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;input id="lastNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /&gt;&lt;/div&gt;
             &lt;div id="helloMessage"&gt;
                 &lt;p&gt;Hello &lt;span class="name"&gt;&lt;/span&gt;!&lt;/p&gt;
                 &lt;p&gt;Pardon me &lt;span class="name"&gt;&lt;/span&gt;, but do you have any grey poupon?&lt;/p&gt;
@@ -270,58 +245,57 @@ root.atomic.adaptHtml
                                                 <button id="resetClickCountButton" class="btn">Reset clicks</button>
                                             </div>
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example4"),
-                                                {
-                                                    numberOfClicks:         { bindTo: "clickCount" },
-                                                    countClickButton:
-                                                    {
-                                                        onclick:
-                                                        function()
-                                                        {
-                                                            this.data("clickCount", this.data("clickCount")+1);
-                                                        },
-                                                        ondataupdate:
-                                                        function(data)
-                                                        {
-                                                            this.enable(data("clickCount")<3);
-                                                        }
-                                                    },
-                                                    tooManyClicksMessage:
-                                                    {
-                                                        ondataupdate:
-                                                        function(data)
-                                                        {
-                                                            this.toggleDisplay(data("clickCount")>=3);
-                                                        }
-                                                    },
-                                                    resetClickCountButton:
-                                                    {
-                                                        onclick:
-                                                        function()
-                                                        {
-                                                            this.data("clickCount",0);
-                                                        }
-                                                    }
-                                                }
-                                            )
-                                            (function(adapter)
-                                            {
-                                                adapter.data("", {clickCount:0});
-                                            });
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example4",
+                                            {
+                                                numberOfClicks:         { bind: "clickCount" },
+                                                countClickButton:
+                                                {
+                                                    onclick:
+                                                    function()
+                                                    {
+                                                        this.data("clickCount", this.data("clickCount")+1);
+                                                    },
+                                                    bind:       {enabled: function(){return this.data("clickCount")<3;}}
+                                                },
+                                                tooManyClicksMessage:
+                                                {
+                                                    bind:   { display: function(data){return data("clickCount")>=3;} }
+                                                },
+                                                resetClickCountButton:
+                                                {
+                                                    onclick:
+                                                    function()
+                                                    {
+                                                        this.data("clickCount",0);
+                                                    }
+                                                },
+                                                example4model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", {clickCount:0});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example4model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example4"),
+    "#example4",
     {
-        numberOfClicks:         { bindTo: "clickCount" },
+        numberOfClicks:         { bind: "clickCount" },
         countClickButton:
         {
             onclick:
@@ -329,19 +303,11 @@ root.atomic.adaptHtml
             {
                 this.data("clickCount", this.data("clickCount")+1);
             },
-            ondataupdate:
-            function(data)
-            {
-                this.enable(data("clickCount")%lt;3);
-            }
+            bind:       {enabled: function(){return this.data("clickCount")&lt;3;}}
         },
         tooManyClicksMessage:
         {
-            ondataupdate:
-            function(data)
-            {
-                this.toggleDisplay(data("clickCount")&gt;=3);
-            }
+            bind:   { display: function(data){return data("clickCount")&gt;=3;} }
         },
         resetClickCountButton:
         {
@@ -392,76 +358,79 @@ root.atomic.adaptHtml
                                                 </div>
                                             </div>
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example5"),
-                                                {
-                                                    newItem:
-                                                    {
-                                                        bindTo:     "newItem",
-                                                        onenter:    function(){this.parent.controls.addNewItemButton.click();},
-                                                        updateon: ["keydown", "keyup", "change"]
-                                                    },
-                                                    addNewItemButton:
-                                                    {
-                                                        ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
-                                                        onclick:
-                                                        function()
-                                                        {
-                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                                                            this.source("items").push(this.data("newItem"));
-                                                            this.data("newItem","");
-                                                        }
-                                                    },
-                                                    itemsList:
-                                                    {
-                                                        bindSource: "items"
-                                                    }
-                                                }
-                                            )
-                                            (function(adapter)
-                                            {
-                                                adapter.data("", {newItem:""});
-                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
-                                            });
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example5",
+                                            {
+                                                newItem:
+                                                {
+                                                    bind:       { value: { to: "newItem", updateon:   ["keydown", "keyup", "change"] } },
+                                                    onenter:    function(){this.parent.controls.addNewItemButton.click();}
+                                                },
+                                                addNewItemButton:
+                                                {
+                                                    bind:       { enabled: "newItem.length" },
+                                                    onclick:
+                                                    function()
+                                                    {
+                                                        if (this.data("newItem.length")>0 && this.data("...items").indexOf(this.data("newItem"))==-1)
+                                                        this.data("items").push(this.data("newItem"));
+                                                        this.data("newItem","");
+                                                    }
+                                                },
+                                                itemsList:
+                                                {
+                                                    bind: {items: "items"}
+                                                },
+                                                example5model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example5model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example5"),
+    "#example5",
     {
         newItem:
         {
-            bindTo:     "newItem",
-            onenter:    function(){this.parent.controls.addNewItemButton.click();},
-            updateon: ["keydown", "keyup", "change"]
+            bind:       { value: { to: "newItem", updateon:   ["keydown", "keyup", "change"] } },
+            onenter:    function(){this.parent.controls.addNewItemButton.click();}
         },
         addNewItemButton:
         {
-            ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
+            bind:       { enabled: "newItem.length" },
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                this.source("items").push(this.data("newItem"));
+                if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                this.data("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
         },
         itemsList:
         {
-            bindSource: "items",
+            bind: "items"
         }
     }
 )
 (function(adapter)
 {
-    adapter.data("", {newItem:""});
-    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+    adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
 });
                                             </code>
                                         </pre>
@@ -502,96 +471,99 @@ root.atomic.adaptHtml
                                                 <button id="sortItemsButton" class="btn">Sort</button>
                                             </div>
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example6"),
-                                                {
-                                                    betterNewItem:
-                                                    {
-                                                        bindTo:     "newItem",
-                                                        onenter:    function(){this.parent.controls.betterAddNewItemButton.click();},
-                                                        updateon: ["keydown", "keyup", "change"]
-                                                    },
-                                                    betterAddNewItemButton:
-                                                    {
-                                                        ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
-                                                        onclick:
-                                                        function()
-                                                        {
-                                                            if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                                                            this.source("items").push(this.data("newItem"));
-                                                            this.data("newItem","");
-                                                        }
-                                                    },
-                                                    betterItemsList:
-                                                    {
-                                                        bindSource: "items"
-                                                    },
-                                                    removeItemButton:
-                                                    {
-                                                        onsourceupdate: function(data){this.enable(data("items.length")>0);},
-                                                        onclick:        function(){this.source("items").removeAll(this.parent.controls.betterItemsList.value());}
-                                                    },
-                                                    sortItemsButton:
-                                                    {
-                                                        onsourceupdate: function(data){this.enable(data("items.length")>1);},
-                                                        onclick:        function(){this.source("items").sort();}
-                                                    }
-                                                }
-                                            )
-                                            (function(adapter)
-                                            {
-                                                adapter.data("", {newItem:""});
-                                                adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
-                                            });
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example6",
+                                            {
+                                                betterNewItem:
+                                                {
+                                                    bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                                                    onenter:    function(){this.parent.controls.betterAddNewItemButton.click();}
+                                                },
+                                                betterAddNewItemButton:
+                                                {
+                                                    bind:       { enabled: "newItem.length" },
+                                                    onclick:
+                                                    function()
+                                                    {
+                                                        if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                                                        this.data("items").push(this.data("newItem"));
+                                                        this.data("newItem","");
+                                                    }
+                                                },
+                                                betterItemsList:
+                                                {
+                                                    bind: {items: "items"}
+                                                },
+                                                removeItemButton:
+                                                {
+                                                    bind:       {enabled: "items.length"},
+                                                    onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList.value());}
+                                                },
+                                                sortItemsButton:
+                                                {
+                                                    bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                    onclick:    function(){this.data("items").sort();}
+                                                },
+                                                example6model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example6model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example6"),
+    "#example6",
     {
         betterNewItem:
         {
-            bindTo:     "newItem",
-            onenter:    function(){this.parent.controls.addNewItemButton.click();},
-            updateon: ["keydown", "keyup", "change"]
+            bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+            onenter:    function(){this.parent.controls.betterAddNewItemButton.click();}
         },
         betterAddNewItemButton:
         {
-            ondataupdate:   function(data){this.enable(data("newItem.length")>0);},
+            bind:       { enabled: "newItem.length" },
             onclick:
             function()
             {
-                if (this.data("newItem.length")>0 && this.source("items").indexOf(this.data("newItem"))==-1)
-                this.source("items").push(this.data("newItem"));
+                if (this.data("newItem.length")&gt;0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                this.data("items").push(this.data("newItem"));
                 this.data("newItem","");
             }
         },
         betterItemsList:
         {
-            bindSource: "items"
+            bind: {items: "items"}
         },
         removeItemButton:
         {
-            onsourceupdate: function(data){this.enable(data("items.length")>0);},
-            onclick:        function(){this.source("items").remove(this.parent.controls.betterItemsList.value());}
+            bind:       {enabled: "items.length"},
+            onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList.value());}
         },
         sortItemsButton:
         {
-            onsourceupdate: function(data){this.enable(data("items.length")>1);},
-            onclick:        function(){this.source("items").sort();}
+            bind:       {enabled: function(){return this.data("items.length")&gt;1}},
+            onclick:    function(){this.data("items").sort();}
         }
     }
 )
 (function(adapter)
 {
-    adapter.data("", {newItem:""});
-    adapter.source("", {items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
 });
                                             </code>
                                         </pre>
@@ -696,64 +668,70 @@ root.atomic.adaptHtml
                                                 </div>
                                             </div>
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example7"),
-                                                {
-                                                    stringValueReadout:             { bindTo: "stringValue" },
-                                                    passwordValueReadout:           { bindTo: "passwordValue" },
-                                                    booleanValueReadout:            { bindTo: "booleanValue" },
-                                                    selectedValueReadout:           { bindTo: "selectedValue" },
-                                                    multipleSelectedValuesReadout:  { bindTo: "multipleSelectedValues", bindAs: function(data){ return data&&data.join();} },
-                                                    radioSelectedOptionReadout:     { bindTo: "radioSelectedValue" },
-                                                    onChangeTextboxControl:         { bindTo: "stringValue" },
-                                                    onKeyStrokeTextboxControl:      { bindTo: "stringValue", updateon: ["keydown","keyup","change"] },
-                                                    textAreaControl:                { bindTo: "stringValue" },
-                                                    passwordControl:                { bindTo: "passwordValue" },
-                                                    checkboxControl:                { bindTo: "booleanValue" },
-                                                    singleDropdownListControl:      { bindTo: "selectedValue", bindSource: "items" },
-                                                    multipleListControl:            { bindTo: "multipleSelectedValues", bindSource: "items" },
-                                                    radioGroupControl:              { bindTo: "radioSelectedValue", bindSource: "items" }
-                                                }
-                                            )
-                                            (function(adapter)
-                                            {
-                                                adapter.data("", 
-                                                {
-                                                    stringValue:            "Hello", 
-                                                    passwordValue:          "mypass", 
-                                                    booleanValue:           true, 
-                                                    selectedValue:          "Gamma", 
-                                                    multipleSelectedValues: ["Beta"], 
-                                                    radioSelectedValue:     "Alpha"
-                                                });
-                                                adapter.source("", {items: ["Alpha","Beta","Gamma"]});
-                                            });
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example7",
+                                            {
+                                                stringValueReadout:             { bind: "stringValue" },
+                                                passwordValueReadout:           { bind: "passwordValue" },
+                                                booleanValueReadout:            { bind: "booleanValue" },
+                                                selectedValueReadout:           { bind: "selectedValue" },
+                                                multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
+                                                radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
+                                                onChangeTextboxControl:         { bind: "stringValue" },
+                                                onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
+                                                textAreaControl:                { bind: "stringValue" },
+                                                passwordControl:                { bind: "passwordValue" },
+                                                checkboxControl:                { bind: "booleanValue" },
+                                                singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
+                                                multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
+                                                radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
+                                                example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", 
+                                            {
+                                                stringValue:            "Hello", 
+                                                passwordValue:          "mypass", 
+                                                booleanValue:           true, 
+                                                selectedValue:          "Gamma", 
+                                                multipleSelectedValues: ["Beta"], 
+                                                radioSelectedValue:     "Alpha",
+                                                items:                  ["Alpha","Beta","Gamma"]});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example7model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example7"),
+    "#example7",
     {
-        stringValueReadout:             { bindTo: "stringValue" },
-        passwordValueReadout:           { bindTo: "passwordValue" },
-        booleanValueReadout:            { bindTo: "booleanValue" },
-        selectedValueReadout:           { bindTo: "selectedValue" },
-        multipleSelectedValuesReadout:  { bindTo: "multipleSelectedValues", bindAs: function(data){ return data&&data.join();} },
-        radioSelectedOptionReadout:     { bindTo: "radioSelectedValue" },
-        onChangeTextboxControl:         { bindTo: "stringValue" },
-        onKeyStrokeTextboxControl:      { bindTo: "stringValue", updateon: ["keydown","keyup","change"] },
-        textAreaControl:                { bindTo: "stringValue" },
-        passwordControl:                { bindTo: "passwordValue" },
-        checkboxControl:                { bindTo: "booleanValue" },
-        singleDropdownListControl:      { bindTo: "selectedValue", bindSource: "items" },
-        multipleListControl:            { bindTo: "multipleSelectedValues", bindSource: "items" },
-        radioGroupControl:              { bindTo: "radioSelectedValue", bindSource: "items" }
+        stringValueReadout:             { bind: "stringValue" },
+        passwordValueReadout:           { bind: "passwordValue" },
+        booleanValueReadout:            { bind: "booleanValue" },
+        selectedValueReadout:           { bind: "selectedValue" },
+        multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
+        radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
+        onChangeTextboxControl:         { bind: "stringValue" },
+        onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
+        textAreaControl:                { bind: "stringValue" },
+        passwordControl:                { bind: "passwordValue" },
+        checkboxControl:                { bind: "booleanValue" },
+        singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
+        multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
+        radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } }
     }
 )
 (function(adapter)
@@ -765,9 +743,8 @@ root.atomic.adaptHtml
         booleanValue:           true, 
         selectedValue:          "Gamma", 
         multipleSelectedValues: ["Beta"], 
-        radioSelectedValue:     "Alpha"
-    });
-    adapter.source("", {items: ["Alpha","Beta","Gamma"]});
+        radioSelectedValue:     "Alpha",
+        items:                  ["Alpha","Beta","Gamma"]});
 });
                                             </code>
                                         </pre>
@@ -870,6 +847,7 @@ root.atomic.adaptHtml
                                                     <div>
                                                         <span id="personNameLabel"> </span> has <span id="childCountLabel">&nbsp;</span> children:
                                                         <a id="addChildLink" class="clickable">Add child</a>
+                                                        <a id="sortChildrenLink" class="clickable">Sort Children</a>
                                                         <span id="renderTimeSection" class="renderTime">
                                                             (person rendered at <span id="renderTimeLabel"> </span>)
                                                         </span>
@@ -886,100 +864,116 @@ root.atomic.adaptHtml
                                             </ul>
                                             <label><input id="showRenderTimesCheckbox" type='checkbox' /> Show render times</label> 
                                         </div>
-                                        <script type="text/javascript">
-                                            root.atomic.adaptHtml
-                                            (
-                                                document.querySelector("example8"),
-                                                function(root){return {controls:
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example8",
+                                            {
+                                                peopleList:
                                                 {
-                                                    peopleList:
+                                                    bind:   "people",
+                                                    repeat:
                                                     {
-                                                        bindTo: "people",
-                                                        repeat:
+                                                        peopleListItemTemplate:
                                                         {
-                                                            peopleListItemTemplate:
+                                                            getKey:     function(data){return "person-"+this.index;},
+                                                            controls:
                                                             {
-                                                                controls:
+                                                                personNameLabel:    { bind:     "name" },
+                                                                childCountLabel:    { bind:     "children.length" },
+                                                                addChildLink:       { onclick:  function(){this.data("children").push("New Child");} },
+                                                                sortChildrenLink:   { onclick:  function(){this.data("children").sort();}},
+                                                                renderTimeSection:  
                                                                 {
-                                                                    personNameLabel:    { bindTo: "name" },
-                                                                    childCountLabel:    { bindAs: function(data){return data("children.length");} },
-                                                                    addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
-                                                                    renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
-                                                                    renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
-                                                                    childList:
+                                                                    bind:       { display: "...showRenderTimes" },
+                                                                    controls:
                                                                     {
-                                                                        bindTo: "children",
-                                                                        repeat:
+                                                                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} }
+                                                                    }
+                                                                },
+                                                                childList:
+                                                                {
+                                                                    bind:   "children",
+                                                                    repeat:
+                                                                    {
+                                                                        childListItemTemplate:
                                                                         {
-                                                                            childListItemTemplate:
+                                                                            getKey:     function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
+                                                                            controls:
                                                                             {
-                                                                                controls:
-                                                                                {
-                                                                                    childNameLabel:         { bindTo: "name" },
-                                                                                    childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
-                                                                                    childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
-                                                                                }
+                                                                                childNameLabel:         { bind: "" },
+                                                                                childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
+                                                                                childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
                                                                             }
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
-                                                    },
-                                                    showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
-                                                }};}
-                                            )
-                                            (function(adapter)
+                                                    }
+                                                },
+                                                showRenderTimesCheckbox:    { bind: "showRenderTimes" },
+                                                example8model:              { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data
+                                            ("",
                                             {
-                                                adapter.data
-                                                ("",
-                                                {
-                                                    showRenderTimes:    false,
-                                                    people:
-                                                    [
-                                                        {name:"Anabelle",   children: [{name: "Arnie"},{name: "Anders"},{name: "Apple"}]},
-                                                        {name:"Bertie",     children: [{name: "Boutros-Boutros"},{name: "Brianna"},{name: "Barbie"},{name: "Bee-bop"}]},
-                                                        {name:"Charles",    children: [{name: "Cayenne"},{name: "Cleopatra"}]}
-                                                    ]
-                                                });
+                                                showRenderTimes:    false,
+                                                people:
+                                                [
+                                                    {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
+                                                    {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
+                                                    {name:"Charles",    children: ["Cayenne","Cleopatra"]}
+                                                ]
                                             });
-                                        </script>
-                                    </div>
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example8model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
 root.atomic.adaptHtml
 (
-    document.querySelector("example8"),
-    function(root){return {controls:
+    "#example8",
     {
         peopleList:
         {
-            bindTo: "people",
+            bind:   "people",
             repeat:
             {
                 peopleListItemTemplate:
                 {
+                    getKey:     function(data){return "person-"+this.index;},
                     controls:
                     {
-                        personNameLabel:    { bindTo: "name" },
-                        childCountLabel:    { bindAs: function(data){return data("children.length");} },
-                        addChildLink:       { onclick: function(){this.data("children").push({name:"New Child"});} },
-                        renderTimeSection:  { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
-                        renderTimeLabel:    { bindAs: function(data){return new Date().getSeconds();} },
+                        personNameLabel:    { bind:     "name" },
+                        childCountLabel:    { bind:     "children.length" },
+                        addChildLink:       { onclick:  function(){this.data("children").push({name:"New Child"});} },
+                        renderTimeSection:  { bind:     { display: "::showRenderTimes" } },
+                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} },
                         childList:
                         {
-                            bindTo: "children",
+                            bind:   "children",
                             repeat:
                             {
                                 childListItemTemplate:
                                 {
+                                    getKey:     function(data){return "person-"+this.parent.parent.data("name")+"-child-"+this.index;},
                                     controls:
                                     {
-                                        childNameLabel:         { bindTo: "name" },
-                                        childRenderTimeSection: { ondataupdate: function(data){this.toggleDisplay(root.data("showRenderTimes"));} },
-                                        childRenderTimeLabel:   { bindAs: function(data){return new Date().getSeconds();} },
+                                        childNameLabel:         { bind: "name" },
+                                        childRenderTimeSection: { bind: { display: "::showRenderTimes" } },
+                                        childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
                                     }
                                 }
                             }
@@ -988,8 +982,8 @@ root.atomic.adaptHtml
                 }
             }
         },
-        showRenderTimesCheckbox:    { bindTo: "showRenderTimes" }
-    }};}
+        showRenderTimesCheckbox:    { bind: "showRenderTimes" }
+    }
 )
 (function(adapter)
 {
@@ -1035,6 +1029,314 @@ root.atomic.adaptHtml
             &lt;/ul&gt;
             &lt;label&gt;&lt;input id="showRenderTimesCheckbox" type='checkbox' /&gt; Show render times&lt;/label&gt; 
         &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example9">
+                                    <div class="example">
+                                        <div class="well form-group">
+                                            <div id="inputPanel" class="well">
+                                                <div><input id="firstNameTextbox9" autocomplete="off" class="form-control" placeholder="Enter your first name:" /></div>
+                                                <div><input id="lastNameTextbox9" autocomplete="off" class="form-control" placeholder="Enter your last name:" /></div>
+                                            </div>
+                                            <div><input id="otherNameTextbox9" autocomplete="off" class="form-control" placeholder="Enter your other name:" /></div>
+                                            <div id="helloMessage9">
+                                                <p>Hello <span class="name"></span>!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example9",
+                                            {
+                                                inputPanel:
+                                                {
+                                                    bind:       "input",
+                                                    controls:
+                                                    {
+                                                        firstNameTextbox9:
+                                                        {
+                                                            focused:    true,
+                                                            bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+                                                            onescape:   function(){this.value(""); }
+                                                        },
+                                                        lastNameTextbox9:
+                                                        {
+                                                            bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+                                                            onescape:   function(){this.value("");}
+                                                        }
+                                                    }
+                                                },
+                                                otherNameTextbox9:
+                                                {
+                                                    bind:       { value: { to: "otherName", updateon: ["keydown", "keyup", "change"] } },
+                                                    onescape:   function(){this.value("");}
+                                                },
+                                                helloMessage9:
+                                                {
+                                                    bind:       { value: "input", display: function(){return this.data.hasValue("input.firstName") || this.data.hasValue("input.lastName");} },
+                                                    controls:
+                                                    {
+                                                        nameLabels:
+                                                        {
+                                                            selector:   ".name",
+                                                            bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
+                                                        }
+                                                    }
+                                                },
+                                                example9model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        );
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example9model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    "#example9",
+    {
+        inputPanel:
+        {
+            bind:       "input",
+            controls:
+            {
+                firstNameTextbox9:
+                {
+                    focused:    true,
+                    bind:       { value: { to: "firstName", updateon: ["keydown", "keyup", "change"] } },
+                    onescape:   function(){ this.value(""); }
+                },
+                lastNameTextbox9:
+                {
+                    bind:       { value: { to: "lastName", updateon: ["keydown", "keyup", "change"] } },
+                    onescape:   function(){this.value("");}
+                }
+            }
+        },
+        helloMessage9:
+        {
+            bind:       { value: "input", display: function(){return this.data.hasValue("input.firstName") || this.data.hasValue("input.lastName");} },
+            controls:
+            {
+                nameLabels:
+                {
+                    selector:   ".name",
+                    bind:       function(data){return (this.data("firstName")||"") + (this.data("firstName") && this.data("lastName")?" ":"") + (this.data("lastName")||"");}
+                }
+            }
+        }
+    }
+);
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example3"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;div id="inputPanel"&gt;
+                &lt;div&gt;&lt;input id="firstNameTextbox9" autocomplete="off" class="form-control" placeholder="Enter your first name:" /&gt;&lt;/div&gt;
+                &lt;div&gt;&lt;input id="lastNameTextbox9" autocomplete="off" class="form-control" placeholder="Enter your last name:" /&gt;&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div id="helloMessage9"&gt;
+                &lt;p&gt;Hello &lt;span class="name"&gt;&lt;/span&gt;!&lt;/p&gt;
+                &lt;p&gt;Pardon me &lt;span class="name"&gt;&lt;/span&gt;, but do you have any grey poupon?&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example10">
+                                    <div id="example10container" class="example">
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.adaptHtml
+                                        (
+                                            "#example10",
+                                            {
+                                                example10container:
+                                                {
+                                                    type:       "panel",
+                                                    classes:    "example",
+                                                    controls:
+                                                    {
+                                                        well:
+                                                        {
+                                                            selector:   ".well",
+                                                            type:       "panel",
+                                                            classes:    "well form-group",
+                                                            controls:
+                                                            {
+                                                                betterNewItem10:
+                                                                {
+                                                                    type:       "input",
+                                                                    bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                                                                    onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
+                                                                },
+                                                                betterAddNewItemButton10:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       { enabled: "newItem.length" },
+                                                                    onclick:
+                                                                    function()
+                                                                    {
+                                                                        if (this.data("newItem.length")>0 && this.data("items").indexOf(this.data("newItem"))==-1)
+                                                                        this.data("items").push(this.data("newItem"));
+                                                                        this.data("newItem","");
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        itemsTitle:
+                                                        {
+                                                            type:   "readonly",
+                                                            value:  "Your items:"
+                                                        },
+                                                        formgroup:
+                                                        {
+                                                            selector:   ".listContainer",
+                                                            type:       "panel",
+                                                            classes:    "listContainer form-group",
+                                                            controls:
+                                                            {
+                                                                betterItemsList10:
+                                                                {
+                                                                    type:   "multiselect",
+                                                                    bind:   {items: "items"}
+                                                                },
+                                                                removeItemButton10:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       {enabled: "items.length"},
+                                                                    onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
+                                                                },
+                                                                sortItemsButton:
+                                                                {
+                                                                    type:       "button",
+                                                                    bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                                    onclick:    function(){this.data("items").sort();}
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            }
+                                        )
+                                        (function(adapter)
+                                        {
+                                            adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example10model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.adaptHtml
+(
+    "#example10",
+    {
+        example10container:
+        {
+            type:       "panel",
+            classes:    "example",
+            controls:
+            {
+                well:
+                {
+                    selector:   ".well",
+                    type:       "panel",
+                    classes:    "well form-group",
+                    controls:
+                    {
+                        betterNewItem10:
+                        {
+                            type:       "input",
+                            bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
+                            onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
+                        },
+                        betterAddNewItemButton10:
+                        {
+                            type:       "button",
+                            bind:       { enabled: "newItem.length" },
+                            onclick:
+                            function()
+                            {
+                                if (this.data("newItem.length")&gt;0 &amp;&amp; this.data("items").indexOf(this.data("newItem"))==-1)
+                                this.data("items").push(this.data("newItem"));
+                                this.data("newItem","");
+                            }
+                        }
+                    }
+                },
+                itemsTitle:
+                {
+                    type:   "readonly",
+                    value:  "Your items:"
+                },
+                formgroup:
+                {
+                    selector:   ".listContainer",
+                    type:       "panel",
+                    classes:    "listContainer form-group",
+                    controls:
+                    {
+                        betterItemsList10:
+                        {
+                            type:   "multiselect",
+                            bind:   {items: "items"}
+                        },
+                        removeItemButton10:
+                        {
+                            type:       "button",
+                            bind:       {enabled: "items.length"},
+                            onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
+                        },
+                        sortItemsButton:
+                        {
+                            type:       "button",
+                            bind:       {enabled: function(){return this.data("items.length")&gt;1}},
+                            onclick:    function(){this.data("items").sort();}
+                        }
+                    }
+                }
+            }
+        },
+        example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+    }
+)
+(function(adapter)
+{
+    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
+});
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example10"&gt;
+    &lt;div id="example10container" class="example"&gt;
     &lt;/div&gt;
 &lt;/div&gt;
                                             </code>
