@@ -1,7 +1,7 @@
 !function()
 {"use strict";root.define("todoMVC.appView",
 function()
-{return function todoMVCAppView(appViewAdapter)
+{return function todoMVCAppView()
 {
     function getActiveTodos(todos)
     {
@@ -18,7 +18,7 @@ function()
                 onenter:
                 function()
                 {
-                    if (this.value().trim() !== "") appViewAdapter.on.addNewTodo(this.value().trim());
+                    if (this.value().trim() !== "") this.root.on.addNewTodo(this.value().trim());
                     this.value("");
                 }
             },
@@ -26,7 +26,30 @@ function()
             {
                 controls:
                 {
-                    toggleAllCompleted: { onchange: function() { appViewAdapter.on.toggleAllCompleted(this.value()); } },
+                    toggleAllCompleted: 
+                    {
+                        bind:
+                        {
+                            value:
+                            {
+                                to:
+                                {
+                                    get:    function(data)
+                                    {
+                                        var items           = data();
+                                        var allCompleted    = true;
+                                        for(var itemCounter=0;itemCounter<items.length;itemCounter++)
+                                        allCompleted = allCompleted && (items[itemCounter].completed||false);
+                                        return allCompleted;
+                                    },
+                                    set:    function(data, value)
+                                    {
+                                        this.root.on.toggleAllCompleted(value);
+                                    }
+                                }
+                            }
+                        }
+                    },
                     todoList:
                     {
                         repeat:
@@ -34,20 +57,21 @@ function()
                             todoListItemTemplate:
                             {
                                 getKey:     function(item){return "todoListItem-"+item().id},
+                                bind:       { classes: { completed:  "completed" } },
                                 controls:
                                 {
                                     toggleCompletedCheckbox:
                                     {
-                                        bindTo:     "completed",
+                                        bind:       "completed",
                                         onchange:
                                         function()
                                         {
-                                            appViewAdapter.on.saveTodo(this.data());
+                                            this.root.on.saveTodo(this.data());
                                         } 
                                     },
                                     todoLabel:
                                     {
-                                        bindTo:     "todo",
+                                        bind:       "todo",
                                         ondblclick:
                                         function()
                                         {
@@ -61,19 +85,19 @@ function()
                                         onclick:
                                         function()
                                         {
-                                            appViewAdapter.on.deleteTodo(this.data().id);
+                                            this.root.on.deleteTodo(this.data().id);
                                         }
                                     },
                                     editTodoTextbox:
                                     {
-                                        bindTo:     "todo",
+                                        bind:       "todo",
                                         onenter:
                                         function()
                                         {
                                             this.value(this.value().trim());
                                             this.data.commit();
-                                            if (this.value() == "") appViewAdapter.on.deleteTodo(this.data().id);
-                                            else                    appViewAdapter.on.saveTodo(this.data());
+                                            if (this.value() == "") this.root.on.deleteTodo(this.data().id);
+                                            else                    this.root.on.saveTodo(this.data());
                                         },
                                         onescape:
                                         function()
@@ -83,44 +107,26 @@ function()
                                         },
                                         updateon:   ["change", "keyup"]
                                     }
-                                },
-                                ondataupdate:
-                                function(data)
-                                {
-                                    this.toggleClass("completed", data().completed||false);
-                                },
+                                }
                             }
                         }
                     }
                 },
-                hidden:         true,
-                ondataupdate:   function(data)
-                {
-                    var items           = data();
-                    this.toggleDisplay(items.length>0);
-                    var allCompleted    = true;
-                    for(var itemCounter=0;itemCounter<items.length;itemCounter++)
-                    allCompleted = allCompleted && (items[itemCounter].completed||false);
-                    this.controls.toggleAllCompleted.value(allCompleted);
-                },
+                bind:           { display: "length" },
                 onunbind:       function(data) { this.hide(); }
             },
             todosFooter:
             {
                 controls:
                 {
-                    todosCountLabel:        { bindAs: function(todos){return getActiveTodos(todos()).length;} },
-                    todosCountDescription:  { bindAs: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
-                    allTodosLink:           { onclick: function(){appViewAdapter.attribute("filter", "none");} },
-                    activeTodosLink:        { onclick: function(){appViewAdapter.attribute("filter", "active");} },
-                    completedTodosLink:     { onclick: function(){appViewAdapter.attribute("filter", "completed");} },
-                    deleteCompletedTodos:   { onclick: function(){appViewAdapter.on.deleteCompletedTodos();} },
+                    todosCountLabel:        { bind: function(todos){return getActiveTodos(todos()).length;} },
+                    todosCountDescription:  { bind: function(todos){return getActiveTodos(todos()).length == 1 ? " item left" : " items left";} },
+                    allTodosLink:           { onclick: function(){this.root.attributes({filter: "none"});} },
+                    activeTodosLink:        { onclick: function(){this.root.attributes({filter: "active"});} },
+                    completedTodosLink:     { onclick: function(){this.root.attributes({filter: "completed"});} },
+                    deleteCompletedTodos:   { onclick: function(){this.root.on.deleteCompletedTodos();} },
                 },
-                hidden: true,
-                ondataupdate:   function(data)
-                {
-                    this.toggleDisplay(data().length>0);
-                }
+                bind:       { display: "length" }
             }
         },
         events:["addNewTodo", "deleteTodo", "saveTodo", "toggleAllCompleted", "deleteCompletedTodos"]

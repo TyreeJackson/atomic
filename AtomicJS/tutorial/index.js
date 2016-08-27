@@ -1,13 +1,13 @@
 !function(){window.onload   =
 function ComposeApp()
 {
-    var atomic  = root.atomic.htmlCompositionRoot();
+    var atomic  = root.atomic.html.compositionRoot();
     var app =
     new root.tutorial.appController
     (
         atomic.viewAdapterFactory.create
         (
-            new root.tutorial.appView(), 
+            new root.tutorial.appView(root.utilities.each), 
             document.querySelector("#tutorialApp")
         ),
         new root.tutorial.appProxy(window.localStorage, root.utilities.removeFromArray),

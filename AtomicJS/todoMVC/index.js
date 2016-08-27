@@ -1,9 +1,9 @@
-﻿!function()
+!function()
 {
     window.onload   =
     function ComposeApp()
     {
-        var atomic  = root.atomic.htmlCompositionRoot();
+        var atomic  = root.atomic.html.compositionRoot();
         var app =
         new root.todoMVC.appController
         (
