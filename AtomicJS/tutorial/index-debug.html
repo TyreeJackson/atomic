@@ -656,6 +656,22 @@ root.atomic.adaptHtml
                                                                 </radiogroup>
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Buttons:</td>
+                                                            <td class="table-cell">
+                                                                <button id="buttonControl"></button>
+
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Images:</td>
+                                                            <td class="table-cell">
+                                                                <img id="imageControl"></img><br/>
+                                                                <radiogroup id="imagePathControl">
+                                                                    <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
+                                                                </radiogroup>
+                                                            </td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-4">
@@ -685,6 +701,10 @@ root.atomic.adaptHtml
                                                             <td class="table-cell">Radio button selection:</td>
                                                             <td class="table-cell" id="radioSelectedOptionReadout"></td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Image path value:</td>
+                                                            <td class="table-cell" id="imagePathValueReadout"></td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                             </div>
@@ -701,6 +721,7 @@ root.atomic.adaptHtml
                                                 selectedValueReadout:           { bind: "selectedValue" },
                                                 multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
                                                 radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
+                                                imagePathValueReadout:          { bind: "imageUrl" },
                                                 onChangeTextboxControl:         { bind: "stringValue" },
                                                 onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
                                                 textAreaControl:                { bind: "stringValue" },
@@ -709,6 +730,9 @@ root.atomic.adaptHtml
                                                 singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
                                                 multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
                                                 radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
+                                                buttonControl:                  { bind: "stringValue" },
+                                                imageControl:                   { bind: "imageUrl" },
+                                                imagePathControl:               { bind: { value: "imageUrl", items: { to: "images", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             }
                                         )
@@ -722,7 +746,23 @@ root.atomic.adaptHtml
                                                 selectedValue:          "Gamma", 
                                                 multipleSelectedValues: ["Beta"], 
                                                 radioSelectedValue:     "Alpha",
-                                                items:                  ["Alpha","Beta","Gamma"]});
+                                                items:                  ["Alpha","Beta","Gamma"],
+                                                images:
+                                                [
+                                                    {
+                                                        title:  "Hammock Cat",
+                                                        url:    "images/hammock_cat.jpg"
+                                                    },
+                                                    {
+                                                        title:  "Headphones",
+                                                        url:    "images/headphones.jpg"
+                                                    },
+                                                    {
+                                                        title:  "Nature Scene",
+                                                        url:    "images/nature_scene.png"
+                                                    }
+                                                ]
+                                            });
                                         });
                                     </script>
                                     <figure class="highlight">

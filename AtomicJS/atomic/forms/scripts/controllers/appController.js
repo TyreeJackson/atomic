@@ -4,6 +4,7 @@
     function handleResult(result)
     {
         alert(JSON.stringify(result));
+        appView.data("", result);
     }
     this.launch =
     function()

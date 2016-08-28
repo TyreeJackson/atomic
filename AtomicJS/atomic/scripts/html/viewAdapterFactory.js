@@ -7,7 +7,7 @@
         "input":                    "input",
         "input:checkbox":           "checkbox",
         "textarea":                 "input",
-        "img":                      "panel",
+        "img":                      "image",
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup"

@@ -26,7 +26,7 @@
     var input                   = new root.atomic.html.input(control, defineDataProperties);
     var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
     var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
-    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
+    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder, each);
     var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
     var image                   = new root.atomic.html.image(control, defineDataProperties);
     var button                  = new root.atomic.html.button(control);

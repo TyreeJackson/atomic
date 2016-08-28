@@ -10,7 +10,7 @@
     var deferOrExecute  =
     function()
     {
-        var atomic  = root.atomic.html.compositionRoot();
+        var atomic  = root.atomic.html.compositionRoot(controls);
         var app =
         new root.atomic.forms.appController
         (

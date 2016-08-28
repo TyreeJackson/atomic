@@ -29,6 +29,11 @@
         {
             title:  "Hello World!",
             path:   "/example1"
+        },
+        example2:
+        {
+            title:  "Hello World Revisted",
+            path:   "/example2"
         }
     };
     var resources           =

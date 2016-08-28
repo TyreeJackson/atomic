@@ -4,7 +4,10 @@
 {
     var adapterDefinition   =
     {
-        controls:   {},
+        controls:   
+        {
+            model: {bind: { value: {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ""}}}
+        },
         members:
         {
         }

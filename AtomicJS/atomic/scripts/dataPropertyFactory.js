@@ -136,7 +136,7 @@
                 });}
             }
         });
-        each(["data","bind","root"],function(name)
+        each(["data","bind","root","text","value"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {

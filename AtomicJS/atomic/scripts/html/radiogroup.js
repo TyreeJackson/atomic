@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder)
+{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder, each)
 {
     function setRadioGroupValue(value)
     {
@@ -68,8 +68,8 @@
     function createOption(sourceItem, index)
     {
         var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__element.__selectorPath + (this.__element.id||"unknown"), this);
-        option.text.bind    = this.__sourceText||"";
-        option.value.bind   = this.__sourceValue||"";
+        option.text.bind    = this.sourcetext||"";
+        option.value.bind   = this.sourcevalue||"";
         option.source       = sourceItem;
         return option;
     }
@@ -107,13 +107,19 @@
         __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
-        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}},
+    });
+    each(["text","value"], function(name)
+    {
+        Object.defineProperty(radiogroup.prototype, "source"+name, { get: function(){ return this.items[name]; }, set: function(value){ this.items[name] = value; } });
     });
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
+    function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}
     function bindRadioGroupSource(items)
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
+        Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
         for(var counter=0;counter<items.count;counter++)
         {

@@ -789,7 +789,7 @@
     return select;
 });}();
 !function()
-{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder)
+{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder, each)
 {
     function setRadioGroupValue(value)
     {
@@ -858,8 +858,8 @@
     function createOption(sourceItem, index)
     {
         var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__element.__selectorPath + (this.__element.id||"unknown"), this);
-        option.text.bind    = this.__sourceText||"";
-        option.value.bind   = this.__sourceValue||"";
+        option.text.bind    = this.sourcetext||"";
+        option.value.bind   = this.sourcevalue||"";
         option.source       = sourceItem;
         return option;
     }
@@ -897,13 +897,19 @@
         __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
-        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}},
+    });
+    each(["text","value"], function(name)
+    {
+        Object.defineProperty(radiogroup.prototype, "source"+name, { get: function(){ return this.items[name]; }, set: function(value){ this.items[name] = value; } });
     });
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
+    function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}
     function bindRadioGroupSource(items)
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
+        Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
         for(var counter=0;counter<items.count;counter++)
         {
@@ -1021,7 +1027,7 @@
         "input":                    "input",
         "input:checkbox":           "checkbox",
         "textarea":                 "input",
-        "img":                      "panel",
+        "img":                      "image",
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup"
@@ -1133,8 +1139,10 @@
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
-            if (binding.root !== undefined)                                 viewAdapter[name].root      = binding.root;
-            if (binding.onupdate !== undefined)                             viewAdapter[name].onupdate  = binding.onupdate;
+            each(["root","onupdate","text","value"], (function(option)
+            {
+                if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
+            }).bind(this));
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }
     }
@@ -1758,7 +1766,7 @@
     var input                   = new root.atomic.html.input(control, defineDataProperties);
     var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
     var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
-    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder);
+    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder, each);
     var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
     var image                   = new root.atomic.html.image(control, defineDataProperties);
     var button                  = new root.atomic.html.button(control);
@@ -1777,6 +1785,7 @@
         image:          {value: image},
         button:         {value: button}
     });
+    root.utilities.each(customControlTypes, function(controlType, name){Object.defineProperty(controlTypes, name, {value: controlType});});
 
     return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
 });}();
