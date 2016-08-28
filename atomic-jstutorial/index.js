@@ -3,14 +3,14 @@ function ComposeApp()
 {
     var atomic  = root.atomic.html.compositionRoot();
     var app =
-    new root.tutorial.appController
+    new root.atomic.tutorial.appController
     (
         atomic.viewAdapterFactory.create
         (
-            new root.tutorial.appView(root.utilities.each), 
+            new root.atomic.tutorial.appView(root.utilities.each), 
             document.querySelector("#tutorialApp")
         ),
-        new root.tutorial.appProxy(window.localStorage, root.utilities.removeFromArray),
+        new root.atomic.tutorial.appProxy(window.localStorage, root.utilities.removeFromArray),
         atomic.observer,
         new root.path()
     );
