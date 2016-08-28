@@ -725,6 +725,7 @@ root.atomic.adaptHtml
                                                 selectedValue:          "Gamma", 
                                                 multipleSelectedValues: ["Beta"], 
                                                 radioSelectedValue:     "Alpha",
+                                                imageUrl:               "images/hammock_cat.jpg",
                                                 items:                  ["Alpha","Beta","Gamma"],
                                                 images:
                                                 [
@@ -764,6 +765,7 @@ root.atomic.adaptHtml
         selectedValueReadout:           { bind: "selectedValue" },
         multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
         radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
+        imagePathValueReadout:          { bind: "imageUrl" },
         onChangeTextboxControl:         { bind: "stringValue" },
         onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
         textAreaControl:                { bind: "stringValue" },
@@ -771,7 +773,11 @@ root.atomic.adaptHtml
         checkboxControl:                { bind: "booleanValue" },
         singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
         multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
-        radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } }
+        radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
+        buttonControl:                  { bind: "stringValue" },
+        imageControl:                   { bind: "imageUrl" },
+        imagePathControl:               { bind: { value: "imageUrl", items: { to: "images", text: "title", value: "url" } } },
+        example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     }
 )
 (function(adapter)
@@ -784,7 +790,24 @@ root.atomic.adaptHtml
         selectedValue:          "Gamma", 
         multipleSelectedValues: ["Beta"], 
         radioSelectedValue:     "Alpha",
-        items:                  ["Alpha","Beta","Gamma"]});
+        imageUrl:               "images/hammock_cat.jpg",
+        items:                  ["Alpha","Beta","Gamma"],
+        images:
+        [
+            {
+                title:  "Hammock Cat",
+                url:    "images/hammock_cat.jpg"
+            },
+            {
+                title:  "Headphones",
+                url:    "images/headphones.jpg"
+            },
+            {
+                title:  "Nature Scene",
+                url:    "images/nature_scene.png"
+            }
+        ]
+    });
 });
                                             </code>
                                         </pre>
@@ -836,6 +859,21 @@ root.atomic.adaptHtml
                                 &lt;/radiogroup&gt;
                             &lt;/td&gt;
                         &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Buttons:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;button id="buttonControl"&gt;&lt;/button&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Images:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;img id="imageControl"&gt;&lt;/img&gt;&lt;br/&gt;
+                                &lt;radiogroup id="imagePathControl"&gt;
+                                    &lt;radiogroupitem class="radio-inline"&gt;&lt;input type="radio" /&gt;&lt;label&gt;&lt;/label&gt;&lt;/radiogroupitem&gt;
+                                &lt;/radiogroup&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
                     &lt;/table&gt;
                 &lt;/div&gt;
                 &lt;div class="col-md-4"&gt;
@@ -864,6 +902,10 @@ root.atomic.adaptHtml
                         &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Radio button selection:&lt;/td&gt;
                             &lt;td class="table-cell" id="radioSelectedOptionReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Image path value:&lt;/td&gt;
+                            &lt;td class="table-cell" id="imagePathValueReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                     &lt;/table&gt;
                 &lt;/div&gt;
