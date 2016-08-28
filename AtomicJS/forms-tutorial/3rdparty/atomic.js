@@ -1694,7 +1694,8 @@
                     each(this.__onchange,   (function(event, name){Object.defineProperty(this.__onchange,name,{writable: true});delete this.__onchange[name];}).bind(this));
                     each(value,             (function(event, name){Object.defineProperty(this.__onchange,name,{value: event, configurable: true, enumerable: true});}).bind(this));
                 });}
-            }
+            },
+            update:         {value: function(){this.___inputListener();}}
         });
         each(["data","bind","root"],function(name)
         {

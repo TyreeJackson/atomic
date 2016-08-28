@@ -95,9 +95,11 @@ function()
                                         function()
                                         {
                                             this.value(this.value().trim());
+                                            this.value.update();
                                             this.data.commit();
                                             if (this.value() == "") this.root.on.deleteTodo(this.data().id);
                                             else                    this.root.on.saveTodo(this.data());
+                                            this.parent.removeClass("editing");
                                         },
                                         onescape:
                                         function()
