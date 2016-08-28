@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("tutorial.appView", function(each)
+{"use strict";root.define("atomic.tutorial.appView", function(each)
 {return function tutorialAppView()
 {
     var adapterDefinition   =

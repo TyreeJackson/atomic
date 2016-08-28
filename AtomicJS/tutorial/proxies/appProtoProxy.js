@@ -1,4 +1,4 @@
 !function()
-{"use strict";root.define("tutorial.appProxy", function tutorialProtoProxy(localStorage, removeFromArray)
+{"use strict";root.define("atomic.tutorial.appProxy", function tutorialProtoProxy(localStorage, removeFromArray)
 {return {
 };});}();

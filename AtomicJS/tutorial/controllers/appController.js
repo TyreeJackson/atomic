@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("tutorial.appController", function tutorialAppController(appView, appProxy, observer, path)
+{"use strict";root.define("atomic.tutorial.appController", function tutorialAppController(appView, appProxy, observer, path)
 {
     this.launch =
     function()

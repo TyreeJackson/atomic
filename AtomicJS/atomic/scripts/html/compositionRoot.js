@@ -45,6 +45,7 @@
         image:          {value: image},
         button:         {value: button}
     });
+    root.utilities.each(customControlTypes, function(controlType, name){Object.defineProperty(controlTypes, name, {value: controlType});});
 
     return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
 });}();
