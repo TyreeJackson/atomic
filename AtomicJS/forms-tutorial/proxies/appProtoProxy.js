@@ -132,6 +132,10 @@
                 examples:   exampleMenuItems,
                 message:    "Hello World!"
             }
+        },
+        "/example2":
+        {
+            
         }
     };
 return {
