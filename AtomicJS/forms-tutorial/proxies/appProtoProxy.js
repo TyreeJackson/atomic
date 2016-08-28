@@ -131,19 +131,19 @@
     };
 return {
         name:   "formsTutorial",
-        get:    function(url)
+        get:    function(url, callback)
         {
-            return resources[url]||resources.notfound;
+            callback(resources[url]||resources.not_found);
         },
-        put:    function(url, resource)
-        {
-
-        },
-        post:   function(url, resource)
+        put:    function(url, resource, callback)
         {
 
         },
-        delete: function(url)
+        post:   function(url, resource, callback)
+        {
+
+        },
+        delete: function(url, callback)
         {
 
         }
