@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Atomic • Tutorial</title>
+    <title>AtomicJS • Tutorial</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="index.css" />
     <script type="text/javascript" src="../atomic/scripts/namespaces.js"></script>
@@ -732,7 +732,7 @@ root.atomic.adaptHtml
                                                 radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
                                                 buttonControl:                  { bind: "stringValue" },
                                                 imageControl:                   { bind: "imageUrl" },
-                                                imagePathControl:               { bind: { value: "imageUrl", items: { to: "images", text: "title", value: "url" } } },
+                                                imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             }
                                         )

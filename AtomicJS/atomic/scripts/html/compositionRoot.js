@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customControlTypes)
+{"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes)
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
@@ -25,7 +25,7 @@
     var repeater                = new root.atomic.html.repeater(container, defineDataProperties, viewAdapterFactory, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control, defineDataProperties);
     var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
-    var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder);
+    var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder, each);
     var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder, each);
     var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
     var image                   = new root.atomic.html.image(control, defineDataProperties);
@@ -45,9 +45,9 @@
         image:          {value: image},
         button:         {value: button}
     });
-    root.utilities.each(customControlTypes, function(controlType, name){Object.defineProperty(controlTypes, name, {value: controlType});});
-
-    return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
+    var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
+    if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
+    return atomic;
 });}();
 !function(window, document)
 {"use strict";root.define("atomic.adaptHtml", function adaptHtml(viewElement, controlsOrAdapter)

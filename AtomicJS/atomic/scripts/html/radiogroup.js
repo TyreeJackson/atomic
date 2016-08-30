@@ -41,8 +41,8 @@
         });
         defineDataProperties(this, this.__sourceBinder,
         {
-            text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value;}},
-            value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value;}}
+            text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value&&value.isObserver?value():value;}},
+            value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value&&value.isObserver?value():value;}}
         });
         this.__radioElement.name = name;
         this.__element.addEventListener
@@ -68,8 +68,8 @@
     function createOption(sourceItem, index)
     {
         var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__element.__selectorPath + (this.__element.id||"unknown"), this);
-        option.text.bind    = this.sourcetext||"";
-        option.value.bind   = this.sourcevalue||"";
+        option.text.bind    = this.optionText||"";
+        option.value.bind   = this.optionValue||"";
         option.source       = sourceItem;
         return option;
     }
@@ -111,7 +111,16 @@
     });
     each(["text","value"], function(name)
     {
-        Object.defineProperty(radiogroup.prototype, "source"+name, { get: function(){ return this.items[name]; }, set: function(value){ this.items[name] = value; } });
+        var thisName    = name.substr(0,1).toUpperCase()+name.substr(1);
+        Object.defineProperty(radiogroup.prototype, "option"+thisName, 
+        {
+            get: function(){ return this["__option"+thisName]; },
+            set: function(value)
+            {
+                Object.defineProperty(this,"__option"+thisName, {value: value, configurable: true});
+                each(this.__options, function(option){option[name].bind = value;});
+            }
+        });
     });
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
     function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}

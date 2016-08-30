@@ -21,17 +21,12 @@
     }
     function control(element, selector, parent)
     {
-        if (element === undefined)  throw new Error("View element not provided for control with selector " + selector);
-        if (element.getAttribute("data-missing")==="true")
+        if (element === undefined)
         {
-            var container       = element;
-            element             = this.__createNode(selector);
-            container.appendChild(element);
-            element.id          = container.id;
-            element.className   = container.className;
-            container.id        = 
-            container.className = "";
-            element.title       = selector;
+            element                 = this.__createNode(selector);
+            parent.__element.appendChild(element);
+            element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
+            element.__selectorPath  = parent.getSelectorPath();
         }
         Object.defineProperties(this, 
         {

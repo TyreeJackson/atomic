@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.select", function htmlSelect(input, defineDataProperties, dataBinder)
+{"use strict";root.define("atomic.html.select", function htmlSelect(input, defineDataProperties, dataBinder, each)
 {
     function getSelectListValue()
     {
@@ -24,8 +24,8 @@
         });
         defineDataProperties(this, this.__sourceBinder,
         {
-            text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value;}},
-            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value;}}
+            text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value&&value.isObserver?value():value;}},
+            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value;}}
         });
     }
     Object.defineProperties(selectoption.prototype,
@@ -36,8 +36,8 @@
     function createOption(sourceItem, index)
     {
         var option          = new selectoption(document.createElement('option'), this.selector+"-"+index, this);
-        option.text.bind    = this.__sourceText||"";
-        option.value.bind   = this.__sourceValue||"";
+        option.text.bind    = this.optionText||"";
+        option.value.bind   = this.optionValue||"";
         option.source       = sourceItem;
         return option;
     }
@@ -76,6 +76,19 @@
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+    });
+    each(["text","value"], function(name)
+    {
+        var thisName    = name.substr(0,1).toUpperCase()+name.substr(1);
+        Object.defineProperty(select.prototype, "option"+thisName, 
+        {
+            get: function(){ return this["__option"+thisName]; },
+            set: function(value)
+            {
+                Object.defineProperty(this,"__option"+thisName, {value: value, configurable: true});
+                each(this.__options, function(option){option[name].bind = value;});
+            }
+        });
     });
     function clearOptions(){ for(var counter=this.__element.options.length-1;counter>=0;counter--) this.__element.remove(counter); }
     function bindSelectListSource(items)

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Atomic • Tutorial</title>
+    <title>AtomicJS Forms • Tutorial</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="index.css" />
     <!-- AtomicJS -->
@@ -31,6 +31,10 @@
     <!-- AtomicJS Forms -->
     <script type="text/javascript" src="../atomic/forms/scripts/controllers/appController.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/views/appView.js"></script>
+    <script type="text/javascript" src="../atomic/forms/scripts/views/controls/template.js"></script>
+    <script type="text/javascript" src="../atomic/forms/scripts/views/controls/layout.js"></script>
+    <script type="text/javascript" src="../atomic/forms/scripts/views/controls/menu.js"></script>
+    <script type="text/javascript" src="../atomic/forms/scripts/views/controls/static.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/html/compositionRoot.js"></script>
     <script type="text/javascript" src="3rdparty/path.min.js"></script>
 
@@ -39,5 +43,13 @@
     <script type="text/javascript" src="index.js"></script>
 </head>
 <body id="formsTutorialApp">
+    <div id="layout"></div>
+    <div id="menu">
+        <ul>
+        </ul>
+    </div>
+    <p id="static">
+        <label class="static-label"></label>: <label class="static-readout"></label>
+    </p>
 </body>
 </html>

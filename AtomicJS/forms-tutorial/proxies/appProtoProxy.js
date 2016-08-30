@@ -3,139 +3,129 @@
 {
     var mainMenu            =
     {
-        examples:
-        {
-            title:  "Examples",
-            rel:    "/",
-            action: "get",
-            menu:
-            {
-                bind:   "examples",
-                repeat:
-                {
-                    bind:
-                    {
-                        title:  "title",
-                        rel:    "path"
-                    },
-                    action: "get"
-                }
-            }
-        }
-    }
-    var exampleMenuItems    =
-    {
-        example1:
-        {
-            title:  "Hello World!",
-            path:   "/example1"
-        },
-        example2:
-        {
-            title:  "Hello World Revisted",
-            path:   "/example2"
-        }
+        name:       "mainMenu",
+        type:       "menu",
+        width:      12,
+        bind:       { value: { to: "menu", text: "title", value: "path" } }
     };
+    var exampleMenuItems    =
+    [
+        {
+            title:      "Examples",
+            path:       "/",
+            items:
+            [
+                {
+                    title:  "Hello World!",
+                    path:   "/example1"
+                },
+                {
+                    title:  "Hello World Revisted",
+                    path:   "/example2"
+                }
+            ]
+        }
+    ];
     var resources           =
     {
         not_found:
         {
             layout:
-            {
-                menu:       mainMenu,
-                screens:
+            [
+                mainMenu,
                 {
-                    main:
-                    {
-                        fields:
+                    name:   "main",
+                    type:   "layout",
+                    width:  12,
+                    layout:
+                    [
                         {
-                            message:
-                            {
-                                type:       "readonly",
-                                columns:    12,
-                                bind:       "message"
-                            }
+                            name:       "message",
+                            type:       "static",
+                            columns:    12,
+                            bind:       "message"
                         }
-                    }
+                    ]
                 }
-            },
+            ],
             data:
             {
-                examples:   exampleMenuItems,
+                menu:       exampleMenuItems,
                 message:    "The resource that you are attempting to access was not found.  Please check your route and try again."
             }
         },
         "/":
         {
             layout:
-            {
-                menu:   mainMenu
-            },
+            [
+                mainMenu
+            ],
             data:
             {
-                examples:   exampleMenuItems
+                menu:   exampleMenuItems
             }
         },
         "/example1":
         {
             layout:
-            {
-                menu:       mainMenu,
-                screens:
+            [
+                mainMenu,
                 {
-                    demo:
-                    {
-                        screens:
-                        {
-                            example1:
-                            {
-                                fields:
-                                {
-                                    message:
-                                    {
-                                        type:       "readonly",
-                                        columns:    12,
-                                        bind:       "message"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    model:
-                    {
-                        fields:
-                        {
-                            model:
-                            {
-                                type:       "readonly",
-                                columns:    12,
-                                bind:       {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ".../data" }
-                            }
-                        }
-                    },
+                    name:   "main",
+                    type:   "layout",
+                    width:  12,
                     layout:
-                    {
-                        fields:
+                    [
                         {
-                            model:
-                            {
-                                type:       "readonly",
-                                columns:    12,
-                                bind:       {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ".../layout" }
-                            }
+                            name:       "message",
+                            type:       "static",
+                            columns:    12,
+                            label:      "Message",
+                            bind:       ""
                         }
-                    }
+                    ]
+                },
+                {
+                    name:   "data",
+                    type:   "layout",
+                    width:  12,
+                    layout:
+                    [
+                        {
+                            name:       "model",
+                            type:       "static",
+                            columns:    12,
+                            label:      "Data",
+                            bind:       { value: { to: function(){return JSON.stringify(this.data("..."), null, '    ');}, root: "" } }
+                        }
+                    ]
+                },
+                {
+                    name:   "layout",
+                    type:   "layout",
+                    width:  12,
+                    layout:
+                    [
+                        {
+                            name:       "model",
+                            type:       "static",
+                            columns:    12,
+                            label:      "Layout",
+                            bind:       { value: { to: function(){return JSON.stringify(this.data("..."), null, '    ');}, root: "" } }
+                        }
+                    ]
                 }
-            },
+            ],
             data:
             {
-                examples:   exampleMenuItems,
+                menu:       exampleMenuItems,
                 message:    "Hello World!"
             }
         },
         "/example2":
         {
-            
+            layout: [],
+            data:   {}
         }
     };
 return {

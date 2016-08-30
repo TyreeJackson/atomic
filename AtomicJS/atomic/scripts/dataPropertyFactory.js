@@ -56,7 +56,7 @@
             }
             else if (this.__onupdate)
             {
-                Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
+                Object.defineProperty(this, "__bindListener", {configurable: true, value: (function(){ notifyOnDataUpdate.call(this, this.data); }).bind(this)});
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
             }
@@ -137,7 +137,7 @@
             },
             update:         {value: function(){this.___inputListener();}}
         });
-        each(["data","bind","root","text","value"],function(name)
+        each(["data","bind","root"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {

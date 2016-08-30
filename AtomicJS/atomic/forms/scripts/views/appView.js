@@ -6,7 +6,11 @@
     {
         controls:   
         {
-            model: {bind: { value: {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ""}}}
+            root:
+            {
+                type:   "layout"
+            },
+            model:  {bind: { value: {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ""}}}
         },
         members:
         {

@@ -3,13 +3,14 @@
 {
     function handleResult(result)
     {
-        alert(JSON.stringify(result));
-        appView.data("", result);
+        appView.controls.root.layoutData("", result);debugger;
+        appView.data("", result.data);
     }
     this.launch =
     function()
     {
-        appView.data    = new observer();
+        appView.controls.root.layoutData    = new observer({});
+        appView.data                        = new observer({});
         path.rescue(function(path){appProxy.get(path.substr(1), handleResult);});
         path.root("#/");
         path.listen();

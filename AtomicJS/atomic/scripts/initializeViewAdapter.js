@@ -31,9 +31,14 @@
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
-            each(["root","onupdate","text","value"], (function(option)
+            each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
+            }).bind(this));
+            each(["text","value"], (function(option)
+            {
+                var optionName  = "option"+option.substr(0,1).toUpperCase()+option.substr(1);
+                if (binding[option] !== undefined)                          viewAdapter[optionName]     = binding[option];
             }).bind(this));
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
         }

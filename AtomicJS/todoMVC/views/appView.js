@@ -90,12 +90,11 @@ function()
                                     },
                                     editTodoTextbox:
                                     {
-                                        bind:       "todo",
+                                        bind:       { value: { to: "todo", updateon: ["change", "keyup"] } },
                                         onenter:
                                         function()
                                         {
                                             this.value(this.value().trim());
-                                            this.value.update();
                                             this.data.commit();
                                             if (this.value() == "") this.root.on.deleteTodo(this.data().id);
                                             else                    this.root.on.saveTodo(this.data());
@@ -106,8 +105,7 @@ function()
                                         {
                                             this.data.rollback();
                                             this.parent.removeClass("editing");
-                                        },
-                                        updateon:   ["change", "keyup"]
+                                        }
                                     }
                                 }
                             }

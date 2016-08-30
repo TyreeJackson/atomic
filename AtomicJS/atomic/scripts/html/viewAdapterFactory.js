@@ -23,7 +23,9 @@
                 ?   "panel"
                 :   definition.repeat
                     ?   "repeater"
-                    :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default;
+                    :   element !== undefined
+                        ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                        :   elementControlTypes.default;
     }
     var viewAdapterFactory  =
     {
@@ -34,7 +36,7 @@
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||viewAdapterFactory.select(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector, controlDeclaration.type);
+            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, controlDeclaration.type);
             initializeViewAdapter(control, controlDeclaration);
             return control;
         },
@@ -48,10 +50,10 @@
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
             return viewAdapter;
         },
-        createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate, selector)
+        createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            return (function(parent, containerElement, containerSelector)
+            return (function(parent, containerElement, selector)
             {
                 var container   = parent;
                 if (containerElement !== undefined)
@@ -66,7 +68,7 @@
         },
         select:         function(uiElement, selector, selectorPath)
         {
-            var element = uiElement.querySelector(selector);
+            return uiElement.querySelector(selector)||undefined;
             if (element === null)
             {
                 logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));

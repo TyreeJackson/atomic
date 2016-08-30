@@ -1,7 +1,7 @@
 !function()
 {"use strict";root.define("atomic.html.panel", function htmlPanel(container, defineDataProperties, viewAdapterFactory, each)
 {
-    function attachControls(controlDeclarations, viewElement)
+    function attachControls(controlDeclarations)
     {
         if (controlDeclarations === undefined)  return;
         var selectorPath                = this.getSelectorPath();
@@ -10,7 +10,7 @@
             this.__controlKeys.push(controlKey);
             var declaration             = controlDeclarations[controlKey];
             var selector                = (declaration.selector||("#"+controlKey));
-            this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(viewElement, selector, selectorPath), this, selector);
+            this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
         }
     }
     function panel(elements, selector, parent)
@@ -18,7 +18,7 @@
         container.call(this, elements, selector, parent);
         defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
         {
-            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.__binder;}).bind(this));
         }}});
         this.bind   = "";
     }
