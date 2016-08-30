@@ -21,11 +21,13 @@
             var layout          = new root.atomic.forms.controls.layout(template, document.querySelector("#layout"), defineDataProperties, atomic.viewAdapterFactory, each);
             var menu            = new root.atomic.forms.controls.menu(template, document.querySelector("#menu"), defineDataProperties, atomic.viewAdapterFactory);
             var staticControl   = new root.atomic.forms.controls.static(template, document.querySelector("#static"), defineDataProperties);
+            var json            = new root.atomic.forms.controls.json(staticControl, document.querySelector("#json"), defineDataProperties);
             Object.defineProperties(controlTypes,
             {
                 layout: {value: layout},
                 menu:   {value: menu},
-                static: {value: staticControl}
+                static: {value: staticControl},
+                json:   {value: json}
             });
         });
         var app =

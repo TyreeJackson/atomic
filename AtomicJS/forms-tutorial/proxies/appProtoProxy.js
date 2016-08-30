@@ -93,10 +93,10 @@
                     [
                         {
                             name:       "model",
-                            type:       "static",
+                            type:       "json",
                             columns:    12,
                             label:      "Data",
-                            bind:       { value: { to: function(){return JSON.stringify(this.data("...").data, null, '    ');}, root: "" } }
+                            bind:       "...data"
                         }
                     ]
                 },
@@ -108,10 +108,10 @@
                     [
                         {
                             name:       "model",
-                            type:       "static",
+                            type:       "json",
                             columns:    12,
                             label:      "Layout",
-                            bind:       { value: { to: function(){return JSON.stringify(this.data("...").layout, null, '    ');}, root: "" } }
+                            bind:       "...layout"
                         }
                     ]
                 }
