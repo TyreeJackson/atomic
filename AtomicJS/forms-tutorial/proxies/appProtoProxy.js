@@ -81,7 +81,7 @@
                             type:       "static",
                             columns:    12,
                             label:      "Message",
-                            bind:       ""
+                            bind:       "data.message"
                         }
                     ]
                 },
@@ -96,7 +96,7 @@
                             type:       "static",
                             columns:    12,
                             label:      "Data",
-                            bind:       { value: { to: function(){return JSON.stringify(this.data("..."), null, '    ');}, root: "" } }
+                            bind:       { value: { to: function(){return JSON.stringify(this.data("...").data, null, '    ');}, root: "" } }
                         }
                     ]
                 },
@@ -111,7 +111,7 @@
                             type:       "static",
                             columns:    12,
                             label:      "Layout",
-                            bind:       { value: { to: function(){return JSON.stringify(this.data("..."), null, '    ');}, root: "" } }
+                            bind:       { value: { to: function(){return JSON.stringify(this.data("...").layout, null, '    ');}, root: "" } }
                         }
                     ]
                 }

@@ -3,8 +3,8 @@
 {
     function handleResult(result)
     {
-        appView.controls.root.layoutData("", result);debugger;
-        appView.data("", result.data);
+        appView.controls.root.layoutData("", result);
+        appView.data("", result);
     }
     this.launch =
     function()

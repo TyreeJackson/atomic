@@ -8,7 +8,7 @@
         var objectObserver                              =
         objectObserverFunctionFactory.create
         (function objectObserverFactory(basePath, bag)
-        {
+        {if (basePath==undefined) debugger;
             function objectObserver(path, value)
             {
                 return objectObserver.__invoke(path, value, false);
@@ -96,7 +96,7 @@
             pathSegments    = pathSegments || [""];
             if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
