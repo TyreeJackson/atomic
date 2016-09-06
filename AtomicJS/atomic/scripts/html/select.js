@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.select", function htmlSelect(input, defineDataProperties, dataBinder, each)
+{"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
 {
     function getSelectListValue()
     {
@@ -22,7 +22,7 @@
             "__element":        {value: element},
             "__sourceBinder":   {value: new dataBinder()}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value&&value.isObserver?value():value;}},
             value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value;}}
@@ -49,12 +49,9 @@
             "__items":      {value: null, configurable: true},
             "__options":    {value: []}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")}
-        });
-        defineDataProperties(this, this.__binder,
-        {
+            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},

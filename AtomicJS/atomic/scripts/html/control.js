@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, defineDataProperties, eventsSet, dataBinder)
+{"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder)
 {
     function addEvents(eventNames)
     {
@@ -37,11 +37,11 @@
             __attributes:           {value: {}, writable: true},
             __selector:             {value: selector},
             parent:                 {value: parent},
-            __binder:               {value: new dataBinder()},
+            __binder:               {value: new dataBinder(this)},
             __forceRoot:            {value: false, configurable: true},
             classes:                {value: {}}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             attributes:         
             {
@@ -95,7 +95,7 @@
         data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
         bindClass:          {value: function(className)
         {
-            defineDataProperties(this.classes, this.__binder, className, 
+            this.__binder.defineDataProperties(this.classes, className, 
             {
                 owner:      this,
                 get:        function(){return this.hasClass(className);}, 

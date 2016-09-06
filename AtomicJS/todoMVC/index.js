@@ -7,7 +7,7 @@
         var app =
         new root.todoMVC.appController
         (
-            atomic.viewAdapterFactory.create
+            atomic.viewAdapterFactory.createView
             (
                 new root.todoMVC.appView(), 
                 document.querySelector("#todoMVCApp")

@@ -1,10 +1,10 @@
 !function()
-{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, defineDataProperties)
+{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control)
 {
     function readonly(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value&&value.isObserver?value():value;}}
         });

@@ -6,19 +6,18 @@
 
     function staticControl(element, selector, parent)
     {
-        base.call(this, element, selector, parent);
-        Object.defineProperties(this,
+        base.call(this, element, selector, parent, {controls:
         {
-            __label:    {value: this.__element.querySelector(".static-label")},
-            __readout:  {value: this.__element.querySelector(".static-readout")}
-        });
+            label:      { type: "readonly", selector: ".static-label" },
+            readout:    { type: "readonly", selector: ".static-readout" }
+        }});
         defineDataProperties(this, this.__layoutBinder,
         {
-            label:  {get: function(){return this.__label.innerHTML;}, set: function(value){this.__label.innerHTML = (value&&value.isObserver?value():value);}}
+            label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value&&value.isObserver?value():value);}}
         });
         defineDataProperties(this, this.__binder,
         {
-            value:  {get: function(){return this.__readout.innerHTML;}, set: function(value){this.__readout.innerHTML = (value&&value.isObserver?value():value);}}
+            value:  {get: function(){return this.controls.readout.value();}, set: function(value){this.controls.readout.value(value&&value.isObserver?value():value);}}
         });
         this.label.bind = "label";
     }

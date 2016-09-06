@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder, each)
+{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
 {
     function setRadioGroupValue(value)
     {
@@ -39,7 +39,7 @@
             "__text":           {value: null, configurable: true},
             "__value":          {value: null, configurable: true}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value&&value.isObserver?value():value;}},
             value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value&&value.isObserver?value():value;}}
@@ -81,12 +81,9 @@
             "__items":      {value: null, configurable: true},
             "__options":    {value: []}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")}
-        });
-        defineDataProperties(this, this.__binder,
-        {
+            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},

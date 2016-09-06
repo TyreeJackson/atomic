@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each)
+{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each, observer)
 {
     var missingElements;
     var elementControlTypes =
@@ -19,13 +19,15 @@
     });
     function getControlTypeForElement(definition, element)
     {
-        return  definition.controls
+        return  definition.type
+                ||
+                (definition.controls
                 ?   "panel"
                 :   definition.repeat
                     ?   "repeater"
                     :   element !== undefined
                         ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
-                        :   elementControlTypes.default;
+                        :   elementControlTypes.default);
     }
     var viewAdapterFactory  =
     {
@@ -36,35 +38,74 @@
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, controlDeclaration.type);
+            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement));
             initializeViewAdapter(control, controlDeclaration);
             return control;
         },
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
-            var viewAdapterDefinition   = new viewAdapterDefinitionConstructor();
-            controlType                 = controlType || getControlTypeForElement(viewAdapterDefinition, viewElement);
+            if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
-            viewAdapter.init(viewAdapterDefinition);
+            viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
             return viewAdapter;
         },
+        createView:     function(viewAdapterDefinitionConstructor, viewElement)
+        {
+            return this.create
+            (
+                typeof viewAdapterDefinitionConstructor !== "function"
+                ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
+                :   viewAdapterDefinitionConstructor,
+                viewElement,
+                undefined,
+                undefined,
+                "panel"
+            );
+        },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
+            if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
             return (function(parent, containerElement, selector)
             {
                 var container   = parent;
                 if (containerElement !== undefined)
                 {
-                    container                       = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
+                    container                       = this.create(function(){return {};}, containerElement, parent, selector);
                     container.__element.innerHTML   = "";
                 }
-                var view                            = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
+                var view                            = this.create
+                (
+                    typeof viewAdapterDefinitionConstructor !== "function"
+                    ?   function(control){return viewAdapterDefinitionConstructor}
+                    :   viewAdapterDefinitionConstructor,
+                    viewElementTemplate.cloneNode(true),
+                    container,
+                    selector,
+                    "composite"
+                );
                 container.appendControl(view);
                 return view;
             }).bind(this);
+        },
+        launch:         function(viewElement, controlsOrAdapter, callback)
+        {
+            if (controlsOrAdapter === undefined)
+            {
+                controlsOrAdapter   = viewElement;
+                viewElement         = document.body;
+            }
+            var adapter =
+            this.createView
+            (
+                controlsOrAdapter, 
+                typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
+            );
+            adapter.data    = new observer({});
+            if (typeof callback === "function") callback(adapter);
+            return adapter;
         },
         select:         function(uiElement, selector, selectorPath)
         {

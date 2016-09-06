@@ -6,7 +6,7 @@
 
     function menu(element, selector, parent)
     {
-        base.call(this, element, selector, parent);
+        base.call(this, element, selector, parent, {});
         defineDataProperties(this, this.__binder,
         {
             value:  {get: function(){return this.__element.checked;}, set: function(value){this.__element.checked = value===true;},  onchange: this.getEvents("change")}

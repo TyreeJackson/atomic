@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.multiselect", function htmlMultiSelect(base, defineDataProperties)
+{"use strict";root.define("atomic.html.multiselect", function htmlMultiSelect(base)
 {
     function setSelectListValues(values)
     {
@@ -18,7 +18,7 @@
     function multiselect(elements, selector, parent)
     {
         base.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value||null);},  onchange: this.getEvents("change")}
         });

@@ -60,12 +60,7 @@
 
     function layout(element, selector, parent)
     {
-        base.call(this, element, selector, parent);
-        Object.defineProperties(this,
-        {
-            "__controlKeys":    {value: []},
-            controls:           {value: {}}
-        });
+        base.call(this, element, selector, parent, {});
         defineDataProperties(this, this.__layoutBinder, {layout: {onupdate: function(value)
         {
             bindLayout.call(this, this.layoutData.observe(this.layout.bind));

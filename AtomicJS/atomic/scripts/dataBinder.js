@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray)
+{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray, defineDataProperties)
 {
     function notifyProperties()
     {
@@ -8,18 +8,25 @@
             property.data = this.data||null;
         }).bind(this));
     }
-    function dataBinder(data)
+    function dataBinder(target, data)
     {
         Object.defineProperties(this,
         {
             "__properties": {value: []},
-            "__forceRoot":  {value: false, configurable: true}
+            "__forceRoot":  {value: false, configurable: true},
+            "__target":     {value: target}
         });
         this.__makeRoot();
         if (data) this.data = data;
     };
     Object.defineProperties(dataBinder.prototype,
     {
+        __makeRoot:   {value: function()
+        {
+            var parent  = this.__parentBinder;
+            Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
+            if(parent)   parent.unregister(this);
+        }},
         data:
         {
             get:    function(){return this.__data;},
@@ -42,12 +49,7 @@
                 notifyProperties.call(this);
             }
         },
-        __makeRoot:   {value: function()
-        {
-            var parent  = this.__parentBinder;
-            Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
-            if(parent)   parent.unregister(this);
-        }},
+        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty)}},
         isBinder:   {value: true},
         isRoot:
         {

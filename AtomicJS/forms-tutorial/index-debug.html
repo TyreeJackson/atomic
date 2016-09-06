@@ -35,6 +35,7 @@
     <script type="text/javascript" src="../atomic/forms/scripts/views/controls/layout.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/views/controls/menu.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/views/controls/static.js"></script>
+    <script type="text/javascript" src="../atomic/forms/scripts/views/controls/textbox.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/views/controls/json.js"></script>
     <script type="text/javascript" src="../atomic/forms/scripts/html/compositionRoot.js"></script>
     <script type="text/javascript" src="3rdparty/path.min.js"></script>
@@ -43,7 +44,7 @@
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
     <script type="text/javascript" src="index.js"></script>
 </head>
-<body id="formsTutorialApp">
+<body id="formsTutorialApp" class="container">
     <div id="layout" class="row col-md-12"></div>
     <div id="menu" class="col-md-8">
         <ul>
@@ -51,6 +52,9 @@
     </div>
     <p id="static" class="col-md-8">
         <label class="static-label"></label>: <label class="static-readout"></label>
+    </p>
+    <p id="textbox" class="col-md-8">
+        <label class="textbox-label"></label>: <input type="text" class="textbox-input" />
     </p>
     <figure id="json" class="col-md-8">
         <label class="static-label"></label>: <pre><code><span class="static-readout pre"></span></code></pre>

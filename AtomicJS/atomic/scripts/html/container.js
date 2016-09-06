@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -41,7 +41,7 @@
         appendControl:      {value: function(childControl)
         {
             this.__element.appendChild(childControl.__element); 
-            this.controlKeys.push(childControl.key);
+            this.__controlKeys.push(childControl.key);
             this.controls[childControl.key] = childControl;
         }},
         addControl:         {value: function(controlKey, controlDeclaration)
@@ -51,6 +51,18 @@
             this.controls[controlKey]       = createControl(controlDeclaration, undefined, this, "#" + controlKey);
             this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
+        }},
+        attachControls:     {value: function(controlDeclarations)
+        {
+            if (controlDeclarations === undefined)  return;
+            var selectorPath                = this.getSelectorPath();
+            for(var controlKey in controlDeclarations)
+            {
+                this.__controlKeys.push(controlKey);
+                var declaration             = controlDeclarations[controlKey];
+                var selector                = (declaration.selector||("#"+controlKey));
+                this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
+            }
         }},
         createControl:
         function(controlDeclaration, controlElement, parent, selector)

@@ -11,6 +11,7 @@
     <script type="text/javascript" src="../atomic/scripts/html/readonly.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/container.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/panel.js"></script>
+    <script type="text/javascript" src="../atomic/scripts/html/composite.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/repeater.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/input.js"></script>
     <script type="text/javascript" src="../atomic/scripts/html/checkbox.js"></script>
@@ -56,6 +57,8 @@
                                 <li id="exampleLink8"><a href="#/example/8">Working with Lists</a></li>
                                 <li id="exampleLink9"><a href="#/example/9">Hello Friend - container demo</a></li>
                                 <li id="exampleLink10"><a href="#/example/10">A Better List - control types demo</a></li>
+                                <li id="exampleLink11"><a href="#/example/11">A really simple Todo</a></li>
+                                <li id="exampleLink12"><a href="#/example/12">Composite Controls</a></li>
                             </ul>
                         </div>
                     </div>
@@ -71,14 +74,14 @@
                                             <h1 id="greeting">Hello <span id="worldLabel"></span>!</h1>
                                         </div>
                                         <script type="text/javascript">
-                                            root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
+                                            root.atomic.launch ( "#example1", {worldLabel: {value: "World"}} );
                                         </script>
                                     </div>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
+root.atomic.launch ( "#example1", {worldLabel: {value: "World"}} );
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -103,7 +106,7 @@ root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example2",
                                             {
@@ -128,7 +131,7 @@ root.atomic.adaptHtml ( "#example1", {worldLabel: {value: "World"}} );
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example2",
     {
@@ -169,7 +172,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example3",
                                             {
@@ -207,7 +210,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example3",
     {
@@ -268,7 +271,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example4",
                                             {
@@ -295,12 +298,9 @@ root.atomic.adaptHtml
                                                     }
                                                 },
                                                 example4model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data("", {clickCount:0});
-                                        });
+                                            },
+                                            function(adapter) { adapter.data("", {clickCount:0}); }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -312,7 +312,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example4",
     {
@@ -338,12 +338,9 @@ root.atomic.adaptHtml
                 this.data("clickCount",0);
             }
         }
-    }
-)
-(function(adapter)
-{
-    adapter.data("", {clickCount:0});
-});
+    },
+    function(adapter) { adapter.data("", {clickCount:0}); }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -381,7 +378,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example5",
                                             {
@@ -406,12 +403,9 @@ root.atomic.adaptHtml
                                                     bind: {items: "items"}
                                                 },
                                                 example5model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
-                                        });
+                                            },
+                                            function(adapter) { adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]}); }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -423,7 +417,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example5",
     {
@@ -447,12 +441,9 @@ root.atomic.adaptHtml
         {
             bind: "items"
         }
-    }
-)
-(function(adapter)
-{
-    adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]});
-});
+    },
+    function(adapter) { adapter.data("", {newItem:"", items: ["Alpha","Beta","Gamma"]}); }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -494,7 +485,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example6",
                                             {
@@ -529,12 +520,9 @@ root.atomic.adaptHtml
                                                     onclick:    function(){this.data("items").sort();}
                                                 },
                                                 example6model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
-                                        });
+                                            },
+                                            function(adapter) { adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]}); }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -546,7 +534,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example6",
     {
@@ -580,12 +568,9 @@ root.atomic.adaptHtml
             bind:       {enabled: function(){return this.data("items.length")&gt;1}},
             onclick:    function(){this.data("items").sort();}
         }
-    }
-)
-(function(adapter)
-{
-    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
-});
+    },
+    function(adapter) { adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]}); }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -711,7 +696,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example7",
                                             {
@@ -734,37 +719,37 @@ root.atomic.adaptHtml
                                                 imageControl:                   { bind: "imageUrl" },
                                                 imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data("", 
+                                            },
+                                            function(adapter)
                                             {
-                                                stringValue:            "Hello", 
-                                                passwordValue:          "mypass", 
-                                                booleanValue:           true, 
-                                                selectedValue:          "Gamma", 
-                                                multipleSelectedValues: ["Beta"], 
-                                                radioSelectedValue:     "Alpha",
-                                                imageUrl:               "images/hammock_cat.jpg",
-                                                items:                  ["Alpha","Beta","Gamma"],
-                                                images:
-                                                [
-                                                    {
-                                                        title:  "Hammock Cat",
-                                                        url:    "images/hammock_cat.jpg"
-                                                    },
-                                                    {
-                                                        title:  "Headphones",
-                                                        url:    "images/headphones.jpg"
-                                                    },
-                                                    {
-                                                        title:  "Nature Scene",
-                                                        url:    "images/nature_scene.png"
-                                                    }
-                                                ]
-                                            });
-                                        });
+                                                adapter.data("", 
+                                                {
+                                                    stringValue:            "Hello", 
+                                                    passwordValue:          "mypass", 
+                                                    booleanValue:           true, 
+                                                    selectedValue:          "Gamma", 
+                                                    multipleSelectedValues: ["Beta"], 
+                                                    radioSelectedValue:     "Alpha",
+                                                    imageUrl:               "images/hammock_cat.jpg",
+                                                    items:                  ["Alpha","Beta","Gamma"],
+                                                    images:
+                                                    [
+                                                        {
+                                                            title:  "Hammock Cat",
+                                                            url:    "images/hammock_cat.jpg"
+                                                        },
+                                                        {
+                                                            title:  "Headphones",
+                                                            url:    "images/headphones.jpg"
+                                                        },
+                                                        {
+                                                            title:  "Nature Scene",
+                                                            url:    "images/nature_scene.png"
+                                                        }
+                                                    ]
+                                                });
+                                            }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -776,7 +761,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example7",
     {
@@ -799,37 +784,37 @@ root.atomic.adaptHtml
         imageControl:                   { bind: "imageUrl" },
         imagePathControl:               { bind: { value: "imageUrl", items: { to: "images", text: "title", value: "url" } } },
         example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-    }
-)
-(function(adapter)
-{
-    adapter.data("", 
+    },
+    function(adapter)
     {
-        stringValue:            "Hello", 
-        passwordValue:          "mypass", 
-        booleanValue:           true, 
-        selectedValue:          "Gamma", 
-        multipleSelectedValues: ["Beta"], 
-        radioSelectedValue:     "Alpha",
-        imageUrl:               "images/hammock_cat.jpg",
-        items:                  ["Alpha","Beta","Gamma"],
-        images:
-        [
-            {
-                title:  "Hammock Cat",
-                url:    "images/hammock_cat.jpg"
-            },
-            {
-                title:  "Headphones",
-                url:    "images/headphones.jpg"
-            },
-            {
-                title:  "Nature Scene",
-                url:    "images/nature_scene.png"
-            }
-        ]
-    });
-});
+        adapter.data("", 
+        {
+            stringValue:            "Hello", 
+            passwordValue:          "mypass", 
+            booleanValue:           true, 
+            selectedValue:          "Gamma", 
+            multipleSelectedValues: ["Beta"], 
+            radioSelectedValue:     "Alpha",
+            imageUrl:               "images/hammock_cat.jpg",
+            items:                  ["Alpha","Beta","Gamma"],
+            images:
+            [
+                {
+                    title:  "Hammock Cat",
+                    url:    "images/hammock_cat.jpg"
+                },
+                {
+                    title:  "Headphones",
+                    url:    "images/headphones.jpg"
+                },
+                {
+                    title:  "Nature Scene",
+                    url:    "images/nature_scene.png"
+                }
+            ]
+        });
+    }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -969,7 +954,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example8",
                                             {
@@ -1018,22 +1003,22 @@ root.atomic.adaptHtml
                                                 },
                                                 showRenderTimesCheckbox:    { bind: "showRenderTimes" },
                                                 example8model:              { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data
-                                            ("",
+                                            },
+                                            function(adapter)
                                             {
-                                                showRenderTimes:    false,
-                                                people:
-                                                [
-                                                    {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
-                                                    {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
-                                                    {name:"Charles",    children: ["Cayenne","Cleopatra"]}
-                                                ]
-                                            });
-                                        });
+                                                adapter.data
+                                                ("",
+                                                {
+                                                    showRenderTimes:    false,
+                                                    people:
+                                                    [
+                                                        {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
+                                                        {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
+                                                        {name:"Charles",    children: ["Cayenne","Cleopatra"]}
+                                                    ]
+                                                });
+                                            }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -1045,7 +1030,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example8",
     {
@@ -1086,22 +1071,22 @@ root.atomic.adaptHtml
             }
         },
         showRenderTimesCheckbox:    { bind: "showRenderTimes" }
-    }
-)
-(function(adapter)
-{
-    adapter.data
-    ("",
+    },
+    function(adapter)
     {
-        showRenderTimes:    false,
-        people:
-        [
-            {name:"Anabelle",   children: [{name: "Arnie"},{name: "Anders"},{name: "Apple"}]},
-            {name:"Bertie",     children: [{name: "Boutros-Boutros"},{name: "Brianna"},{name: "Barbie"},{name: "Bee-bop"}]},
-            {name:"Charles",    children: [{name: "Cayenne"},{name: "Cleopatra"}]}
-        ]
-    });
-});
+        adapter.data
+        ("",
+        {
+            showRenderTimes:    false,
+            people:
+            [
+                {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
+                {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
+                {name:"Charles",    children: ["Cayenne","Cleopatra"]}
+            ]
+        });
+    }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -1152,7 +1137,7 @@ root.atomic.adaptHtml
                                         </div>
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example9",
                                             {
@@ -1205,7 +1190,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example9",
     {
@@ -1268,7 +1253,7 @@ root.atomic.adaptHtml
                                     <div id="example10container" class="example">
                                     </div>
                                     <script type="text/javascript">
-                                        root.atomic.adaptHtml
+                                        root.atomic.launch
                                         (
                                             "#example10",
                                             {
@@ -1339,12 +1324,9 @@ root.atomic.adaptHtml
                                                     }
                                                 },
                                                 example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-                                            }
-                                        )
-                                        (function(adapter)
-                                        {
-                                            adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
-                                        });
+                                            },
+                                            function(adapter) { adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]}); }
+                                        );
                                     </script>
                                     <figure class="highlight">
                                         <h2>Model</h2>
@@ -1356,7 +1338,7 @@ root.atomic.adaptHtml
                                         <h2>View Adapter</h2>
                                         <pre>
                                             <code class="language-javascript">
-root.atomic.adaptHtml
+root.atomic.launch
 (
     "#example10",
     {
@@ -1427,12 +1409,9 @@ root.atomic.adaptHtml
             }
         },
         example10model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
-    }
-)
-(function(adapter)
-{
-    adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]});
-});
+    },
+    function(adapter) { adapter.data("", {newItem:"", items: ["Fries","Eggs Benedict","Ham","Cheese"]}); }
+);
                                             </code>
                                         </pre>
                                         <h2>View</h2>
@@ -1440,6 +1419,405 @@ root.atomic.adaptHtml
                                             <code class="language-html">
 &lt;div id="example10"&gt;
     &lt;div id="example10container" class="example"&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example11">
+                                    <div class="example">
+                                        <style>.strikethrough{text-decoration: line-through;}</style>
+                                        <div class="well form-group">
+                                            <h1 id="example11title"></h1>
+                                            <fieldset>
+                                                <input id="newTodo" type="text">
+                                                <button id="addTodo">Add Todo</button>
+                                            </fieldset>
+                                            <ul id="todoList">
+                                                <li id="todoListItem">
+                                                    <input id="todoDone" type="checkbox">
+                                                    <span id="todoDescription"></span>
+                                                    <button id="removeTodo">Remove</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.launch
+                                        (
+                                            "#example11",
+                                            {
+                                                newTodo:
+                                                {
+                                                    bind:       {value: {to: "newTodo", updateon:["keyup", "change"]}}, 
+                                                    onenter:    function(){this.parent.controls.addTodo.click();}
+                                                },
+                                                addTodo:        {onclick: function()
+                                                {
+                                                    this.data("todos").push({description: this.data("newTodo"), done: false});
+                                                    this.data("newTodo", "");
+                                                }},
+                                                todoList:
+                                                {
+                                                    bind:   "todos",
+                                                    repeat:
+                                                    {
+                                                        todoListItem:
+                                                        {
+                                                            controls:
+                                                            {
+                                                                todoDone:           {bind: "done"},
+                                                                todoDescription:    {bind: {value: "description", classes: {strikethrough: "done"}}},
+                                                                removeTodo:         {onclick: function()
+                                                                {
+                                                                    this.data("...todos").remove(this.data());
+                                                                }}
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                example11model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            },
+                                            function(adapter) { adapter.data("todos", []); }
+                                        );
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example11model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.launch
+(
+    "#example11",
+    {
+        newTodo:
+        {
+            bind:       {value: {to: "newTodo", updateon:["keyup", "change"]}}, 
+            onenter:    function(){this.parent.controls.addTodo.click();}
+        },
+        addTodo:        {onclick: function()
+        {
+            this.data("todos").push({description: this.data("newTodo"), done: false});
+            this.data("newTodo", "");
+        }},
+        todoList:
+        {
+            bind:   "todos",
+            repeat:
+            {
+                todoListItem:
+                {
+                    controls:
+                    {
+                        todoDone:           {bind: "done"},
+                        todoDescription:    {bind: {value: "description", classes: {strikethrough: "done"}}},
+                        removeTodo:         {onclick: function()
+                        {
+                            this.data("...todos").remove(this.data());
+                        }}
+                    }
+                }
+            }
+        },
+        example11model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+    },
+    function(adapter) { adapter.data("todos", []); }
+);
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example2"&gt;
+    &lt;div class="example"&gt;
+        &lt;style&gt;.strikethrough{text-decoration: line-through;}&lt;/style&gt;
+        &lt;div class="well form-group"&gt;
+            &lt;h1 id="example11title"&gt;&lt;/h1&gt;
+            &lt;fieldset&gt;
+                &lt;input id="newTodo" type="text"&gt;
+                &lt;button id="addTodo"&gt;Add Todo&lt;/button&gt;
+            &lt;/fieldset&gt;
+            &lt;ul id="todoList"&gt;
+                &lt;li id="todoListItem"&gt;
+                    &lt;input id="todoDone" type="checkbox"&gt;
+                    &lt;span id="todoDescription"&gt;&lt;/span&gt;
+                    &lt;button id="removeTodo"&gt;Remove&lt;/button&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                                <div id="example12">
+                                    <div class="example">
+                                        <div id="example12container" class="well form-group">
+                                            <div class="textbox-field-control">
+                                                <label class="textbox-label"></label>
+                                                <input class="textbox-input">
+                                            </div>
+                                            <div class="readonly-field-control">
+                                                <label class="readonly-label"></label>
+                                                <span class="readonly-readout"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.ready(function(atomic)
+                                        {
+                                            var textboxControl  = atomic.viewAdapterFactory.createFactory
+                                            (
+                                                {
+                                                    controls:
+                                                    {
+                                                        label:
+                                                        {
+                                                            selector:   ".textbox-label"
+                                                        },
+                                                        input:
+                                                        {
+                                                            selector:   ".textbox-input"
+                                                        }
+                                                    },
+                                                    properties:
+                                                    {
+                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
+                                                        value:  function(){return this.controls.input.value}
+                                                    },
+                                                    extensions:
+                                                    [{
+                                                        initializers:
+                                                        {
+                                                            label:  function(adapter, value){adapter.label = value;}
+                                                        }
+                                                    }]
+                                                    
+                                                },
+                                                "#example12 .textbox-field-control"
+                                            );
+                                            var readonlyControl = atomic.viewAdapterFactory.createFactory
+                                            (
+                                                {
+                                                    controls:
+                                                    {
+                                                        label:
+                                                        {
+                                                            selector:   ".readonly-label"
+                                                        },
+                                                        readout:
+                                                        {
+                                                            selector:   ".readonly-readout"
+                                                        }
+                                                    },
+                                                    properties:
+                                                    {
+                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
+                                                        value:  function(){return this.controls.readout.value}
+                                                    },
+                                                    extensions:
+                                                    [{
+                                                        initializers:
+                                                        {
+                                                            label:  function(adapter, value){adapter.label = value;}
+                                                        }
+                                                    }]
+                                                    
+                                                },
+                                                "#example12 .readonly-field-control"
+                                            );
+                                            atomic.viewAdapterFactory.launch
+                                            (
+                                                "#example12",
+                                                {
+                                                    example12container:
+                                                    {
+                                                        controls:
+                                                        {
+                                                            firstName:
+                                                            {
+                                                                factory:    textboxControl, 
+                                                                label:      "First Name:", 
+                                                                bind:       {value: {to: "firstName", updateon: ["keyup", "change"] } }
+                                                            },
+                                                            lastName:
+                                                            {
+                                                                factory:    textboxControl, 
+                                                                label:      "Last Name:", 
+                                                                bind:       {value: {to: "lastName", updateon: ["keyup", "change"] } }
+                                                            },
+                                                            fullName:
+                                                            {
+                                                                factory:    readonlyControl, 
+                                                                label:      "Full Name:", 
+                                                                bind: 
+                                                                {
+                                                                    value:      function()
+                                                                    {
+                                                                        return (this.data("firstName")||"") + " " + (this.data("lastName")||"");
+                                                                    }, 
+                                                                    display:    function()
+                                                                    {
+                                                                        return (this.data("firstName")||"").length > 0
+                                                                        ||
+                                                                        (this.data("lastName")||"").length > 0;
+                                                                    } 
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    example12model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                                }
+                                            );
+                                        });
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example12model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.ready(function(atomic)
+{
+    var textboxControl  = atomic.viewAdapterFactory.createFactory
+    (
+        {
+            controls:
+            {
+                label:
+                {
+                    selector:   ".textbox-label"
+                },
+                input:
+                {
+                    selector:   ".textbox-input"
+                }
+            },
+            properties:
+            {
+                label:
+                {
+                    get: function(){return this.controls.label.value();},
+                    set: function(value){this.controls.label.value(value);}
+                },
+                value:  function(){return this.controls.input.value}
+            },
+            extensions:
+            [{
+                initializers:
+                {
+                    label:  function(adapter, value){adapter.label = value;}
+                }
+            }]
+
+        },
+        "#example12 .textbox-field-control"
+    );
+    var readonlyControl = atomic.viewAdapterFactory.createFactory
+    (
+        {
+            controls:
+            {
+                label:
+                {
+                    selector:   ".readonly-label"
+                },
+                readout:
+                {
+                    selector:   ".readonly-readout"
+                }
+            },
+            properties:
+            {
+                label:
+                {
+                    get: function(){return this.controls.label.value();}, 
+                    set: function(value){this.controls.label.value(value);}
+                },
+                value:  function(){return this.controls.readout.value}
+            },
+            extensions:
+            [{
+                initializers:
+                {
+                    label:  function(adapter, value){adapter.label = value;}
+                }
+            }]
+
+        },
+        "#example12 .readonly-field-control"
+    );
+    atomic.viewAdapterFactory.launch
+    (
+        "#example12",
+        {
+            example12container:
+            {
+                controls:
+                {
+                    firstName:
+                    {
+                        factory:    textboxControl, 
+                        label:      "First Name:", 
+                        bind:       {value: {to: "firstName", updateon: ["keyup", "change"] } }
+                    },
+                    lastName:
+                    {
+                        factory:    textboxControl, 
+                        label:      "Last Name:", 
+                        bind:       {value: {to: "lastName", updateon: ["keyup", "change"] } }
+                    },
+                    fullName:
+                    {
+                        factory:    readonlyControl, 
+                        label:      "Full Name:", 
+                        bind: 
+                        {
+                            value:      function()
+                            {
+                                return (this.data("firstName")||"") + " " + (this.data("lastName")||"");
+                            }, 
+                            display:    function()
+                            {
+                                return (this.data("firstName")||"").length > 0
+                                ||
+                                (this.data("lastName")||"").length > 0;
+                            } 
+                        }
+                    }
+                }
+            }
+        }
+    );
+});
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example2"&gt;
+    &lt;div class="example"&gt;
+        &lt;div id="example12container" class="well form-group"&gt;
+            &lt;div class="textbox-field-control"&gt;
+                &lt;label class="textbox-label"&gt;&lt;/label&gt;
+                &lt;input class="textbox-input"&gt;
+            &lt;/div&gt;
+            &lt;div class="readonly-field-control"&gt;
+                &lt;label class="readonly-label"&gt;&lt;/label&gt;
+                &lt;span class="readonly-readout"&gt;&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
     &lt;/div&gt;
 &lt;/div&gt;
                                             </code>

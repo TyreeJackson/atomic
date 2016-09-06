@@ -1,25 +1,10 @@
 !function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, defineDataProperties, viewAdapterFactory, removeFromArray)
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, viewAdapterFactory, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
     {
-        var element = uiElement.querySelector(selector);
-        if (element === null)
-        {
-            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-            var label               = document.createElement("span");
-            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-            var container           = document.createElement("div");
-            missingElements         = missingElements||createMissingElementsContainer();
-            container.appendChild(element);
-            missingElements.appendChild(label);
-            missingElements.appendChild(container);
-            element.style.border    = "solid 1px black";
-        }
-        element.__selectorPath  = selectorPath;
-        return element;
+        return uiElement.querySelector(selector)||document.createElement("div");
     };
     function removeAllElementChildren(element)
     {
@@ -60,10 +45,10 @@
             if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return this.parent.__selector+"-"+this.__selector+"-"+this.index;}
             var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), this.getSelectorPath());
             var templateElementParent                       = templateElement.parentNode;
-            templateElementParent.removeChild(templateElement);
-            this.__templateElements[templateKey]     =
+            if (templateElementParent !== null)             templateElementParent.removeChild(templateElement);
+            this.__templateElements[templateKey]            =
             {
-                parent:         templateElementParent,
+                parent:         templateElementParent||viewElement,
                 declaration:    templateDeclaration,
                 element:        templateElement
             };
@@ -115,9 +100,9 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            bindRepeatedList.call(this, this.data.observe(this.bind));
+            setTimeout((function(data){bindRepeatedList.call(this, data);}).bind(this, this.data.observe(this.bind)),0);
         }}});
         this.bind   = "";
     }

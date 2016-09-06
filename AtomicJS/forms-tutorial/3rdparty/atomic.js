@@ -153,7 +153,7 @@
     return eventsSet;
 });}();
 !function()
-{"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, defineDataProperties, eventsSet, dataBinder)
+{"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder)
 {
     function addEvents(eventNames)
     {
@@ -191,11 +191,11 @@
             __attributes:           {value: {}, writable: true},
             __selector:             {value: selector},
             parent:                 {value: parent},
-            __binder:               {value: new dataBinder()},
+            __binder:               {value: new dataBinder(this)},
             __forceRoot:            {value: false, configurable: true},
             classes:                {value: {}}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             attributes:         
             {
@@ -249,7 +249,7 @@
         data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
         bindClass:          {value: function(className)
         {
-            defineDataProperties(this.classes, this.__binder, className, 
+            this.__binder.defineDataProperties(this.classes, className, 
             {
                 owner:      this,
                 get:        function(){return this.hasClass(className);}, 
@@ -364,12 +364,12 @@
     return control;
 });}();
 !function()
-{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, defineDataProperties)
+{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control)
 {
     function readonly(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value&&value.isObserver?value():value;}}
         });
@@ -383,7 +383,7 @@
     return readonly;
 });}();
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -425,7 +425,7 @@
         appendControl:      {value: function(childControl)
         {
             this.__element.appendChild(childControl.__element); 
-            this.controlKeys.push(childControl.key);
+            this.__controlKeys.push(childControl.key);
             this.controls[childControl.key] = childControl;
         }},
         addControl:         {value: function(controlKey, controlDeclaration)
@@ -435,6 +435,18 @@
             this.controls[controlKey]       = createControl(controlDeclaration, undefined, this, "#" + controlKey);
             this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
+        }},
+        attachControls:     {value: function(controlDeclarations)
+        {
+            if (controlDeclarations === undefined)  return;
+            var selectorPath                = this.getSelectorPath();
+            for(var controlKey in controlDeclarations)
+            {
+                this.__controlKeys.push(controlKey);
+                var declaration             = controlDeclarations[controlKey];
+                var selector                = (declaration.selector||("#"+controlKey));
+                this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
+            }
         }},
         createControl:
         function(controlDeclaration, controlElement, parent, selector)
@@ -459,24 +471,12 @@
     return container;
 });}();
 !function()
-{"use strict";root.define("atomic.html.panel", function htmlPanel(container, defineDataProperties, viewAdapterFactory, each)
+{"use strict";root.define("atomic.html.panel", function htmlPanel(container, each)
 {
-    function attachControls(controlDeclarations)
-    {
-        if (controlDeclarations === undefined)  return;
-        var selectorPath                = this.getSelectorPath();
-        for(var controlKey in controlDeclarations)
-        {
-            this.__controlKeys.push(controlKey);
-            var declaration             = controlDeclarations[controlKey];
-            var selector                = (declaration.selector||("#"+controlKey));
-            this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
-        }
-    }
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
             each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
         }}});
@@ -489,50 +489,59 @@
         init:               {value: function(definition)
         {
             container.prototype.init.call(this, definition);
-            attachControls.call(this, definition.controls, this.__element);
+            this.attachControls(definition.controls, this.__element);
         }},
-        children:           {value: function(){return this.controls || null;}},
-        appendControl:      {value: function(childControl){ this.__element.appendChild(childControl.__element); }},
-        addControl:         {value: function(controlKey, controlDeclaration)
-        {
-            if (controlDeclaration === undefined)  return;
-            this.__controlKeys.push(controlKey);
-            this.controls[controlKey]   = createControl(controlDeclaration, undefined, this, "#" + controlKey);
-            return this.controls[controlKey];
-        }},
-        removeControl:      {value: function(childControl)
-        {
-            each(this.__elements, function(element){each(childControl.__elements, function(childElement)
-            {
-                element.removeChild(childElement);
-            });});
-            return this;
-        }}
+        children:           {value: function(){return this.controls || null;}}
     });
     return panel;
 });}();
 !function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, defineDataProperties, viewAdapterFactory, removeFromArray)
+{"use strict";root.define("atomic.html.composite", function htmlComposite(base, each)
+{
+    function composite(elements, selector, parent)
+    {
+        base.call(this, elements, selector, parent);
+    }
+    Object.defineProperty(composite, "prototype", {value: Object.create(base.prototype)});
+    Object.defineProperties(composite.prototype,
+    {
+        constructor:        {value: composite},
+        attachProperties:   {value: function(propertyDeclarations)
+        {
+            if (propertyDeclarations === undefined) return;
+            for(var propertyKey in propertyDeclarations)
+            {
+                var property    = propertyDeclarations[propertyKey];
+                if (typeof property === "function")     Object.defineProperty(this, propertyKey, {value: property.call(this)});
+                else    if (property.get !== undefined) Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+            }
+        }},
+        data:
+        {
+            get:    function(){return this.__binder.data;},
+            set:    function(value)
+            {
+                this.__binder.data = value;
+                each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;}).bind(this));
+            }
+        },
+        init:               {value: function(definition)
+        {
+            base.prototype.init.call(this, definition);
+            this.attachControls(definition.controls, this.__element);
+            this.attachProperties(definition.properties);
+        }},
+        children:           {value: function(){return this.controls || null;}}
+    });
+    return composite;
+});}();
+!function()
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, viewAdapterFactory, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
     {
-        var element = uiElement.querySelector(selector);
-        if (element === null)
-        {
-            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-            var label               = document.createElement("span");
-            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-            var container           = document.createElement("div");
-            missingElements         = missingElements||createMissingElementsContainer();
-            container.appendChild(element);
-            missingElements.appendChild(label);
-            missingElements.appendChild(container);
-            element.style.border    = "solid 1px black";
-        }
-        element.__selectorPath  = selectorPath;
-        return element;
+        return uiElement.querySelector(selector)||document.createElement("div");
     };
     function removeAllElementChildren(element)
     {
@@ -573,10 +582,10 @@
             if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return this.parent.__selector+"-"+this.__selector+"-"+this.index;}
             var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), this.getSelectorPath());
             var templateElementParent                       = templateElement.parentNode;
-            templateElementParent.removeChild(templateElement);
-            this.__templateElements[templateKey]     =
+            if (templateElementParent !== null)             templateElementParent.removeChild(templateElement);
+            this.__templateElements[templateKey]            =
             {
-                parent:         templateElementParent,
+                parent:         templateElementParent||viewElement,
                 declaration:    templateDeclaration,
                 element:        templateElement
             };
@@ -628,9 +637,9 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        defineDataProperties(this, this.__binder, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            bindRepeatedList.call(this, this.data.observe(this.bind));
+            setTimeout((function(data){bindRepeatedList.call(this, data);}).bind(this, this.data.observe(this.bind)),0);
         }}});
         this.bind   = "";
     }
@@ -649,12 +658,12 @@
     return repeater;
 });}();
 !function()
-{"use strict";root.define("atomic.html.input", function htmlInput(control, defineDataProperties)
+{"use strict";root.define("atomic.html.input", function htmlInput(control)
 {
     function input(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||"";},  onchange: this.getEvents("change")}
         });
@@ -669,12 +678,12 @@
     return input;
 });}();
 !function()
-{"use strict";root.define("atomic.html.checkbox", function htmlCheckbox(control, defineDataProperties)
+{"use strict";root.define("atomic.html.checkbox", function htmlCheckbox(control)
 {
     function checkbox(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.checked;}, set: function(value){this.__element.checked = value===true;},  onchange: this.getEvents("change")}
         });
@@ -688,7 +697,7 @@
     return checkbox;
 });}();
 !function()
-{"use strict";root.define("atomic.html.select", function htmlSelect(input, defineDataProperties, dataBinder, each)
+{"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
 {
     function getSelectListValue()
     {
@@ -711,7 +720,7 @@
             "__element":        {value: element},
             "__sourceBinder":   {value: new dataBinder()}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value&&value.isObserver?value():value;}},
             value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value;}}
@@ -738,12 +747,9 @@
             "__items":      {value: null, configurable: true},
             "__options":    {value: []}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")}
-        });
-        defineDataProperties(this, this.__binder,
-        {
+            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -797,7 +803,7 @@
     return select;
 });}();
 !function()
-{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, defineDataProperties, dataBinder, each)
+{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
 {
     function setRadioGroupValue(value)
     {
@@ -837,7 +843,7 @@
             "__text":           {value: null, configurable: true},
             "__value":          {value: null, configurable: true}
         });
-        defineDataProperties(this, this.__sourceBinder,
+        this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value&&value.isObserver?value():value;}},
             value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value&&value.isObserver?value():value;}}
@@ -879,12 +885,9 @@
             "__items":      {value: null, configurable: true},
             "__options":    {value: []}
         });
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")}
-        });
-        defineDataProperties(this, this.__binder,
-        {
+            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -940,7 +943,7 @@
     return radiogroup;
 });}();
 !function()
-{"use strict";root.define("atomic.html.multiselect", function htmlMultiSelect(base, defineDataProperties)
+{"use strict";root.define("atomic.html.multiselect", function htmlMultiSelect(base)
 {
     function setSelectListValues(values)
     {
@@ -959,7 +962,7 @@
     function multiselect(elements, selector, parent)
     {
         base.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value||null);},  onchange: this.getEvents("change")}
         });
@@ -977,12 +980,12 @@
     return multiselect;
 });}();
 !function()
-{"use strict";root.define("atomic.html.image", function htmlImage(control, defineDataProperties)
+{"use strict";root.define("atomic.html.image", function htmlImage(control)
 {
     function image(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
         });
@@ -1036,7 +1039,7 @@
     }
 });}();
 !function()
-{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each)
+{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each, observer)
 {
     var missingElements;
     var elementControlTypes =
@@ -1056,11 +1059,15 @@
     });
     function getControlTypeForElement(definition, element)
     {
-        return  definition.controls
+        return  definition.type
+                ||
+                (definition.controls
                 ?   "panel"
                 :   definition.repeat
                     ?   "repeater"
-                    :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default;
+                    :   element !== undefined
+                        ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                        :   elementControlTypes.default);
     }
     var viewAdapterFactory  =
     {
@@ -1071,35 +1078,74 @@
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, controlDeclaration.type);
+            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement));
             initializeViewAdapter(control, controlDeclaration);
             return control;
         },
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
-            var viewAdapterDefinition   = new viewAdapterDefinitionConstructor();
-            controlType                 = controlType || getControlTypeForElement(viewAdapterDefinition, viewElement);
+            if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
-            viewAdapter.init(viewAdapterDefinition);
+            viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
             if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
             return viewAdapter;
         },
+        createView:     function(viewAdapterDefinitionConstructor, viewElement)
+        {
+            return this.create
+            (
+                typeof viewAdapterDefinitionConstructor !== "function"
+                ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
+                :   viewAdapterDefinitionConstructor,
+                viewElement,
+                undefined,
+                undefined,
+                "panel"
+            );
+        },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
+            if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
             return (function(parent, containerElement, selector)
             {
                 var container   = parent;
                 if (containerElement !== undefined)
                 {
-                    container                       = internalFunctions.create(function(){return {};}, containerElement, parent, selector);
+                    container                       = this.create(function(){return {};}, containerElement, parent, selector);
                     container.__element.innerHTML   = "";
                 }
-                var view                            = internalFunctions.create(viewAdapterDefinitionConstructor, viewElementTemplate.cloneNode(true), container, selector);
+                var view                            = this.create
+                (
+                    typeof viewAdapterDefinitionConstructor !== "function"
+                    ?   function(control){return viewAdapterDefinitionConstructor}
+                    :   viewAdapterDefinitionConstructor,
+                    viewElementTemplate.cloneNode(true),
+                    container,
+                    selector,
+                    "composite"
+                );
                 container.appendControl(view);
                 return view;
             }).bind(this);
+        },
+        launch:         function(viewElement, controlsOrAdapter, callback)
+        {
+            if (controlsOrAdapter === undefined)
+            {
+                controlsOrAdapter   = viewElement;
+                viewElement         = document.body;
+            }
+            var adapter =
+            this.createView
+            (
+                controlsOrAdapter, 
+                typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
+            );
+            adapter.data    = new observer({});
+            if (typeof callback === "function") callback(adapter);
+            return adapter;
         },
         select:         function(uiElement, selector, selectorPath)
         {
@@ -1217,6 +1263,8 @@
         if (viewAdapterDefinition.hasOwnProperty(initializerSetKey))
         {
             var initializerSet  = viewAdapterDefinition[initializerSetKey];
+            if (typeof extension.initializers[initializerSetKey] === "function")    extension.initializers[initializerSetKey](viewAdapter, viewAdapterDefinition[initializerSetKey]);
+            else
             for(var initializerKey in extension.initializers[initializerSetKey])
             if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
         }
@@ -1242,7 +1290,7 @@
         var objectObserver                              =
         objectObserverFunctionFactory.create
         (function objectObserverFactory(basePath, bag)
-        {
+        {if (basePath==undefined) debugger;
             function objectObserver(path, value)
             {
                 return objectObserver.__invoke(path, value, false);
@@ -1330,7 +1378,7 @@
             pathSegments    = pathSegments || [""];
             if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath, this.__bag, Array.isArray(returnValue));
+            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
@@ -1516,7 +1564,7 @@
     });
 }();
 !function()
-{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray)
+{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray, defineDataProperties)
 {
     function notifyProperties()
     {
@@ -1525,18 +1573,25 @@
             property.data = this.data||null;
         }).bind(this));
     }
-    function dataBinder(data)
+    function dataBinder(target, data)
     {
         Object.defineProperties(this,
         {
             "__properties": {value: []},
-            "__forceRoot":  {value: false, configurable: true}
+            "__forceRoot":  {value: false, configurable: true},
+            "__target":     {value: target}
         });
         this.__makeRoot();
         if (data) this.data = data;
     };
     Object.defineProperties(dataBinder.prototype,
     {
+        __makeRoot:   {value: function()
+        {
+            var parent  = this.__parentBinder;
+            Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
+            if(parent)   parent.unregister(this);
+        }},
         data:
         {
             get:    function(){return this.__data;},
@@ -1559,12 +1614,7 @@
                 notifyProperties.call(this);
             }
         },
-        __makeRoot:   {value: function()
-        {
-            var parent  = this.__parentBinder;
-            Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
-            if(parent)   parent.unregister(this);
-        }},
+        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty)}},
         isBinder:   {value: true},
         isRoot:
         {
@@ -1638,7 +1688,7 @@
             }
             else if (this.__onupdate)
             {
-                Object.defineProperty(this, "__bindListener", {configurable: true, value: function(){ notifyOnDataUpdate.call(this, this.data); }});
+                Object.defineProperty(this, "__bindListener", {configurable: true, value: (function(){ notifyOnDataUpdate.call(this, this.data); }).bind(this)});
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
             }
@@ -1766,9 +1816,10 @@
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
+    var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each);
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
-    var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
+    var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray, defineDataProperties);
     var eventsSet               = new root.atomic.html.eventsSet(pubSub);
     var controlTypes            = {};
     var viewAdapterFactory      =   new root.atomic.html.viewAdapterFactory
@@ -1778,27 +1829,31 @@
                                         new root.atomic.initializeViewAdapter(each),
                                         pubSub,
                                         function(message){console.log(message);},
-                                        each
+                                        each,
+                                        observer
                                     );
 
-    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, defineDataProperties, eventsSet, dataBinder);
-    var readonly                = new root.atomic.html.readonly(control, defineDataProperties);
-    var container               = new root.atomic.html.container(control, each);
-    var panel                   = new root.atomic.html.panel(container, defineDataProperties, viewAdapterFactory, each);
-    var repeater                = new root.atomic.html.repeater(container, defineDataProperties, viewAdapterFactory, root.utilities.removeFromArray);
-    var input                   = new root.atomic.html.input(control, defineDataProperties);
-    var checkbox                = new root.atomic.html.checkbox(control, defineDataProperties);
-    var select                  = new root.atomic.html.select(input, defineDataProperties, dataBinder, each);
-    var radiogroup              = new root.atomic.html.radiogroup(input, defineDataProperties, dataBinder, each);
-    var multiselect             = new root.atomic.html.multiselect(select, defineDataProperties);
-    var image                   = new root.atomic.html.image(control, defineDataProperties);
+    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
+    var readonly                = new root.atomic.html.readonly(control);
+    var container               = new root.atomic.html.container(control, each, viewAdapterFactory);
+    var panel                   = new root.atomic.html.panel(container, each);
+    var composite               = new root.atomic.html.composite(container, each);
+    var repeater                = new root.atomic.html.repeater(container, viewAdapterFactory, root.utilities.removeFromArray);
+    var input                   = new root.atomic.html.input(control);
+    var checkbox                = new root.atomic.html.checkbox(control);
+    var select                  = new root.atomic.html.select(input, dataBinder, each);
+    var radiogroup              = new root.atomic.html.radiogroup(input, dataBinder, each);
+    var multiselect             = new root.atomic.html.multiselect(select);
+    var image                   = new root.atomic.html.image(control);
     var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
     {
         control:        {value: control},
         readonly:       {value: readonly},
+        container:      {value: container},
         panel:          {value: panel},
+        composite:      {value: composite},
         repeater:       {value: repeater},
         input:          {value: input},
         checkbox:       {value: checkbox},
@@ -1808,34 +1863,31 @@
         image:          {value: image},
         button:         {value: button}
     });
-    if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes);
-
-    return { viewAdapterFactory: viewAdapterFactory, observer: new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each) };
+    var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };
+    if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
+    return atomic;
 });}();
 !function(window, document)
-{"use strict";root.define("atomic.adaptHtml", function adaptHtml(viewElement, controlsOrAdapter)
+{"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
 {
-    if (arguments.length == 1)
+    root.atomic.ready(function(atomic)
     {
-        controlsOrAdapter   = viewElement;
-        viewElement         = document.body;
-    }
-    var callback;
-    var deferOrExecute  =
-    function()
-    {
-        var atomic  = root.atomic.html.compositionRoot();
-        var adapter =
-        atomic.viewAdapterFactory.create
-        (
-            typeof controlsOrAdapter !== "function" ? function(appViewAdapter){return {controls: controlsOrAdapter}; } : controlsOrAdapter, 
-            typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
-        );
-        adapter.data    = new atomic.observer({});
-        if (typeof callback === "function") callback(adapter);
-    }
-    if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
-    else                                    deferOrExecute();
-
-    return function(callbackFunction){ callback = callbackFunction; };
+        var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
+    });
 });}(window, document);
+!function(window, document)
+{
+    "use strict";
+    var atomic;
+    root.define("atomic.ready", function ready(callback)
+    {
+        var deferOrExecute  =
+        function()
+        {
+            if (atomic === undefined)   atomic  = root.atomic.html.compositionRoot();
+            if (typeof callback === "function") callback(atomic);
+        }
+        if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
+        else                                    deferOrExecute();
+    });
+}(window, document);

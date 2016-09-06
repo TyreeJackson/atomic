@@ -1,10 +1,10 @@
 !function()
-{"use strict";root.define("atomic.html.image", function htmlImage(control, defineDataProperties)
+{"use strict";root.define("atomic.html.image", function htmlImage(control)
 {
     function image(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
         });

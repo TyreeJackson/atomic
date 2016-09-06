@@ -1,5 +1,5 @@
 !function(window, document)
-{"use strict";root.define("atomic.forms.dock", function adaptHtml(viewElement, proxy, controls)
+{"use strict";root.define("atomic.forms.dock", function launch(viewElement, proxy, controls)
 {
     if (arguments.length == 1)
     {
@@ -17,29 +17,30 @@
     {
         var atomic  = root.atomic.html.compositionRoot(function(controlTypes, atomic)
         {
-            var template        = new root.atomic.forms.controls.template(controlTypes.control, dataBinder, defineDataProperties);
+            var template        = new root.atomic.forms.controls.template(controlTypes.container, dataBinder, defineDataProperties);
             var layout          = new root.atomic.forms.controls.layout(template, document.querySelector("#layout"), defineDataProperties, atomic.viewAdapterFactory, each);
             var menu            = new root.atomic.forms.controls.menu(template, document.querySelector("#menu"), defineDataProperties, atomic.viewAdapterFactory);
             var staticControl   = new root.atomic.forms.controls.static(template, document.querySelector("#static"), defineDataProperties);
+            var textboxControl  = new root.atomic.forms.controls.textbox(template, document.querySelector("#textbox"), defineDataProperties);
             var json            = new root.atomic.forms.controls.json(staticControl, document.querySelector("#json"), defineDataProperties);
             Object.defineProperties(controlTypes,
             {
-                layout: {value: layout},
-                menu:   {value: menu},
-                static: {value: staticControl},
-                json:   {value: json}
+                layout:     {value: layout},
+                menu:       {value: menu},
+                static:     {value: staticControl},
+                json:       {value: json},
+                textbox:    {value: textboxControl}
             });
         });
         var app =
         new root.atomic.forms.appController
         (
-            atomic.viewAdapterFactory.create
+            atomic.viewAdapterFactory.createView
             (
-                new root.atomic.forms.appView(), 
+                new root.atomic.forms.appView(atomic.observer), 
                 typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
             ),
             typeof proxy === "function" ? new proxy() : proxy,
-            atomic.observer,
             new root.path()
         );
         if (typeof callback === "function") callback(app);

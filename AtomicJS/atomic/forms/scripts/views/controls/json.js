@@ -7,9 +7,9 @@
     function json(element, selector, parent)
     {
         base.call(this, element, selector, parent);
-        defineDataProperties(this, this.__binder,
+        defineDataProperties(this.controls.readout, this.controls.readout.__binder,
         {
-            value:  {get: function(){return JSON.parse(this.__readout.innerHTML);}, set: function(value){this.__readout.innerHTML = JSON.stringify(value&&value.isObserver?value():value, null, '    ');}}
+            value:  {get: function(){return JSON.parse(this.controls.readout.value());}, set: function(value){this.controls.readout.value(JSON.stringify(value&&value.isObserver?value():value, null, '    '));}}
         });
     }
     Object.defineProperty(json, "prototype", {value: Object.create(base.prototype)});

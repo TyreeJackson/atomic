@@ -1,10 +1,10 @@
 !function()
-{"use strict";root.define("atomic.html.input", function htmlInput(control, defineDataProperties)
+{"use strict";root.define("atomic.html.input", function htmlInput(control)
 {
     function input(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
-        defineDataProperties(this, this.__binder,
+        this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||"";},  onchange: this.getEvents("change")}
         });

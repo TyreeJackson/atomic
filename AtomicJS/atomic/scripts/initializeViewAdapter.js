@@ -92,6 +92,8 @@
         if (viewAdapterDefinition.hasOwnProperty(initializerSetKey))
         {
             var initializerSet  = viewAdapterDefinition[initializerSetKey];
+            if (typeof extension.initializers[initializerSetKey] === "function")    extension.initializers[initializerSetKey](viewAdapter, viewAdapterDefinition[initializerSetKey]);
+            else
             for(var initializerKey in extension.initializers[initializerSetKey])
             if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
         }

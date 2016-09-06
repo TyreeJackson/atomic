@@ -1,6 +1,6 @@
 !function()
-{"use strict";root.define("atomic.forms.appView", function(each)
-{return function tutorialAppView()
+{"use strict";root.define("atomic.forms.appView", function(observer)
+{return function tutorialAppView(view)
 {
     var adapterDefinition   =
     {
@@ -10,10 +10,22 @@
             {
                 type:   "layout"
             },
-            model:  {bind: { value: {to: function(){return JSON.stringify(this.data(), null, '    ');}, root: ""}}}
+            model:
+            {
+                type:   "json",
+                width:  12,
+                label:  "Root",
+                bind:   ""
+            }
         },
         members:
         {
+            construct:  function()
+            {
+                this.data   = new observer({});
+                this.controls.root.layoutData   = this.data.observe();
+                this.controls.model.layoutData  = new observer(adapterDefinition.controls.model); 
+            }
         }
     };
     return adapterDefinition;

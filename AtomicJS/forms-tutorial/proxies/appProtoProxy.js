@@ -30,6 +30,7 @@
     {
         not_found:
         {
+            width:  12,
             layout:
             [
                 mainMenu,
@@ -40,10 +41,10 @@
                     layout:
                     [
                         {
-                            name:       "message",
-                            type:       "static",
-                            columns:    12,
-                            bind:       "message"
+                            name:   "message",
+                            type:   "static",
+                            width:  12,
+                            bind:   "message"
                         }
                     ]
                 }
@@ -56,6 +57,7 @@
         },
         "/":
         {
+            width:  12,
             layout:
             [
                 mainMenu
@@ -67,6 +69,7 @@
         },
         "/example1":
         {
+            width:  12,
             layout:
             [
                 mainMenu,
@@ -77,41 +80,40 @@
                     layout:
                     [
                         {
-                            name:       "message",
-                            type:       "static",
-                            columns:    12,
-                            label:      "Message",
-                            bind:       "data.message"
+                            name:   "message",
+                            type:   "static",
+                            width:  12,
+                            label:  "Message",
+                            bind:   "data.message"
+                        },
+                        {
+                            name:   "messageInput",
+                            type:   "textbox",
+                            width:  12,
+                            label:  "Message",
+                            bind:   "data.message"
                         }
                     ]
                 },
                 {
-                    name:   "data",
+                    name:   "models",
                     type:   "layout",
                     width:  12,
                     layout:
                     [
                         {
-                            name:       "model",
-                            type:       "json",
-                            columns:    12,
-                            label:      "Data",
-                            bind:       "...data"
-                        }
-                    ]
-                },
-                {
-                    name:   "layout",
-                    type:   "layout",
-                    width:  12,
-                    layout:
-                    [
+                            name:   "data",
+                            type:   "json",
+                            width:  6,
+                            label:  "Data",
+                            bind:   "...data"
+                        },
                         {
-                            name:       "model",
-                            type:       "json",
-                            columns:    12,
-                            label:      "Layout",
-                            bind:       "...layout"
+                            name:   "layout",
+                            type:   "json",
+                            width:  6,
+                            label:  "Layout",
+                            bind:   "...layout"
                         }
                     ]
                 }
@@ -124,6 +126,7 @@
         },
         "/example2":
         {
+            width:  12,
             layout: [],
             data:   {}
         }
