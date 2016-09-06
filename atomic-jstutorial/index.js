@@ -5,7 +5,7 @@ function ComposeApp()
     var app =
     new root.atomic.tutorial.appController
     (
-        atomic.viewAdapterFactory.create
+        atomic.viewAdapterFactory.createView
         (
             new root.atomic.tutorial.appView(root.utilities.each), 
             document.querySelector("#tutorialApp")

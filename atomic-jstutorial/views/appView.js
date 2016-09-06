@@ -1,6 +1,6 @@
 !function()
 {"use strict";root.define("atomic.tutorial.appView", function(each)
-{return function tutorialAppView()
+{return function tutorialAppView(viewAdapter)
 {
     var adapterDefinition   =
     {
@@ -27,7 +27,7 @@
             }
         }
     };
-    each([1,2,3,4,5,6,7,8,9,10], function(val)
+    each([1,2,3,4,5,6,7,8,9,10,11,12], function(val)
     {
         adapterDefinition.controls.exampleLinks.controls["exampleLink"+val] = {};
         adapterDefinition.controls.examples.controls["example"+val]         = {hidden: true};
