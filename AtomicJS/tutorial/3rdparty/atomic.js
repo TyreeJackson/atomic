@@ -77,7 +77,7 @@
                 {
                     "__listenersChanged":   {value: listenersChanged},
                     "__listeners":          {value: []},
-                    "__lastPublished":      {writeble: true, value: null},
+                    "__lastPublished":      {writable: true, value: null},
                     "__publishTimeoutId":   {writable: true, value: null},
                     "limit":                {writable: true, value: null}
                 });
@@ -235,6 +235,14 @@
         {
             addEvents.call(this, definition.events);
             addCustomMembers.call(this, definition.members);
+
+            if (definition.extensions !== undefined && definition.extensions.length !== undefined)
+            for(var counter=0;counter<definition.extensions.length;counter++)
+            {
+                if (definition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
+                if (definition.extensions[counter].extend !== undefined) definition.extensions[counter].extend.call(this);
+            }
+
             this.__extensions   = definition.extensions;
         }},
         addClass:           {value: function(className, silent)
@@ -1061,7 +1069,7 @@
     {
         return  definition.type
                 ||
-                (definition.controls
+                (definition.controls || definition.adapter
                 ?   "panel"
                 :   definition.repeat
                     ?   "repeater"
@@ -1088,7 +1096,7 @@
             if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
             viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
-            if(viewAdapter.construct)   viewAdapter.construct(viewAdapter);
+            if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
         createView:     function(viewAdapterDefinitionConstructor, viewElement)
@@ -1113,7 +1121,7 @@
                 var container   = parent;
                 if (containerElement !== undefined)
                 {
-                    container                       = this.create(function(){return {};}, containerElement, parent, selector);
+                    container                       = this.create(function(){return {};}, containerElement, parent, selector, "composite");
                     container.__element.innerHTML   = "";
                 }
                 var view                            = this.create

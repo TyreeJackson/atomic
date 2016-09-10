@@ -21,7 +21,7 @@
     {
         return  definition.type
                 ||
-                (definition.controls
+                (definition.controls || definition.adapter
                 ?   "panel"
                 :   definition.repeat
                     ?   "repeater"
@@ -36,7 +36,7 @@
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(parent, controlElement, selector);
+                control = controlDeclaration.factory(controlElement, selector, parent);
             }
             else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement));
             initializeViewAdapter(control, controlDeclaration);
@@ -68,15 +68,15 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            return (function(parent, containerElement, selector)
+            return (function(containerElement, selector, parent)
             {
                 var container   = parent;
                 if (containerElement !== undefined)
                 {
-                    container                       = this.create(function(){return {};}, containerElement, parent, selector);
+                    container                       = viewAdapterFactory.create(function(){return {};}, containerElement, parent, selector, "composite");
                     container.__element.innerHTML   = "";
                 }
-                var view                            = this.create
+                var view                            = viewAdapterFactory.create
                 (
                     typeof viewAdapterDefinitionConstructor !== "function"
                     ?   function(control){return viewAdapterDefinitionConstructor}

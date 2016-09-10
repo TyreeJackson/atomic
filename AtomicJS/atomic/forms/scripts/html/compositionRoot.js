@@ -17,12 +17,12 @@
     {
         var atomic  = root.atomic.html.compositionRoot(function(controlTypes, atomic)
         {
-            var template        = new root.atomic.forms.controls.template(controlTypes.container, dataBinder, defineDataProperties);
+            var template        = new root.atomic.forms.controls.template(controlTypes.composite, dataBinder, defineDataProperties);
             var layout          = new root.atomic.forms.controls.layout(template, document.querySelector("#layout"), defineDataProperties, atomic.viewAdapterFactory, each);
             var menu            = new root.atomic.forms.controls.menu(template, document.querySelector("#menu"), defineDataProperties, atomic.viewAdapterFactory);
-            var staticControl   = new root.atomic.forms.controls.static(template, document.querySelector("#static"), defineDataProperties);
-            var textboxControl  = new root.atomic.forms.controls.textbox(template, document.querySelector("#textbox"), defineDataProperties);
-            var json            = new root.atomic.forms.controls.json(staticControl, document.querySelector("#json"), defineDataProperties);
+            var staticControl   = atomic.viewAdapterFactory.createFactory(root.atomic.forms.controls.static, document.querySelector("#static"));
+            var textboxControl  = atomic.viewAdapterFactory.createFactory(root.atomic.forms.controls.textbox, document.querySelector("#textbox"));
+            var json            = atomic.viewAdapterFactory.createFactory(root.atomic.forms.controls.json, document.querySelector("#json"));
             Object.defineProperties(controlTypes,
             {
                 layout:     {value: layout},

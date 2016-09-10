@@ -81,6 +81,14 @@
         {
             addEvents.call(this, definition.events);
             addCustomMembers.call(this, definition.members);
+
+            if (definition.extensions !== undefined && definition.extensions.length !== undefined)
+            for(var counter=0;counter<definition.extensions.length;counter++)
+            {
+                if (definition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
+                if (definition.extensions[counter].extend !== undefined) definition.extensions[counter].extend.call(this);
+            }
+
             this.__extensions   = definition.extensions;
         }},
         addClass:           {value: function(className, silent)

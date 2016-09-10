@@ -51,7 +51,7 @@
                 {
                     "__listenersChanged":   {value: listenersChanged},
                     "__listeners":          {value: []},
-                    "__lastPublished":      {writeble: true, value: null},
+                    "__lastPublished":      {writable: true, value: null},
                     "__publishTimeoutId":   {writable: true, value: null},
                     "limit":                {writable: true, value: null}
                 });
