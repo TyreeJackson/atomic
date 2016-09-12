@@ -6,7 +6,10 @@
         container.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+            each(this.__controlKeys, (function(controlKey)
+            {
+                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);
+            }).bind(this));
         }}});
         this.bind   = "";
     }

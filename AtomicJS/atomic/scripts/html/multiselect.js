@@ -20,7 +20,7 @@
         base.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value||null);},  onchange: this.getEvents("change")}
+            value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")}
         });
     }
     Object.defineProperty(multiselect, "prototype", {value: Object.create(base.prototype)});

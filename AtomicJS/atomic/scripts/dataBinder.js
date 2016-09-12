@@ -5,7 +5,7 @@
     {
         each(this.__properties,(function(property)
         {
-            property.data = this.data||null;
+            property.data = this.data===undefined?null:this.data;
         }).bind(this));
     }
     function dataBinder(target, data)

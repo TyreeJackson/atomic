@@ -1,12 +1,13 @@
 !function()
-{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control)
+{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, each)
 {
     function readonly(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
+        Object.defineProperty(this, "__elements", {value: parent.__element.querySelectorAll(selector), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value&&value.isObserver?value():value;}}
+            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});

@@ -12,11 +12,13 @@
         delete window.__isolatedFunction;
  return {
             create:
-            function(functionToIsolate)
+            function(constructor)
             {
-                isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
+                //isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
+                isolatedDocument.write("<script>parent.__isolatedSubFunction = function "+constructor.name+"(){function "+constructor.name+"(){return "+constructor.name+".___invoke.apply("+constructor.name+", arguments);}; this.___construct.apply("+constructor.name+", arguments); return "+constructor.name+";};<\/script>");
                 var __isolatedSubFunction  = window.__isolatedSubFunction;
                 delete window.__isolatedSubFunction;
+                __isolatedSubFunction.prototype.___construct = constructor;
                 return __isolatedSubFunction;
             },
             root:   isolatedFunction

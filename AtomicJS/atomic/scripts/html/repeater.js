@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, viewAdapterFactory, removeFromArray)
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -31,7 +31,7 @@
 
         var elementCopy     = templateElement.element.cloneNode(true);
         elementCopy.setAttribute("id", key);
-        var clone           = { key: key, parent: templateElement.parent, control: viewAdapterFactory.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        var clone           = { key: key, parent: templateElement.parent, control: this.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
         clone.control.data  = subDataItem;
         return clone;
     };
@@ -102,7 +102,14 @@
         });
         this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            setTimeout((function(data){bindRepeatedList.call(this, data);}).bind(this, this.data.observe(this.bind)),0);
+            setTimeout
+            (
+                (function(data)
+                {
+                    bindRepeatedList.call(this, data);
+                }).bind(this, this.data.observe(this.bind)),
+                0
+            );
         }}});
         this.bind   = "";
     }

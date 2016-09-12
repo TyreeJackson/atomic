@@ -12,9 +12,10 @@
     Object.defineProperty(input, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(input.prototype,
     {
-        constructor:    {value: input},
-        __createNode:   {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
-        select:         {value: function(){this.__element.select(); return this;}}
+        constructor:        {value: input},
+        __createNode:       {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
+        select:             {value: function(){this.__element.select(); return this;}},
+        onchangingdelay:    {get:   function(){return this.__onchangingdelay;}, set: function(value){Object.defineProperty(this, "__onchangingdelay", {value: value, configurable: true});}}
     });
     return input;
 });}();

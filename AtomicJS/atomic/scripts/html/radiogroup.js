@@ -83,7 +83,7 @@
         });
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")},
+            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -91,7 +91,7 @@
                 {
                     Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
                     captureTemplateIfNeeded.call(this);
-                    if (value!==undefined)
+
                     bindRadioGroupSource.call(this, value);
                 }
             }

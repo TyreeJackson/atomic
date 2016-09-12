@@ -5,24 +5,25 @@
     function buildFunction(isolatedFunctionFactory, each)
     {
         var functionFactory = new isolatedFunctionFactory();
-        var createProperty  =
+        var dataProperty    =
         functionFactory.create
-        (function createProperty(owner, getter, setter, onchange, binder)
+        (function dataProperty(owner, getter, setter, onchange, binder)
         {
-            function property(value, forceSet)
+            var property    = this;
+            Object.defineProperties(this,
             {
-                if (value !== undefined || forceSet)
+                ___invoke:              {value: function(value, forceSet)
                 {
-                    if (typeof setter === "function")   setter.call(owner, value);
-                    if (Object.keys(property.__onchange).length===0)    property.__inputListener();
-                }
-                else                                    return getter.call(owner);
-            };
-            Object.defineProperties(property,
-            {
+                    if (value !== undefined || forceSet)
+                    {
+                        if (typeof setter === "function")   setter.call(owner, value);
+                        if (Object.keys(this.__onchange).length===0)    property.__inputListener();
+                    }
+                    else                                    return getter.call(owner);
+                }},
                 __owner:                {value: owner},
                 __binder:               {value: binder, configurable: true},
-                __getter:               {value: function(){return getter.call(owner);}},
+                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
                 __onchange:             {value: {}},
@@ -86,25 +87,19 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            __destroy:
+            __destroy:          {value: function()
             {
-                value:  function()
-                {
-                    if (this.__binder)  this.__binder.unregister(this);
-                    Object.defineProperty(this, "__binder", {value: undefined, writable: true});
-                    delete this.__binder;
-                }
-            },
-            ___inputListener:
+                if (this.__binder)  this.__binder.unregister(this);
+                Object.defineProperty(this, "__binder", {value: undefined, writable: true});
+                delete this.__binder;
+            }},
+            ___inputListener:   {value: function()
             {
-                value:  function()
-                {
-                    if (this.__bounded===false) return;
-                    this.__notifyingObserver    = true;
-                    this.__setDataValue();
-                    this.__notifyingObserver    = false;
-                }
-            },
+                if (this.__bounded===false) return;
+                this.__notifyingObserver    = true;
+                this.__setDataValue();
+                this.__notifyingObserver    = false;
+            }},
             __getDataValue:
             {
                 value:  function()
@@ -123,7 +118,7 @@
 
                     if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
                     else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
-                    else                                                            {throw new Error("Unable to set back two way bound value to model.");}
+                    else                                                            {debugger; throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
             onchange:
@@ -163,7 +158,7 @@
         function defineDataProperty(target, binder, propertyName, property)
         {
             if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-            Object.defineProperty(target, propertyName, {value: createProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
             each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)

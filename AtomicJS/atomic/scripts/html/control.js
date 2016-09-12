@@ -59,7 +59,6 @@
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
             for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
-            href:               {get: function(){return this.__element.href;},                  set: function(value){this.__element.href=value;}},
             id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
@@ -120,13 +119,13 @@
         }},
         hasClass:           {value: function(className){return this.__element.className.split(" ").indexOf(className) > -1;}},
         hasFocus:           {value: function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}},
-        height:             {get:   function(){return this.__element.offsetHeight;}},
+        height:             {get:   function(){return this.__element.offsetHeight;}, set: function(value){this.__element.style.height = parseInt(value)+"px";}},
         hide:               {value: function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
-        isDataRoot:         {get: function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot = value===true;}},
+        isDataRoot:         {get: function(){return this.__isDataRoot;}, set: function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
         isRoot:
         {
             get:    function(){return this.__forceRoot||this.parent===undefined;}, 
@@ -168,7 +167,8 @@
                 return names;
             },
             set: function(eventNames){ this.value.onchange = this.getEvents(eventNames); }
-        }
+        },
+        width:              {get:   function(){return this.__element.offsetWidth;}, set: function(value){this.__element.style.width = parseInt(value)+"px";}}
     });
     each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()

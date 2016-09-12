@@ -50,9 +50,21 @@
             var functionFactory = new isolatedFunctionFactory();
             var pubSub          =
             functionFactory.create
-            (function(listenersChanged)
+            (function pubSub(listenersChanged)
             {
-                function pubSub()
+                Object.defineProperties(this, 
+                {
+                    "__listenersChanged":   {value: listenersChanged},
+                    "__listeners":          {value: []},
+                    "__lastPublished":      {writable: true, value: null},
+                    "__publishTimeoutId":   {writable: true, value: null},
+                    "limit":                {writable: true, value: null}
+                });
+                return this;
+            });
+            Object.defineProperties(functionFactory.root.prototype,
+            {
+                ___invoke:                  {value: function()
                 {
                     var publish = (function(args)
                     {
@@ -60,7 +72,7 @@
                         this.__lastPublished    = new Number(new Date());
                         if (this.__listeners === undefined) debugger;
                         for(var listenerCounter=0;listenerCounter<this.__listeners.length;listenerCounter++) this.__listeners[listenerCounter].apply(null, args);
-                    }).bind(pubSub, arguments);
+                    }).bind(this, arguments);
 
                     if (this.__publishTimeoutId != null)
                     {
@@ -72,19 +84,7 @@
 
                     if (now>=limitOffset)   publish();
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
-                }
-                Object.defineProperties(pubSub, 
-                {
-                    "__listenersChanged":   {value: listenersChanged},
-                    "__listeners":          {value: []},
-                    "__lastPublished":      {writable: true, value: null},
-                    "__publishTimeoutId":   {writable: true, value: null},
-                    "limit":                {writable: true, value: null}
-                });
-                return pubSub;
-            });
-            Object.defineProperties(functionFactory.root.prototype,
-            {
+                }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
                 ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
@@ -213,7 +213,6 @@
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
             for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
-            href:               {get: function(){return this.__element.href;},                  set: function(value){this.__element.href=value;}},
             id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
@@ -274,13 +273,13 @@
         }},
         hasClass:           {value: function(className){return this.__element.className.split(" ").indexOf(className) > -1;}},
         hasFocus:           {value: function(nested){return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement));}},
-        height:             {get:   function(){return this.__element.offsetHeight;}},
+        height:             {get:   function(){return this.__element.offsetHeight;}, set: function(value){this.__element.style.height = parseInt(value)+"px";}},
         hide:               {value: function(){ this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertBefore:       {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this;}},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertAfter:        {value: function(siblingControl){ siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this;}},
-        isDataRoot:         {get: function(){return this.__binder.isRoot;}, set: function(value){this.__binder.isRoot = value===true;}},
+        isDataRoot:         {get: function(){return this.__isDataRoot;}, set: function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
         isRoot:
         {
             get:    function(){return this.__forceRoot||this.parent===undefined;}, 
@@ -322,7 +321,8 @@
                 return names;
             },
             set: function(eventNames){ this.value.onchange = this.getEvents(eventNames); }
-        }
+        },
+        width:              {get:   function(){return this.__element.offsetWidth;}, set: function(value){this.__element.style.width = parseInt(value)+"px";}}
     });
     each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
@@ -372,14 +372,15 @@
     return control;
 });}();
 !function()
-{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control)
+{"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, each)
 {
     function readonly(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
+        Object.defineProperty(this, "__elements", {value: parent.__element.querySelectorAll(selector), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){this.__element.innerHTML = value&&value.isObserver?value():value;}}
+            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
@@ -391,28 +392,57 @@
     return readonly;
 });}();
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory)
+{"use strict";root.define("atomic.html.link", function htmlLink(base)
 {
-    var querySelector       =
-    function(uiElement, selector, selectorPath, typeHint)
+    function link(elements, selector, parent)
     {
-        var element = uiElement.querySelector(selector);
-        if (element === null)
+        base.call(this, elements, selector, parent);
+        this.__binder.defineDataProperties(this,
         {
-            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-            var label               = document.createElement("span");
-            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-            var container           = document.createElement("div");
-            missingElements         = missingElements||createMissingElementsContainer();
-            container.appendChild(element);
-            missingElements.appendChild(label);
-            missingElements.appendChild(container);
-            element.style.border    = "solid 1px black";
-        }
-        element.__selectorPath  = selectorPath;
-        return element;
+            href: {get: function(){return this.__element.href;}, set: function(value){this.__element.href = value&&value.isObserver?value():value;}}
+        });
+    }
+    Object.defineProperty(link, "prototype", {value: Object.create(base.prototype)});
+    Object.defineProperties(link.prototype,
+    {
+        constructor:    {value: link},
+        __createNode:   {value: function(){return document.createElement("a");}, configurable: true}
+    });
+    return link;
+});}();
+!function()
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter)
+{
+    var elementControlTypes =
+    {
+        "input":                    "input",
+        "input:checkbox":           "checkbox",
+        "textarea":                 "input",
+        "img":                      "image",
+        "select:select-multiple":   "multiselect",
+        "select:select-one":        "select",
+        "radiogroup":               "radiogroup",
+        "a":                        "link"
     };
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    function(name)
+    {
+        elementControlTypes[name]   = "readonly";
+    });
+    function getControlTypeForElement(definition, element, multipleElements)
+    {
+        return  definition.type
+                ||
+                multipleElements
+                ?   "readonly"
+                :   (definition.controls || definition.adapter
+                    ?   "panel"
+                    :   definition.repeat
+                        ?   "repeater"
+                        :   element !== undefined
+                            ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                            :   elementControlTypes.default);
+    }
     function container(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
@@ -430,17 +460,17 @@
         {
             control.prototype.init.call(this, definition);
         }},
-        appendControl:      {value: function(childControl)
+        appendControl:      {value: function(key, childControl)
         {
             this.__element.appendChild(childControl.__element); 
-            this.__controlKeys.push(childControl.key);
-            this.controls[childControl.key] = childControl;
+            this.__controlKeys.push(key);
+            this.controls[key] = childControl;
+            return this;
         }},
         addControl:         {value: function(controlKey, controlDeclaration)
         {
             if (controlDeclaration === undefined)  return;
-            this.__controlKeys.push(controlKey);
-            this.controls[controlKey]       = createControl(controlDeclaration, undefined, this, "#" + controlKey);
+            this.appendControl(controlKey, this.createControl(controlDeclaration, undefined, this, "#" + controlKey));
             this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
         }},
@@ -453,26 +483,30 @@
                 this.__controlKeys.push(controlKey);
                 var declaration             = controlDeclarations[controlKey];
                 var selector                = (declaration.selector||("#"+controlKey));
-                this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
+                var elements                = viewAdapterFactory.selectAll(this.__element, selector, selectorPath);
+                this.controls[controlKey]   = this.createControl(declaration, elements&&elements[0], this, selector, elements && elements.length > 1);
             }
         }},
-        createControl:
-        function(controlDeclaration, controlElement, parent, selector)
+        createControl:      {value: function(controlDeclaration, controlElement, parent, selector, multipleElements)
         {
             var control;
             if (controlDeclaration.factory !== undefined)
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||querySelector(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector);
+            else    control = viewAdapterFactory.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement, multipleElements));
             initializeViewAdapter(control, controlDeclaration);
             return control;
-        },
-        removeControl:      {value: function(childControl)
+        }},
+        removeControl:      {value: function(key)
         {
-            this.__element.removeChild(childControl.__element);
-            removeItemFromArray(this.__controlKeys, childControl.key);
-            delete this.controls[childControl.key];
+            var childControl    = this.controls[key];
+            if (childControl !== undefined)
+            {
+                this.__element.removeChild(childControl.__element);
+                delete this.controls[key];
+            }
+            removeItemFromArray(this.__controlKeys, key);
             return this;
         }}
     });
@@ -486,7 +520,10 @@
         container.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);}).bind(this));
+            each(this.__controlKeys, (function(controlKey)
+            {
+                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);
+            }).bind(this));
         }}});
         this.bind   = "";
     }
@@ -521,7 +558,8 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")     Object.defineProperty(this, propertyKey, {value: property.call(this)});
-                else    if (property.get !== undefined) Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+                else    if (property.bound === true)    this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onupdate: property.onupdate});
+                else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
         data:
@@ -530,7 +568,10 @@
             set:    function(value)
             {
                 this.__binder.data = value;
-                each(this.__controlKeys, (function(controlKey){if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;}).bind(this));
+                each(this.__controlKeys, (function(controlKey)
+                {
+                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;
+                }).bind(this));
             }
         },
         init:               {value: function(definition)
@@ -544,7 +585,7 @@
     return composite;
 });}();
 !function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, viewAdapterFactory, removeFromArray)
+{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -576,7 +617,7 @@
 
         var elementCopy     = templateElement.element.cloneNode(true);
         elementCopy.setAttribute("id", key);
-        var clone           = { key: key, parent: templateElement.parent, control: viewAdapterFactory.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        var clone           = { key: key, parent: templateElement.parent, control: this.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
         clone.control.data  = subDataItem;
         return clone;
     };
@@ -647,7 +688,14 @@
         });
         this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
         {
-            setTimeout((function(data){bindRepeatedList.call(this, data);}).bind(this, this.data.observe(this.bind)),0);
+            setTimeout
+            (
+                (function(data)
+                {
+                    bindRepeatedList.call(this, data);
+                }).bind(this, this.data.observe(this.bind)),
+                0
+            );
         }}});
         this.bind   = "";
     }
@@ -679,9 +727,10 @@
     Object.defineProperty(input, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(input.prototype,
     {
-        constructor:    {value: input},
-        __createNode:   {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
-        select:         {value: function(){this.__element.select(); return this;}}
+        constructor:        {value: input},
+        __createNode:       {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
+        select:             {value: function(){this.__element.select(); return this;}},
+        onchangingdelay:    {get:   function(){return this.__onchangingdelay;}, set: function(value){Object.defineProperty(this, "__onchangingdelay", {value: value, configurable: true});}}
     });
     return input;
 });}();
@@ -757,7 +806,7 @@
         });
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")},
+            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value) {setSelectListValue.call(this, value===undefined?null:value);}, onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -765,7 +814,6 @@
                 {
                     Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
 
-                    if (value!==undefined)
                     bindSelectListSource.call(this, value);
                 }
             }
@@ -796,9 +844,10 @@
     function clearOptions(){ for(var counter=this.__element.options.length-1;counter>=0;counter--) this.__element.remove(counter); }
     function bindSelectListSource(items)
     {
-        var selectedValue   = this.value();
+        var selectedValue   = this.__rawValue;
         clearOptions.call(this);
         if (items === undefined)   return;
+
         for(var counter=0;counter<items.count;counter++)
         {
             var sourceItem  = items.observe(counter);
@@ -895,7 +944,7 @@
         });
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value||null);},  onchange: this.getEvents("change")},
+            value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -903,7 +952,7 @@
                 {
                     Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
                     captureTemplateIfNeeded.call(this);
-                    if (value!==undefined)
+
                     bindRadioGroupSource.call(this, value);
                 }
             }
@@ -972,7 +1021,7 @@
         base.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value||null);},  onchange: this.getEvents("change")}
+            value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")}
         });
     }
     Object.defineProperty(multiselect, "prototype", {value: Object.create(base.prototype)});
@@ -1035,11 +1084,13 @@
         delete window.__isolatedFunction;
  return {
             create:
-            function(functionToIsolate)
+            function(constructor)
             {
-                isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
+                //isolatedDocument.write("<script>parent.__isolatedSubFunction = " + functionToIsolate.toString() + ";<\/script>");
+                isolatedDocument.write("<script>parent.__isolatedSubFunction = function "+constructor.name+"(){function "+constructor.name+"(){return "+constructor.name+".___invoke.apply("+constructor.name+", arguments);}; this.___construct.apply("+constructor.name+", arguments); return "+constructor.name+";};<\/script>");
                 var __isolatedSubFunction  = window.__isolatedSubFunction;
                 delete window.__isolatedSubFunction;
+                __isolatedSubFunction.prototype.___construct = constructor;
                 return __isolatedSubFunction;
             },
             root:   isolatedFunction
@@ -1047,49 +1098,10 @@
     }
 });}();
 !function()
-{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, initializeViewAdapter, pubSub, logger, each, observer)
+{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each, observer)
 {
-    var missingElements;
-    var elementControlTypes =
-    {
-        "input":                    "input",
-        "input:checkbox":           "checkbox",
-        "textarea":                 "input",
-        "img":                      "image",
-        "select:select-multiple":   "multiselect",
-        "select:select-one":        "select",
-        "radiogroup":               "radiogroup"
-    };
-    each(["default","a","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
-    function(name)
-    {
-        elementControlTypes[name]   = "readonly";
-    });
-    function getControlTypeForElement(definition, element)
-    {
-        return  definition.type
-                ||
-                (definition.controls || definition.adapter
-                ?   "panel"
-                :   definition.repeat
-                    ?   "repeater"
-                    :   element !== undefined
-                        ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
-                        :   elementControlTypes.default);
-    }
     var viewAdapterFactory  =
     {
-        createControl:  function(controlDeclaration, controlElement, parent, selector)
-        {
-            var control;
-            if (controlDeclaration.factory !== undefined)
-            {
-                control = controlDeclaration.factory(parent, controlElement, selector);
-            }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement));
-            initializeViewAdapter(control, controlDeclaration);
-            return control;
-        },
         create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
@@ -1118,23 +1130,25 @@
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
             return (function(parent, containerElement, selector)
             {
-                var container   = parent;
+                var container                       = parent;
+                var viewElement                     = viewElementTemplate.cloneNode(true);
                 if (containerElement !== undefined)
                 {
                     container                       = this.create(function(){return {};}, containerElement, parent, selector, "composite");
                     container.__element.innerHTML   = "";
+                    container.__element.appendChild(viewElement);
                 }
+                else                                parent.__element.appendChild(viewElement);
                 var view                            = this.create
                 (
                     typeof viewAdapterDefinitionConstructor !== "function"
                     ?   function(control){return viewAdapterDefinitionConstructor}
                     :   viewAdapterDefinitionConstructor,
-                    viewElementTemplate.cloneNode(true),
+                    viewElement,
                     container,
                     selector,
                     "composite"
                 );
-                container.appendControl(view);
                 return view;
             }).bind(this);
         },
@@ -1157,16 +1171,7 @@
         },
         select:         function(uiElement, selector, selectorPath)
         {
-            return uiElement.querySelector(selector)||undefined;
-            if (element === null)
-            {
-                logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-                var element             = document.createElement("div");
-                uiElement.appendChild(element);
-                element.style.border    = "solid 2px red";
-                element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
-                element.setAttribute("data-missing", "true");
-            }
+            var element = uiElement.querySelector(selector)||undefined;
             element.__selectorPath  = selectorPath;
             return element;
         },
@@ -1178,7 +1183,7 @@
     return viewAdapterFactory;
 });}();
 !function()
-{"use strict";root.define("atomic.initializeViewAdapter", function(each, defineDataProperties)
+{"use strict";root.define("atomic.initializeViewAdapter", function(each)
 {
     function cancelEvent(event)
     {
@@ -1196,10 +1201,10 @@
     {
         if ((this.__lastChangingValueSeen||"") === this.value())  return;
         this.__lastChangingValueSeen = this.value();
-        if (this.__onchangingdelay !== undefined)
+        if (this.onchangingdelay !== undefined)
         {
             if (this.__lastChangingTimeout !== undefined)   clearTimeout(this.__lastChangingTimeout);
-            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.__onchangingdelay);
+            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.onchangingdelay);
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
@@ -1239,7 +1244,7 @@
     var initializers    =   {};
     Object.defineProperties(initializers,
     {
-        onchangingdelay:    {enumerable: true, value: function(viewAdapter, value)    { viewAdapter.onchangingdelay(parseInt(value)); }},
+        onchangingdelay:    {enumerable: true, value: function(viewAdapter, value)    { viewAdapter.onchangingdelay = parseInt(value); }},
         onchanging:         {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(viewAdapter, callback), false, true); }},
         onenter:            {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keypress", function(event){ if (event.keyCode==13) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
         onescape:           {enumerable: true, value: function(viewAdapter, callback) { viewAdapter.addEventListener("keydown", function(event){ if (event.keyCode==27) { callback.call(viewAdapter); return cancelEvent(event); } }, false, true); }},
@@ -1252,14 +1257,14 @@
         }},
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
-            if (typeof value === "function")    viewAdapter[name] = value.call(viewAdapter);
-            else                                viewAdapter[name] = value;
+            if (typeof value === "function" && !value.isObserver)   viewAdapter.data    = value.call(viewAdapter);
+            else                                                    viewAdapter.data    = value;
         }},
         updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
     each(["value"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + typeof(viewAdapter) + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
-    each(["bindData", "bindSource", "bindSourceData", "bindSourceValue", "bindSourceText","isRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
-    each(["onbind", "onbindsource", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
+    each(["optionValue", "optionText", "isDataRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
+    each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val)
     {
@@ -1294,88 +1299,35 @@
     var createObserver;
     function buildConstructor(removeFromArray, isolatedFunctionFactory, each)
     {
+        var getObserverEnum                             = {auto: 0, no: -1, yes: 1};
         var objectObserverFunctionFactory               = new isolatedFunctionFactory();
         var objectObserver                              =
         objectObserverFunctionFactory.create
-        (function objectObserverFactory(basePath, bag)
+        (function objectObserver(basePath, bag)
         {if (basePath==undefined) debugger;
-            function objectObserver(path, value)
+            Object.defineProperties(this,
             {
-                return objectObserver.__invoke(path, value, false);
-            }
-            Object.defineProperties(objectObserver,
-            {
-                "__basePath":   {get:   function(){return basePath;}},
-                "__bag":        {get:   function(){return bag;}},
-                "isDefined":    {value: function(propertyName){return this(propertyName)!==undefined;}},
-                "hasValue":     {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                __basePath: {get:   function(){return basePath;}},
+                __bag:      {get:   function(){return bag;}},
+                isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
+                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
             });
-            return objectObserver;
+            return this;
         });
         var arrayObserverFunctionFactory                = new isolatedFunctionFactory();
         var arrayObserver                               =
         arrayObserverFunctionFactory.create
-        (function arrayObserverFactory(basePath, bag)
+        (function arrayObserver(basePath, bag)
         {
-            function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
-            function arrayObserver(path, value)
+            //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
+            Object.defineProperties(this,
             {
-                return arrayObserver.__invoke(path, value, false);
-            }
-            Object.defineProperties(arrayObserver,
-            {
-                "__basePath":   {get:   function(){return basePath;}},
-                "__bag":        {get:   function(){return bag;}}
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                __basePath: {get:   function(){return basePath;}},
+                __bag:      {get:   function(){return bag;}}
             });
-            each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver, 
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var items   = this(); 
-                            var result  = items[name].apply(items, arguments);
-                            this.__notify(this.__basePath, items); 
-                            return result === items ? this : result; 
-                        }
-                    }
-                );
-            });
-            each(["remove","removeAll"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver,
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var result = this["__"+name].apply(this, arguments); 
-                            this.__notify(this.__basePath, this());
-                            return result; 
-                        }
-                    }
-                );
-            });
-            each(["join","indexOf","slice"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver, 
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var items   = this(); 
-                            return items[name].apply(items, arguments);
-                        }
-                    }
-                );
-            });
-            return arrayObserver;
+            return this;
         });
         function createObserver(revisedPath, bag, isArray)
         {
@@ -1386,7 +1338,7 @@
             pathSegments    = pathSegments || [""];
             if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
+            if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
@@ -1463,9 +1415,36 @@
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag)
+        function notifyPropertyListener(propertyKey, listener, bag, directOnly)
         {
-            if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.nestedUpdatesRootPath !== undefined && propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath) || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+            if
+            (
+                listener.callback !== undefined
+                &&
+                !listener.callback.ignore
+                &&
+                (
+                    propertyKey == "" 
+                    ||
+                    (
+                        listener.nestedUpdatesRootPath !== undefined
+                        &&
+                        propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath
+                    )
+                    ||
+                    (
+                        listener.properties !== undefined
+                        &&
+                        listener.properties.hasOwnProperty(propertyKey)
+                        &&
+                        (
+                            !directOnly
+                            ||
+                            listener.properties[propertyKey] === ""
+                        )
+                    )
+                )
+            )
             {
                 bag.updating.push(listener);
                 listener.properties = {};
@@ -1474,10 +1453,10 @@
                 if (postCallback !== undefined) postCallback();
             }
         }
-        function notifyPropertyListeners(propertyKey, value, bag)
+        function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly);
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
@@ -1497,11 +1476,12 @@
                 if (value !== currentValue)
                 {
                     navDataPath(this.__bag, pathSegments, value);
-                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
-            __notify:           {value: function(path, value){notifyPropertyListeners.call(this, path, value, this.__bag);}},
-            observe:            {value: function(path){return this.__invoke(path, undefined, true);}},
+            __notify:           {value: function(path, changes, directOnly){notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -1516,17 +1496,65 @@
             {
                 var listener    = {callback: callback, nestedUpdatesRootPath: nestedUpdatesRootPath!==undefined?((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath):undefined};
                 this.__bag.itemListeners.push(listener);
-                notifyPropertyListener.call(this, "", listener, this.__bag);
+                notifyPropertyListener.call(this, "", listener, this.__bag, false);
             }},
             rollback:           {value: function()
             {
                 this.__bag.rollingback  = true;
                 this.__bag.item         = this.__bag.backup;
                 delete this.__bag.backup;
-                notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
+                notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag, false);
                 this.__bag.rollingback  = false;
             }}
         });});
+        each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype, 
+                name, 
+                {
+                    value: function()
+                    {
+                        var items       = this();
+                        var result      = items[name].apply(items, arguments);
+                        this.__notify(this.__basePath, items, name!=="sort"&&name!=="reverse"); 
+                        return result === items ? this : result; 
+                    }
+                }
+            );
+        });
+        each(["remove","removeAll"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype,
+                name, 
+                {
+                    value: function()
+                    {
+                        var result      = this["__"+name].apply(this, arguments); 
+                        this.__notify(this.__basePath, this(), true);
+                        return result; 
+                    }
+                }
+            );
+        });
+        each(["join","indexOf","slice"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype, 
+                name, 
+                {
+                    value: function()
+                    {
+                        var items   = this(); 
+                        return items[name].apply(items, arguments);
+                    }
+                }
+            );
+        });
         Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
         {
             __remove:           {value: function(value)
@@ -1578,7 +1606,7 @@
     {
         each(this.__properties,(function(property)
         {
-            property.data = this.data||null;
+            property.data = this.data===undefined?null:this.data;
         }).bind(this));
     }
     function dataBinder(target, data)
@@ -1645,24 +1673,25 @@
     function buildFunction(isolatedFunctionFactory, each)
     {
         var functionFactory = new isolatedFunctionFactory();
-        var createProperty  =
+        var dataProperty    =
         functionFactory.create
-        (function createProperty(owner, getter, setter, onchange, binder)
+        (function dataProperty(owner, getter, setter, onchange, binder)
         {
-            function property(value, forceSet)
+            var property    = this;
+            Object.defineProperties(this,
             {
-                if (value !== undefined || forceSet)
+                ___invoke:              {value: function(value, forceSet)
                 {
-                    if (typeof setter === "function")   setter.call(owner, value);
-                    if (Object.keys(property.__onchange).length===0)    property.__inputListener();
-                }
-                else                                    return getter.call(owner);
-            };
-            Object.defineProperties(property,
-            {
+                    if (value !== undefined || forceSet)
+                    {
+                        if (typeof setter === "function")   setter.call(owner, value);
+                        if (Object.keys(this.__onchange).length===0)    property.__inputListener();
+                    }
+                    else                                    return getter.call(owner);
+                }},
                 __owner:                {value: owner},
                 __binder:               {value: binder, configurable: true},
-                __getter:               {value: function(){return getter.call(owner);}},
+                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
                 __onchange:             {value: {}},
@@ -1726,25 +1755,19 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            __destroy:
+            __destroy:          {value: function()
             {
-                value:  function()
-                {
-                    if (this.__binder)  this.__binder.unregister(this);
-                    Object.defineProperty(this, "__binder", {value: undefined, writable: true});
-                    delete this.__binder;
-                }
-            },
-            ___inputListener:
+                if (this.__binder)  this.__binder.unregister(this);
+                Object.defineProperty(this, "__binder", {value: undefined, writable: true});
+                delete this.__binder;
+            }},
+            ___inputListener:   {value: function()
             {
-                value:  function()
-                {
-                    if (this.__bounded===false) return;
-                    this.__notifyingObserver    = true;
-                    this.__setDataValue();
-                    this.__notifyingObserver    = false;
-                }
-            },
+                if (this.__bounded===false) return;
+                this.__notifyingObserver    = true;
+                this.__setDataValue();
+                this.__notifyingObserver    = false;
+            }},
             __getDataValue:
             {
                 value:  function()
@@ -1763,7 +1786,7 @@
 
                     if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
                     else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
-                    else                                                            {throw new Error("Unable to set back two way bound value to model.");}
+                    else                                                            {debugger; throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
             onchange:
@@ -1803,7 +1826,7 @@
         function defineDataProperty(target, binder, propertyName, property)
         {
             if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-            Object.defineProperty(target, propertyName, {value: createProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
             each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)
@@ -1834,7 +1857,6 @@
                                     (
                                         document,
                                         controlTypes,
-                                        new root.atomic.initializeViewAdapter(each),
                                         pubSub,
                                         function(message){console.log(message);},
                                         each,
@@ -1842,11 +1864,12 @@
                                     );
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
-    var readonly                = new root.atomic.html.readonly(control);
-    var container               = new root.atomic.html.container(control, each, viewAdapterFactory);
+    var readonly                = new root.atomic.html.readonly(control, each);
+    var link                    = new root.atomic.html.link(readonly);
+    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
     var composite               = new root.atomic.html.composite(container, each);
-    var repeater                = new root.atomic.html.repeater(container, viewAdapterFactory, root.utilities.removeFromArray);
+    var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control);
     var checkbox                = new root.atomic.html.checkbox(control);
     var select                  = new root.atomic.html.select(input, dataBinder, each);
@@ -1859,6 +1882,7 @@
     {
         control:        {value: control},
         readonly:       {value: readonly},
+        link:           {value: link},
         container:      {value: container},
         panel:          {value: panel},
         composite:      {value: composite},

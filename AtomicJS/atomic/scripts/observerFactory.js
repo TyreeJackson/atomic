@@ -4,88 +4,35 @@
     var createObserver;
     function buildConstructor(removeFromArray, isolatedFunctionFactory, each)
     {
+        var getObserverEnum                             = {auto: 0, no: -1, yes: 1};
         var objectObserverFunctionFactory               = new isolatedFunctionFactory();
         var objectObserver                              =
         objectObserverFunctionFactory.create
-        (function objectObserverFactory(basePath, bag)
+        (function objectObserver(basePath, bag)
         {if (basePath==undefined) debugger;
-            function objectObserver(path, value)
+            Object.defineProperties(this,
             {
-                return objectObserver.__invoke(path, value, false);
-            }
-            Object.defineProperties(objectObserver,
-            {
-                "__basePath":   {get:   function(){return basePath;}},
-                "__bag":        {get:   function(){return bag;}},
-                "isDefined":    {value: function(propertyName){return this(propertyName)!==undefined;}},
-                "hasValue":     {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                __basePath: {get:   function(){return basePath;}},
+                __bag:      {get:   function(){return bag;}},
+                isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
+                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
             });
-            return objectObserver;
+            return this;
         });
         var arrayObserverFunctionFactory                = new isolatedFunctionFactory();
         var arrayObserver                               =
         arrayObserverFunctionFactory.create
-        (function arrayObserverFactory(basePath, bag)
+        (function arrayObserver(basePath, bag)
         {
-            function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
-            function arrayObserver(path, value)
+            //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
+            Object.defineProperties(this,
             {
-                return arrayObserver.__invoke(path, value, false);
-            }
-            Object.defineProperties(arrayObserver,
-            {
-                "__basePath":   {get:   function(){return basePath;}},
-                "__bag":        {get:   function(){return bag;}}
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                __basePath: {get:   function(){return basePath;}},
+                __bag:      {get:   function(){return bag;}}
             });
-            each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver, 
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var items   = this(); 
-                            var result  = items[name].apply(items, arguments);
-                            this.__notify(this.__basePath, items); 
-                            return result === items ? this : result; 
-                        }
-                    }
-                );
-            });
-            each(["remove","removeAll"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver,
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var result = this["__"+name].apply(this, arguments); 
-                            this.__notify(this.__basePath, this());
-                            return result; 
-                        }
-                    }
-                );
-            });
-            each(["join","indexOf","slice"], function(name)
-            {
-                Object.defineProperty
-                (
-                    arrayObserver, 
-                    name, 
-                    {
-                        value: function()
-                        {
-                            var items   = this(); 
-                            return items[name].apply(items, arguments);
-                        }
-                    }
-                );
-            });
-            return arrayObserver;
+            return this;
         });
         function createObserver(revisedPath, bag, isArray)
         {
@@ -96,7 +43,7 @@
             pathSegments    = pathSegments || [""];
             if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object")) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
+            if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
         }
         function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
@@ -173,9 +120,36 @@
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag)
+        function notifyPropertyListener(propertyKey, listener, bag, directOnly)
         {
-            if (listener.callback !== undefined && !listener.callback.ignore && (propertyKey == "" || (listener.nestedUpdatesRootPath !== undefined && propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath) || (listener.properties !== undefined && listener.properties.hasOwnProperty(propertyKey))))
+            if
+            (
+                listener.callback !== undefined
+                &&
+                !listener.callback.ignore
+                &&
+                (
+                    propertyKey == "" 
+                    ||
+                    (
+                        listener.nestedUpdatesRootPath !== undefined
+                        &&
+                        propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath
+                    )
+                    ||
+                    (
+                        listener.properties !== undefined
+                        &&
+                        listener.properties.hasOwnProperty(propertyKey)
+                        &&
+                        (
+                            !directOnly
+                            ||
+                            listener.properties[propertyKey] === ""
+                        )
+                    )
+                )
+            )
             {
                 bag.updating.push(listener);
                 listener.properties = {};
@@ -184,10 +158,10 @@
                 if (postCallback !== undefined) postCallback();
             }
         }
-        function notifyPropertyListeners(propertyKey, value, bag)
+        function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly);
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
@@ -207,11 +181,12 @@
                 if (value !== currentValue)
                 {
                     navDataPath(this.__bag, pathSegments, value);
-                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag);
+                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
-            __notify:           {value: function(path, value){notifyPropertyListeners.call(this, path, value, this.__bag);}},
-            observe:            {value: function(path){return this.__invoke(path, undefined, true);}},
+            __notify:           {value: function(path, changes, directOnly){notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -226,17 +201,65 @@
             {
                 var listener    = {callback: callback, nestedUpdatesRootPath: nestedUpdatesRootPath!==undefined?((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath):undefined};
                 this.__bag.itemListeners.push(listener);
-                notifyPropertyListener.call(this, "", listener, this.__bag);
+                notifyPropertyListener.call(this, "", listener, this.__bag, false);
             }},
             rollback:           {value: function()
             {
                 this.__bag.rollingback  = true;
                 this.__bag.item         = this.__bag.backup;
                 delete this.__bag.backup;
-                notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag);
+                notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag, false);
                 this.__bag.rollingback  = false;
             }}
         });});
+        each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype, 
+                name, 
+                {
+                    value: function()
+                    {
+                        var items       = this();
+                        var result      = items[name].apply(items, arguments);
+                        this.__notify(this.__basePath, items, name!=="sort"&&name!=="reverse"); 
+                        return result === items ? this : result; 
+                    }
+                }
+            );
+        });
+        each(["remove","removeAll"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype,
+                name, 
+                {
+                    value: function()
+                    {
+                        var result      = this["__"+name].apply(this, arguments); 
+                        this.__notify(this.__basePath, this(), true);
+                        return result; 
+                    }
+                }
+            );
+        });
+        each(["join","indexOf","slice"], function(name)
+        {
+            Object.defineProperty
+            (
+                arrayObserverFunctionFactory.root.prototype, 
+                name, 
+                {
+                    value: function()
+                    {
+                        var items   = this(); 
+                        return items[name].apply(items, arguments);
+                    }
+                }
+            );
+        });
         Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
         {
             __remove:           {value: function(value)

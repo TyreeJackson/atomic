@@ -1,26 +1,36 @@
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter)
 {
-    var querySelector       =
-    function(uiElement, selector, selectorPath, typeHint)
+    var elementControlTypes =
     {
-        var element = uiElement.querySelector(selector);
-        if (element === null)
-        {
-            logger("Element for selector " + selector + " was not found in " + (uiElement.id?("#"+uiElement.id):("."+uiElement.className)));
-            element                 = document.createElement(typeHint!==undefined?(typeHintMap[typeHint]||typeHint):"div");
-            var label               = document.createElement("span");
-            label.innerHTML         = (selectorPath||"") + "-" + selector + ":";
-            var container           = document.createElement("div");
-            missingElements         = missingElements||createMissingElementsContainer();
-            container.appendChild(element);
-            missingElements.appendChild(label);
-            missingElements.appendChild(container);
-            element.style.border    = "solid 1px black";
-        }
-        element.__selectorPath  = selectorPath;
-        return element;
+        "input":                    "input",
+        "input:checkbox":           "checkbox",
+        "textarea":                 "input",
+        "img":                      "image",
+        "select:select-multiple":   "multiselect",
+        "select:select-one":        "select",
+        "radiogroup":               "radiogroup",
+        "a":                        "link"
     };
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    function(name)
+    {
+        elementControlTypes[name]   = "readonly";
+    });
+    function getControlTypeForElement(definition, element, multipleElements)
+    {
+        return  definition.type
+                ||
+                multipleElements
+                ?   "readonly"
+                :   (definition.controls || definition.adapter
+                    ?   "panel"
+                    :   definition.repeat
+                        ?   "repeater"
+                        :   element !== undefined
+                            ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                            :   elementControlTypes.default);
+    }
     function container(elements, selector, parent)
     {
         control.call(this, elements, selector, parent);
@@ -38,17 +48,17 @@
         {
             control.prototype.init.call(this, definition);
         }},
-        appendControl:      {value: function(childControl)
+        appendControl:      {value: function(key, childControl)
         {
             this.__element.appendChild(childControl.__element); 
-            this.__controlKeys.push(childControl.key);
-            this.controls[childControl.key] = childControl;
+            this.__controlKeys.push(key);
+            this.controls[key] = childControl;
+            return this;
         }},
         addControl:         {value: function(controlKey, controlDeclaration)
         {
             if (controlDeclaration === undefined)  return;
-            this.__controlKeys.push(controlKey);
-            this.controls[controlKey]       = createControl(controlDeclaration, undefined, this, "#" + controlKey);
+            this.appendControl(controlKey, this.createControl(controlDeclaration, undefined, this, "#" + controlKey));
             this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
         }},
@@ -61,26 +71,30 @@
                 this.__controlKeys.push(controlKey);
                 var declaration             = controlDeclarations[controlKey];
                 var selector                = (declaration.selector||("#"+controlKey));
-                this.controls[controlKey]   = viewAdapterFactory.createControl(declaration, viewAdapterFactory.select(this.__element, selector, selectorPath), this, selector);
+                var elements                = viewAdapterFactory.selectAll(this.__element, selector, selectorPath);
+                this.controls[controlKey]   = this.createControl(declaration, elements&&elements[0], this, selector, elements && elements.length > 1);
             }
         }},
-        createControl:
-        function(controlDeclaration, controlElement, parent, selector)
+        createControl:      {value: function(controlDeclaration, controlElement, parent, selector, multipleElements)
         {
             var control;
             if (controlDeclaration.factory !== undefined)
             {
                 control = controlDeclaration.factory(parent, controlElement, selector);
             }
-            else    control = this.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement||querySelector(parent.__element, (controlDeclaration.selector||("#"+controlKey)), parent.getSelectorPath()), parent, selector);
+            else    control = viewAdapterFactory.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement, multipleElements));
             initializeViewAdapter(control, controlDeclaration);
             return control;
-        },
-        removeControl:      {value: function(childControl)
+        }},
+        removeControl:      {value: function(key)
         {
-            this.__element.removeChild(childControl.__element);
-            removeItemFromArray(this.__controlKeys, childControl.key);
-            delete this.controls[childControl.key];
+            var childControl    = this.controls[key];
+            if (childControl !== undefined)
+            {
+                this.__element.removeChild(childControl.__element);
+                delete this.controls[key];
+            }
+            removeItemFromArray(this.__controlKeys, key);
             return this;
         }}
     });

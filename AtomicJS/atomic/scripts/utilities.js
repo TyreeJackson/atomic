@@ -24,9 +24,21 @@
             var functionFactory = new isolatedFunctionFactory();
             var pubSub          =
             functionFactory.create
-            (function(listenersChanged)
+            (function pubSub(listenersChanged)
             {
-                function pubSub()
+                Object.defineProperties(this, 
+                {
+                    "__listenersChanged":   {value: listenersChanged},
+                    "__listeners":          {value: []},
+                    "__lastPublished":      {writable: true, value: null},
+                    "__publishTimeoutId":   {writable: true, value: null},
+                    "limit":                {writable: true, value: null}
+                });
+                return this;
+            });
+            Object.defineProperties(functionFactory.root.prototype,
+            {
+                ___invoke:                  {value: function()
                 {
                     var publish = (function(args)
                     {
@@ -34,7 +46,7 @@
                         this.__lastPublished    = new Number(new Date());
                         if (this.__listeners === undefined) debugger;
                         for(var listenerCounter=0;listenerCounter<this.__listeners.length;listenerCounter++) this.__listeners[listenerCounter].apply(null, args);
-                    }).bind(pubSub, arguments);
+                    }).bind(this, arguments);
 
                     if (this.__publishTimeoutId != null)
                     {
@@ -46,19 +58,7 @@
 
                     if (now>=limitOffset)   publish();
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
-                }
-                Object.defineProperties(pubSub, 
-                {
-                    "__listenersChanged":   {value: listenersChanged},
-                    "__listeners":          {value: []},
-                    "__lastPublished":      {writable: true, value: null},
-                    "__publishTimeoutId":   {writable: true, value: null},
-                    "limit":                {writable: true, value: null}
-                });
-                return pubSub;
-            });
-            Object.defineProperties(functionFactory.root.prototype,
-            {
+                }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
                 ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},

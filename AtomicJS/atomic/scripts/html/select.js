@@ -51,7 +51,7 @@
         });
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value){setSelectListValue.call(this, value||null);},  onchange: this.getEvents("change")},
+            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value) {setSelectListValue.call(this, value===undefined?null:value);}, onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -59,7 +59,6 @@
                 {
                     Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
 
-                    if (value!==undefined)
                     bindSelectListSource.call(this, value);
                 }
             }
@@ -90,9 +89,10 @@
     function clearOptions(){ for(var counter=this.__element.options.length-1;counter>=0;counter--) this.__element.remove(counter); }
     function bindSelectListSource(items)
     {
-        var selectedValue   = this.value();
+        var selectedValue   = this.__rawValue;
         clearOptions.call(this);
         if (items === undefined)   return;
+
         for(var counter=0;counter<items.count;counter++)
         {
             var sourceItem  = items.observe(counter);
