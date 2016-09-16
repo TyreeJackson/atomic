@@ -146,6 +146,7 @@ root.atomic.launch
                                             <div><input id="lastNameTextbox" autocomplete="off" class="form-control" placeholder="Enter your last name:" /></div>
                                             <div id="helloMessage">
                                                 <p>Hello <span class="name"></span>!</p>
+                                                <p>Have a great day <span class="name"></span>!</p>
                                             </div>
                                         </div>
                                     </div>
@@ -627,6 +628,10 @@ root.atomic.launch
                                                             </td>
                                                         </tr>
                                                         <tr>
+                                                            <td class="table-cell">Link:</td>
+                                                            <td class="table-cell"><a id="linkControl"></a><br/><input id="urlTextboxControl" /></td>
+                                                        </tr>
+                                                        <tr>
                                                             <td class="table-cell">Images:</td>
                                                             <td class="table-cell">
                                                                 <img id="imageControl"></img><br/>
@@ -643,6 +648,10 @@ root.atomic.launch
                                                         <tr>
                                                             <td class="table-cell">Text value:</td>
                                                             <td class="table-cell" id="stringValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Url value:</td>
+                                                            <td class="table-cell" id="urlValueReadout"></td>
                                                         </tr>
                                                         <tr>
                                                             <td class="table-cell">Password:</td>
@@ -679,6 +688,7 @@ root.atomic.launch
                                             "#example7",
                                             {
                                                 stringValueReadout:             { bind: "stringValue" },
+                                                urlValueReadout:                { bind: "urlValue" },
                                                 passwordValueReadout:           { bind: "passwordValue" },
                                                 booleanValueReadout:            { bind: "booleanValue" },
                                                 selectedValueReadout:           { bind: "selectedValue" },
@@ -694,6 +704,8 @@ root.atomic.launch
                                                 multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
                                                 radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
                                                 buttonControl:                  { bind: "stringValue" },
+                                                linkControl:                    { bind: {value: "stringValue", href: "urlValue" }},
+                                                urlTextboxControl:              { bind: "urlValue" },
                                                 imageControl:                   { bind: "imageUrl" },
                                                 imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
@@ -703,6 +715,7 @@ root.atomic.launch
                                                 adapter.data("", 
                                                 {
                                                     stringValue:            "Hello", 
+                                                    urlValue:               "https://atomicstack.com",
                                                     passwordValue:          "mypass", 
                                                     booleanValue:           true, 
                                                     selectedValue:          "Gamma", 
