@@ -688,7 +688,7 @@
             "__templateElements":   {value: {}}
         });
         this.__binder.defineDataProperties(this, {value: {set: function(value)
-        {debugger;
+        {
             setTimeout
             (
                 (function(data)
