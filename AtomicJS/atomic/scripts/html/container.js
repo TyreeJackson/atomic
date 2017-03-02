@@ -21,14 +21,14 @@
     {
         return  definition.type
                 ||
-                multipleElements
-                ?   "readonly"
-                :   (definition.controls || definition.adapter
-                    ?   "panel"
-                    :   definition.repeat
-                        ?   "repeater"
-                        :   element !== undefined
-                            ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                (definition.controls || definition.adapter
+                ?   "panel"
+                :   definition.repeat
+                    ?   "repeater"
+                    :   element !== undefined
+                        ?   multipleElements
+                            ?   "readonly"
+                            :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
                             :   elementControlTypes.default);
     }
     function container(elements, selector, parent)

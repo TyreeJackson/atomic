@@ -4,7 +4,7 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
             each(this.__controlKeys, (function(controlKey)
             {

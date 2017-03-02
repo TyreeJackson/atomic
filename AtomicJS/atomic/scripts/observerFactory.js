@@ -120,7 +120,7 @@
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag, directOnly)
+        function notifyPropertyListener(propertyKey, listener, bag, directOnly, value)
         {
             if
             (
@@ -153,7 +153,7 @@
             {
                 bag.updating.push(listener);
                 listener.properties = {};
-                var postCallback = listener.callback();
+                var postCallback = listener.callback(value);
                 bag.updating.pop();
                 if (postCallback !== undefined) postCallback();
             }
@@ -161,7 +161,16 @@
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+        }
+        function getItemChanges(oldItems, newItems)
+        {
+            var changes = {changed: [], items: newItems};
+            for(var counter=0;counter<newItems.length;counter++)
+            {
+                if (oldItems.length<=counter||oldItems[counter]!==newItems[counter])    changes.changed.push(counter);
+            }
+            return changes;
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
@@ -184,7 +193,11 @@
                     notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
-            __notify:           {value: function(path, changes, directOnly){notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);}},
+            __notify:           {value: function(path, changes, directOnly)
+            {
+                notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);
+                for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
+            }},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
             basePath:           {value: function(){return this.__basePath;}},
@@ -222,8 +235,9 @@
                     value: function()
                     {
                         var items       = this();
+                        var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, items, name!=="sort"&&name!=="reverse"); 
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name!=="sort"&&name!=="reverse"); 
                         return result === items ? this : result; 
                     }
                 }
@@ -238,8 +252,10 @@
                 {
                     value: function()
                     {
+                        var items       = this();
+                        var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
-                        this.__notify(this.__basePath, this(), true);
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
                         return result; 
                     }
                 }

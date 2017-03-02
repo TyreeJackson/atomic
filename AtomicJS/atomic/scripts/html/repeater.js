@@ -100,7 +100,7 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
             setTimeout
             (

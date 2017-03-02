@@ -20,6 +20,7 @@
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
+        bind:               { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});} },
         data:
         {
             get:    function(){return this.__binder.data;},
@@ -28,7 +29,7 @@
                 this.__binder.data = value;
                 each(this.__controlKeys, (function(controlKey)
                 {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;
+                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
                 }).bind(this));
             }
         },

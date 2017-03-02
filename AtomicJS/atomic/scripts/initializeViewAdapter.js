@@ -69,7 +69,7 @@
         bind:               {enumerable: true, value: function(viewAdapter, value)
         {
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
-            else                            {viewAdapter.value.bind  = value;}
+            else                            {viewAdapter.bind  = value;}
         }},
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
