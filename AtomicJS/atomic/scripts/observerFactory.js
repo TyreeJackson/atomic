@@ -195,7 +195,7 @@
             }},
             __notify:           {value: function(path, changes, directOnly)
             {
-                notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
             }},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},

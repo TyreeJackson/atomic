@@ -24,13 +24,19 @@
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
+    function bindWhenBinding(viewAdapter, name, binding)
+    {
+        if (binding.equals      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        if (binding.notequals   !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+    }
     function bindProperty(viewAdapter, name, binding)
     {
         if(viewAdapter[name] === undefined) debugger;
-        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind = binding;
+        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind      = binding;
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            if (binding.when !== undefined)                                 bindWhenBinding(viewAdapter, name, binding);
             each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
@@ -54,8 +60,8 @@
     }
     function bindMultipleProperties(viewAdapter, bindings)
     {
-        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
-        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
+        for(var name in bindings) if (name !== "classes")   bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)                 bindClassProperties(viewAdapter, bindings.classes);
     }
     var initializers    =   {};
     Object.defineProperties(initializers,

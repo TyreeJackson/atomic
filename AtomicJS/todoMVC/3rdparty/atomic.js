@@ -380,26 +380,48 @@
         Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
+            value:      {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}},
+            attributes:         
+            {
+                get:    function(){return this.__attributes;}, 
+                set:    function(value)
+                {
+                    if (value!==undefined&&value.isObserver) value=value(); 
+                    this.__attributes=value;
+
+                    if (value!==undefined)
+                    for(var key in value)
+                    {
+                        each(this.__elements, function(element){element.setAttribute("data-"+key, value[key]);});
+                        this.__element.setAttribute("data-" + key, value[key]);
+                    }
+                }
+            },
+            disabled:           {get: function(){return this.__element.disabled;},              set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
+            display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
+            enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
+            "for":              {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(readonly.prototype,
     {
         constructor:    {value: readonly},
-        __createNode:   {value: function(){return document.createElement("span");}, configurable: true}
+        __createNode:   {value: function(){return document.createElement("span");}, configurable: true},
+        hide:               {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
+        show:               {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
     });
     return readonly;
 });}();
 !function()
-{"use strict";root.define("atomic.html.link", function htmlLink(base)
+{"use strict";root.define("atomic.html.link", function htmlLink(base, each)
 {
     function link(elements, selector, parent)
     {
         base.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            href: {get: function(){return this.__element.href;}, set: function(value){this.__element.href = value&&value.isObserver?value():value;}}
+            href: {get: function(){return this.__element.href;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.href = val;}); this.__element.href = val;}}
         });
     }
     Object.defineProperty(link, "prototype", {value: Object.create(base.prototype)});
@@ -433,15 +455,19 @@
     {
         return  definition.type
                 ||
-                multipleElements
-                ?   "readonly"
-                :   (definition.controls || definition.adapter
-                    ?   "panel"
-                    :   definition.repeat
-                        ?   "repeater"
-                        :   element !== undefined
-                            ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
-                            :   elementControlTypes.default);
+                (definition.controls || definition.adapter
+                ?   element.nodeName.toLowerCase() == "a"
+                    ?   "linkPanel"
+                    :   "panel"
+                :   definition.repeat
+                    ?   "repeater"
+                    :   element !== undefined
+                        ?   multipleElements
+                            ?   element.nodeName.toLowerCase() == "a"
+                                ?   "link"
+                                :   "readonly"
+                            :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                        :   elementControlTypes.default);
     }
     function container(elements, selector, parent)
     {
@@ -518,7 +544,7 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
             each(this.__controlKeys, (function(controlKey)
             {
@@ -562,6 +588,7 @@
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
+        bind:               { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});} },
         data:
         {
             get:    function(){return this.__binder.data;},
@@ -570,7 +597,7 @@
                 this.__binder.data = value;
                 each(this.__controlKeys, (function(controlKey)
                 {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;
+                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
                 }).bind(this));
             }
         },
@@ -686,7 +713,7 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
             setTimeout
             (
@@ -1208,13 +1235,19 @@
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
+    function bindWhenBinding(viewAdapter, name, binding)
+    {
+        if (binding.equals      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        if (binding.notequals   !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+    }
     function bindProperty(viewAdapter, name, binding)
     {
         if(viewAdapter[name] === undefined) debugger;
-        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind = binding;
+        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind      = binding;
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            if (binding.when !== undefined)                                 bindWhenBinding(viewAdapter, name, binding);
             each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
@@ -1238,8 +1271,8 @@
     }
     function bindMultipleProperties(viewAdapter, bindings)
     {
-        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
-        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
+        for(var name in bindings) if (name !== "classes")   bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)                 bindClassProperties(viewAdapter, bindings.classes);
     }
     var initializers    =   {};
     Object.defineProperties(initializers,
@@ -1253,7 +1286,7 @@
         bind:               {enumerable: true, value: function(viewAdapter, value)
         {
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
-            else                            {viewAdapter.value.bind  = value;}
+            else                            {viewAdapter.bind  = value;}
         }},
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
@@ -1415,7 +1448,7 @@
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag, directOnly)
+        function notifyPropertyListener(propertyKey, listener, bag, directOnly, value)
         {
             if
             (
@@ -1448,7 +1481,7 @@
             {
                 bag.updating.push(listener);
                 listener.properties = {};
-                var postCallback = listener.callback();
+                var postCallback = listener.callback(value);
                 bag.updating.pop();
                 if (postCallback !== undefined) postCallback();
             }
@@ -1456,7 +1489,16 @@
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+        }
+        function getItemChanges(oldItems, newItems)
+        {
+            var changes = {changed: [], items: newItems};
+            for(var counter=0;counter<newItems.length;counter++)
+            {
+                if (oldItems.length<=counter||oldItems[counter]!==newItems[counter])    changes.changed.push(counter);
+            }
+            return changes;
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
@@ -1479,7 +1521,11 @@
                     notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
-            __notify:           {value: function(path, changes, directOnly){notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);}},
+            __notify:           {value: function(path, changes, directOnly)
+            {
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
+                for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
+            }},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
             basePath:           {value: function(){return this.__basePath;}},
@@ -1517,8 +1563,9 @@
                     value: function()
                     {
                         var items       = this();
+                        var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, items, name!=="sort"&&name!=="reverse"); 
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name!=="sort"&&name!=="reverse"); 
                         return result === items ? this : result; 
                     }
                 }
@@ -1533,8 +1580,10 @@
                 {
                     value: function()
                     {
+                        var items       = this();
+                        var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
-                        this.__notify(this.__basePath, this(), true);
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
                         return result; 
                     }
                 }
@@ -1865,9 +1914,10 @@
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, each);
-    var link                    = new root.atomic.html.link(readonly);
+    var link                    = new root.atomic.html.link(readonly, each);
     var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
+    var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);
     var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control);
@@ -1883,6 +1933,7 @@
         control:        {value: control},
         readonly:       {value: readonly},
         link:           {value: link},
+        linkPanel:      {value: linkPanel},
         container:      {value: container},
         panel:          {value: panel},
         composite:      {value: composite},

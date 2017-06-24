@@ -22,14 +22,18 @@
         return  definition.type
                 ||
                 (definition.controls || definition.adapter
-                ?   "panel"
+                ?   element.nodeName.toLowerCase() == "a"
+                    ?   "linkPanel"
+                    :   "panel"
                 :   definition.repeat
                     ?   "repeater"
                     :   element !== undefined
                         ?   multipleElements
-                            ?   "readonly"
+                            ?   element.nodeName.toLowerCase() == "a"
+                                ?   "link"
+                                :   "readonly"
                             :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
-                            :   elementControlTypes.default);
+                        :   elementControlTypes.default);
     }
     function container(elements, selector, parent)
     {
