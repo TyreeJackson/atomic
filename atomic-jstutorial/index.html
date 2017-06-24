@@ -486,7 +486,7 @@ root.atomic.launch
                                                 },
                                                 betterItemsList:
                                                 {
-                                                    bind: {items: "items"}
+                                                    bind: {value: "selected", items: "items"}
                                                 },
                                                 removeItemButton:
                                                 {
@@ -535,7 +535,7 @@ root.atomic.launch
         },
         betterItemsList:
         {
-            bind: {items: "items"}
+            bind: {value: "selected", items: "items"}
         },
         removeItemButton:
         {
@@ -628,13 +628,21 @@ root.atomic.launch
                                                             </td>
                                                         </tr>
                                                         <tr>
+                                                            <td class="table-cell">Readonly:</td>
+                                                            <td class="table-cell"><span id="readonlyControl"></a></td>
+                                                        </tr>
+                                                        <tr>
                                                             <td class="table-cell">Link:</td>
                                                             <td class="table-cell"><a id="linkControl"></a><br/><input id="urlTextboxControl" /></td>
                                                         </tr>
                                                         <tr>
+                                                            <td class="table-cell">Link Panel:</td>
+                                                            <td class="table-cell"><a id="linkPanelControl"><span id="panelReadonly"></span> [ <span id="panelUrl"></span> ]</a></td>
+                                                        </tr>
+                                                        <tr>
                                                             <td class="table-cell">Images:</td>
                                                             <td class="table-cell">
-                                                                <img id="imageControl"></img><br/>
+                                                                <img id="imageControl" /><br/>
                                                                 <radiogroup id="imagePathControl">
                                                                     <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
                                                                 </radiogroup>
@@ -704,8 +712,18 @@ root.atomic.launch
                                                 multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
                                                 radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
                                                 buttonControl:                  { bind: "stringValue" },
+                                                readonlyControl:                { bind: "stringValue" },
                                                 linkControl:                    { bind: {value: "stringValue", href: "urlValue" }},
                                                 urlTextboxControl:              { bind: "urlValue" },
+                                                linkPanelControl:
+                                                {
+                                                    bind: {href: "urlValue"},
+                                                    controls:
+                                                    {
+                                                        panelReadonly:  { bind: "stringValue" },
+                                                        panelUrl:       { bind: "urlValue" }
+                                                    }
+                                                },
                                                 imageControl:                   { bind: "imageUrl" },
                                                 imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
@@ -757,6 +775,7 @@ root.atomic.launch
     "#example7",
     {
         stringValueReadout:             { bind: "stringValue" },
+        urlValueReadout:                { bind: "urlValue" },
         passwordValueReadout:           { bind: "passwordValue" },
         booleanValueReadout:            { bind: "booleanValue" },
         selectedValueReadout:           { bind: "selectedValue" },
@@ -772,8 +791,20 @@ root.atomic.launch
         multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
         radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
         buttonControl:                  { bind: "stringValue" },
+        readonlyControl:                { bind: "stringValue" },
+        linkControl:                    { bind: {value: "stringValue", href: "urlValue" }},
+        urlTextboxControl:              { bind: "urlValue" },
+        linkPanelControl:
+        {
+            bind: {href: "urlValue"},
+            controls:
+            {
+                panelReadonly:  { bind: "stringValue" },
+                panelUrl:       { bind: "urlValue" }
+            }
+        },
         imageControl:                   { bind: "imageUrl" },
-        imagePathControl:               { bind: { value: "imageUrl", items: { to: "images", text: "title", value: "url" } } },
+        imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
         example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     },
     function(adapter)
@@ -781,6 +812,7 @@ root.atomic.launch
         adapter.data("", 
         {
             stringValue:            "Hello", 
+            urlValue:               "https://atomicstack.com",
             passwordValue:          "mypass", 
             booleanValue:           true, 
             selectedValue:          "Gamma", 
@@ -863,6 +895,18 @@ root.atomic.launch
                             &lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Readonly:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;span id="readonlyControl"&gt;&lt;/a&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Link:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;a id="linkControl"&gt;&lt;/a&gt;&lt;br/&gt;&lt;input id="urlTextboxControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Link Panel:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;a id="linkPanelControl"&gt;&lt;span id="panelReadonly"&gt;&lt;/span&gt; [ &lt;span id="panelUrl"&gt;&lt;/span&gt; ]&lt;/a&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Images:&lt;/td&gt;
                             &lt;td class="table-cell"&gt;
                                 &lt;img id="imageControl"&gt;&lt;/img&gt;&lt;br/&gt;
@@ -879,6 +923,10 @@ root.atomic.launch
                         &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Text value:&lt;/td&gt;
                             &lt;td class="table-cell" id="stringValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Url value:&lt;/td&gt;
+                            &lt;td class="table-cell" id="urlValueReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Password:&lt;/td&gt;
@@ -1296,7 +1344,7 @@ root.atomic.launch
                                                                 betterItemsList10:
                                                                 {
                                                                     type:   "multiselect",
-                                                                    bind:   {items: "items"}
+                                                                    bind:   {value: "selected", items: "items"}
                                                                 },
                                                                 removeItemButton10:
                                                                 {
@@ -1381,7 +1429,7 @@ root.atomic.launch
                         betterItemsList10:
                         {
                             type:   "multiselect",
-                            bind:   {items: "items"}
+                            bind:   {value: "selected", items: "items"}
                         },
                         removeItemButton10:
                         {
