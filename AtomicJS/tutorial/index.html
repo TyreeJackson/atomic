@@ -37,6 +37,7 @@
                                 <li id="exampleLink10"><a href="#/example/10">A Better List - control types demo</a></li>
                                 <li id="exampleLink11"><a href="#/example/11">A really simple Todo</a></li>
                                 <li id="exampleLink12"><a href="#/example/12">Composite Controls</a></li>
+                                <li id="exampleLink13"><a href="#/example/13">Control Bindings</a></li>
                             </ul>
                         </div>
                     </div>
@@ -1863,6 +1864,516 @@ root.atomic.ready(function(atomic)
                                         </pre>
                                     </figure>
                                 </div>
+
+                                <div id="example13">
+                                    <div class="example">
+                                        <div class="well">
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <h3>Control bindings</h3>
+                                                    <style>
+                                                        .addBorder  { border: solid 2px black; }
+                                                        .addBold    { font-weight: bold; }
+                                                        .addItalics { font-style: italic; }
+                                                        .addPadding { padding: 20px; }
+                                                    </style>
+                                                    <table class="table table-bordered">
+                                                        <tr>
+                                                            <td class="table-cell">Readonly with attributes:</td>
+                                                            <td class="table-cell" id="readonlyWithAttributesControlWrapper"><span id="readonlyWithAttributesControl">This control has attributes</span></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to disabled):</td>
+                                                            <td class="table-cell" id="disabledExampleControlWrapper"><input id="disabledExampleControl" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to display):</td>
+                                                            <td class="table-cell" id="displayExampleControlWrapper"><input id="displayExampleControl" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to enabled):</td>
+                                                            <td class="table-cell" id="enabledExampleControlWrapper"><input id="enabledExampleControl" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Label control (reacts to for):</td>
+                                                            <td class="table-cell" id="labelForControlWrapper"><label id="labelForControl">This label can be set for another element.<br/>Clicking on this label will set focus to that control.</label></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Panel control (reacts to id):</td>
+                                                            <td class="table-cell" id="dynamicIdControlWrapper"><div id="dynamicIdControl">The id of this panel changes dynamically</div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Panel control (reacts to tooltip):</td>
+                                                            <td class="table-cell" id="tooltipControlWrapper"><div id="tooltipControl">The tooltip of this panel changes dynamically.<br/>Try hovering the mouse over it.</div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Textarea control (reacts to value):</td>
+                                                            <td class="table-cell" id="valueControlWrapper"><textarea id="valueControl"></textarea></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Panel control (reacts to classes):</td>
+                                                            <td class="table-cell" id="classesControlWrapper"><div id="classesControl">The classes applied to this panel changes dynamically.</div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Image control (reacts to alt):</td>
+                                                            <td class="table-cell" id="altControlWrapper"><img id="altControl" src="nonexistent.png" width="150" height="60" /></td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h3>Settings</h3>
+                                                    <table class="table table-bordered">
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Disabled:</td>
+                                                            <td class="table-cell"><input id="disabledCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Display:</td>
+                                                            <td class="table-cell"><input id="displayCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Enabled:</td>
+                                                            <td class="table-cell"><input id="enabledCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">For:</td>
+                                                            <td class="table-cell"><select id="forList"></select></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Id:</td>
+                                                            <td class="table-cell"><input id="idTextbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Tooltip:</td>
+                                                            <td class="table-cell"><input id="tooltipTextbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Value:</td>
+                                                            <td class="table-cell"><input id="valueTextbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Add Border:</td>
+                                                            <td class="table-cell"><input id="addBorderCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Add Bold:</td>
+                                                            <td class="table-cell"><input id="addBoldCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Add Italics:</td>
+                                                            <td class="table-cell"><input id="addItalicsCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Add Padding:</td>
+                                                            <td class="table-cell"><input id="addPaddingCheckbox" type="checkbox" class="checkbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Alt:</td>
+                                                            <td class="table-cell"><input id="altTextbox" /></td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <h3>What's in the view?</h3>
+                                                    <table class="table table-bordered">
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Readonly with attributes:</td>
+                                                            <td class="table-cell" id="readonlyWithAttibutesControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to disabled):</td>
+                                                            <td class="table-cell" id="disabledExampleControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to display):</td>
+                                                            <td class="table-cell" id="displayExampleControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Text control (reacts to enabled):</td>
+                                                            <td class="table-cell" id="enabledExampleControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Label control (reacts to for):</td>
+                                                            <td class="table-cell" id="labelForControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Panel control (reacts to id):</td>
+                                                            <td class="table-cell" id="dynamicIdControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Panel control (reacts to tooltip):</td>
+                                                            <td class="table-cell" id="tooltipControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Textarea control (reacts to value):</td>
+                                                            <td class="table-cell" id="valueControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Panel control (reacts to classes):</td>
+                                                            <td class="table-cell" id="classesControlReadout"></td>
+                                                        </tr>
+                                                        <tr class="table-row">
+                                                            <td class="table-cell">Image control (reacts to alt):</td>
+                                                            <td class="table-cell" id="altControlReadout"></td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <script type="text/javascript">
+                                        root.atomic.launch
+                                        (
+                                            "#example13",
+                                            {
+                                                readonlyWithAttributesControlWrapper:   {},
+                                                readonlyWithAttributesControl:          { bind: {attributes: { to: "settings", root: "settings" } } },
+                                                readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "settings" } } },
+                                                disabledExampleControlWrapper:          {},
+                                                disabledExampleControl:                 { bind: { disabled: "settings.disabled" } },
+                                                disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                displayExampleControlWrapper:           {},
+                                                displayExampleControl:                  { bind: { display: "settings.display" } },
+                                                displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                enabledExampleControlWrapper:           {},
+                                                enabledExampleControl:                  { bind: { enabled: "settings.enabled" } },
+                                                enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                labelForControlWrapper:                 {},
+                                                labelForControl:                        { bind: { for: "settings.for" } },
+                                                labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                dynamicIdControlWrapper:                {},
+                                                dynamicIdControl:                       { bind: { id: "settings.id" } },
+                                                dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                tooltipControlWrapper:                  {},
+                                                tooltipControl:                         { bind: { tooltip: "settings.tooltip" } },
+                                                tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                valueControlWrapper:                    {},
+                                                valueControl:                           { bind: { value: "settings.value" } },
+                                                valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                classesControlWrapper:                  {},
+                                                classesControl:
+                                                {
+                                                    bind:
+                                                    {
+                                                        classes:
+                                                        {
+                                                            addBorder:  { when: "classes.addBorder" }, 
+                                                            addItalics: { when: "classes.addItalics" }, 
+                                                            addBold:    { when: "classes.addBold" }, 
+                                                            addPadding: { when: "classes.addPadding" }
+                                                        }
+                                                    }
+                                                },
+                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classes" } } },
+                                                altControlWrapper:                      {},
+                                                altControl:                             { bind: { alt: "settings.alt" } },
+                                                altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                disabledCheckbox:                       { bind: "settings.disabled" },
+                                                displayCheckbox:                        { bind: "settings.display" },
+                                                enabledCheckbox:                        { bind: "settings.enabled" },
+                                                forList:                                { bind: { value: "settings.for",    items: "controls" } },
+                                                idTextbox:                              { bind: { value: { to: "settings.id",        updateon: ["keydown", "keyup", "change"] } } },
+                                                tooltipTextbox:                         { bind: { value: { to: "settings.tooltip",   updateon: ["keydown", "keyup", "change"] } } },
+                                                valueTextbox:                           { bind: { value: { to: "settings.value",     updateon: ["keydown", "keyup", "change"] } } },
+                                                addBorderCheckbox:                      { bind: "classes.addBorder" },
+                                                addBoldCheckbox:                        { bind: "classes.addBold" },
+                                                addItalicsCheckbox:                     { bind: "classes.addItalics" },
+                                                addPaddingCheckbox:                     { bind: "classes.addPadding" },
+                                                altTextbox:                             { bind: { value: { to: "settings.alt",   updateon: ["keydown", "keyup", "change"] } } },
+                                                example13model:                         { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                            },
+                                            function(adapter)
+                                            {
+                                                adapter.data("", 
+                                                {
+                                                    settings:
+                                                    {
+                                                        disabled:       false,
+                                                        display:        true,
+                                                        enabled:        true,
+                                                        for:            "disabledExampleControl",
+                                                        id:             "someUniqueId",
+                                                        tooltip:        "This is a tooltip!",
+                                                        value:          "A value fit for a control",
+                                                        alt:            "Depending on your browser this text might appear when the value property of the image has not been set or bound or is non existent."
+                                                    },
+                                                    classes:
+                                                    {
+                                                        addBorder:      false,
+                                                        addBold:        false,
+                                                        addItalics:     false,
+                                                        addPadding:     false
+                                                    },
+                                                    controls:   ["disabledExampleControl", "displayExampleControl", "enabledExampleControl"]
+                                                });
+                                            }
+                                        );
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example13model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
+                                    <figure class="highlight">
+                                        <h2>View Adapter</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+root.atomic.launch
+(
+    "#example13",
+    {
+        readonlyWithAttributesControlWrapper:   {},
+        readonlyWithAttributesControl:          { bind: {attributes: { to: "settings", root: "settings" } } },
+        readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "settings" } } },
+        disabledExampleControlWrapper:          {},
+        disabledExampleControl:                 { bind: { disabled: "settings.disabled" } },
+        disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        displayExampleControlWrapper:           {},
+        displayExampleControl:                  { bind: { display: "settings.display" } },
+        displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        enabledExampleControlWrapper:           {},
+        enabledExampleControl:                  { bind: { enabled: "settings.enabled" } },
+        enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        labelForControlWrapper:                 {},
+        labelForControl:                        { bind: { for: "settings.for" } },
+        labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        dynamicIdControlWrapper:                {},
+        dynamicIdControl:                       { bind: { id: "settings.id" } },
+        dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        tooltipControlWrapper:                  {},
+        tooltipControl:                         { bind: { tooltip: "settings.tooltip" } },
+        tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        valueControlWrapper:                    {},
+        valueControl:                           { bind: { value: "settings.value" } },
+        valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        classesControlWrapper:                  {},
+        classesControl:
+        {
+            bind:
+            {
+                classes:
+                {
+                    addBorder:  { when: "classes.addBorder" }, 
+                    addItalics: { when: "classes.addItalics" }, 
+                    addBold:    { when: "classes.addBold" }, 
+                    addPadding: { when: "classes.addPadding" }
+                }
+            }
+        },
+        classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "classes" } } },
+        altControlWrapper:                      {},
+        altControl:                             { bind: { alt: "settings.alt" } },
+        altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        disabledCheckbox:                       { bind: "settings.disabled" },
+        displayCheckbox:                        { bind: "settings.display" },
+        enabledCheckbox:                        { bind: "settings.enabled" },
+        forList:                                { bind: { value: "settings.for",    items: "controls" } },
+        idTextbox:                              { bind: { value: { to: "settings.id",        updateon: ["keydown", "keyup", "change"] } } },
+        tooltipTextbox:                         { bind: { value: { to: "settings.tooltip",   updateon: ["keydown", "keyup", "change"] } } },
+        valueTextbox:                           { bind: { value: { to: "settings.value",     updateon: ["keydown", "keyup", "change"] } } },
+        addBorderCheckbox:                      { bind: "classes.addBorder" },
+        addBoldCheckbox:                        { bind: "classes.addBold" },
+        addItalicsCheckbox:                     { bind: "classes.addItalics" },
+        addPaddingCheckbox:                     { bind: "classes.addPadding" },
+        altTextbox:                             { bind: { value: { to: "settings.alt",   updateon: ["keydown", "keyup", "change"] } } },
+        example13model:                         { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+    },
+    function(adapter)
+    {
+        adapter.data("", 
+        {
+            settings:
+            {
+                disabled:       false,
+                display:        true,
+                enabled:        true,
+                for:            "disabledExampleControl",
+                id:             "someUniqueId",
+                tooltip:        "This is a tooltip!",
+                value:          "A value fit for a control",
+                alt:            "Depending on your browser this text might appear when the value property of the image has not been set or bound or is non existent."
+            },
+            classes:
+            {
+                addBorder:      false,
+                addBold:        false,
+                addItalics:     false,
+                addPadding:     false
+            },
+            controls:   ["disabledExampleControl", "displayExampleControl", "enabledExampleControl"]
+        });
+    }
+);
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example13"&gt;
+    &lt;div class="example"&gt;
+        &lt;div class="well"&gt;
+            &lt;div class="row"&gt;
+                &lt;div class="col-md-8"&gt;
+                    &lt;h3&gt;Control bindings&lt;/h3&gt;
+                    &lt;style&gt;
+                        .addBorder  { border: solid 2px black; }
+                        .addBold    { font-weight: bold; }
+                        .addItalics { font-style: italic; }
+                        .addPadding { padding: 20px; }
+                    &lt;/style&gt;
+                    &lt;table class="table table-bordered"&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Readonly with attributes:&lt;/td&gt;
+                            &lt;td class="table-cell" id="readonlyWithAttributesControlWrapper"&gt;&lt;span id="readonlyWithAttributesControl"&gt;This control has attributes&lt;/span&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to disabled):&lt;/td&gt;
+                            &lt;td class="table-cell" id="disabledExampleControlWrapper"&gt;&lt;input id="disabledExampleControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to display):&lt;/td&gt;
+                            &lt;td class="table-cell" id="displayExampleControlWrapper"&gt;&lt;input id="displayExampleControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to enabled):&lt;/td&gt;
+                            &lt;td class="table-cell" id="enabledExampleControlWrapper"&gt;&lt;input id="enabledExampleControl" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Label control (reacts to for):&lt;/td&gt;
+                            &lt;td class="table-cell" id="labelForControlWrapper"&gt;&lt;label id="labelForControl"&gt;This label can be set for another element.&lt;br/&gt;Clicking on this label will set focus to that control.&lt;/label&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to id):&lt;/td&gt;
+                            &lt;td class="table-cell" id="dynamicIdControlWrapper"&gt;&lt;div id="dynamicIdControl"&gt;The id of this panel changes dynamically&lt;/div&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to tooltip):&lt;/td&gt;
+                            &lt;td class="table-cell" id="tooltipControlWrapper"&gt;&lt;div id="tooltipControl"&gt;The tooltip of this panel changes dynamically.&lt;br/&gt;Try hovering the mouse over it.&lt;/div&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Textarea control (reacts to value):&lt;/td&gt;
+                            &lt;td class="table-cell" id="valueControlWrapper"&gt;&lt;textarea id="valueControl"&gt;&lt;/textarea&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to classes):&lt;/td&gt;
+                            &lt;td class="table-cell" id="classesControlWrapper"&gt;&lt;div id="classesControl"&gt;The classes applied to this panel changes dynamically.&lt;/div&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Image control (reacts to alt):&lt;/td&gt;
+                            &lt;td class="table-cell" id="altControlWrapper"&gt;&lt;img id="altControl" src="nonexistent.png" width="150" height="60" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+                &lt;div class="col-md-4"&gt;
+                    &lt;h3&gt;Settings&lt;/h3&gt;
+                    &lt;table class="table table-bordered"&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Disabled:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="disabledCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Display:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="displayCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Enabled:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="enabledCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;For:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;select id="forList"&gt;&lt;/select&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Id:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="idTextbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Tooltip:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="tooltipTextbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Value:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="valueTextbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Add Border:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="addBorderCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Add Bold:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="addBoldCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Add Italics:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="addItalicsCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Add Padding:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="addPaddingCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Alt:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="altTextbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+                &lt;div class="col-md-12"&gt;
+                    &lt;h3&gt;What's in the view?&lt;/h3&gt;
+                    &lt;table class="table table-bordered"&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Readonly with attributes:&lt;/td&gt;
+                            &lt;td class="table-cell" id="readonlyWithAttibutesControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to disabled):&lt;/td&gt;
+                            &lt;td class="table-cell" id="disabledExampleControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to display):&lt;/td&gt;
+                            &lt;td class="table-cell" id="displayExampleControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Text control (reacts to enabled):&lt;/td&gt;
+                            &lt;td class="table-cell" id="enabledExampleControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Label control (reacts to for):&lt;/td&gt;
+                            &lt;td class="table-cell" id="labelForControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to id):&lt;/td&gt;
+                            &lt;td class="table-cell" id="dynamicIdControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to tooltip):&lt;/td&gt;
+                            &lt;td class="table-cell" id="tooltipControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Textarea control (reacts to value):&lt;/td&gt;
+                            &lt;td class="table-cell" id="valueControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Panel control (reacts to classes):&lt;/td&gt;
+                            &lt;td class="table-cell" id="classesControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Image control (reacts to alt):&lt;/td&gt;
+                            &lt;td class="table-cell" id="altControlReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
+                            
+                            
+                            
                             </div>
                         </div>
                     </div>
@@ -1873,13 +2384,19 @@ root.atomic.ready(function(atomic)
 </body>
 </html>
 <!--
-                                <div id="example">
+                                <div id="example?">
                                     <div class="example">
                                         <div class="well">
                                         </div>
-                                        <script type="text/javascript">
-                                        </script>
                                     </div>
+                                    <script type="text/javascript">
+                                    </script>
+                                    <figure class="highlight">
+                                        <h2>Model</h2>
+                                        <pre>
+<code id="example?model" class="language-javascript"></code>
+                                        </pre>
+                                    </figure>
                                     <figure class="highlight">
                                         <h2>View Adapter</h2>
                                         <pre>
@@ -1889,7 +2406,7 @@ root.atomic.ready(function(atomic)
                                         <h2>View</h2>
                                         <pre>
                                             <code class="language-html">
-&lt;div id="example1"&gt;
+&lt;div id="example?"&gt;
     &lt;div class="example"&gt;
         &lt;div class="well"&gt;
         &lt;/div&gt;
