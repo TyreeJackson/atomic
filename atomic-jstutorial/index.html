@@ -2026,31 +2026,14 @@ root.atomic.ready(function(atomic)
                                         (
                                             "#example13",
                                             {
-                                                readonlyWithAttributesControlWrapper:   {},
-                                                readonlyWithAttributesControl:          { bind: {attributes: { to: "settings", root: "settings" } } },
-                                                readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "settings" } } },
-                                                disabledExampleControlWrapper:          {},
+                                                readonlyWithAttributesControl:          { bind: { attributes: { to: "settings", root: "settings" } } },
                                                 disabledExampleControl:                 { bind: { disabled: "settings.disabled" } },
-                                                disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                displayExampleControlWrapper:           {},
                                                 displayExampleControl:                  { bind: { display: "settings.display" } },
-                                                displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                enabledExampleControlWrapper:           {},
                                                 enabledExampleControl:                  { bind: { enabled: "settings.enabled" } },
-                                                enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                labelForControlWrapper:                 {},
                                                 labelForControl:                        { bind: { for: "settings.for" } },
-                                                labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                dynamicIdControlWrapper:                {},
                                                 dynamicIdControl:                       { bind: { id: "settings.id" } },
-                                                dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                tooltipControlWrapper:                  {},
                                                 tooltipControl:                         { bind: { tooltip: "settings.tooltip" } },
-                                                tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                valueControlWrapper:                    {},
                                                 valueControl:                           { bind: { value: "settings.value" } },
-                                                valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                classesControlWrapper:                  {},
                                                 classesControl:
                                                 {
                                                     bind:
@@ -2064,10 +2047,11 @@ root.atomic.ready(function(atomic)
                                                         }
                                                     }
                                                 },
-                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classes" } } },
-                                                altControlWrapper:                      {},
                                                 altControl:                             { bind: { alt: "settings.alt" } },
-                                                altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+
+
+
+
                                                 disabledCheckbox:                       { bind: "settings.disabled" },
                                                 displayCheckbox:                        { bind: "settings.display" },
                                                 enabledCheckbox:                        { bind: "settings.enabled" },
@@ -2080,6 +2064,35 @@ root.atomic.ready(function(atomic)
                                                 addItalicsCheckbox:                     { bind: "classes.addItalics" },
                                                 addPaddingCheckbox:                     { bind: "classes.addPadding" },
                                                 altTextbox:                             { bind: { value: { to: "settings.alt",   updateon: ["keydown", "keyup", "change"] } } },
+
+
+
+
+                                                /* BEGIN: these controls are here to display the contents of the view */
+
+                                                readonlyWithAttributesControlWrapper:   {},
+                                                disabledExampleControlWrapper:          {},
+                                                displayExampleControlWrapper:           {},
+                                                enabledExampleControlWrapper:           {},
+                                                labelForControlWrapper:                 {},
+                                                dynamicIdControlWrapper:                {},
+                                                tooltipControlWrapper:                  {},
+                                                valueControlWrapper:                    {},
+                                                classesControlWrapper:                  {},
+                                                altControlWrapper:                      {},
+                                                readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "settings" } } },
+                                                disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classes" } } },
+                                                altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+
+                                                /* END: these controls are here to display the contents of the view */
+
                                                 example13model:                         { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             },
                                             function(adapter)
@@ -2123,31 +2136,14 @@ root.atomic.launch
 (
     "#example13",
     {
-        readonlyWithAttributesControlWrapper:   {},
-        readonlyWithAttributesControl:          { bind: {attributes: { to: "settings", root: "settings" } } },
-        readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "settings" } } },
-        disabledExampleControlWrapper:          {},
+        readonlyWithAttributesControl:          { bind: { attributes: { to: "settings", root: "settings" } } },
         disabledExampleControl:                 { bind: { disabled: "settings.disabled" } },
-        disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        displayExampleControlWrapper:           {},
         displayExampleControl:                  { bind: { display: "settings.display" } },
-        displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        enabledExampleControlWrapper:           {},
         enabledExampleControl:                  { bind: { enabled: "settings.enabled" } },
-        enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        labelForControlWrapper:                 {},
         labelForControl:                        { bind: { for: "settings.for" } },
-        labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        dynamicIdControlWrapper:                {},
         dynamicIdControl:                       { bind: { id: "settings.id" } },
-        dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        tooltipControlWrapper:                  {},
         tooltipControl:                         { bind: { tooltip: "settings.tooltip" } },
-        tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        valueControlWrapper:                    {},
         valueControl:                           { bind: { value: "settings.value" } },
-        valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        classesControlWrapper:                  {},
         classesControl:
         {
             bind:
@@ -2161,10 +2157,11 @@ root.atomic.launch
                 }
             }
         },
-        classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "classes" } } },
-        altControlWrapper:                      {},
         altControl:                             { bind: { alt: "settings.alt" } },
-        altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+
+
+
+
         disabledCheckbox:                       { bind: "settings.disabled" },
         displayCheckbox:                        { bind: "settings.display" },
         enabledCheckbox:                        { bind: "settings.enabled" },
@@ -2177,6 +2174,35 @@ root.atomic.launch
         addItalicsCheckbox:                     { bind: "classes.addItalics" },
         addPaddingCheckbox:                     { bind: "classes.addPadding" },
         altTextbox:                             { bind: { value: { to: "settings.alt",   updateon: ["keydown", "keyup", "change"] } } },
+
+
+
+
+        /* BEGIN: these controls are here to display the contents of the view */
+
+        readonlyWithAttributesControlWrapper:   {},
+        disabledExampleControlWrapper:          {},
+        displayExampleControlWrapper:           {},
+        enabledExampleControlWrapper:           {},
+        labelForControlWrapper:                 {},
+        dynamicIdControlWrapper:                {},
+        tooltipControlWrapper:                  {},
+        valueControlWrapper:                    {},
+        classesControlWrapper:                  {},
+        altControlWrapper:                      {},
+        readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "settings" } } },
+        disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+        classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "classes" } } },
+        altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
+
+        /* END: these controls are here to display the contents of the view */
+
         example13model:                         { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     },
     function(adapter)
