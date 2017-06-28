@@ -6,7 +6,8 @@
         control.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
+            alt:    {get: function(){return this.__element.alt;},   set: function(value){this.__element.alt = value||"";}},
+            value:  {get: function(){return this.__element.src;},   set: function(value){this.__element.src = value||"";}}
         });
     }
     Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
