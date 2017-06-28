@@ -2040,10 +2040,10 @@ root.atomic.ready(function(atomic)
                                                     {
                                                         classes:
                                                         {
-                                                            addBorder:  { when: "classes.addBorder" }, 
+                                                            addBorder:  { when: "classes.addBorder" },                      // default operation is a bool check
                                                             addItalics: { when: "classes.addItalics" }, 
-                                                            addBold:    { when: "classes.addBold" }, 
-                                                            addPadding: { when: "classes.addPadding" }
+                                                            addBold:    { when: "classes.addBold",      equals: true },     // alternative operation equals
+                                                            addPadding: { when: "classes.addPadding",   notequals: false }  // alternative operation notequals
                                                         }
                                                     }
                                                 },
@@ -2150,10 +2150,10 @@ root.atomic.launch
             {
                 classes:
                 {
-                    addBorder:  { when: "classes.addBorder" }, 
+                    addBorder:  { when: "classes.addBorder" },                     // default operation is a bool check
                     addItalics: { when: "classes.addItalics" }, 
-                    addBold:    { when: "classes.addBold" }, 
-                    addPadding: { when: "classes.addPadding" }
+                    addBold:    { when: "classes.addBold",      equals: true },    // alternative operation equals
+                    addPadding: { when: "classes.addPadding",   notequals: false } // alternative operation notequals
                 }
             }
         },
