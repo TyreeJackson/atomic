@@ -214,6 +214,7 @@
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
             for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
             id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
+            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){this.__element.title = value||"";}},
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
@@ -380,7 +381,6 @@
         Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            value:      {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}},
             attributes:         
             {
                 get:    function(){return this.__attributes;}, 
@@ -400,7 +400,9 @@
             disabled:           {get: function(){return this.__element.disabled;},              set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
-            "for":              {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}}
+            for:              {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}},
+            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
+            value:              {get: function(){return this.__element.innerHTML;},             set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
@@ -1071,7 +1073,8 @@
         control.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
+            alt:    {get: function(){return this.__element.alt;},   set: function(value){this.__element.alt = value||"";}},
+            value:  {get: function(){return this.__element.src;},   set: function(value){this.__element.src = value||"";}}
         });
     }
     Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
@@ -1237,8 +1240,9 @@
     }
     function bindWhenBinding(viewAdapter, name, binding)
     {
-        if (binding.equals      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
-        if (binding.notequals   !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+        if (binding.equals         !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        else if (binding.notequals !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
     }
     function bindProperty(viewAdapter, name, binding)
     {
