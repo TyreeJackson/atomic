@@ -26,9 +26,13 @@
     }
     function bindWhenBinding(viewAdapter, name, binding)
     {
-        if (binding.equals         !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
-        else if (binding.notequals !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
-        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+        if (binding.equals || binding["="]          !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        else if (binding.notequals || binding["!="] !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+        else if (binding[">"]                       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) > binding[">"];};
+        else if (binding[">="]                      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) >= binding[">="];};
+        else if (binding["<"]                       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
+        else if (binding["<="]                      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
+        else                                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
     }
     function bindProperty(viewAdapter, name, binding)
     {

@@ -458,7 +458,7 @@
         return  definition.type
                 ||
                 (definition.controls || definition.adapter
-                ?   element.nodeName.toLowerCase() == "a"
+                ?   element !== undefined && element.nodeName.toLowerCase() == "a"
                     ?   "linkPanel"
                     :   "panel"
                 :   definition.repeat
@@ -1240,9 +1240,13 @@
     }
     function bindWhenBinding(viewAdapter, name, binding)
     {
-        if (binding.equals         !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
-        else if (binding.notequals !== undefined)   viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
-        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+        if (binding.equals || binding["="]          !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        else if (binding.notequals || binding["!="] !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+        else if (binding[">"]                       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) > binding[">"];};
+        else if (binding[">="]                      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) >= binding[">="];};
+        else if (binding["<"]                       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
+        else if (binding["<="]                      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
+        else                                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
     }
     function bindProperty(viewAdapter, name, binding)
     {
@@ -1569,7 +1573,8 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name!=="sort"&&name!=="reverse"); 
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        if(name!=="sort" && name!=="reverse")   notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result === items ? this : result; 
                     }
                 }
@@ -1588,6 +1593,7 @@
                         var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
                         this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result; 
                     }
                 }

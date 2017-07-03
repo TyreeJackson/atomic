@@ -22,7 +22,7 @@
         return  definition.type
                 ||
                 (definition.controls || definition.adapter
-                ?   element.nodeName.toLowerCase() == "a"
+                ?   element !== undefined && element.nodeName.toLowerCase() == "a"
                     ?   "linkPanel"
                     :   "panel"
                 :   definition.repeat

@@ -93,8 +93,8 @@ root.atomic.launch ( "#example1", {worldLabel: {value: "World"}} );
                                                 worldLabel2:    {bind: "worldValue"},
                                                 sayHelloButton:
                                                 {
-                                                    onclick:    function(){this.data("worldValue","World");}, 
-                                                    bind:       { display: function(){return !this.data("worldValue.length");} }
+                                                    onclick:    function(){ this.data("worldValue","World"); }, 
+                                                    bind:       { display: { when: "worldValue.length", "=": 0 } }
                                                 },
                                                 example2model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             }
@@ -118,8 +118,8 @@ root.atomic.launch
         worldLabel2:    {bind: "worldValue"},
         sayHelloButton:
         {
-            onclick:    function(){this.data("worldValue","World");}, 
-            bind:       { display: function(){return !this.data("worldValue.length");} }
+            onclick:    function(){ this.data("worldValue","World"); }, 
+            bind:       { display: { when: "worldValue.length", "=": 0 } }
         }
     }
 );
@@ -263,18 +263,18 @@ root.atomic.launch
                                                     {
                                                         this.data("clickCount", this.data("clickCount")+1);
                                                     },
-                                                    bind:       {enabled: function(){return this.data("clickCount")<3;}}
+                                                    bind:       { enabled: { when: "clickCount", "<": 3 } }
                                                 },
                                                 tooManyClicksMessage:
                                                 {
-                                                    bind:   { display: function(data){return data("clickCount")>=3;} }
+                                                    bind:   { display: { when: "clickCount", ">=": 3 } }
                                                 },
                                                 resetClickCountButton:
                                                 {
                                                     onclick:
                                                     function()
                                                     {
-                                                        this.data("clickCount",0);
+                                                        this.data("clickCount", 0);
                                                     }
                                                 },
                                                 example4model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
@@ -304,11 +304,11 @@ root.atomic.launch
             {
                 this.data("clickCount", this.data("clickCount")+1);
             },
-            bind:       {enabled: function(){return this.data("clickCount")&lt;3;}}
+            bind:       { enabled: { when: "clickCount", "&lt;": 3 } }
         },
         tooManyClicksMessage:
         {
-            bind:   { display: function(data){return data("clickCount")&gt;=3;} }
+            bind:   { display: { when: "clickCount", "&gt;=": 3 } }
         },
         resetClickCountButton:
         {
@@ -491,12 +491,12 @@ root.atomic.launch
                                                 },
                                                 removeItemButton:
                                                 {
-                                                    bind:       {enabled: "items.length"},
+                                                    bind:       { enabled: "items.length" },
                                                     onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList.value());}
                                                 },
                                                 sortItemsButton:
                                                 {
-                                                    bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                    bind:       { enabled: { when: "items.length", ">": 1 } },
                                                     onclick:    function(){this.data("items").sort();}
                                                 },
                                                 example6model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
@@ -545,7 +545,7 @@ root.atomic.launch
         },
         sortItemsButton:
         {
-            bind:       {enabled: function(){return this.data("items.length")&gt;1}},
+            bind:       { enabled: { when: "items.length", "&gt;": 1 } },
             onclick:    function(){this.data("items").sort();}
         }
     },
@@ -1087,7 +1087,7 @@ root.atomic.launch
                         personNameLabel:    { bind:     "name" },
                         childCountLabel:    { bind:     "children.length" },
                         addChildLink:       { onclick:  function(){this.data("children").push({name:"New Child"});} },
-                        renderTimeSection:  { bind:     { display: "::showRenderTimes" } },
+                        renderTimeSection:  { bind:     { display: "...showRenderTimes" } },
                         renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} },
                         childList:
                         {
@@ -1100,7 +1100,7 @@ root.atomic.launch
                                     controls:
                                     {
                                         childNameLabel:         { bind: "name" },
-                                        childRenderTimeSection: { bind: { display: "::showRenderTimes" } },
+                                        childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
                                         childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
                                     }
                                 }
@@ -1356,7 +1356,7 @@ root.atomic.launch
                                                                 sortItemsButton:
                                                                 {
                                                                     type:       "button",
-                                                                    bind:       {enabled: function(){return this.data("items.length")>1}},
+                                                                    bind:       { enabled: { when: "items.length", ">": 1 } },
                                                                     onclick:    function(){this.data("items").sort();}
                                                                 }
                                                             }
@@ -1441,7 +1441,7 @@ root.atomic.launch
                         sortItemsButton:
                         {
                             type:       "button",
-                            bind:       {enabled: function(){return this.data("items.length")&gt;1}},
+                            bind:       { enabled: { when: "items.length", "&gt;": 1 } },
                             onclick:    function(){this.data("items").sort();}
                         }
                     }
@@ -1624,7 +1624,8 @@ root.atomic.launch
                                                         },
                                                         input:
                                                         {
-                                                            selector:   ".textbox-input"
+                                                            selector:   ".textbox-input",
+                                                            onescape:   function(){ this.value(""); }
                                                         }
                                                     },
                                                     properties:

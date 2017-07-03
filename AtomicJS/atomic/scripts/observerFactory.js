@@ -237,7 +237,8 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name!=="sort"&&name!=="reverse"); 
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        if(name!=="sort" && name!=="reverse")   notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result === items ? this : result; 
                     }
                 }
@@ -256,6 +257,7 @@
                         var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
                         this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result; 
                     }
                 }
