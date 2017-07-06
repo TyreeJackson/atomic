@@ -4,6 +4,10 @@
     function button(element, selector, parent)
     {
         control.call(this, element, selector, parent);
+        this.__binder.defineDataProperties(this,
+        {
+            value:  {get: function(){return this.__element.innerHTML;},   set: function(value){this.__element.innerHTML = value||"";}}
+        });
     }
     Object.defineProperty(button, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(button.prototype,

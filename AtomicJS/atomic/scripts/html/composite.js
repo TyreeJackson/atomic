@@ -16,7 +16,7 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")     Object.defineProperty(this, propertyKey, {value: property.call(this)});
-                else    if (property.bound === true)    this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onupdate: property.onupdate});
+                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate});}
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
