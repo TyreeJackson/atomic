@@ -367,7 +367,7 @@ input, textarea {
 .langright {
     margin-left: 10px;
 }
-.markdown-body { padding: 5px; border: none; height: 200px; }
+.markdown-body { padding: 5px; border: none; max-height: 200px; }
 .containerLabel
 {
     position:                   absolute; 
