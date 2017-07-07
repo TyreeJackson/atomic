@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomic • Interactive Tutorial</title>
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <link rel="stylesheet" href="index.css" />
+    <script type="application/javascript" src="scripts/atomic.js"></script>
+    <script type="application/javascript" src="scripts/ace/ace.js"></script>
+</head>
+<body id="tutorialApp">
+    <nav class="navbar navbar-default">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#toolbar">
+                <span class="sr-only">Toggle toolbar</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Atomic JS</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="toolbar">
+            <ul class="nav navbar-nav">
+                <li id="btnRun"><a id="runButton"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</a></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </nav>
+    <div id="playground">
+        <div class="checkbox"><input id="livePreviewCheckbox" type="checkbox" /><label for="livePreviewCheckbox">Live preview: </label></div>
+        <div class="selectList"><select id="exampleList"></select> <input id="addNewPlaygroundButton" type="button" value="Add New Playground" /></div>
+        <div class="meta">
+            <div class="top">
+                <div id="instructions" class="markdownContainer"></div>
+            </div>
+            <div class="bottom">
+                <div class="editorContainer">
+                    <div id="preview" class="editor"></div>
+                </div>
+            </div>
+        </div>
+        <div class="editors">
+            <div class="top">
+                <div id="htmlEditor" class="editorContainer"></div>
+            </div>
+            <div class="middle">
+                <div id="cssEditor" class="editorContainer"></div>
+            </div>
+            <div class="bottom">
+                <div id="javascriptEditor" class="editorContainer"></div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="editorContainer2">
+                <div class="editor">
+                    <pre>
+<code id="model" class="language-javascript"></code>
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="editorControl" class="editor"></div>
+</body>
+<script type="application/javascript">
+    root.atomic.ready(function(atomic)
+    {
+        var editorControl   = atomic.viewAdapterFactory.createFactory
+        (
+            {
+                properties:
+                {
+                    value:
+                    {
+                        bound:      true,
+                        get:        function(){return this.__editor.getValue();},
+                        set:        function(value){this.__editor.setValue(value||"");},
+                        onchange:   "change"
+                    },
+                    bind:   { get: function(){return this.value.bind;}, set: function(value){this.value.bind = value;}}
+
+                },
+                extensions:
+                [{
+                    initializers:
+                    {
+                        theme:  function(viewAdapter, value){this.__editor.setTheme(value);},
+                        mode:   function(viewAdapter, value){this.__editor.getSession().setMode("ace/mode/" + value);}
+                    },
+                    extend:
+                    function()
+                    {
+                        this.__editor   = ace.edit(this.__element);
+                        this.__editor.getSession().on("change", (function(e){this.triggerEvent("change");}).bind(this));
+                    }
+
+                }]
+
+            },
+            "#editorControl"
+        );
+
+        function getActiveExamplePath(item)
+        {
+            var active  = item("...active");
+            if (active !== undefined && item("...examples") !== undefined)
+            for(var counter=0;counter<item("...examples").count;counter++) if(item("...examples")(counter)("name")==active) {return "...examples."+counter+".example"; }
+            return undefined;
+        }
+        var updaterId;
+        function updateIframe(execute)
+        {
+            var examplePath = getActiveExamplePath(this.data);
+            var html        = '<html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="scripts/atomic.js"></sc' + 'ript><style>' + this.data(examplePath+".css") + '</style></head><body>' + (this.data(examplePath+".html")||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<scr' + 'ipt type="application/javascript">' + this.data(examplePath+".javascript") + '</scr' + 'ipt></body></html>';
+            if (!execute) return;
+            function doIt()
+            {
+                updaterId   = undefined;
+                this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
+                var iframe  = this.root.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0];
+                iframe.contentWindow.document.open();
+                iframe.contentWindow.document.write(html);
+                iframe.contentWindow.document.close();
+            }
+            if (updaterId !== undefined)    clearTimeout(updaterId);
+            updaterId   = setTimeout(doIt.bind(this), 250);
+        }
+        atomic.viewAdapterFactory.launch
+        (
+            document.body,
+            {
+                runButton:              { onclick:  function(){ updateIframe.call(this, true); } },
+                exampleList:
+                {
+                    bind:
+                    {
+                        value:  "active",
+                        items:
+                        {
+                            to:     "examples",
+                            text:   "name",
+                            value:  "name"
+                        }
+                    }
+                },
+                addNewPlaygroundButton:
+                {
+                    onclick:
+                    function()
+                    {
+                        var name = prompt("Enter a name for the new playground (blank to abort): "); 
+                        if (name == '') return;
+                        this.data("examples").push({name: name, example: {javascript: "", html: "", css: ""}});
+                        var newPlayground = this.data("examples")(this.data("examples").count-1)("example");
+                        debugger;
+                        this.data("...active", name);
+                    }
+                },
+                livePreviewCheckbox:            { bind:     "livePreview" },
+                playground: 
+                {
+                    bind:       getActiveExamplePath, 
+                    controls:
+                    {
+                        javascriptEditor:       { factory:  editorControl,  theme: "ace/theme/monokai", mode:   "javascript",   bind: "javascript" },
+                        cssEditor:              { factory:  editorControl,  theme: "ace/theme/monokai", mode:   "css",          bind: "css" },
+                        htmlEditor:             { factory:  editorControl,  theme: "ace/theme/monokai", mode:   "html",         bind: "html" },
+                        preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, item("...livePreview")); } } } }
+                    }
+                },
+                model:      { bind:     { value: { to: function(){return JSON.stringify(this.data(), null, '    ').replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "" } } }
+            },
+            function(adapter)
+            {
+                adapter.data("",
+                {
+                    livePreview:    true,
+                    examples:
+                    [
+                        {
+                            name:       "--Select an example--",
+                            example:    {}
+                        },
+                        {
+                            name:           "Hello World",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch ( \"#example1\", {worldLabel: {value: \"World\"}} );",
+                                css:        "",
+                                html:       "<div id=\"example1\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <h1 id=\"greeting\">Hello <span id=\"worldLabel\"></span>!</h1>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Hello World Revisited",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example2\",\n    {\n        greeting2:      {bind: { display: \"worldValue.length\" }},\n        worldLabel2:    {bind: \"worldValue\"},\n        sayHelloButton:\n        {\n            onclick:    function(){ this.data(\"worldValue\",\"World\"); }, \n            bind:       { display: { when: \"worldValue.length\", \"=\": 0 } }\n        }\n    }\n);",
+                                css:        "",
+                                html:       "<div id=\"example2\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <h1 id=\"greeting2\">Hello <span id=\"worldLabel2\"></span>!</h1>\n            <button id=\"sayHelloButton\">Say Hello</button>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Hello Friend",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example3\",\n    {\n        firstNameTextbox:\n        {\n            focused:    true,\n            bind:       { value: { to: \"firstName\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n            onescape:   function(){ this.value(\"\"); }\n        },\n        lastNameTextbox:\n        {\n            bind:       { value: { to: \"lastName\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n            onescape:   function(){this.value(\"\");}\n        },\n        helloMessage:\n        {\n            bind:   { display: function(){return this.data.hasValue(\"firstName\") || this.data.hasValue(\"lastName\");} }\n        },\n        nameLabels:\n        {\n            selector:   \".name\",\n            bind:       function(data){return (this.data(\"firstName\")||\"\") + (this.data(\"firstName\") && this.data(\"lastName\")?\" \":\"\") + (this.data(\"lastName\")||\"\");}\n        }\n    }\n);",
+                                css:        "",
+                                html:       "<div id=\"example3\">\n    <div class=\"example\">\n        <div class=\"well form-group\">\n            <div><input id=\"firstNameTextbox\" autocomplete=\"off\" class=\"form-control\" placeholder=\"Enter your first name:\" /></div>\n            <div><input id=\"lastNameTextbox\" autocomplete=\"off\" class=\"form-control\" placeholder=\"Enter your last name:\" /></div>\n            <div id=\"helloMessage\">\n                <p>Hello <span class=\"name\"></span>!</p>\n                <p>Pardon me <span class=\"name\"></span>, but do you have any grey poupon?</p>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Click Counter",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example4\",\n    {\n        numberOfClicks:         { bind: \"clickCount\" },\n        countClickButton:\n        {\n            onclick:\n            function()\n            {\n                this.data(\"clickCount\", this.data(\"clickCount\")+1);\n            },\n            bind:       { enabled: { when: \"clickCount\", \"<\": 3 } }\n        },\n        tooManyClicksMessage:\n        {\n            bind:   { display: { when: \"clickCount\", \">=\": 3 } }\n        },\n        resetClickCountButton:\n        {\n            onclick:\n            function()\n            {\n                this.data(\"clickCount\",0);\n            }\n        }\n    },\n    function(adapter) { adapter.data(\"\", {clickCount:0}); }\n);",
+                                css:        "",
+                                html:       "<div id=\"example4\">\n    <div class=\"example\">\n        <div class=\"well form-group\">\n            <div>You've clicked <span id=\"numberOfClicks\"> </span> times</div>\n\n            <button id=\"countClickButton\" class=\"btn\">Click me</button>\n\n            <div id=\"tooManyClicksMessage\">\n                That's too many clicks! Please stop before you wear out your fingers.\n                <button id=\"resetClickCountButton\" class=\"btn\">Reset clicks</button>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Simple List",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example5\",\n    {\n        newItem:\n        {\n            bind:       { value: { to: \"newItem\", updateon:   [\"keydown\", \"keyup\", \"change\"] } },\n            onenter:    function(){this.parent.controls.addNewItemButton.click();}\n        },\n        addNewItemButton:\n        {\n            bind:       { enabled: \"newItem.length\" },\n            onclick:\n            function()\n            {\n                if (this.data(\"newItem.length\")>0 && this.data(\"items\").indexOf(this.data(\"newItem\"))==-1)\n                this.data(\"items\").push(this.data(\"newItem\"));\n                this.data(\"newItem\",\"\");\n            }\n        },\n        itemsList:\n        {\n            bind: { value: \"selected\", items: \"items\" }\n        }\n    },\n    function(adapter) { adapter.data(\"\", {newItem:\"\", items: [\"Alpha\",\"Beta\",\"Gamma\"]}); }\n);",
+                                css:        "",
+                                html:       "<div id=\"example5\">\n    <div class=\"example\">\n        <div class=\"well form-group\">\n            <div>\n                <div class=\"form-group\"><input id=\"newItem\" class=\"form-control\" /></div>\n                <button id=\"addNewItemButton\" type=\"button\" class=\"btn\">Add</button>\n                <p>Your items:</p>\n                <div class=\"form-group\">\n                    <select id=\"itemsList\" multiple=\"multiple\" class=\"form-control\"> </select>\n                </div>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "A Better List",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example6\",\n    {\n        betterNewItem:\n        {\n            bind:       { value: { to: \"newItem\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n            onenter:    function(){this.parent.controls.betterAddNewItemButton.click();}\n        },\n        betterAddNewItemButton:\n        {\n            bind:       { enabled: \"newItem.length\" },\n            onclick:\n            function()\n            {\n                if (this.data(\"newItem.length\")>0 && this.data(\"items\").indexOf(this.data(\"newItem\"))==-1)\n                this.data(\"items\").push(this.data(\"newItem\"));\n                this.data(\"newItem\",\"\");\n            }\n        },\n        betterItemsList:\n        {\n            bind: { value: \"selected\", items: \"items\" }\n        },\n        removeItemButton:\n        {\n            bind:       { enabled: \"items.length\" },\n            onclick:    function(){this.data(\"items\").removeAll(this.parent.controls.betterItemsList.value());}\n        },\n        sortItemsButton:\n        {\n            bind:       { enabled: { when: \"items.length\", \">\": 1 } },\n            onclick:    function(){this.data(\"items\").sort();}\n        }\n    },\n    function(adapter) { adapter.data(\"\", {newItem:\"\", items: [\"Fries\",\"Eggs Benedict\",\"Ham\",\"Cheese\"]}); }\n);",
+                                css:        "",
+                                html:       "<div id=\"example6\">\n    <div class=\"example\">\n        <div class=\"well form-group\">\n            <div>\n                <div class=\"form-group\"><input id=\"betterNewItem\" class=\"form-control\" /></div>\n                <button id=\"betterAddNewItemButton\" type=\"button\" class=\"btn\">Add</button>\n                <p>Your items:</p>\n                <div class=\"form-group\">\n                    <select id=\"betterItemsList\" multiple=\"multiple\" class=\"form-control\"> </select>\n                </div>\n            </div>\n            <div>\n                <button id=\"removeItemButton\" class=\"btn\">Remove</button>\n                <button id=\"sortItemsButton\" class=\"btn\">Sort</button>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Control Types Demo",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example7\",\n    {\n        stringValueReadout:             { bind: \"stringValue\" },\n        urlValueReadout:                { bind: \"urlValue\" },\n        passwordValueReadout:           { bind: \"passwordValue\" },\n        booleanValueReadout:            { bind: \"booleanValue\" },\n        selectedValueReadout:           { bind: \"selectedValue\" },\n        multipleSelectedValuesReadout:  { bind: function(data){ return data(\"multipleSelectedValues\")&&data(\"multipleSelectedValues\").join();} },\n        radioSelectedOptionReadout:     { bind: \"radioSelectedValue\" },\n        imagePathValueReadout:          { bind: \"imageUrl\" },\n        onChangeTextboxControl:         { bind: \"stringValue\" },\n        onKeyStrokeTextboxControl:      { bind: { value: { to: \"stringValue\", updateon: [\"keydown\",\"keyup\",\"change\"] } } },\n        textAreaControl:                { bind: \"stringValue\" },\n        passwordControl:                { bind: \"passwordValue\" },\n        checkboxControl:                { bind: \"booleanValue\" },\n        singleDropdownListControl:      { bind: { value: \"selectedValue\",           items: \"items\" } },\n        multipleListControl:            { bind: { value: \"multipleSelectedValues\",  items: \"items\" } },\n        radioGroupControl:              { bind: { value: \"radioSelectedValue\",      items: \"items\" } },\n        buttonControl:                  { bind: \"stringValue\" },\n        readonlyControl:                { bind: \"stringValue\" },\n        linkControl:                    { bind: {value: \"stringValue\", href: \"urlValue\" }},\n        urlTextboxControl:              { bind: \"urlValue\" },\n        linkPanelControl:\n        {\n            bind: {href: \"urlValue\"},\n            controls:\n            {\n                panelReadonly:  { bind: \"stringValue\" },\n                panelUrl:       { bind: \"urlValue\" }\n            }\n        },\n        imageControl:                   { bind: \"imageUrl\" },\n        imagePathControl:               { bind: { value: \"imageUrl\",                items: { to: \"images\", text: \"title\", value: \"url\" } } }\n    },\n    function(adapter)\n    {\n        adapter.data(\"\", \n        {\n            stringValue:            \"Hello\", \n            urlValue:               \"https://atomicstack.com\",\n            passwordValue:          \"mypass\", \n            booleanValue:           true, \n            selectedValue:          \"Gamma\", \n            multipleSelectedValues: [\"Beta\"], \n            radioSelectedValue:     \"Alpha\",\n            imageUrl:               \"images/hammock_cat.jpg\",\n            items:                  [\"Alpha\",\"Beta\",\"Gamma\"],\n            images:\n            [\n                {\n                    title:  \"Hammock Cat\",\n                    url:    \"images/hammock_cat.jpg\"\n                },\n                {\n                    title:  \"Headphones\",\n                    url:    \"images/headphones.jpg\"\n                },\n                {\n                    title:  \"Nature Scene\",\n                    url:    \"images/nature_scene.png\"\n                }\n            ]\n        });\n    }\n);\n",
+                                css:        "",
+                                html:       "<div id=\"example7\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <div class=\"row\">\n                <div class=\"col-md-8\">\n                    <h3>HTML controls</h3>\n                    <table class=\"table table-bordered\">\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text value (updates on change):</td>\n                            <td class=\"table-cell\"><input id=\"onChangeTextboxControl\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Text value (updates on keystroke):</td>\n                            <td class=\"table-cell\"><input id=\"onKeyStrokeTextboxControl\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Text value (multi-line):</td>\n                            <td class=\"table-cell\"><textarea id=\"textAreaControl\"> </textarea></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Password:</td>\n                            <td class=\"table-cell\"><input id=\"passwordControl\" type=\"password\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Checkbox:</td>\n                            <td class=\"table-cell\"><input id=\"checkboxControl\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Drop-down list:</td>\n                            <td class=\"table-cell\"><select id=\"singleDropdownListControl\"></select></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Multi-select drop-down list:</td>\n                            <td class=\"table-cell\"><select id=\"multipleListControl\" multiple=\"multiple\"></select></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Radio buttons:</td>\n                            <td class=\"table-cell\">\n                                <radiogroup id=\"radioGroupControl\">\n                                    <radiogroupitem class=\"radio-inline\"><input type=\"radio\" /><label></label></radiogroupitem>\n                                </radiogroup>\n                            </td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Buttons:</td>\n                            <td class=\"table-cell\">\n                                <button id=\"buttonControl\"></button>\n\n                            </td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Readonly:</td>\n                            <td class=\"table-cell\"><span id=\"readonlyControl\"></a></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Link:</td>\n                            <td class=\"table-cell\"><a id=\"linkControl\"></a><br/><input id=\"urlTextboxControl\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Link Panel:</td>\n                            <td class=\"table-cell\"><a id=\"linkPanelControl\"><span id=\"panelReadonly\"></span> [ <span id=\"panelUrl\"></span> ]</a></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Images:</td>\n                            <td class=\"table-cell\">\n                                <img id=\"imageControl\" /><br/>\n                                <radiogroup id=\"imagePathControl\">\n                                    <radiogroupitem class=\"radio-inline\"><input type=\"radio\" /><label></label></radiogroupitem>\n                                </radiogroup>\n                            </td>\n                        </tr>\n                    </table>\n                </div>\n                <div class=\"col-md-4\">\n                    <h3>What's in the model?</h3>\n                    <table class=\"table table-bordered\">\n                        <tr>\n                            <td class=\"table-cell\">Text value:</td>\n                            <td class=\"table-cell\" id=\"stringValueReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Url value:</td>\n                            <td class=\"table-cell\" id=\"urlValueReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Password:</td>\n                            <td class=\"table-cell\" id=\"passwordValueReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Bool value:</td>\n                            <td class=\"table-cell\" id=\"booleanValueReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Selected option:</td>\n                            <td class=\"table-cell\" id=\"selectedValueReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Multi-selected options:</td>\n                            <td class=\"table-cell\" id=\"multipleSelectedValuesReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Radio button selection:</td>\n                            <td class=\"table-cell\" id=\"radioSelectedOptionReadout\"></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Image path value:</td>\n                            <td class=\"table-cell\" id=\"imagePathValueReadout\"></td>\n                        </tr>\n                    </table>\n                </div>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Working with Lists",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example8\",\n    {\n        peopleList:\n        {\n            bind:   \"people\",\n            repeat:\n            {\n                peopleListItemTemplate:\n                {\n                    getKey:     function(data){return \"person-\"+this.index;},\n                    controls:\n                    {\n                        personNameLabel:    { bind:     \"name\" },\n                        childCountLabel:    { bind:     \"children.length\" },\n                        addChildLink:       { onclick:  function(){this.data(\"children\").push(\"New Child\");} },\n                        sortChildrenLink:   { onclick:  function(){this.data(\"children\").sort();}},\n                        renderTimeSection:  \n                        {\n                            bind:       { display: \"...showRenderTimes\" },\n                            controls:\n                            {\n                                renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} }\n                            }\n                        },\n                        childList:\n                        {\n                            bind:   \"children\",\n                            repeat:\n                            {\n                                childListItemTemplate:\n                                {\n                                    getKey:     function(data){return \"person-\"+this.parent.parent.data(\"name\")+\"-child-\"+this.index;},\n                                    controls:\n                                    {\n                                        childNameLabel:         { bind: \"\" },\n                                        childRenderTimeSection: { bind: { display: \"...showRenderTimes\" } },\n                                        childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        },\n        showRenderTimesCheckbox:    { bind: \"showRenderTimes\" }\n    },\n    function(adapter)\n    {\n        adapter.data\n        (\"\",\n        {\n            showRenderTimes:    false,\n            people:\n            [\n                {name:\"Anabelle\",   children: [\"Arnie\",\"Anders\",\"Apple\"]},\n                {name:\"Bertie\",     children: [\"Boutros-Boutros\",\"Brianna\",\"Barbie\",\"Bee-bop\"]},\n                {name:\"Charles\",    children: [\"Cayenne\",\"Cleopatra\"]}\n            ]\n        });\n    }\n);",
+                                css:        "a { cursor: pointer; }",
+                                html:       "<div id=\"example8\">\n    <style type=\"text/css\">\n        .renderTime { color: #777; font-style: italic; font-size: 0.8em; }\n    </style>\n    <div class=\"example\">\n        <div class=\"well\">\n            <h2>People</h2>\n            <ul id=\"peopleList\">\n                <li id=\"peopleListItemTemplate\">\n                    <div>\n                        <span id=\"personNameLabel\"> </span> has <span id=\"childCountLabel\"> </span> children:\n                        <a id=\"addChildLink\" class=\"clickable\">Add child</a>\n                        <a id=\"sortChildrenLink\" class=\"clickable\">Sort Children</a>\n                        <span id=\"renderTimeSection\" class=\"renderTime\">\n                            (person rendered at <span id=\"renderTimeLabel\"> </span>)\n                        </span>\n                    </div>\n                    <ul id=\"childList\">\n                        <li id=\"childListItemTemplate\">\n                            <span id=\"childNameLabel\"> </span>\n                            <span id=\"childRenderTimeSection\" class=\"renderTime\">\n                                (child rendered at <span id=\"childRenderTimeLabel\"> </span>)\n                            </span>\n                        </li>\n                    </ul>\n                </li>\n            </ul>\n            <label><input id=\"showRenderTimesCheckbox\" type='checkbox' /> Show render times</label> \n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Hello Friend - container demo",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example9\",\n    {\n        inputPanel:\n        {\n            bind:       \"input\",\n            controls:\n            {\n                firstNameTextbox9:\n                {\n                    focused:    true,\n                    bind:       { value: { to: \"firstName\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n                    onescape:   function(){this.value(\"\"); }\n                },\n                lastNameTextbox9:\n                {\n                    bind:       { value: { to: \"lastName\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n                    onescape:   function(){this.value(\"\");}\n                }\n            }\n        },\n        otherNameTextbox9:\n        {\n            bind:       { value: { to: \"otherName\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n            onescape:   function(){this.value(\"\");}\n        },\n        helloMessage9:\n        {\n            bind:       { value: \"input\", display: function(){return this.data.hasValue(\"input.firstName\") || this.data.hasValue(\"input.lastName\");} },\n            controls:\n            {\n                nameLabels:\n                {\n                    selector:   \".name\",\n                    bind:       function(data){return (this.data(\"firstName\")||\"\") + (this.data(\"firstName\") && this.data(\"lastName\")?\" \":\"\") + (this.data(\"lastName\")||\"\");}\n                }\n            }\n        }\n    }\n);\n",
+                                css:        "",
+                                html:       "<div id=\"example9\">\n    <div class=\"example\">\n        <div class=\"well form-group\">\n            <div id=\"inputPanel\" class=\"well\">\n                <div><input id=\"firstNameTextbox9\" autocomplete=\"off\" class=\"form-control\" placeholder=\"Enter your first name:\" /></div>\n                <div><input id=\"lastNameTextbox9\" autocomplete=\"off\" class=\"form-control\" placeholder=\"Enter your last name:\" /></div>\n            </div>\n            <div><input id=\"otherNameTextbox9\" autocomplete=\"off\" class=\"form-control\" placeholder=\"Enter your other name:\" /></div>\n            <div id=\"helloMessage9\">\n                <p>Hello <span class=\"name\"></span>!</p>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "A Better List - control types demo",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example10\",\n    {\n        example10container:\n        {\n            type:       \"panel\",\n            classes:    [\"example\", \"well\"],\n            controls:\n            {\n                well:\n                {\n                    selector:   \".well\",\n                    type:       \"panel\",\n                    classes:    [\"well\", \"form-group\"],\n                    controls:\n                    {\n                        betterNewItem10:\n                        {\n                            type:       \"input\",\n                            classes:    [\"form-control\"],\n                            bind:       { value: { to: \"newItem\", updateon: [\"keydown\", \"keyup\", \"change\"] } },\n                            onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}\n                        },\n                        betterAddNewItemButton10:\n                        {\n                            type:       \"button\",\n                            classes:    [\"btn\"],\n                            value:      \"Add\",\n                            bind:       { enabled: \"newItem.length\" },\n                            onclick:\n                            function()\n                            {\n                                if (this.data(\"newItem.length\")>0 && this.data(\"items\").indexOf(this.data(\"newItem\"))==-1)\n                                this.data(\"items\").push(this.data(\"newItem\"));\n                                this.data(\"newItem\",\"\");\n                            }\n                        }\n                    }\n                },\n                itemsTitle:\n                {\n                    type:   \"readonly\",\n                    value:  \"Your items:\"\n                },\n                formgroup:\n                {\n                    selector:   \".listContainer\",\n                    type:       \"panel\",\n                    classes:    [\"listContainer\", \"well\", \"form-group\"],\n                    controls:\n                    {\n                        betterItemsList10:\n                        {\n                            type:       \"multiselect\",\n                            classes:    [\"form-control\"],\n                            bind:       { value: \"selected\", items: \"items\" }\n                        },\n                        listButtons:\n                        {\n                            selector:   \".listButtons\",\n                            type:       \"panel\",\n                            controls:\n                            {\n                                removeItemButton10:\n                                {\n                                    type:       \"button\",\n                                    classes:    [\"btn\"],\n                                    value:      \"Remove\",\n                                    bind:       {enabled: \"items.length\"},\n                                    onclick:    function(){this.data(\"items\").removeAll(this.parent.parent.controls.betterItemsList10.value());}\n                                },\n                                sortItemsButton:\n                                {\n                                    type:       \"button\",\n                                    classes:    [\"btn\"],\n                                    value:      \"Sort\",\n                                    bind:       { enabled: { when: \"items.length\", \">\": 1 } },\n                                    onclick:    function(){this.data(\"items\").sort();}\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    },\n    function(adapter) { adapter.data(\"\", {newItem:\"\", items: [\"Fries\",\"Eggs Benedict\",\"Ham\",\"Cheese\"]}); }\n);\n",
+                                css:        "",
+                                html:       "<div id=\"example10\">\n    <div id=\"example10container\" class=\"example\">\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "A really simple Todo",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example11\",\n    {\n        newTodo:\n        {\n            bind:       {value: {to: \"newTodo\", updateon:[\"keyup\", \"change\"]}}, \n            onenter:    function(){this.parent.controls.addTodo.click();}\n        },\n        addTodo:        {onclick: function()\n        {\n            this.data(\"todos\").push({description: this.data(\"newTodo\"), done: false});\n            this.data(\"newTodo\", \"\");\n        }},\n        todoList:\n        {\n            bind:   \"todos\",\n            repeat:\n            {\n                todoListItem:\n                {\n                    controls:\n                    {\n                        todoDone:           {bind: {value: \"done\", id: function(item){return \"todo-\"+item(\"description\");} }},\n                        todoDescription:    {bind: {value: \"description\", for: function(item){return \"todo-\"+item(\"description\");}, classes: {strikethrough: \"done\"}}},\n                        removeTodo:         {onclick: function()\n                        {\n                            this.data(\"...todos\").remove(this.data());\n                        }}\n                    }\n                }\n            }\n        }\n    },\n    function(adapter) { adapter.data(\"todos\", []); }\n);\n",
+                                css:        "",
+                                html:       "<div id=\"example11\">\n    <div class=\"example\">\n        <style>.strikethrough{text-decoration: line-through;}</style>\n        <div class=\"well form-group\">\n            <h1 id=\"example11title\"></h1>\n            <fieldset>\n                <input id=\"newTodo\" type=\"text\">\n                <button id=\"addTodo\">Add Todo</button>\n            </fieldset>\n            <ul id=\"todoList\">\n                <li id=\"todoListItem\">\n                    <input id=\"todoDone\" type=\"checkbox\">\n                    <label id=\"todoDescription\"></label>\n                    <button id=\"removeTodo\">Remove</button>\n                </li>\n            </ul>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Composite Controls",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.ready(function(atomic)\n{\n    var textboxControl  = atomic.viewAdapterFactory.createFactory\n    (\n        {\n            controls:\n            {\n                label:\n                {\n                    selector:   \".textbox-label\"\n                },\n                input:\n                {\n                    selector:   \".textbox-input\",\n                    onescape:   function(){ this.value(\"\"); }\n                }\n            },\n            properties:\n            {\n                label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},\n                value:  function(){return this.controls.input.value}\n            },\n            extensions:\n            [{\n                initializers:\n                {\n                    label:  function(adapter, value){adapter.label = value;}\n                }\n            }]\n\n        },\n        \"#example12 .textbox-field-control\"\n    );\n    var readonlyControl = atomic.viewAdapterFactory.createFactory\n    (\n        {\n            controls:\n            {\n                label:\n                {\n                    selector:   \".readonly-label\"\n                },\n                readout:\n                {\n                    selector:   \".readonly-readout\"\n                }\n            },\n            properties:\n            {\n                label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},\n                value:  function(){return this.controls.readout.value}\n            },\n            extensions:\n            [{\n                initializers:\n                {\n                    label:  function(adapter, value){adapter.label = value;}\n                }\n            }]\n\n        },\n        \"#example12 .readonly-field-control\"\n    );\n    atomic.viewAdapterFactory.launch\n    (\n        \"#example12\",\n        {\n            example12container:\n            {\n                controls:\n                {\n                    firstName:\n                    {\n                        factory:    textboxControl, \n                        label:      \"First Name:\", \n                        bind:       {value: {to: \"firstName\", updateon: [\"keyup\", \"change\"] } }\n                    },\n                    lastName:\n                    {\n                        factory:    textboxControl, \n                        label:      \"Last Name:\", \n                        bind:       {value: {to: \"lastName\", updateon: [\"keyup\", \"change\"] } }\n                    },\n                    fullName:\n                    {\n                        factory:    readonlyControl, \n                        label:      \"Full Name:\", \n                        bind: \n                        {\n                            value:      function()\n                            {\n                                return (this.data(\"firstName\")||\"\") + \" \" + (this.data(\"lastName\")||\"\");\n                            }, \n                            display:    function()\n                            {\n                                return (this.data(\"firstName\")||\"\").length > 0\n                                ||\n                                (this.data(\"lastName\")||\"\").length > 0;\n                            } \n                        }\n                    }\n                }\n            }\n        }\n    );\n});",
+                                css:        "",
+                                html:       "<div id=\"example12\">\n    <div class=\"example\">\n        <div id=\"example12container\" class=\"well form-group\">\n            <div class=\"textbox-field-control\">\n                <label class=\"textbox-label\"></label>\n                <input class=\"textbox-input\">\n            </div>\n            <div class=\"readonly-field-control\">\n                <label class=\"readonly-label\"></label>\n                <span class=\"readonly-readout\"></span>\n            </div>\n        </div>\n    </div>\n</div>"
+                            }
+                        },
+                        {
+                            name:           "Control Bindings",
+                            description:    "",
+                            example:
+                            {
+                                javascript: "root.atomic.launch\n(\n    \"#example13\",\n    {\n        readonlyWithAttributesControl:          { bind: { attributes: { to: \"settings\", root: \"settings\" } } },\n        disabledExampleControl:                 { bind: { disabled: \"settings.disabled\" } },\n        displayExampleControl:                  { bind: { display: \"settings.display\" } },\n        enabledExampleControl:                  { bind: { enabled: \"settings.enabled\" } },\n        labelForControl:                        { bind: { for: \"settings.for\" } },\n        dynamicIdControl:                       { bind: { id: \"settings.id\" } },\n        tooltipControl:                         { bind: { tooltip: \"settings.tooltip\" } },\n        valueControl:                           { bind: { value: \"settings.value\" } },\n        classesControl:\n        {\n            bind:\n            {\n                classes:\n                {\n                    addBorder:  { when: \"classes.addBorder\" },                      // default operation is a bool check\n                    addItalics: { when: \"classes.addItalics\" }, \n                    addBold:    { when: \"classes.addBold\",      equals: true },     // alternative operation equals\n                    addPadding: { when: \"classes.addPadding\",   notequals: false }  // alternative operation notequals\n                }\n            }\n        },\n        altControl:                             { bind: { alt: \"settings.alt\" } },\n\n\n\n\n        disabledCheckbox:                       { bind: \"settings.disabled\" },\n        displayCheckbox:                        { bind: \"settings.display\" },\n        enabledCheckbox:                        { bind: \"settings.enabled\" },\n        forList:                                { bind: { value: \"settings.for\",    items: \"controls\" } },\n        idTextbox:                              { bind: { value: { to: \"settings.id\",        updateon: [\"keydown\", \"keyup\", \"change\"] } } },\n        tooltipTextbox:                         { bind: { value: { to: \"settings.tooltip\",   updateon: [\"keydown\", \"keyup\", \"change\"] } } },\n        valueTextbox:                           { bind: { value: { to: \"settings.value\",     updateon: [\"keydown\", \"keyup\", \"change\"] } } },\n        addBorderCheckbox:                      { bind: \"classes.addBorder\" },\n        addBoldCheckbox:                        { bind: \"classes.addBold\" },\n        addItalicsCheckbox:                     { bind: \"classes.addItalics\" },\n        addPaddingCheckbox:                     { bind: \"classes.addPadding\" },\n        altTextbox:                             { bind: { value: { to: \"settings.alt\",   updateon: [\"keydown\", \"keyup\", \"change\"] } } },\n\n\n\n\n        /* BEGIN: these controls are here to display the contents of the view */\n\n        readonlyWithAttributesControlWrapper:   {},\n        disabledExampleControlWrapper:          {},\n        displayExampleControlWrapper:           {},\n        enabledExampleControlWrapper:           {},\n        labelForControlWrapper:                 {},\n        dynamicIdControlWrapper:                {},\n        tooltipControlWrapper:                  {},\n        valueControlWrapper:                    {},\n        classesControlWrapper:                  {},\n        altControlWrapper:                      {},\n        readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item(\"settings\"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");}, root: \"settings\" } } },\n        disabledExampleControlReadout:          { bind: { value: { to: function(item){item(\"settings.disabled\"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        displayExampleControlReadout:           { bind: { value: { to: function(item){item(\"settings.display\"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        enabledExampleControlReadout:           { bind: { value: { to: function(item){item(\"settings.enabled\"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        labelForControlReadout:                 { bind: { value: { to: function(item){item(\"settings.for\"); return this.parent.controls.labelForControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        dynamicIdControlReadout:                { bind: { value: { to: function(item){item(\"settings.id\"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        tooltipControlReadout:                  { bind: { value: { to: function(item){item(\"settings.tooltip\"); return this.parent.controls.tooltipControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        valueControlReadout:                    { bind: { value: { to: function(item){item(\"settings.value\"); return this.parent.controls.valueControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n        classesControlReadout:                  { bind: { value: { to: function(item){item(\"classes\"); return this.parent.controls.classesControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");}, root: \"classes\" } } },\n        altControlReadout:                      { bind: { value: { to: function(item){item(\"settings.alt\"); return this.parent.controls.altControlWrapper.value().replace(/\\</g, \"&lt;\").replace(/\\>/g, \"&gt;\");} } } },\n\n        /* END: these controls are here to display the contents of the view */\n\n        example13model:                         { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: \"\" } } }\n    },\n    function(adapter)\n    {\n        adapter.data(\"\", \n        {\n            settings:\n            {\n                disabled:       false,\n                display:        true,\n                enabled:        true,\n                for:            \"disabledExampleControl\",\n                id:             \"someUniqueId\",\n                tooltip:        \"This is a tooltip!\",\n                value:          \"A value fit for a control\",\n                alt:            \"Depending on your browser this text might appear when the value property of the image has not been set or bound or is non existent.\"\n            },\n            classes:\n            {\n                addBorder:      false,\n                addBold:        false,\n                addItalics:     false,\n                addPadding:     false\n            },\n            controls:   [\"disabledExampleControl\", \"displayExampleControl\", \"enabledExampleControl\"]\n        });\n    }\n);\n",
+                                css:        "",
+                                html:       "<div id=\"example13\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <div class=\"row\">\n                <div class=\"col-md-8\">\n                    <h3>Control bindings</h3>\n                    <style>\n                        .addBorder  { border: solid 2px black; }\n                        .addBold    { font-weight: bold; }\n                        .addItalics { font-style: italic; }\n                        .addPadding { padding: 20px; }\n                    </style>\n                    <table class=\"table table-bordered\">\n                        <tr>\n                            <td class=\"table-cell\">Readonly with attributes:</td>\n                            <td class=\"table-cell\" id=\"readonlyWithAttributesControlWrapper\"><span id=\"readonlyWithAttributesControl\">This control has attributes</span></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to disabled):</td>\n                            <td class=\"table-cell\" id=\"disabledExampleControlWrapper\"><input id=\"disabledExampleControl\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to display):</td>\n                            <td class=\"table-cell\" id=\"displayExampleControlWrapper\"><input id=\"displayExampleControl\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to enabled):</td>\n                            <td class=\"table-cell\" id=\"enabledExampleControlWrapper\"><input id=\"enabledExampleControl\" /></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Label control (reacts to for):</td>\n                            <td class=\"table-cell\" id=\"labelForControlWrapper\"><label id=\"labelForControl\">This label can be set for another element.<br/>Clicking on this label will set focus to that control.</label></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Panel control (reacts to id):</td>\n                            <td class=\"table-cell\" id=\"dynamicIdControlWrapper\"><div id=\"dynamicIdControl\">The id of this panel changes dynamically</div></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Panel control (reacts to tooltip):</td>\n                            <td class=\"table-cell\" id=\"tooltipControlWrapper\"><div id=\"tooltipControl\">The tooltip of this panel changes dynamically.<br/>Try hovering the mouse over it.</div></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Textarea control (reacts to value):</td>\n                            <td class=\"table-cell\" id=\"valueControlWrapper\"><textarea id=\"valueControl\"></textarea></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Panel control (reacts to classes):</td>\n                            <td class=\"table-cell\" id=\"classesControlWrapper\"><div id=\"classesControl\">The classes applied to this panel changes dynamically.</div></td>\n                        </tr>\n                        <tr>\n                            <td class=\"table-cell\">Image control (reacts to alt):</td>\n                            <td class=\"table-cell\" id=\"altControlWrapper\"><img id=\"altControl\" src=\"nonexistent.png\" width=\"150\" height=\"60\" /></td>\n                        </tr>\n                    </table>\n                </div>\n                <div class=\"col-md-4\">\n                    <h3>Settings</h3>\n                    <table class=\"table table-bordered\">\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Disabled:</td>\n                            <td class=\"table-cell\"><input id=\"disabledCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Display:</td>\n                            <td class=\"table-cell\"><input id=\"displayCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Enabled:</td>\n                            <td class=\"table-cell\"><input id=\"enabledCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">For:</td>\n                            <td class=\"table-cell\"><select id=\"forList\"></select></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Id:</td>\n                            <td class=\"table-cell\"><input id=\"idTextbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Tooltip:</td>\n                            <td class=\"table-cell\"><input id=\"tooltipTextbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Value:</td>\n                            <td class=\"table-cell\"><input id=\"valueTextbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Add Border:</td>\n                            <td class=\"table-cell\"><input id=\"addBorderCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Add Bold:</td>\n                            <td class=\"table-cell\"><input id=\"addBoldCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Add Italics:</td>\n                            <td class=\"table-cell\"><input id=\"addItalicsCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Add Padding:</td>\n                            <td class=\"table-cell\"><input id=\"addPaddingCheckbox\" type=\"checkbox\" class=\"checkbox\" /></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Alt:</td>\n                            <td class=\"table-cell\"><input id=\"altTextbox\" /></td>\n                        </tr>\n                    </table>\n                </div>\n                <div class=\"col-md-12\">\n                    <h3>What's in the view?</h3>\n                    <table class=\"table table-bordered\">\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Readonly with attributes:</td>\n                            <td class=\"table-cell\" id=\"readonlyWithAttibutesControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to disabled):</td>\n                            <td class=\"table-cell\" id=\"disabledExampleControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to display):</td>\n                            <td class=\"table-cell\" id=\"displayExampleControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Text control (reacts to enabled):</td>\n                            <td class=\"table-cell\" id=\"enabledExampleControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Label control (reacts to for):</td>\n                            <td class=\"table-cell\" id=\"labelForControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Panel control (reacts to id):</td>\n                            <td class=\"table-cell\" id=\"dynamicIdControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Panel control (reacts to tooltip):</td>\n                            <td class=\"table-cell\" id=\"tooltipControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Textarea control (reacts to value):</td>\n                            <td class=\"table-cell\" id=\"valueControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Panel control (reacts to classes):</td>\n                            <td class=\"table-cell\" id=\"classesControlReadout\"></td>\n                        </tr>\n                        <tr class=\"table-row\">\n                            <td class=\"table-cell\">Image control (reacts to alt):</td>\n                            <td class=\"table-cell\" id=\"altControlReadout\"></td>\n                        </tr>\n                    </table>\n                </div>\n            </div>\n        </div>\n    </div>\n    <figure class=\"highlight\">\n        <h2>Model</h2>\n        <pre>\n<code id=\"example13model\" class=\"language-javascript\"></code>\n        </pre>\n    </figure>\n</div>"
+                            }
+                        },
+                        {
+                            "name":         "Text Field Demo",
+                            description:    "",
+                            "example":
+                            {
+                                javascript: "root.atomic.launch\n(\n    document.body,\n    {\n        text1:  { bind: \"value\" },\n        text2:  { bind: { value: \"value\" } },\n        text3:  { bind: { value: { to: \"value\" } } }\n    },\n    function(adapter)\n    {\n        adapter.data(\"\", {value: \"Hello World!\"})\n    }\n);",
+                                css:        "input { display: block; }",
+                                html:       "<input id=\"text1\" type=\"text\" />\n<input id=\"text2\" type=\"text\" />\n<input id=\"text3\" type=\"text\" />"
+                            }
+                        }
+                    ]
+                });
+            }
+        );
+    });
+</script>
+</html>
