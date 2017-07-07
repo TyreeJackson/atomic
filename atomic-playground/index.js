@@ -9,7 +9,7 @@ function ComposeApp()
     (
         atomic.viewAdapterFactory.createView
         (
-            new root.atomic.playground.appView(editorControl, markdownControl), 
+            new root.atomic.playground.appView(editorControl, markdownControl, JSON), 
             document.body
         ),
         new root.atomic.playground.appProxy(window.localStorage, JSON),

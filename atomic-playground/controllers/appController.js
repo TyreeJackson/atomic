@@ -18,6 +18,13 @@
                 appView.data("", response.data.examples);
             });
         });
+        appView.on.importPlayground.listen(function(playground)
+        {
+            appProxy.importExample(playground, function(response)
+            {
+                appView.data("", response.data.examples);
+            });
+        });
         appProxy.launch(function(response)
         {
             appView.data    = new observer(response.data.examples);

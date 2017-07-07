@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.playground.appView", function(editorControl, markdownControl)
+{"use strict";root.define("atomic.playground.appView", function(editorControl, markdownControl, json)
 {return function playgroundAppView(viewAdapter)
 {
     function getActiveExamplePath(item)
@@ -58,25 +58,24 @@
                     this.data("...active", name);
                 }
             },
-            savePlaygroundsButton:
+            savePlaygroundsButton:          { onclick: function() { viewAdapter.on.savePlayground(this.data());} },
+            resetPlaygroundsButton:         { onclick: function() { viewAdapter.on.resetPlayground(); } },
+            exportCurrentPlaygroundButton:  { onclick: function() { alert(json.stringify(this.data(getActiveExamplePath(this.data))())); } },
+            importPlaygroundButton:
             {
                 onclick:
                 function()
                 {
-                    viewAdapter.on.savePlayground(this.data());
+                    var name = prompt("Enter the name of the new playground: ");
+                    if (name == null) return;
+                    var data = prompt("Enter the exported playground here: ");
+                    if (data == null) return;
+                    viewAdapter.on.importPlayground({name: name, example: json.parse(data)});
                 }
             },
-            resetPlaygroundsButton:
-            {
-                onclick:
-                function()
-                {
-                    viewAdapter.on.resetPlayground();
-                }
-            },
-            livePreviewCheckbox:        { bind: "livePreview" },
-            viewEngineModelCheckbox:    { bind: "viewEngineModel" },
-            description:                { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
+            livePreviewCheckbox:            { bind: "livePreview" },
+            viewEngineModelCheckbox:        { bind: "viewEngineModel" },
+            description:                    { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
             playground: 
             {
                 bind:       { value: getActiveExamplePath, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); } }, 
@@ -91,7 +90,7 @@
             engineFooter:               { bind: { display: "viewEngineModel" } },
             model:                      { bind: { value: { to: function(item){return this.data("viewEngineModel") && JSON.stringify(this.data(), null, '    ').replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "" } } }
         },
-        events: ["savePlayground", "resetPlayground"]
+        events: ["savePlayground", "resetPlayground", "exportPlayground", "importPlayground"]
     };
     return adapterDefinition;
 }});}();
