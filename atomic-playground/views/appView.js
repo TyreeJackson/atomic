@@ -5,15 +5,15 @@
     function getActiveExamplePath(item)
     {
         var active  = item("...active");
-        if (active !== undefined && item("...examples") !== undefined)
-        for(var counter=0;counter<item("...examples").count;counter++) if(item("...examples")(counter)("name")==active) {return "...examples."+counter+".example"; }
+        if (active !== undefined && item.peek("...examples") !== undefined)
+        for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) {return "...examples."+counter+".example"; }
         return "...examples.0.example";
     }
     var updaterId;
-    function updateIframe(execute)
+    function updateIframe(execute, peek)
     {
         var examplePath = getActiveExamplePath(this.data);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript><style>' + this.data(examplePath+".css") + '</style></head><body>' + (this.data(examplePath+".html")||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<scr' + 'ipt type="application/javascript">' + this.data(examplePath+".javascript") + '</scr' + 'ipt></body></html>';
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (this.data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + this.data.read(examplePath+".css", peek) + '</style><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         function doIt()
         {
@@ -37,7 +37,7 @@
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true); } },
+                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true, true); } },
                     items:
                     {
                         to:     "examples",
