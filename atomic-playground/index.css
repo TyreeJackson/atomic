@@ -28,13 +28,15 @@ body {
 .footer { height: 20%; }
 .all { height: 100%; }
 
-.editorSet
+.editorSet, .previewSet
 {
-    width:          49%;
     float:          left;
     margin-right:   5px;
     margin-bottom:  5px;
 }
+.editorSet { display: none; }
+.previewSet { width: 99%; }
+.displayEditors .editorSet, .displayEditors .previewSet { display: block; width: 49%; }
 .editorContainer, .markdownContainer {
     margin-right:   5px;
     margin-bottom:  5px;

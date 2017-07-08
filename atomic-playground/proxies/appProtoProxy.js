@@ -53,6 +53,7 @@
         {
             active:             "--Select an example--",
             viewEngineModel:    false,
+            displayEditors:     true,
             livePreview:        true,
             editorTheme:        "ace/theme/crimson_editor",
             examples:

@@ -37,7 +37,7 @@
             {
                 bind:
                 {
-                    value:  "active",
+                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true); } },
                     items:
                     {
                         to:     "examples",
@@ -75,11 +75,12 @@
                 }
             },
             livePreviewCheckbox:            { bind: "livePreview" },
+            displayEditorsCheckbox:         { bind: "displayEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
             description:                    { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
             playground: 
             {
-                bind:       { value: getActiveExamplePath, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); } }, 
+                bind:       { value: getActiveExamplePath, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
                 controls:
                 {
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
