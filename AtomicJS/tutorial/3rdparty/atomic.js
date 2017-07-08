@@ -1357,7 +1357,7 @@
         {if (basePath==undefined) debugger;
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}},
                 isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
@@ -1373,7 +1373,7 @@
             //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}}
             });
@@ -1383,10 +1383,10 @@
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath, getObserver)
+        function getValue(pathSegments, revisedPath, getObserver, peek)
         {
             pathSegments    = pathSegments || [""];
-            if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            if (!peek && this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
             if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
@@ -1497,6 +1497,7 @@
             )
             {
                 bag.updating.push(listener);
+                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
                 listener.properties = {};
                 var postCallback = listener.callback(value);
                 bag.updating.pop();
@@ -1519,17 +1520,17 @@
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value, getObserver)
+            __invoke:           {value: function(path, value, getObserver, peek)
             {
-                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver);}
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
+                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
+                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
                 if (path === undefined || path === null)        path    = "";
                 var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
                                         ?   path.substr(3)
                                         :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
                 var pathSegments    = extractPathSegments(resolvedPath);
                 var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
+                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
                 if (this.__bag.rollingback) return;
                 var currentValue = navDataPath(this.__bag, pathSegments);
                 if (value !== currentValue)
@@ -1543,8 +1544,9 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
             }},
-            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
-            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
+            peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
