@@ -13,7 +13,10 @@ function ComposeApp()
             document.body
         ),
         new root.atomic.playground.appProxy(window.localStorage, JSON),
-        atomic.observer
+        atomic.observer,
+        JSZip,
+        saveAs,
+        aja
     );
     app.launch();
 };}();

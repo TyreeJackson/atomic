@@ -61,6 +61,7 @@
             savePlaygroundsButton:          { onclick: function() { viewAdapter.on.savePlayground(this.data());} },
             resetPlaygroundsButton:         { onclick: function() { viewAdapter.on.resetPlayground(); } },
             exportCurrentPlaygroundButton:  { onclick: function() { alert(json.stringify(this.data(getActiveExamplePath(this.data))())); } },
+            downloadCurrentPlaygroundButton:{ onclick: function() { viewAdapter.on.downloadPlayground(this.data("...active"), this.data(getActiveExamplePath(this.data))()); } },
             importPlaygroundButton:
             {
                 onclick:
@@ -90,7 +91,7 @@
             engineFooter:               { bind: { display: "viewEngineModel" } },
             model:                      { bind: { value: { to: function(item){return this.data("viewEngineModel") && JSON.stringify(this.data(), null, '    ').replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "" } } }
         },
-        events: ["savePlayground", "resetPlayground", "exportPlayground", "importPlayground"]
+        events: ["savePlayground", "resetPlayground", "exportPlayground", "downloadPlayground", "importPlayground"]
     };
     return adapterDefinition;
 }});}();
