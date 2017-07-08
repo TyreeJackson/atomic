@@ -201,6 +201,7 @@
             }},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
+            read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},

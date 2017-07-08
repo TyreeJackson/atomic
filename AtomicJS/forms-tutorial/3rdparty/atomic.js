@@ -214,6 +214,7 @@
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
             for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
             id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
+            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){this.__element.title = value||"";}},
             value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
@@ -380,26 +381,49 @@
         Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.innerHTML;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
+            attributes:         
+            {
+                get:    function(){return this.__attributes;}, 
+                set:    function(value)
+                {
+                    if (value!==undefined&&value.isObserver) value=value(); 
+                    this.__attributes=value;
+
+                    if (value!==undefined)
+                    for(var key in value)
+                    {
+                        each(this.__elements, function(element){element.setAttribute("data-"+key, value[key]);});
+                        this.__element.setAttribute("data-" + key, value[key]);
+                    }
+                }
+            },
+            disabled:           {get: function(){return this.__element.disabled;},              set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
+            display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
+            enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
+            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}},
+            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
+            value:              {get: function(){return this.__element.innerHTML;},             set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(readonly.prototype,
     {
         constructor:    {value: readonly},
-        __createNode:   {value: function(){return document.createElement("span");}, configurable: true}
+        __createNode:   {value: function(){return document.createElement("span");}, configurable: true},
+        hide:               {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
+        show:               {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
     });
     return readonly;
 });}();
 !function()
-{"use strict";root.define("atomic.html.link", function htmlLink(base)
+{"use strict";root.define("atomic.html.link", function htmlLink(base, each)
 {
     function link(elements, selector, parent)
     {
         base.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            href: {get: function(){return this.__element.href;}, set: function(value){this.__element.href = value&&value.isObserver?value():value;}}
+            href: {get: function(){return this.__element.href;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.href = val;}); this.__element.href = val;}}
         });
     }
     Object.defineProperty(link, "prototype", {value: Object.create(base.prototype)});
@@ -433,15 +457,19 @@
     {
         return  definition.type
                 ||
-                multipleElements
-                ?   "readonly"
-                :   (definition.controls || definition.adapter
-                    ?   "panel"
-                    :   definition.repeat
-                        ?   "repeater"
-                        :   element !== undefined
-                            ?   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
-                            :   elementControlTypes.default);
+                (definition.controls || definition.adapter
+                ?   element !== undefined && element.nodeName.toLowerCase() == "a"
+                    ?   "linkPanel"
+                    :   "panel"
+                :   definition.repeat
+                    ?   "repeater"
+                    :   element !== undefined
+                        ?   multipleElements
+                            ?   element.nodeName.toLowerCase() == "a"
+                                ?   "link"
+                                :   "readonly"
+                            :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
+                        :   elementControlTypes.default);
     }
     function container(elements, selector, parent)
     {
@@ -518,11 +546,12 @@
     function panel(elements, selector, parent)
     {
         container.call(this, elements, selector, parent);
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
+            var bind    = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
             each(this.__controlKeys, (function(controlKey)
             {
-                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(this.bind);
+                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(bind);
             }).bind(this));
         }}});
         this.bind   = "";
@@ -558,10 +587,11 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")     Object.defineProperty(this, propertyKey, {value: property.call(this)});
-                else    if (property.bound === true)    this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onupdate: property.onupdate});
+                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate});}
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
+        bind:               { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});} },
         data:
         {
             get:    function(){return this.__binder.data;},
@@ -570,7 +600,7 @@
                 this.__binder.data = value;
                 each(this.__controlKeys, (function(controlKey)
                 {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value;
+                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
                 }).bind(this));
             }
         },
@@ -686,7 +716,7 @@
             "__templateKeys":       {value: []},
             "__templateElements":   {value: {}}
         });
-        this.__binder.defineDataProperties(this, {value: {onupdate: function(value)
+        this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
             setTimeout
             (
@@ -768,7 +798,8 @@
     function setSelectListValue(value)
     {
         this.__rawValue = value;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = this.__element.options[counter].rawValue == value;
+        var bound       = this.items.bind != undefined;
+        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
     }
     function selectoption(element, selector, parent)
     {
@@ -806,7 +837,7 @@
         });
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return getSelectListValue.call(this);}, set: function(value) {setSelectListValue.call(this, value===undefined?null:value);}, onchange: this.getEvents("change")},
+            value:  {get: function(){return this.items.bind != undefined ? getSelectListValue.call(this) : this.__element.value;}, set: function(value) {setSelectListValue.call(this, value===undefined?null:value);}, onchange: this.getEvents("change")},
             items:
             {
                 get:        function() {return this.__items;},
@@ -824,8 +855,8 @@
     {
         constructor:        {value: select},
         __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
-        count:              {get:   function(){ return this.__elements[0].options.length; }},
-        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        count:              {get:   function(){ return this.__element.options.length; }},
+        selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)
@@ -1044,7 +1075,8 @@
         control.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.src;}, set: function(value){this.__element.src = value||"";}}
+            alt:    {get: function(){return this.__element.alt;},   set: function(value){this.__element.alt = value||"";}},
+            value:  {get: function(){return this.__element.src;},   set: function(value){this.__element.src = value||"";}}
         });
     }
     Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
@@ -1061,6 +1093,10 @@
     function button(element, selector, parent)
     {
         control.call(this, element, selector, parent);
+        this.__binder.defineDataProperties(this,
+        {
+            value:  {get: function(){return this.__element.innerHTML;},   set: function(value){this.__element.innerHTML = value||"";}}
+        });
     }
     Object.defineProperty(button, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(button.prototype,
@@ -1208,13 +1244,26 @@
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
+    function bindWhenBinding(viewAdapter, name, binding)
+    {
+        if (binding.equals          !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
+        else if (binding.notequals  !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
+        else if (binding["=="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding["=="];};
+        else if (binding["!="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding["!="];};
+        else if (binding[">"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) > binding[">"];};
+        else if (binding[">="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) >= binding[">="];};
+        else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
+        else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
+        else                                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+    }
     function bindProperty(viewAdapter, name, binding)
     {
         if(viewAdapter[name] === undefined) debugger;
-        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind = binding;
+        if (typeof binding === "string" || typeof binding === "function")   viewAdapter[name].bind      = binding;
         else
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
+            else if (binding.when !== undefined)                            bindWhenBinding(viewAdapter, name, binding);
             each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
@@ -1238,8 +1287,8 @@
     }
     function bindMultipleProperties(viewAdapter, bindings)
     {
-        for(var name in bindings) if (name !== "class") bindProperty(viewAdapter, name, bindings[name]);
-        if (bindings.classes !== undefined)             bindClassProperties(viewAdapter, bindings.classes);
+        for(var name in bindings) if (name !== "classes")   bindProperty(viewAdapter, name, bindings[name]);
+        if (bindings.classes !== undefined)                 bindClassProperties(viewAdapter, bindings.classes);
     }
     var initializers    =   {};
     Object.defineProperties(initializers,
@@ -1253,7 +1302,7 @@
         bind:               {enumerable: true, value: function(viewAdapter, value)
         {
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
-            else                            {viewAdapter.value.bind  = value;}
+            else                            {viewAdapter.bind  = value;}
         }},
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
@@ -1264,6 +1313,7 @@
     });
     each(["value"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + typeof(viewAdapter) + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
     each(["optionValue", "optionText", "isDataRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
+    initializers.classes = function(viewAdapter, value) { each(value, function(val){viewAdapter.toggleClass(val, true);}); };
     each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
     each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val)
@@ -1276,10 +1326,10 @@
         if (viewAdapterDefinition.hasOwnProperty(initializerSetKey))
         {
             var initializerSet  = viewAdapterDefinition[initializerSetKey];
-            if (typeof extension.initializers[initializerSetKey] === "function")    extension.initializers[initializerSetKey](viewAdapter, viewAdapterDefinition[initializerSetKey]);
+            if (typeof extension.initializers[initializerSetKey] === "function")    extension.initializers[initializerSetKey].call(viewAdapter, viewAdapter, viewAdapterDefinition[initializerSetKey]);
             else
             for(var initializerKey in extension.initializers[initializerSetKey])
-            if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey](viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
+            if (initializerSet.hasOwnProperty(initializerKey))   extension.initializers[initializerSetKey][initializerKey].call(viewAdapter, viewAdapter, viewAdapterDefinition[initializerSetKey][initializerKey]);
         }
     }
 
@@ -1307,7 +1357,7 @@
         {if (basePath==undefined) debugger;
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}},
                 isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
@@ -1323,7 +1373,7 @@
             //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}}
             });
@@ -1333,10 +1383,10 @@
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath, getObserver)
+        function getValue(pathSegments, revisedPath, getObserver, peek)
         {
             pathSegments    = pathSegments || [""];
-            if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            if (!peek && this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
             if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
@@ -1415,7 +1465,7 @@
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag, directOnly)
+        function notifyPropertyListener(propertyKey, listener, bag, directOnly, value)
         {
             if
             (
@@ -1447,8 +1497,9 @@
             )
             {
                 bag.updating.push(listener);
+                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
                 listener.properties = {};
-                var postCallback = listener.callback();
+                var postCallback = listener.callback(value);
                 bag.updating.pop();
                 if (postCallback !== undefined) postCallback();
             }
@@ -1456,21 +1507,30 @@
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+        }
+        function getItemChanges(oldItems, newItems)
+        {
+            var changes = {changed: [], items: newItems};
+            for(var counter=0;counter<newItems.length;counter++)
+            {
+                if (oldItems.length<=counter||oldItems[counter]!==newItems[counter])    changes.changed.push(counter);
+            }
+            return changes;
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value, getObserver)
+            __invoke:           {value: function(path, value, getObserver, peek)
             {
-                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver);}
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
+                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
+                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
                 if (path === undefined || path === null)        path    = "";
                 var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
                                         ?   path.substr(3)
                                         :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
                 var pathSegments    = extractPathSegments(resolvedPath);
                 var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
+                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
                 if (this.__bag.rollingback) return;
                 var currentValue = navDataPath(this.__bag, pathSegments);
                 if (value !== currentValue)
@@ -1479,9 +1539,15 @@
                     notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
-            __notify:           {value: function(path, changes, directOnly){notifyPropertyListeners.call(this, path, changes, this.__bag, directOnly);}},
-            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
-            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
+            __notify:           {value: function(path, changes, directOnly)
+            {
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
+                for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
+            }},
+            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
+            peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
+            read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -1517,8 +1583,10 @@
                     value: function()
                     {
                         var items       = this();
+                        var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, items, name!=="sort"&&name!=="reverse"); 
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        if(name!=="sort" && name!=="reverse")   notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result === items ? this : result; 
                     }
                 }
@@ -1533,8 +1601,11 @@
                 {
                     value: function()
                     {
+                        var items       = this();
+                        var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
-                        this.__notify(this.__basePath, this(), true);
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result; 
                     }
                 }
@@ -1865,9 +1936,10 @@
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, each);
-    var link                    = new root.atomic.html.link(readonly);
+    var link                    = new root.atomic.html.link(readonly, each);
     var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
+    var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);
     var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control);
@@ -1883,6 +1955,7 @@
         control:        {value: control},
         readonly:       {value: readonly},
         link:           {value: link},
+        linkPanel:      {value: linkPanel},
         container:      {value: container},
         panel:          {value: panel},
         composite:      {value: composite},
@@ -1902,6 +1975,15 @@
 !function(window, document)
 {"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
 {
+    if (arguments.length === 0) return;
+    if (arguments.length === 1 || (arguments.length === 2 && (typeof controlsOrAdapter === "function"||(typeof viewElement === "object" && typeof controlsOrAdapter === "object"))))
+    {
+        callback            = controlsOrAdapter;
+        controlsOrAdapter   = viewElement;
+        viewElement         = document.body;
+    }
+    if (callback === undefined)             callback    = function(adapter){adapter.data("", {});};
+    else if(typeof callback === "object")   callback    = (function(data){return function(adapter){adapter.data("", data);};})(callback);
     root.atomic.ready(function(atomic)
     {
         var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
