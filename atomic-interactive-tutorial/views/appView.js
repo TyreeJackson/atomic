@@ -1,19 +1,23 @@
 !function()
-{"use strict";root.define("atomic.playground.appView", function(editorControl, markdownControl, json)
+{"use strict";root.define("atomic.interactiveTutorial.appView", function(editorControl, markdownControl, json)
 {return function playgroundAppView(viewAdapter)
 {
     function getActiveExamplePath(item)
     {
         var active  = item("...active");
-        if (active !== undefined && item.peek("...examples") !== undefined)
-        for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) {return "...examples."+counter+".example"; }
+        if (active !== undefined && item("...examples") !== undefined)
+        for(var counter=0;counter<item("...examples").count;counter++) if(item("...examples")(counter)("name")==active) {return "...examples."+counter+".example"; }
         return "...examples.0.example";
     }
+    function getRenderedOutput()
+    {
+        return viewAdapter.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0].contentDocument.body.querySelector("#output").innerHTML.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+    }
     var updaterId;
-    function updateIframe(execute, peek)
+    function updateIframe(execute)
     {
         var examplePath = getActiveExamplePath(this.data);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (this.data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + this.data.read(examplePath+".css", peek) + '</style><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript><style>' + this.data(examplePath+".css") + '</style></head><body><div id="output">' + (this.data(examplePath+".html")||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><scr' + 'ipt type="application/javascript">' + this.data(examplePath+".javascript") + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         function doIt()
         {
@@ -25,7 +29,8 @@
             iframe.contentWindow.document.close();
         }
         if (updaterId !== undefined)    clearTimeout(updaterId);
-        updaterId   = setTimeout(doIt.bind(this), 1000);
+        //updaterId   = setTimeout(doIt.bind(this), 0);
+        doIt.call(this);
     }
     var adapterDefinition   =
     {
@@ -37,7 +42,7 @@
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true, true); } },
+                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true); } },
                     items:
                     {
                         to:     "examples",
@@ -75,7 +80,6 @@
                 }
             },
             livePreviewCheckbox:            { bind: "livePreview" },
-            displayEditorsCheckbox:         { bind: "displayEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
             description:                    { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
             playground: 
@@ -84,7 +88,6 @@
                 controls:
                 {
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
-                    cssEditor:              { factory:  editorControl,  mode:   "css",          bind: { value: "css",          theme: "...editorTheme" } },
                     htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",         theme: "...editorTheme" } },
                     preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, item("...livePreview")); } } } }
                 }

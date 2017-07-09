@@ -353,3 +353,12 @@ input, textarea {
 .langright {
     margin-left: 10px;
 }
+.top, .middle, .bottom { height: 33%; }
+.topAndMiddle, .middleAndBottom { height: 67%; }
+.top .editor, .middle .editor, .bottom .editor { height: 200px; }
+.topAndMiddle .editor, .middleAndBottom .editor { height: 400px; }
+.preview { height: 200px; }
+.markdown-body { max-height: none; height: 365px; background-color: #f0f0f0;}
+.markdownContainer { border: 1px #cecece solid; height: 400px; }
+.navButtons { margin: auto; width: 410px; }
+.navButtons input[type="button"] { width: 200px; }
