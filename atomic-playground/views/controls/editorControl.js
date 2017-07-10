@@ -1,13 +1,13 @@
 !function()
-{"use strict";root.define("atomic.playground.controls.editorControl", function(ace)
+{"use strict";root.define("atomic.interactiveTutorial.controls.editorControl", function(ace)
 {return {
     properties:
     {
         value:
         {
             bound:      true,
-            get:        function(){return this.__editor.getValue();},
-            set:        function(value){this.__editor.setValue(value||""); this.__editor.clearSelection();},
+            get:        function(){console.log(this.__selector+": getting value"); return this.__editor.getValue();},
+            set:        function(value){console.log(this.__selector+": setting value");this.__editor.setValue(value||""); this.__editor.clearSelection();},
             onchange:   "change"
         },
         theme:
@@ -17,6 +17,10 @@
             set:    function(value){this.__editor.setTheme(value); }
         },
         bind:   { get: function(){return this.value.bind;}, set: function(value){this.value.bind = value;}}
+    },
+    members:
+    {
+        focus:  function(){ this.__editor.focus(); }
     },
     extensions:
     [{
