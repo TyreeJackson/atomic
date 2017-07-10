@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.interactiveTutorial.controls.markdownControl", function(marked)
+{"use strict";root.define("atomic.playground.controls.markdownControl", function(marked)
 {return {
     properties:
     {

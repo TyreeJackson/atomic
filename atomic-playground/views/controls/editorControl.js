@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.interactiveTutorial.controls.editorControl", function(ace)
+{"use strict";root.define("atomic.playground.controls.editorControl", function(ace)
 {return {
     properties:
     {
