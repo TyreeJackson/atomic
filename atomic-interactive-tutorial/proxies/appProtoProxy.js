@@ -52,6 +52,7 @@
         var data =
         {
             active:             "--Select a tutorial--",
+            activeLesson:       0,
             viewEngineModel:    false,
             displayEditors:     true,
             livePreview:        true,
@@ -69,16 +70,33 @@
                     name:       "Hello World",
                     example:
                     {
-                        instruction:    
+                        lessons:
+                        [
+                            {
+                                instructions:    
 `# Hello World
 This is the classic hello world example.  Note that the word \`World\` in the example is dynamically obtained from the model using a simple value binding.
 
 This example uses the simplest overload of the \`root.atomic.launch\` method which accepts a single argument containing the [\`view adapter\` definition](https://github.com/TyreeJackson/atomic/wiki/AtomicJS-Documentation#view-adapter-definition-structure).
 `,
-                        javascript:     "root.atomic.launch ({worldLabel: {value: \"World\"}});",
-                        css:            "",
-                        html:           "<div class=\"well\">\n    <h1 id=\"greeting\">Hello <span id=\"worldLabel\"></span>!</h1>\n</div>",
-                        criteria:       ""
+                                javascript:         "root.atomic.launch ({worldLabel: {value: \"World\"}});",
+                                html:               "<div class=\"well\">\n    <h1 id=\"greeting\">Hello <span id=\"worldLabel\"></span>!</h1>\n</div>",
+                                targetJavascript:   "root.atomic.launch ({worldLabel: {value: \"World\"}});",
+                                targetHTML:         "<div class=\"well\">\n    <h1 id=\"greeting\">Hello <span id=\"worldLabel\"></span>!</h1>\n</div>"
+                            },
+                            {
+                                instructions:    
+`# Hello World Revisited
+In this version of the hello world example, the greeting is not displayed until the Say Hello button has been pressed.
+
+This example uses the following overload of the launch method: \`root.atomic.launch(\`*\`cssSelector\`*\`, \`*\`viewAdapterDefinition\`*\`)\` where the \`cssSelector\` parameter accepts a string argument containing a css selector that locates the root element of the view and the \`viewAdapterDefinition\` parameter accepts an object argument containing the [\`view adapter\` definition](https://github.com/TyreeJackson/atomic/wiki/AtomicJS-Documentation#view-adapter-definition-structure).
+`,
+                                javascript:         "root.atomic.launch\n(\n    \"#example2\",\n    {\n        greeting2:      {bind: { display: \"worldValue.length\" }},\n        worldLabel2:    {bind: \"worldValue\"},\n        sayHelloButton:\n        {\n            onclick:    function(){ this.data(\"worldValue\",\"World\"); }, \n            bind:       { display: function(item){return !item.hasValue(\"worldValue\"); } }\n        }\n    }\n);",
+                                html:               "<div id=\"example2\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <h1 id=\"greeting2\">Hello <span id=\"worldLabel2\"></span>!</h1>\n            <button id=\"sayHelloButton\">Say Hello</button>\n        </div>\n    </div>\n</div>",
+                                targetJavascript:   "root.atomic.launch\n(\n    \"#example2\",\n    {\n        greeting2:      {bind: { display: \"worldValue.length\" }},\n        worldLabel2:    {bind: \"worldValue\"},\n        sayHelloButton:\n        {\n            onclick:    function(){ this.data(\"worldValue\",\"World\"); }, \n            bind:       { display: function(item){return !item.hasValue(\"worldValue\"); } }\n        }\n    }\n);",
+                                targetHTML:         "<div id=\"example2\">\n    <div class=\"example\">\n        <div class=\"well\">\n            <h1 id=\"greeting2\">Hello <span id=\"worldLabel2\"></span>!</h1>\n            <button id=\"sayHelloButton\">Say Hello</button>\n        </div>\n    </div>\n</div>"
+                            }
+                        ]
                     }
                 }
             ]

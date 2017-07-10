@@ -10,9 +10,9 @@
     <script type="application/javascript" src="3rdparty/atomic.js"></script>
     <script type="application/javascript" src="3rdparty/ace/ace.js"></script>
     <script type="application/javascript" src="3rdparty/marked.js"></script>
-    <script type="application/javascript" src="views/appView.js"></script>
     <script type="application/javascript" src="views/controls/editorControl.js"></script>
     <script type="application/javascript" src="views/controls/markdownControl.js"></script>
+    <script type="application/javascript" src="views/appView.js"></script>
     <script type="application/javascript" src="controllers/appController.js"></script>
     <script type="application/javascript" src="proxies/appProtoProxy.js"></script>
     <script type="application/javascript" src="index.js"></script>
@@ -59,6 +59,8 @@
                         </div>
                         <br>
                         <div class="checkbox"><input id="viewEngineModelCheckbox" type="checkbox" /><label for="viewEngineModelCheckbox">View Engine Model</label></div>
+                        <br>
+                        <div class="checkbox"><input id="displayAuthorEditorsCheckbox" type="checkbox" /><label for="displayAuthorEditorsCheckbox">View Authoring Editors</label></div>
                     </div>
                 </div>
             </div>
@@ -66,15 +68,16 @@
     </div>
     <div class="editors">
     </div>
-    <div id="playground">
+    <div id="playground" class="playground">
         <div class="editors">
             <div class="editorSet">
                 <div class="topAndMiddle">
                     <div class="markdownContainer">
-                        <div id="description"></div>
+                        <div class="navArrows"><input type="button" id="movePreviousArrow" class="movePrevious" /> <input type="button" id="moveNextArrow" class="moveNext" /></div>
+                        <div id="instructions"></div>
                         <div class="navButtons">
-                            <input type="button" value="Help - it's not working!" />
-                            <input type="button" value="Contiue!" />
+                            <input id="fixCodeAndHtmlButton" type="button" value="Help - it's not working!" />
+                            <input id="moveToNextLessonButton" type="button" value="Contiue!" />
                         </div>
                     </div>
                 </div>
@@ -95,6 +98,40 @@
                 <div class="middleAndBottom">
                     <div class="editorContainer">
                         <div id="javascriptEditor"></div>
+                        <span class="containerLabel">Javascript</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+            </div>
+        </div>
+    </div>
+    <div id="authorEditors" class="authorEditors">
+        <div class="editors">
+            <div class="editorSet">
+                <div class="topAndMiddle">
+                    <div class="editorContainer">
+                        <div id="markdownEditor"></div>
+                        <span class="containerLabel">Instructions</span>
+                    </div>
+                </div>
+                <div class="bottom">
+                    <div class="editorContainer">
+                        <div id="targetPreview" class="preview"></div>
+                        <span class="containerLabel">Output</span>
+                    </div>
+                </div>
+            </div>
+            <div class="editorSet">
+                <div class="top">
+                    <div class="editorContainer">
+                        <div id="targetHTMLEditor"></div>
+                        <span class="containerLabel">HTML</span>
+                    </div>
+                </div>
+                <div class="middleAndBottom">
+                    <div class="editorContainer">
+                        <div id="targetJavascriptEditor"></div>
                         <span class="containerLabel">Javascript</span>
                     </div>
                 </div>

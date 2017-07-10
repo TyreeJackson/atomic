@@ -2,47 +2,50 @@
 {"use strict";root.define("atomic.interactiveTutorial.appView", function(editorControl, markdownControl, json)
 {return function playgroundAppView(viewAdapter)
 {
-    function getActiveExamplePath(item)
+    function getActiveExamplePath(item, withLesson)
     {
-        var active  = item("...active");
-        if (active !== undefined && item("...examples") !== undefined)
-        for(var counter=0;counter<item("...examples").count;counter++) if(item("...examples")(counter)("name")==active) {return "...examples."+counter+".example"; }
-        return "...examples.0.example";
+        var active          = item("...active");
+        var activeLesson    = item("...activeLesson");
+        var activeTutorial;
+        if (active !== undefined && item.peek("...examples") !== undefined)
+        for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) { activeTutorial = "...examples."+counter+".example"; break; }
+        if (activeTutorial === undefined) activeTutorial = "...examples.0.example";
+        if (activeLesson === undefined || activeLesson > item("activeTutorial.lessons.length")) { activeLesson = 0; item("...activeLesson", activeLesson); }
+        return activeTutorial+(withLesson?".lessons."+activeLesson:"");
     }
     function getRenderedOutput()
     {
         return viewAdapter.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0].contentDocument.body.querySelector("#output").innerHTML.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
     }
-    var updaterId;
-    function updateIframe(execute)
+    var updaterIds  = {};
+    function updateIframe(parent, execute, peek)
     {
-        var examplePath = getActiveExamplePath(this.data);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript><style>' + this.data(examplePath+".css") + '</style></head><body><div id="output">' + (this.data(examplePath+".html")||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><scr' + 'ipt type="application/javascript">' + this.data(examplePath+".javascript") + '</scr' + 'ipt></body></html>';
+        var examplePath = getActiveExamplePath(this.data, true);
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + this.data.read(examplePath+".css", peek) + '</style></div><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         function doIt()
         {
-            updaterId   = undefined;
-            this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
-            var iframe  = this.root.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0];
+            updaterIds[parent.id()] = undefined;
+            parent.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
+            var iframe  = parent.__element.getElementsByTagName("iframe")[0];
             iframe.contentWindow.document.open();
             iframe.contentWindow.document.write(html);
             iframe.contentWindow.document.close();
         }
-        if (updaterId !== undefined)    clearTimeout(updaterId);
-        //updaterId   = setTimeout(doIt.bind(this), 0);
-        doIt.call(this);
+        if (updaterIds[parent.id()] !== undefined)  clearTimeout(updaterIds[parent.id()]);
+        updaterIds[parent.id()] = setTimeout(doIt.bind(this), 1000);
     }
     var adapterDefinition   =
     {
         controls:
         {
-            runButton:                  { onclick:  function(){ updateIframe.call(this, true); }, bind: { display: { when: "livePreview", "!=": true } } },
+            runButton:                  { onclick:  function(){ updateIframe.call(this, this.root.controls.playground.controls.preview, true); }, bind: { display: { when: "livePreview", "!=": true } } },
             editorThemeList:            { bind: "editorTheme" },
             exampleList:
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true); } },
+                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, this.root.controls.playground.controls.preview, true, true); updateIframe.call(this, this.root.controls.authorEditors.controls.targetPreview, true, true); } },
                     items:
                     {
                         to:     "examples",
@@ -80,16 +83,55 @@
                 }
             },
             livePreviewCheckbox:            { bind: "livePreview" },
+            displayAuthorEditorsCheckbox:   { bind: "displayAuthorEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
-            description:                    { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
             playground: 
             {
-                bind:       { value: getActiveExamplePath, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
+                bind:       { value: function(item){return getActiveExamplePath(item, true); }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
                 controls:
                 {
+                    instructions:           { factory:  markdownControl,                        bind: "instructions" },
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
                     htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",         theme: "...editorTheme" } },
-                    preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, item("...livePreview")); } } } }
+                    preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, this, item("...livePreview")); } } } },
+                    fixCodeAndHtmlButton:
+                    {
+                        onclick:
+                        function()
+                        {
+                            if (confirm("Are you sure you wand to do this?  Your code and markup will be replaced with working copies."))
+                            {
+                                this.data("html", this.data("targetHTML"));
+                                this.data("javascript", this.data("targetJavascript"));
+                            }
+                        }
+                    },
+                    movePreviousArrow:
+                    {
+                        onclick: function() { this.data("...activeLesson", this.data("...activeLesson")-1); },
+                        bind:   { enabled: function(item){return item("...activeLesson") > 0;} }
+                    },
+                    moveNextArrow:
+                    {
+                        onclick: function() { this.data("...activeLesson", this.data("...activeLesson")+1); },
+                        bind:   { enabled: function(item){return item("...activeLesson") < item(getActiveExamplePath(item)+".lessons.length")-1;} }
+                    },
+                    moveToNextLessonButton:
+                    {
+                        onclick: function() { this.data("...activeLesson", this.data("...activeLesson")+1); },
+                        bind:   { display: function(item){return item("...activeLesson") < item(getActiveExamplePath(item)+".lessons.length")-1;} }
+                    }
+                }
+            },
+            authorEditors: 
+            {
+                bind:       { value: function(item){ return getActiveExamplePath(item, true); }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayAuthorEditors: "displayAuthorEditors" } }, 
+                controls:
+                {
+                    markdownEditor:         { factory:  editorControl,  mode:   "markdown",     bind: { value: "instructions",      theme: "...editorTheme" } },
+                    targetJavascriptEditor: { factory:  editorControl,  mode:   "javascript",   bind: { value: "targetJavascript",  theme: "...editorTheme" } },
+                    targetHTMLEditor:       { factory:  editorControl,  mode:   "html",         bind: { value: "targetHTML",        theme: "...editorTheme" } },
+                    targetPreview:          { bind:     { value: { onupdate: function(item){updateIframe.call(this, this, item("...livePreview")); } } } }
                 }
             },
             engineFooter:               { bind: { display: "viewEngineModel" } },
