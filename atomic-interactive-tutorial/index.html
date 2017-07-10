@@ -61,6 +61,11 @@
                         <div class="checkbox"><input id="viewEngineModelCheckbox" type="checkbox" /><label for="viewEngineModelCheckbox">View Engine Model</label></div>
                         <br>
                         <div class="checkbox"><input id="displayAuthorEditorsCheckbox" type="checkbox" /><label for="displayAuthorEditorsCheckbox">View Authoring Editors</label></div>
+                        <br>
+                        <div class="btn-group">
+                            <input id="addNewTutorialButton" type="button" value="Add New Tutorial" />
+                            <input id="exportTutorialButton" type="button" value="Export Current Tutorial" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -73,7 +78,7 @@
             <div class="editorSet">
                 <div class="topAndMiddle">
                     <div class="markdownContainer">
-                        <div class="navArrows"><input type="button" id="movePreviousArrow" class="movePrevious" /> <input type="button" id="moveNextArrow" class="moveNext" /></div>
+                        <div class="navArrows"><input type="button" id="moveNextArrow" class="moveNext" /><input type="button" id="movePreviousArrow" class="movePrevious" /><div class="lessonProgressMessage"><strong>Lesson <span class="currentLesson"></span> of <span class="lessonCount"></span></strong></div></div>
                         <div id="instructions"></div>
                         <div class="navButtons">
                             <input id="fixCodeAndHtmlButton" type="button" value="Help - it's not working!" />
@@ -137,6 +142,8 @@
                 </div>
             </div>
             <div class="footer">
+                <input id="addLessonButton" type="button" value="Add Lesson" />
+                <input id="removeLessonButton" type="button" value="Remove Current Lesson" />
             </div>
         </div>
     </div>

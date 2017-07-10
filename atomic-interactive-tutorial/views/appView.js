@@ -18,11 +18,16 @@
         return viewAdapter.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0].contentDocument.body.querySelector("#output").innerHTML.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
     }
     var updaterIds  = {};
-    function updateIframe(parent, execute, peek)
+    function clearIframe(parent)
+    {
+        parent.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
+    }
+    function updateIframe(parent, execute, peek, isTarget)
     {
         var examplePath = getActiveExamplePath(this.data, true);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + this.data.read(examplePath+".css", peek) + '</style></div><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+(isTarget?".targetHTML":".html"), peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+(isTarget?".targetJavascript":".javascript"), peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
+        clearIframe(parent);
         function doIt()
         {
             updaterIds[parent.id()] = undefined;
@@ -45,7 +50,7 @@
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, this.root.controls.playground.controls.preview, true, true); updateIframe.call(this, this.root.controls.authorEditors.controls.targetPreview, true, true); } },
+                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, this.root.controls.playground.controls.preview, true, true); updateIframe.call(this, this.root.controls.authorEditors.controls.targetPreview, true, true, true); } },
                     items:
                     {
                         to:     "examples",
@@ -54,21 +59,23 @@
                     }
                 }
             },
-            addNewPlaygroundButton:
+            addNewTutorialButton:
             {
                 onclick:
                 function()
                 {
                     var name = prompt("Enter a name for the new playground (blank to abort): "); 
                     if (name == null || name == '') return;
-                    this.data("examples").push({name: name, example: {javascript: "", html: "", css: ""}});
+                    this.data("examples").push({name: name, example: {lessons: [{instructions: "", javascript: "", html: "", targetJavascript: "", targetHTML: ""}]}});
+                    this.data("...activeLesson", 0);
                     var newPlayground = this.data("examples")(this.data("examples").count-1)("example");
                     this.data("...active", name);
-                }
+                },
+                bind:   { display: "displayAuthorEditors" }
             },
             savePlaygroundsButton:          { onclick: function() { viewAdapter.on.savePlayground(this.data());} },
             resetPlaygroundsButton:         { onclick: function() { viewAdapter.on.resetPlayground(); } },
-            exportCurrentPlaygroundButton:  { onclick: function() { alert(json.stringify(this.data(getActiveExamplePath(this.data))())); } },
+            exportTutorialButton:           { onclick: function() { alert(json.stringify(this.data(getActiveExamplePath(this.data))())); }, bind:   { display: "displayAuthorEditors" } },
             downloadCurrentPlaygroundButton:{ onclick: function() { viewAdapter.on.downloadPlayground(this.data("...active"), this.data(getActiveExamplePath(this.data))()); } },
             importPlaygroundButton:
             {
@@ -104,7 +111,8 @@
                                 this.data("html", this.data("targetHTML"));
                                 this.data("javascript", this.data("targetJavascript"));
                             }
-                        }
+                        },
+                        bind:   { display: { when: "nohelp", "!=": true } }
                     },
                     movePreviousArrow:
                     {
@@ -116,6 +124,8 @@
                         onclick: function() { this.data("...activeLesson", this.data("...activeLesson")+1); },
                         bind:   { enabled: function(item){return item("...activeLesson") < item(getActiveExamplePath(item)+".lessons.length")-1;} }
                     },
+                    currentLesson:  { selector: ".currentLesson",   bind: function(item){ return item("...activeLesson")+1; } },
+                    lessonCount:    { selector: ".lessonCount",     bind: function(item){ return item(getActiveExamplePath(item)+".lessons.length"); } },
                     moveToNextLessonButton:
                     {
                         onclick: function() { this.data("...activeLesson", this.data("...activeLesson")+1); },
@@ -131,7 +141,31 @@
                     markdownEditor:         { factory:  editorControl,  mode:   "markdown",     bind: { value: "instructions",      theme: "...editorTheme" } },
                     targetJavascriptEditor: { factory:  editorControl,  mode:   "javascript",   bind: { value: "targetJavascript",  theme: "...editorTheme" } },
                     targetHTMLEditor:       { factory:  editorControl,  mode:   "html",         bind: { value: "targetHTML",        theme: "...editorTheme" } },
-                    targetPreview:          { bind:     { value: { onupdate: function(item){updateIframe.call(this, this, item("...livePreview")); } } } }
+                    targetPreview:          { bind:     { value: { onupdate: function(item){updateIframe.call(this, this, item("...livePreview"), false, true); } } } },
+                    addLessonButton:
+                    {
+                        onclick:
+                        function()
+                        {
+                            var lessons = this.data(getActiveExamplePath(this.data)+".lessons");
+                            lessons.push({instructions: "", javascript: "", html: "", targetJavascript: "", targetHTML: ""});
+                            this.data("...activeLesson", lessons.count-1);
+                            this.parent.controls.markdownEditor.focus();
+                        }
+                    },
+                    removeLessonButton:
+                    {
+                        onclick:
+                        function()
+                        {
+                            if (confirm("Are you sure that you want to delete the current lesson?"))
+                            {
+                                var lessons = this.data(getActiveExamplePath(this.data)+".lessons");
+                                lessons.remove(this.data.unwrap());
+                                if (this.data("...activeLesson")>=lessons.count) this.data("...activeLesson", lessons.count-1);
+                            }
+                        }
+                    }
                 }
             },
             engineFooter:               { bind: { display: "viewEngineModel" } },

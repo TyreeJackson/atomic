@@ -405,10 +405,10 @@ input, textarea {
 .topAndMiddle, .middleAndBottom { height: 67%; }
 .top .editor, .middle .editor, .bottom .editor { height: 200px; }
 .topAndMiddle .editor, .middleAndBottom .editor { height: 400px; }
-.preview { height: 200px; }
-.markdown-body { clear: both; max-height: none; height: 345px; background-color: #f0f0f0;}
+.preview { height: 200px; overflow-y: hidden;}
+.markdown-body { clear: both; max-height: 340px; height: 340px; background-color: #f0f0f0; overflow-y: auto;}
 .markdownContainer { border: 1px #cecece solid; height: 400px; border-radius: 15px; }
-.navButtons { margin: auto; min width: 200px; width: 410px; display: flex; }
+.navButtons { margin: auto; width: 410px; display: flex; padding-top: 3px; }
 .navButtons input[type="button"] { width: 200px; margin-left: auto; margin-right: auto; }
 input[type="button"].movePrevious, input[type="button"].moveNext { display: block; width: 24px; height: 24px; cursor: pointer; border: 1px transparent solid; border-radius: 2px; background-color: inherit;}
 input[type="button"].movePrevious:hover, input[type="button"].moveNext:hover { background-color: white; border: 1px #cecece solid }
@@ -417,3 +417,4 @@ input[type="button"].movePrevious:disabled, input[type="button"].moveNext:disabl
 .moveNext { background-image: url(images/rightarrow.png); float: right; margin-right: 10px; }
 .movePrevious:disabled { background-image: url(images/leftarrow-disabled.png); float: left; margin-left: 10px; }
 .moveNext:disabled { background-image: url(images/rightarrow-disabled.png); float: right; margin-right: 10px; }
+.lessonProgressMessage { text-align: center; vertical-align: baseline; line-height: 26px; }

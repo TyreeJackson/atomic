@@ -18,6 +18,10 @@
         },
         bind:   { get: function(){return this.value.bind;}, set: function(value){this.value.bind = value;}}
     },
+    members:
+    {
+        focus:  function(){ this.__editor.focus(); }
+    },
     extensions:
     [{
         initializers:
