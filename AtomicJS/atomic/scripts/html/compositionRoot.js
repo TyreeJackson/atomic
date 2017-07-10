@@ -21,6 +21,7 @@
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, each);
+    var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
     var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
@@ -39,6 +40,7 @@
     {
         control:        {value: control},
         readonly:       {value: readonly},
+        label:          {value: label},
         link:           {value: link},
         linkPanel:      {value: linkPanel},
         container:      {value: container},

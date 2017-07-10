@@ -179,6 +179,7 @@
         {
             element                 = this.__createNode(selector);
             parent.__element.appendChild(element);
+            if (this.__addSpacing)  parent.__element.appendChild(document.createTextNode (" "));
             element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
             element.__selectorPath  = parent.getSelectorPath();
         }
@@ -400,7 +401,6 @@
             disabled:           {get: function(){return this.__element.disabled;},              set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
-            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}},
             tooltip:            {get: function(){return this.__element.title;},                 set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
             value:              {get: function(){return this.__element.innerHTML;},             set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
@@ -410,10 +410,31 @@
     {
         constructor:    {value: readonly},
         __createNode:   {value: function(){return document.createElement("span");}, configurable: true},
-        hide:               {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
-        show:               {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
+        hide:           {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
+        show:           {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
     });
     return readonly;
+});}();
+!function()
+{"use strict";root.define("atomic.html.label", function htmlLabel(control, each)
+{
+    function label(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
+        this.__binder.defineDataProperties(this,
+        {
+            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}}
+        });
+    }
+    Object.defineProperty(label, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(label.prototype,
+    {
+        constructor:    {value: label},
+        __createNode:   {value: function(){return document.createElement("label");}, configurable: true},
+        __addSpacing:   {value: true}
+    });
+    return label;
 });}();
 !function()
 {"use strict";root.define("atomic.html.link", function htmlLink(base, each)
@@ -446,9 +467,10 @@
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup",
-        "a":                        "link"
+        "a":                        "link",
+        "label":                    "label"
     };
-    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
     {
         elementControlTypes[name]   = "readonly";
@@ -1936,6 +1958,7 @@
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, each);
+    var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
     var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
@@ -1954,6 +1977,7 @@
     {
         control:        {value: control},
         readonly:       {value: readonly},
+        label:          {value: label},
         link:           {value: link},
         linkPanel:      {value: linkPanel},
         container:      {value: container},

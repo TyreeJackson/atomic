@@ -25,6 +25,7 @@
         {
             element                 = this.__createNode(selector);
             parent.__element.appendChild(element);
+            if (this.__addSpacing)  parent.__element.appendChild(document.createTextNode (" "));
             element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
             element.__selectorPath  = parent.getSelectorPath();
         }
