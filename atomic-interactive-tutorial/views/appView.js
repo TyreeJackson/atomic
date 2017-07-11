@@ -95,7 +95,7 @@
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
             playground: 
             {
-                bind:       { value: function(item){return getActiveExamplePath(item); }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
+                bind:       { value: { to: function(item){return getActiveExamplePath(item); }, onupdate: function(item){this.controls.instructions.scrollTo(0);} }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
                 controls:
                 {
                     instructions:           { factory:  markdownControl,                        bind: function(item){ return item("lessons."+item("...activeLesson")+".instructions"); } },
