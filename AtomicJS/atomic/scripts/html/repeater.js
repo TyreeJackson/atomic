@@ -62,6 +62,7 @@
         if (observer() === undefined) return;
         var documentFragment    = document.createDocumentFragment();
         var retained            = unbindRepeatedList.call(this, observer());
+        var parent;
         for(var dataItemCounter=0;dataItemCounter<observer.count;dataItemCounter++)
         {
             for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
@@ -72,10 +73,11 @@
                 {
                     this.__repeatedControls[clone.key]  = clone.control;
                     documentFragment.appendChild(clone.control.__element);
+                    parent                              = clone.parent;
                 }
             }
         }
-        this.__element.appendChild(documentFragment);
+        if (parent) parent.appendChild(documentFragment);
     }
     function unbindRepeatedList(keepList)
     {
