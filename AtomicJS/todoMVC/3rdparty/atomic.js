@@ -1160,12 +1160,13 @@
 {
     var viewAdapterFactory  =
     {
-        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
+        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType, preConstruct)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
             if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
             viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
+            if (typeof preConstruct === "function") preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
@@ -1179,9 +1180,9 @@
                 viewElement,
                 undefined,
                 undefined,
-                "panel"
+                "panel",
+                function(){this.data = new observer({});}
             );
-            adapter.data    = new observer({});
             return adapter;
         },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
