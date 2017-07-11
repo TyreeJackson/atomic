@@ -24,8 +24,9 @@
     }
     function updateIframe(parent, execute, peek, isTarget)
     {
-        var examplePath = getActiveExamplePath(this.data, true);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+(isTarget?".targetHTML":".html"), peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+(isTarget?".targetJavascript":".javascript"), peek) + '</scr' + 'ipt></body></html>';
+        var examplePath = getActiveExamplePath(this.data, isTarget);
+        var cssPath     = getActiveExamplePath(this.data) + ".css";
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+(isTarget?".targetHTML":".html"), peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><style>' + this.data.read(cssPath, peek) + '</style><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+(isTarget?".targetJavascript":".javascript"), peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         clearIframe(parent);
         function doIt()
@@ -94,12 +95,13 @@
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
             playground: 
             {
-                bind:       { value: function(item){return getActiveExamplePath(item, true); }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
+                bind:       { value: function(item){return getActiveExamplePath(item); }, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
                 controls:
                 {
-                    instructions:           { factory:  markdownControl,                        bind: "instructions" },
-                    javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
-                    htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",         theme: "...editorTheme" } },
+                    instructions:           { factory:  markdownControl,                        bind: function(item){ return item("lessons."+item("...activeLesson")+".instructions"); } },
+                    javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",    theme: "...editorTheme" } },
+                    htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",          theme: "...editorTheme" } },
+                    cssEditor:              { factory:  editorControl,  mode:   "css",          bind: { value: "css",           theme: "...editorTheme", display: "...displayAuthorEditors" } },
                     preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, this, item("...livePreview")); } } } },
                     fixCodeAndHtmlButton:
                     {
@@ -108,11 +110,12 @@
                         {
                             if (confirm("Are you sure you wand to do this?  Your code and markup will be replaced with working copies."))
                             {
-                                this.data("html", this.data("targetHTML"));
-                                this.data("javascript", this.data("targetJavascript"));
+                                var lessonPath  = getActiveExamplePath(this.data, true);
+                                this.data("html", this.data(lessonPath+".targetHTML"));
+                                this.data("javascript", this.data(lessonPath+".targetJavascript"));
                             }
                         },
-                        bind:   { display: { when: "nohelp", "!=": true } }
+                        bind:   { display: function(item){ return item("lessons."+item("...activeLesson")+".nohelp") != true; } }
                     },
                     movePreviousArrow:
                     {
