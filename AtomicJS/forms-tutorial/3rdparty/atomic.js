@@ -1171,7 +1171,7 @@
         },
         createView:     function(viewAdapterDefinitionConstructor, viewElement)
         {
-            return this.create
+            var adapter = this.create
             (
                 typeof viewAdapterDefinitionConstructor !== "function"
                 ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
@@ -1181,6 +1181,8 @@
                 undefined,
                 "panel"
             );
+            adapter.data    = new observer({});
+            return adapter;
         },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
@@ -1223,7 +1225,6 @@
                 controlsOrAdapter, 
                 typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
             );
-            adapter.data    = new observer({});
             if (typeof callback === "function") callback(adapter);
             return adapter;
         },
