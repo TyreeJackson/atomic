@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.interactiveTutorial.appController", function tutorialAppController(appView, appProxy, observer)
+{"use strict";root.define("atomic.interactiveTutorial.appController", function tutorialAppController(appView, appProxy)
 {
     function buildHTML(source)
     {
@@ -55,7 +55,7 @@
         });
         appProxy.launch(function(response)
         {
-            appView.data    = new observer(response.data.examples);
+            appView.data("", response.data.examples);
         });
     }
 });}();

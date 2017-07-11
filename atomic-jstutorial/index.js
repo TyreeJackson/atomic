@@ -11,7 +11,6 @@ function ComposeApp()
             document.querySelector("#tutorialApp")
         ),
         new root.atomic.tutorial.appProxy(window.localStorage, root.utilities.removeFromArray),
-        atomic.observer,
         new root.path()
     );
     app.launch();

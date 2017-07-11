@@ -12,8 +12,7 @@ function ComposeApp()
             new root.atomic.interactiveTutorial.appView(editorControl, markdownControl, JSON), 
             document.body
         ),
-        new root.atomic.interactiveTutorial.appProxy(window.localStorage, JSON),
-        atomic.observer
+        new root.atomic.interactiveTutorial.appProxy(window.localStorage, JSON)
     );
     app.launch();
 };}();

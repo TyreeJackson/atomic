@@ -13,7 +13,6 @@ function ComposeApp()
             document.body
         ),
         new root.atomic.playground.appProxy(window.localStorage, JSON),
-        atomic.observer,
         JSZip,
         saveAs,
         aja

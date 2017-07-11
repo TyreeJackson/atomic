@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.playground.appController", function tutorialAppController(appView, appProxy, observer, jszip, saveAs, aja)
+{"use strict";root.define("atomic.playground.appController", function tutorialAppController(appView, appProxy, jszip, saveAs, aja)
 {
     function buildHTML(source)
     {
@@ -55,7 +55,7 @@
         });
         appProxy.launch(function(response)
         {
-            appView.data    = new observer(response.data.examples);
+            appView.data("", response.data.examples);
         });
     }
 });}();

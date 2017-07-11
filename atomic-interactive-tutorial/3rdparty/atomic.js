@@ -700,6 +700,7 @@
         if (observer() === undefined) return;
         var documentFragment    = document.createDocumentFragment();
         var retained            = unbindRepeatedList.call(this, observer());
+        var parent;
         for(var dataItemCounter=0;dataItemCounter<observer.count;dataItemCounter++)
         {
             for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
@@ -710,10 +711,11 @@
                 {
                     this.__repeatedControls[clone.key]  = clone.control;
                     documentFragment.appendChild(clone.control.__element);
+                    parent                              = clone.parent;
                 }
             }
         }
-        this.__element.appendChild(documentFragment);
+        if (parent) parent.appendChild(documentFragment);
     }
     function unbindRepeatedList(keepList)
     {
@@ -1160,18 +1162,19 @@
 {
     var viewAdapterFactory  =
     {
-        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
+        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType, preConstruct)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
             if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
             viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
+            if (typeof preConstruct === "function") preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
         createView:     function(viewAdapterDefinitionConstructor, viewElement)
         {
-            return this.create
+            var adapter = this.create
             (
                 typeof viewAdapterDefinitionConstructor !== "function"
                 ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
@@ -1179,8 +1182,10 @@
                 viewElement,
                 undefined,
                 undefined,
-                "panel"
+                "panel",
+                function(){this.data = new observer({});}
             );
+            return adapter;
         },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
@@ -1223,7 +1228,6 @@
                 controlsOrAdapter, 
                 typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
             );
-            adapter.data    = new observer({});
             if (typeof callback === "function") callback(adapter);
             return adapter;
         },
@@ -1449,7 +1453,7 @@
             for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
             return path;
         }
-        function navDataPath(root, paths, value)
+        function navDataPath(root, paths, value, forceSet)
         {
             if (paths.length == 0)
             {
@@ -1468,7 +1472,7 @@
                 }
                 current     = current[path.value];
             }
-            if (value === undefined)    return current[paths[paths.length-1].value];
+            if (value === undefined && !forceSet)   return current[paths[paths.length-1].value];
             current[paths[paths.length-1].value]    = value;
         }
         function addPropertyPath(properties, path, remainingPath)
@@ -1542,7 +1546,7 @@
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value, getObserver, peek)
+            __invoke:           {value: function(path, value, getObserver, peek, forceSet)
             {
                 if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
                 if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
@@ -1552,12 +1556,12 @@
                                         :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
                 var pathSegments    = extractPathSegments(resolvedPath);
                 var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
+                if (value === undefined && !forceSet)   return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
                 if (this.__bag.rollingback) return;
                 var currentValue = navDataPath(this.__bag, pathSegments);
                 if (value !== currentValue)
                 {
-                    navDataPath(this.__bag, pathSegments, value);
+                    navDataPath(this.__bag, pathSegments, value, forceSet);
                     notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
                 }
             }},
@@ -1566,6 +1570,7 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
             }},
+            delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},

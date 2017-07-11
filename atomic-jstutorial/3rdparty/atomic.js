@@ -179,6 +179,7 @@
         {
             element                 = this.__createNode(selector);
             parent.__element.appendChild(element);
+            if (this.__addSpacing)  parent.__element.appendChild(document.createTextNode (" "));
             element[selector.substr(0,1)==="#"?"id":"className"]    = selector.substr(1);
             element.__selectorPath  = parent.getSelectorPath();
         }
@@ -400,7 +401,6 @@
             disabled:           {get: function(){return this.__element.disabled;},              set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
-            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}},
             tooltip:            {get: function(){return this.__element.title;},                 set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
             value:              {get: function(){return this.__element.innerHTML;},             set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
         });
@@ -410,10 +410,31 @@
     {
         constructor:    {value: readonly},
         __createNode:   {value: function(){return document.createElement("span");}, configurable: true},
-        hide:               {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
-        show:               {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
+        hide:           {value: function(){each(this.__elements, function(element){element.style.display="none";}); this.__element.style.display="none"; this.triggerEvent("hide"); return this;}},
+        show:           {value: function(){each(this.__elements, function(element){element.style.display="";}); this.__element.style.display=""; this.triggerEvent("show"); return this;}},
     });
     return readonly;
+});}();
+!function()
+{"use strict";root.define("atomic.html.label", function htmlLabel(control, each)
+{
+    function label(elements, selector, parent)
+    {
+        control.call(this, elements, selector, parent);
+        Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
+        this.__binder.defineDataProperties(this,
+        {
+            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}}
+        });
+    }
+    Object.defineProperty(label, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperties(label.prototype,
+    {
+        constructor:    {value: label},
+        __createNode:   {value: function(){return document.createElement("label");}, configurable: true},
+        __addSpacing:   {value: true}
+    });
+    return label;
 });}();
 !function()
 {"use strict";root.define("atomic.html.link", function htmlLink(base, each)
@@ -446,9 +467,10 @@
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup",
-        "a":                        "link"
+        "a":                        "link",
+        "label":                    "label"
     };
-    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","label","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
     {
         elementControlTypes[name]   = "readonly";
@@ -1138,18 +1160,19 @@
 {
     var viewAdapterFactory  =
     {
-        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType)
+        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType, preConstruct)
         {
             selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
             if (controlTypes[controlType] === undefined)    debugger;
             var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
             viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
+            if (typeof preConstruct === "function") preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
         createView:     function(viewAdapterDefinitionConstructor, viewElement)
         {
-            return this.create
+            var adapter = this.create
             (
                 typeof viewAdapterDefinitionConstructor !== "function"
                 ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
@@ -1157,8 +1180,10 @@
                 viewElement,
                 undefined,
                 undefined,
-                "panel"
+                "panel",
+                function(){this.data = new observer({});}
             );
+            return adapter;
         },
         createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
         {
@@ -1201,7 +1226,6 @@
                 controlsOrAdapter, 
                 typeof viewElement === "string" ? document.querySelector(viewElement) : viewElement||document.body
             );
-            adapter.data    = new observer({});
             if (typeof callback === "function") callback(adapter);
             return adapter;
         },
@@ -1357,7 +1381,7 @@
         {if (basePath==undefined) debugger;
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}},
                 isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
@@ -1373,7 +1397,7 @@
             //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             Object.defineProperties(this,
             {
-                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto);}},
+                ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}}
             });
@@ -1383,10 +1407,10 @@
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath, getObserver)
+        function getValue(pathSegments, revisedPath, getObserver, peek)
         {
             pathSegments    = pathSegments || [""];
-            if (this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
+            if (!peek && this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
             var returnValue = navDataPath(this.__bag, pathSegments);
             if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
             return returnValue;
@@ -1497,6 +1521,7 @@
             )
             {
                 bag.updating.push(listener);
+                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
                 listener.properties = {};
                 var postCallback = listener.callback(value);
                 bag.updating.pop();
@@ -1519,17 +1544,17 @@
         }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value, getObserver)
+            __invoke:           {value: function(path, value, getObserver, peek)
             {
-                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver);}
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver);
+                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
+                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
                 if (path === undefined || path === null)        path    = "";
                 var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
                                         ?   path.substr(3)
                                         :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
                 var pathSegments    = extractPathSegments(resolvedPath);
                 var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver);
+                if (value === undefined)    return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
                 if (this.__bag.rollingback) return;
                 var currentValue = navDataPath(this.__bag, pathSegments);
                 if (value !== currentValue)
@@ -1543,8 +1568,10 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
             }},
-            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes);}},
-            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no);}},
+            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
+            peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
+            read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -1933,6 +1960,7 @@
 
     var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
     var readonly                = new root.atomic.html.readonly(control, each);
+    var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
     var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
     var panel                   = new root.atomic.html.panel(container, each);
@@ -1951,6 +1979,7 @@
     {
         control:        {value: control},
         readonly:       {value: readonly},
+        label:          {value: label},
         link:           {value: link},
         linkPanel:      {value: linkPanel},
         container:      {value: container},
