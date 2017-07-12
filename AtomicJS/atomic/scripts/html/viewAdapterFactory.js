@@ -58,11 +58,15 @@
         },
         launch:         function(viewElement, controlsOrAdapter, callback)
         {
-            if (controlsOrAdapter === undefined)
+            if (arguments.length === 0) return;
+            if (arguments.length === 1 || (arguments.length === 2 && (typeof controlsOrAdapter === "function"||(typeof viewElement === "object" && typeof controlsOrAdapter === "object"))))
             {
+                callback            = controlsOrAdapter;
                 controlsOrAdapter   = viewElement;
                 viewElement         = document.body;
             }
+            if (callback === undefined)             callback    = function(adapter){adapter.data("", {});};
+            else if(typeof callback === "object")   callback    = (function(data){return function(adapter){adapter.data("", data);};})(callback);
             var adapter =
             this.createView
             (

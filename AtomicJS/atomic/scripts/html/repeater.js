@@ -77,7 +77,7 @@
                 }
             }
         }
-        if (parent) parent.appendChild(documentFragment);
+        (parent||this.__element).appendChild(documentFragment);
     }
     function unbindRepeatedList(keepList)
     {
