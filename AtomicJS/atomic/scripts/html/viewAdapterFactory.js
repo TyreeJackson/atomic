@@ -58,8 +58,9 @@
         },
         launch:         function(viewElement, controlsOrAdapter, callback)
         {
-            if (arguments.length === 0) return;
-            if (arguments.length === 1 || (arguments.length === 2 && (typeof controlsOrAdapter === "function"||(typeof viewElement === "object" && typeof controlsOrAdapter === "object"))))
+            var argsLength  = callback === undefined ? controlsOrAdapter === undefined ? viewElement === undefined ? 0 : 1 : 2 : 3;
+            if (argsLength === 0) return;
+            if (argsLength === 1 || (argsLength === 2 && (typeof controlsOrAdapter === "function"||(typeof viewElement === "object" && typeof controlsOrAdapter === "object"))))
             {
                 callback            = controlsOrAdapter;
                 controlsOrAdapter   = viewElement;
