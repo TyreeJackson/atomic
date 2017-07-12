@@ -94,7 +94,7 @@ root.atomic.launch ( "#example1", {worldLabel: {value: "World"}} );
                                                 sayHelloButton:
                                                 {
                                                     onclick:    function(){ this.data("worldValue","World"); }, 
-                                                    bind:       { display: { when: "worldValue.length", "=": 0 } }
+                                                    bind:       { display: { when: "worldValue", hasValue: false } }
                                                 },
                                                 example2model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             }
@@ -119,7 +119,7 @@ root.atomic.launch
         sayHelloButton:
         {
             onclick:    function(){ this.data("worldValue","World"); }, 
-            bind:       { display: { when: "worldValue.length", "=": 0 } }
+            bind:       { display: { when: "worldValue", hasValue: false } }
         }
     }
 );
