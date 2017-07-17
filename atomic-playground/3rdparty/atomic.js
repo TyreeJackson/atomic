@@ -1376,6 +1376,331 @@
     };
 });}();
 !function()
+{"use strict"; root.define("atomic.scanner", function scanner()
+{
+    var priv    =
+    {
+        input:              "",
+        currentByteIndex:   -1,
+        currentColumnIndex: 0,
+        currentLineNumber:  0,
+        currentChar:        ""
+    };
+    var scanner = Object.create({},
+    {
+        read:   {value:
+        function(input)
+        {
+            priv.input              = input;
+            priv.currentByteIndex   = -1;
+            priv.currentColumnIndex = 0;
+            priv.currentLineNumber  = 0;
+        }},
+        scan:   {value:
+        function()
+        {
+            priv.currentByteIndex++;
+            if (priv.currentByteIndex < priv.input.length)
+            {
+                priv.currentChar    = priv.input[priv.currentByteIndex];
+                if
+                (
+                    priv.currentByteIndex > 0
+                    &&
+                    priv.input[priv.currentByteIndex-1] == '\n'
+                )
+                {
+                    priv.currentLineNumber++;
+                    priv.currentColumnIndex = -1;
+                }
+                priv.currentColumnIndex++;
+            }
+            return priv.currentByteIndex < priv.input.length;
+        }},
+        stepBack:   {value:
+        function()
+        {
+            if (priv.currentByteIndex <= 0) throw new Error("Scanner is already at position 0.")
+            priv.currentByteIndex--;
+            if (priv.input[priv.currentByteIndex] == '\n')  priv.currentLineNumber--;
+        }},
+        currentByteIndex:   { get: function(){ return priv.currentByteIndex; } },
+        currentColumnIndex: { get: function(){ return priv.currentColumnIndex; } },
+        currentLineNumber:  { get: function(){ return priv.currentLineNumber; } },
+        current:            { get: function(){ return priv.currentChar; } },
+        eof:                { get: function(){ return priv.eof; } }
+    });
+    return scanner;
+});}();
+!function()
+{"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
+{
+    const   whiteSpaceCharacters    = /\s/;
+    var priv    =
+    {
+        currentToken:   null
+    };
+
+    function resetTokenizers()
+    {
+        for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   tokenizer.reset();
+    }
+    var lexer   = Object.create({},
+    {
+        read:           {value:
+        function(input)
+        {
+            scanner.read(input);
+            return this;
+        }},
+        getNextToken:   {value:
+        function()
+        {
+            if (scanner.eof)    return true;
+            var previousTokenizers  = [],
+                activeTokenizers    = [],
+                currentChar;
+            
+            while(scanner.scan())
+            {
+                currentChar = scanner.current;
+                if (activeTokenizers.length > 0)
+                {
+                    previousTokenizers  = activeTokenizers.slice();
+                    for(var counter=0, activeTokenizer;activeTokenizer=previousTokenizers[counter];counter++)
+                    {
+                        if (activeTokenizer.readChar(currentChar))  continue;
+                        else                                        removeFromArray(activeTokenizer, counter);
+                    }
+
+                    if (activeTokenizers.length > 0)    continue;
+                    else
+                    {
+                        if (!whiteSpaceCharacters.test(currentChar))    scanner.stepBack();
+                        activeTokenizers    = previousTokenizers;
+                        break;
+                    }
+                }
+                activeTokenizers    = [];
+                for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   if (tokenizer.readChar(currentChar))    activeTokenizers.push(tokenizer);
+
+                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
+            }
+            if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement.");
+            
+            priv.currentToken   = activeTokenizers[0].getToken();
+            resetTokenizers();
+        }},
+        eof:                { get: function(){return scanner.eof;}},
+        currentByteIndex:   { get: function(){return scanner.currentByteIndex;}},
+        currentColumnIndex: { get: function(){return scanner.currentColumnIndex;}},
+        currentLineNumber:  { get: function(){return scanner.currentLineNumber;}},
+        current:            { get: function(){return priv.currentToken;}}
+    });
+});}();
+!function()
+{"use strict"; root.define("atomic.tokenizer", function tokenizer()
+{
+    return function(prot, reset, read, getToken)
+    {
+        Object.defineProperties(prot,
+        {
+            isClosed:   {value: false, writable: true}
+        });
+        Object.defineProperties(this,
+        {
+            reset:      {value: function()
+            {
+                prot.isClosed   = true;
+                reset.call(this);
+                return this;
+            }},
+            read:       {value: read},
+            getToken:   {value: getToken}
+        });
+    }
+});}();
+!function()
+{"use strict"; root.define("atomic.pathParser", function pathParser(tokenizer)
+{
+    const   literal             = 'literal';
+    const   word                = 'word';
+    const   numeral             = 'numeral';
+    const   openKeyDelimiter    = 'openKeyDelimiter';
+    const   closeKeyDelimiter   = 'closeKeyDelimiter';
+    const   openParenDelimiter  = 'openParenDelimiter';
+    const   closeParenDelimiter = 'closeParenDelimiter';
+    const   propertyDelimiter   = 'propertyDelimiter';
+    function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
+    function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
+    {
+        // This tokenizer allows for slash delimiter escaping but not double delimiter escaping
+        var priv    =
+        {
+            value:  ""
+        };
+        var prot    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (prot.isClosed && currentChar==delimiter && priv.value.length == 0)
+            {
+                prot.isClosed   = false;
+                handled         = true;
+            }
+            else if(!prot.isClosed && (!failOnCarriageReturnOrLineBreak || (currentChar != "\r" && currentChar != "\n"))
+            {
+                if (currentChar==delimiter && (priv.value.length == 0 || priv.value.slice(-1) != "\\")) prot.isClosed   = true;
+                else                                                                                    priv.value      += currentChar;
+
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, literal);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(stringLiteralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function wordTokenizer()
+    {
+        var firstLetterCharacters   = /[a-zA-Z]_$/;
+        var wordCharacters          = /[a-zA-Z0-9]_$/;
+        var priv                    =
+        {
+            value:  ""
+        };
+        var prot                    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (!prot.isClosed && wordCharaters.test(currentChar))
+            {
+                priv.value  += currentChar;
+                handled     = true;
+            }
+            else if (prot.isClosed && firstLetterCharacters.test(currentChar))
+            {
+                prot.isClosed   = false;
+                priv.value      = currentChar;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, word);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(wordTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function numeralTokenizer()
+    {
+        var numerals    = /[0-9]/;
+        var priv        =
+        {
+            value:  ""
+        };
+        var prot        = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (numerals.test(currentChar))
+            {
+                if (prot.isClosed)  prot.isClosed   = false;
+                priv.value  += currentChar;
+                handled     = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, numeral);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(numeralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function delimiterTokenizer(delimiter, type)
+    {
+        var priv    =
+        {
+            value:  ""
+        };
+        var prot    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (currentChar === delimiter && prot.isClosed)
+            {
+                priv.value      = currentChar;
+                prot.isClosed   = false;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, type);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(delimiterTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+
+    return Object.create({},
+    {
+        tokenizers: { get: { function()
+        {
+            var tokenizers  =
+            [
+                new stringLiteralTokenizer("'", true),
+                new stringLiteralTokenizer("\"", true),
+                new stringLiteralTokenizer("`", false),
+                new wordTokenizer(),
+                new numeralTokenizer(),
+                new delimiterTokenizer('.', propertyDelimiter),
+                new delimiterTokenizer('[', openKeyDelimiter),
+                new delimiterTokenizer(']', closeKeyDelimiter),
+                new delimiterTokenizer('(', closeParenDelimiter),
+                new delimiterTokenizer(')', closeParenDelimiter)
+            ];
+            return tokenizers;
+        }}},
+        
+    });
+});}();
+!function()
+{"use strict"; root.define("atomic.pathResolver", function pathResolver()
+{
+    /*
+        Special tokens:
+            `$root`:        reset pointer path to root
+            `$home`:        reset pointer path to the basePath that the subscriber is bound to
+            `$parent`:      move pointer up to parent node - this may set the pointer to an index of an array which is a valid node in the path and points to the item in the array
+            `$key`:         terminates the path and returns the key/index of the current selected node - ex: An unresolved path of `$key` with a basePath of `lookupdata.items.1` returns `1`.  An unresolved path of `$parent.$key` with a basePath of `data.employees.12.person` returns `12`.  An unresolved path of `$key` with a basePath of `data.employees.12.person` returns `person`.
+            `$path`:        terminates the path and returns the location in the path that the pointer is currently referring to - ex: an unresolved path of `$parent.$path` with a basePath of `data.employees.12` returns `data.employees`
+            `$first(c)`:    start a scan to locate the first child that meets the critiera provided
+            `$last(c)`:     start a scan to locate the last child that meets the critiera provided
+            `$all(c)`:      start a scan to locate all of the children that meet the criteria provided - returns an array containing the matches
+    */
+    var resolver    =
+    {
+        getAccessor:
+        function(basePath, extendedPath)
+        {
+            var fullPath    =   typeof extendedPath === "string" && extendedPath.substr(0,2) === "$root"   // <-- eliminates the base path
+                                ?   path.substr(5)
+                                :   this.__basePath + "." + path.toString();
+        }
+    };
+
+});}();
+!function()
 {
     "use strict";
     var createObserver;
