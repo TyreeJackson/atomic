@@ -1,5 +1,5 @@
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter, removeItemFromArray)
 {
     var elementControlTypes =
     {

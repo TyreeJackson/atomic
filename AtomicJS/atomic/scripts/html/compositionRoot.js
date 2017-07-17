@@ -23,7 +23,7 @@
     var readonly                = new root.atomic.html.readonly(control, each);
     var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
-    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
+    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each), root.utilities.removeItemFromArray);
     var panel                   = new root.atomic.html.panel(container, each);
     var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);

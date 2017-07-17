@@ -20,7 +20,6 @@
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
-        bind:               { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});} },
         data:
         {
             get:    function(){return this.__binder.data;},
@@ -36,6 +35,7 @@
         init:               {value: function(definition)
         {
             base.prototype.init.call(this, definition);
+            if (definition.properties !== undefined)    Object.defineProperty(this, "bind", { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});}, configurable: true });
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
         }},
