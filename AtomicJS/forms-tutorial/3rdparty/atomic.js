@@ -1800,7 +1800,7 @@
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
                 __onchange:             {value: {}},
-                __inputListener:        {value: function(){property.___inputListener();}}
+                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}}
             });
             if (typeof onchange === "string") debugger;
             property.onchange = onchange;
