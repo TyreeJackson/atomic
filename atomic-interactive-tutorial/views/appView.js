@@ -5,12 +5,12 @@
     function getActiveExamplePath(item, withLesson)
     {
         var active          = item("...active");
-        var activeLesson    = item("...activeLesson");
+        var activeLesson    = item.peek("...activeLesson");
         var activeTutorial;
         if (active !== undefined && item.peek("...examples") !== undefined)
         for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) { activeTutorial = "...examples."+counter+".example"; break; }
         if (activeTutorial === undefined) activeTutorial = "...examples.0.example";
-        if (activeLesson === undefined || activeLesson > item("activeTutorial.lessons.length")) { activeLesson = 0; item("...activeLesson", activeLesson); }
+        if (activeLesson === undefined || activeLesson > item.peek("activeTutorial.lessons.length")) { activeLesson = 0; item("...activeLesson", activeLesson); }
         return activeTutorial+(withLesson?".lessons."+activeLesson:"");
     }
     function getRenderedOutput()
@@ -51,7 +51,7 @@
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, this.root.controls.playground.controls.preview, true, true); updateIframe.call(this, this.root.controls.authorEditors.controls.targetPreview, true, true, true); } },
+                    value:  {to : "active", onupdate: function(){ this.data("activeLesson", 0); updateIframe.call(this, this.root.controls.playground.controls.preview, true, true); updateIframe.call(this, this.root.controls.authorEditors.controls.targetPreview, true, true, true); } },
                     items:
                     {
                         to:     "examples",
