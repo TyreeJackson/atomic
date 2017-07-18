@@ -456,7 +456,7 @@
     return link;
 });}();
 !function()
-{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter)
+{"use strict";root.define("atomic.html.container", function htmlContainer(control, each, viewAdapterFactory, initializeViewAdapter, removeItemFromArray)
 {
     var elementControlTypes =
     {
@@ -613,7 +613,6 @@
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
-        bind:               { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});} },
         data:
         {
             get:    function(){return this.__binder.data;},
@@ -629,6 +628,7 @@
         init:               {value: function(definition)
         {
             base.prototype.init.call(this, definition);
+            if (definition.properties !== undefined)    Object.defineProperty(this, "bind", { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});}, configurable: true });
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
         }},
@@ -1296,6 +1296,7 @@
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
             else if (binding.when !== undefined)                            bindWhenBinding(viewAdapter, name, binding);
+            else if (binding.get || binding.set)                            viewAdapter[name].bind      = {get: binding.get, set: binding.set};
             each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];
@@ -1479,7 +1480,7 @@
                 current     = current[path.value];
             }
             if (value === undefined && !forceSet)   return current[paths[paths.length-1].value];
-            current[paths[paths.length-1].value]    = value;
+            current[paths[paths.length-1].value]    = value&&value.isObserver ? value.unwrap() : value;
         }
         function addPropertyPath(properties, path, remainingPath)
         {
@@ -1653,7 +1654,7 @@
                 {
                     value: function()
                     {
-                        var items   = this(); 
+                        var items   = this.unwrap(); 
                         return items[name].apply(items, arguments);
                     }
                 }
@@ -1971,7 +1972,7 @@
     var readonly                = new root.atomic.html.readonly(control, each);
     var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
-    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each));
+    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each), root.utilities.removeItemFromArray);
     var panel                   = new root.atomic.html.panel(container, each);
     var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);

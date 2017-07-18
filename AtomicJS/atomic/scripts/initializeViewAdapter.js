@@ -45,6 +45,7 @@
         {
             if (binding.to !== undefined)                                   viewAdapter[name].bind      = binding.to;
             else if (binding.when !== undefined)                            bindWhenBinding(viewAdapter, name, binding);
+            else if (binding.get || binding.set)                            viewAdapter[name].bind      = {get: binding.get, set: binding.set};
             each(["root","onupdate"], (function(option)
             {
                 if (binding[option] !== undefined)                          viewAdapter[name][option]   = binding[option];

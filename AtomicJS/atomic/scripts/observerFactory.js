@@ -102,7 +102,7 @@
                 current     = current[path.value];
             }
             if (value === undefined && !forceSet)   return current[paths[paths.length-1].value];
-            current[paths[paths.length-1].value]    = value;
+            current[paths[paths.length-1].value]    = value&&value.isObserver ? value.unwrap() : value;
         }
         function addPropertyPath(properties, path, remainingPath)
         {
@@ -276,7 +276,7 @@
                 {
                     value: function()
                     {
-                        var items   = this(); 
+                        var items   = this.unwrap(); 
                         return items[name].apply(items, arguments);
                     }
                 }
