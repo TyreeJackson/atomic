@@ -4,25 +4,27 @@
     <style>
        #debugLog{background-color: rgba(192,192,192,1); font: courier;margin-top: 100px;opacity:.5}
     </style>
+    <script type="text/javascript" src="lib/faker.js"></script>
     <script type="text/javascript" src="../namespaces.js"></script>
-    <script type="text/javascript" src="../viewAdapterFactory.js"></script>
-    <script type="text/javascript" src="../htmlViewAdapterFactorySupport.js"></script>
+    <script type="text/javascript" src="../html/viewAdapterFactory.js"></script>
+    <script type="text/javascript" src="../scanner.js"></script>
     <script type="text/javascript" src="htmlDocumentLogger.js"></script>
+    <script type="text/javascript" src="ion.js"></script>
     <script type="text/javascript" src="mock.js"></script>
-    <script type="text/javascript" src="viewAdapterFactoryTests.js"></script>
-    <script type="text/javascript" src="htmlViewAdapterFactorySupportTests.js"></script>
+    <script type="text/javascript" src="html/viewAdapterFactoryTests.js"></script>
+    <script type="text/javascript" src="scannerTests.js"></script>
     <script type="text/javascript" language="Javascript">
     window.onload   =
     function()
     {
-        var mock    = new root.atomic.testUtilities.mock(new root.atomic.htmlDocumentLogger(document.querySelector("#debugLog")), new root.atomic.htmlDocumentLogger(document.querySelector("#assertionsLog")));
-        mock.execute(root.atomic.tests);
-        var testsNamespace  = root.atomic.tests;
+        var mock    = new root.atomic.testUtilities.mock(new root.atomic.htmlDocumentLogger(document.querySelector("#debugLog")));
+        var ion     = new root.atomic.testUtilities.ion(mock, new root.atomic.htmlDocumentLogger(document.querySelector("#assertionsLog")));
+        ion.execute(root.atomic.tests);
     }
     </script>
 </head>
 <body>
-    <div id="assertionsLog"></div>
+    <pre id="assertionsLog"></pre>
     <div id="debugLog"></div>
 </body>
 </html>

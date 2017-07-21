@@ -1,6 +1,6 @@
 ﻿!function()
 {root.define("atomic.testUtilities.mock",
-function mockModule(debugLogger, assertionsLogger)
+function mockModule(debugLogger)
 {
     const debugging = true;
     var isAny       = {};
@@ -29,7 +29,7 @@ function mockModule(debugLogger, assertionsLogger)
             {
                 get:
                 function(target, name)
-                {
+                {if (typeof name === "symbol") debugger;
                     if (name != "toString" && name != "valueOf" && name != "toJSON") debugLog(proxiedName + "." + name + " was accessed.");
                     if (name == "toJSON")   return function(){return "";};
                     return mock.getCallback(target, proxiedName, name) || target[name];
@@ -186,7 +186,7 @@ function mockModule(debugLogger, assertionsLogger)
         {
             var invocationAction    = getInvocationAction(this.__privileged.invocationActions, fullName);
             invocationAction.calls.push(args);
-            return invocationAction.invoke();
+            return typeof invocationAction.invoke === "function" ? invocationAction.invoke.apply(this, args) : undefined;
         }
     };
     mock.prototype.setup                =
@@ -201,6 +201,12 @@ function mockModule(debugLogger, assertionsLogger)
     function(value)
     {
         this.__privileged.lastActionToSetup.invoke = function(){return value;};
+        return this;
+    };
+    mock.prototype.callback             =
+    function(callback)
+    {
+        this.__privileged.lastActionToSetup.invoke = function(){return callback.apply(this, arguments);};
         return this;
     };
     mock.prototype.throws               =
@@ -236,44 +242,5 @@ function mockModule(debugLogger, assertionsLogger)
         "times",
         {get: function(){return times;}}
     );
-    mock.assert                         =
-    function(condition, failureMessage)
-    {
-        if (!condition) throw new Error(failureMessage);
-    };
-    mock.assert.areEqual                =
-    function(expectedValue, actualValue, failureMessage)
-    {
-        return this(expectedValue===actualValue, failureMessage);
-    }
-    mock.assert.fail                    =
-    function(failureMessage)
-    {
-        return this(false, failureMessage);
-    }
-    mock.execute                        =
-    function(testsNamespace)
-    {
-        var testNames   = Object.getOwnPropertyNames(testsNamespace);
-        for(var testNameCounter=0;testNameCounter<testNames.length;testNameCounter++)
-        {
-            var tests   = new testsNamespace[testNames[testNameCounter]](this);
-            for(var testKey in tests)
-            {
-                if (testKey == "__setup")   continue;
-                try
-                {
-                    var testContext = {};
-                    if (tests.__setup)  tests.__setup.call(testContext);
-                    tests[testKey].call(testContext);
-                    assertionsLogger("SUCCESS: \"" + testKey + "\" test passed successfully.");
-                }
-                catch(error)
-                {
-                    assertionsLogger("FAIL:    \"" + testKey + "\" test failed.  " + error.message);
-                }
-            }
-        }
-    }
     return mock;
 });}();
