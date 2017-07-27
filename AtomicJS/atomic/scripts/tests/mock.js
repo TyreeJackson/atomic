@@ -3,7 +3,10 @@
 function mockModule(debugLogger)
 {
     const debugging = true;
-    var isAny       = {};
+    const isAnyKey  = "__mock.isAny__";
+    function isAnyObject(){}
+    isAnyObject.prototype.toString = function(){return isAnyKey;};
+    var isAny       = new isAnyObject();
     function exists(item) {return item !== undefined && item !== null;}
     function debugLog(message) { if (debugging === true) debugLogger(message); }
     var times   =
@@ -32,7 +35,7 @@ function mockModule(debugLogger)
                 {if (typeof name === "symbol") debugger;
                     if (name != "toString" && name != "valueOf" && name != "toJSON") debugLog(proxiedName + "." + name + " was accessed.");
                     if (name == "toJSON")   return function(){return "";};
-                    return mock.getCallback(target, proxiedName, name) || target[name];
+                    return mock.getCallback(target, proxiedName, name);
                 },
                 set:
                 function(target, name, value)
@@ -116,11 +119,17 @@ function mockModule(debugLogger)
         else
         {
             var action  = this.__privileged.getActions[fullName];
-            if (!action)    action  = this.__privileged.getActions[fullName]   = {callCount: 0};
+            var isAny   = false;
+            if (!action)
+            {
+                action  = this.__privileged.getActions[proxiedName+"."+isAnyKey] || (this.__privileged.getActions[fullName]   = {callCount: 0});
+                isAny   = true;
+            }
+
             action.callCount++;
             return exists(action.invoke)
-            ?   action.invoke()
-            :   target[fullName]
+            ?   isAny?action.invoke(name):action.invoke()
+            :   target[name]
         }
     };
     mock.prototype.setCallback          =

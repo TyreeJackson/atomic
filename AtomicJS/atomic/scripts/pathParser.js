@@ -1,15 +1,12 @@
 !function()
-{"use strict"; root.define("atomic.pathParser", function pathParser(tokenizer)
+{"use strict"; root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
 {
-    const   literal                     = 'literal';
-    const   word                        = 'word';
-    const   numeral                     = 'numeral';
+    const   LITERAL                     = 'literal';
+    const   WORD                        = 'word';
+    const   NUMERAL                     = 'numeral';
     const   openKeyDelimiter            = 'openKeyDelimiter';
     const   closeKeyDelimiter           = 'closeKeyDelimiter';
-    const   openParenDelimiter          = 'openParenDelimiter';
-    const   closeParenDelimiter         = 'closeParenDelimiter';
     const   propertyDelimiter           = 'propertyDelimiter';
-    const   operator                    = 'operator';
     const   EOF                         = 'EOF';
     function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
     function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
@@ -40,15 +37,15 @@
         }
         function getToken()
         {
-            return new token(priv.value, literal);
+            return new token(priv.value, LITERAL);
         }
         tokenizer.call(this, prot, reset, read, getToken);
     }
     Object.defineProperty(stringLiteralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
     function wordTokenizer()
     {
-        var firstLetterCharacters   = /[a-zA-Z]_$/;
-        var wordCharacters          = /[a-zA-Z0-9]_$/;
+        var firstLetterCharacters   = /[a-zA-Z_$]/;
+        var wordCharacters          = /[a-zA-Z0-9_$]/;
         var priv                    =
         {
             value:  ""
@@ -58,7 +55,7 @@
         function read(currentChar)
         {
             var handled = false;
-            if (!prot.isClosed && wordCharaters.test(currentChar))
+            if (!prot.isClosed && wordCharacters.test(currentChar))
             {
                 priv.value  += currentChar;
                 handled     = true;
@@ -73,7 +70,7 @@
         }
         function getToken()
         {
-            return new token(priv.value, word);
+            return new token(priv.value, WORD);
         }
         tokenizer.call(this, prot, reset, read, getToken);
     }
@@ -100,7 +97,7 @@
         }
         function getToken()
         {
-            return new token(priv.value, numeral);
+            return new token(priv.value, NUMERAL);
         }
         tokenizer.call(this, prot, reset, read, getToken);
     }
@@ -131,32 +128,6 @@
         tokenizer.call(this, prot, reset, read, getToken);
     }
     Object.defineProperty(delimiterTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
-    function operatorTokenizer(operator)
-    {
-        var priv    =
-        {
-            currentIndex:   0
-        };
-        var prot    = {};
-        function reset(){ priv.currentIndex = 0; }
-        function read(currentChar)
-        {
-            var handled = false;
-            if (priv.currentIndex < operator.length && currentChar === operator[priv.currentIndex])
-            {
-                prot.isClosed   = false;
-                priv.currentIndex++;
-                handled         = true;
-            }
-            return handled;
-        }
-        function getToken()
-        {
-            return new token(operator, operator);
-        }
-        tokenizer.call(this, prot, reset, read, getToken);
-    }
-    Object.defineProperty(delimiterTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
 
     var Operation   =
     Object.create({},
@@ -166,125 +137,143 @@
         right:      {value: null, writable: true}
     });
 
-    function navDataPath(root, paths, set, value)
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath)
     {
-        if (paths.length == 0)
+        if (typeof segment === "string")        segment = {value: segment, type: 0};
+
+        if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({item: root.item, basePath: root.basePath})};
+
+        if      (segment.value === "$root")
         {
-            if(!set)    return root.item;
-            root.item   = value;
-            return;
+            return {type: 0, target: root.item, newBasePath: []};
         }
-        var current     = root.item;
-        for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
+        else if (segment.value === "$home")
         {
-            var path    = paths[pathCounter];
-
-            if (typeof path === "function") path    = path(root);
-
-            if (current[path.value] === undefined)
+            var resolvedPath    = resolvePath({item: root.item, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            return {type: 0, target: resolvedPath.value, newBasePath: root.basePath.split(".")};
+        }
+        else if (segment.value === "$parent")
+        {
+            newBasePath.pop();
+            var resolvedPath    = resolvePath({item: root.item, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath};
+        }
+        else if (segment.value === "$key")
+        {
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : undefined};
+        }
+        else if (segment.value === "$path")
+        {
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : undefined};
+        }
+        else
+        {
+            newBasePath.push(segment.value);
+            if (current[segment.value] === undefined)
             {
-                if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
-                else                        return undefined;
+                if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
+                else                return {type: 1, value: undefined};
             }
-            current     = current[path.value];
+            return {type: 0, target: current[segment.value], newBasePath: newBasePath};
         }
-        if (!set)   return current[paths[paths.length-1].value];
-        current[paths[paths.length-1].value]    = value&&value.isObserver ? value.unwrap() : value;
     }
 
-    var operators   = Object.create({},
+    function resolvePath(root, paths, constructPath)
     {
-        "==":   (left, right)=>left==right,
-        "!=":   (left, right)=>left!=right,
-        "<":    (left, right)=>left<right,
-        "<=":   (left, right)=>left<=right,
-        ">":    (left, right)=>left>right,
-        ">=":   (left, right)=>left>=right,
-    });
-    function value(value)                           { return {get: root=>value}; }
-    function accessor(path)                         { return {get: root=>navDataPath(root, path), set: (root,value)=>navDataPath(root, path, true, value)}; }
-    function compare(left, operator, right)         { return {get: root=>operators[operator](left.get(root), right.get(root))}; }
-    function boolCheck(value)                       { return {get: root=>value.get(root)}; }
-    function invokeFunction(functionName, criteria) { return {get: root=>functions[functionName]()}}
+        var segments        = paths.prependBasePath ? root.basePath.split(".").filter(segment=>segment).concat(paths.segments) : paths.segments;
+        var current         = root.item;
+        var newBasePath     = [];
+        var segmentsLength  = segments.length-(constructPath?1:0);
 
-    function parseFunction(functionName, depth)
-    {
-        var handled = false;
-        lexer.getNextToken();
-        if (lexer.eof || lexer.current.type !== openParenDelimiter)         throw new Error("Syntax error: A open paren was expected but instead " + (lexer.eof ? "EOF" : lexer.current.value + " was encountered.");
-
-        var left    = parse(depth+1);
-        if      (lexer.eof)                                                 throw new Error("Syntax error: An operator or a close paren was expected but instead EOF was encountered.");
-        else if (lexer.current.type === closeParenDelimiter)                return boolCheck(left);
-        else if (lexer.current.type === operator)
+        for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var operator    = lexer.current.value;
-            var right       = parse(depth+1);
-            if (lexer.eof || lexer.current.type !== closeParenDelimiter)    throw new Error("Syntax error: A close paren was expected but instead " + (lexer.eof ? "EOF" : lexer.current.value + " was encountered.");
-            return compare(left, operator, right);
+            var resolvedSegment = resolvePathSegment(root, segments[segmentCounter], current, newBasePath, constructPath);
+
+            if (resolvedSegment.type === 1) return {value: resolvedSegment.value};
+            else
+            {
+                current     = resolvedSegment.target;
+                newBasePath = resolvedSegment.newBasePath;
+            }
         }
-        else                                                                throw new Error("Syntax error: An unexpected token " + lexer.current.value + " was encountered at position " + lexer.currentByteIndex + ".");
+        return constructPath ? {target: current, segment: segments[segments.length-1], basePath: newBasePath.join(".")} : {value: current, pathSegments: newBasePath};
     }
 
-    function parse(depth)
+    function getDataPath(root, paths)
     {
-        var handled     = false;
-        var currentPath = [];
-        while(!lexer.getNextToken())
+        return resolvePath(root, paths, false).value;
+    }
+
+    function setDataPath(root, paths, value)
+    {
+        var resolved    = resolvePath(root, paths, true);
+        var newValue    = value&&value.isObserver ? value.unwrap() : value;
+        if (typeof resolved.segment.value === "object") resolved.segment.value.set({item: root.item, basePath: resolved.basePath}, newValue);
+        else                                            resolved.target[resolved.segment.value]  = newValue;
+    }
+
+    function accessor(path) { return {get: root=>getDataPath(root, path), set: (root,value)=>setDataPath(root, path, value)}; }
+
+    function parse(lexer)
+    {
+        function parse(depth)
         {
-            var token       = lexer.current.value;
+            var handled     = false;
+            var nextType    = 0;
+            var currentPath = {segments: [], prependBasePath: true};
             var needWord    = false;
-            if (lexer.current.type === word)
+            while(!lexer.getNextToken())
             {
-                if      (token === "$root")     {currentPath = []; handled = true;}
-                else if (token === "$home")     {currentPath = basePath.slice(); handled = true;}
-                else if (token === "$parent")   {currentPath.pop(); handled = true;}
-                else if (token === "$key")      {currentPath.push(value(currentPath[currentPath.length-1])); handled = true;}
-                else if (token === "$path")     {currentPath.push(value(currentPath.join("."))); handled = true;}
-                else if 
-                (
-                    token === "$first"
-                    ||
-                    token === "$last"
-                    ||
-                    token === "$all"
-                )                               {currentPath.push(parseFunction(token, depth+1)); handled = true;}
-                else                            {currentPath.push(token); handled = true;}
-                needWord    = false;
-            }
-            else if (lexer.current.type === numeral)
-            {
-                handled     = true;
-                needWord    = false;
-                currentPath.push(lexer.current.value);
-            }
-            else if (!needWord)
-            {
-                if (lexer.current.type === propertyDelimiter && currentPath.length > 0)
+                var token       = lexer.current.value;
+                if (lexer.current.type === WORD)
                 {
-                    handled = true;
+                    currentPath.segments.push({value: token, type: 0});
+                    handled     = true;
+                    needWord    = false;
                 }
-                else if (lexer.current.type === openKeyDelimiter && currentPath.length > 0)
+                else if (lexer.current.type === NUMERAL)
                 {
-                    handled = true;
-                    currentPath.push(parse(depth+1));
+                    handled     = true;
+                    needWord    = false;
+                    currentPath.segments.push({value: lexer.current.value, type: 1});
                 }
-                else if (lexer.current.type === closeKeyDelimiter && currentPath.length > 0 && depth > 0)
+                else if (!needWord)
                 {
-                    handled = true;
-                    return accessor(currentPath);
+                    if (lexer.current.type === propertyDelimiter && currentPath.segments.length > 0)
+                    {
+                        handled     = true;
+                        nextType    = 0;
+                        needWord    = true;
+                    }
+                    else if (lexer.current.type === openKeyDelimiter && currentPath.segments.length > 0)
+                    {
+                        handled     = true;
+                        currentPath.segments.push({value: parse(depth+1), type: 1});
+                    }
+                    else if (lexer.current.type === closeKeyDelimiter && currentPath.segments.length > 0 && depth > 0)
+                    {
+                        handled = true;
+                        return currentPath.segments.length === 1 && currentPath.segments[0].type === 1 ? currentPath.segments[0].value : accessor(currentPath);
+                    }
+                    else if (currentPath.segments.length == 0 && depth > 0 && lexer.current.type === LITERAL)
+                    {
+                        var segment = lexer.current.value;
+                        if (lexer.getNextToken() || lexer.current.type !== closeKeyDelimiter)   throw new Error ("Syntax error: Expected ']' but encountered " + (lexer.eof?"EOF":lexer.current.value) + " at position " + lexer.currentByteIndex + ".");
+                        return segment;
+                    }
                 }
-            }
 
-            if (handled == false)   throw new Error("Syntax error: An unexpected token " + token + " was encountered at position " + lexer.currentByteIndex + ".");
+                if (handled == false)   throw new Error("Syntax error: An unexpected token " + token + " was encountered at position " + lexer.currentByteIndex + ".");
+            }
+            if (depth>0)    throw new Error("Syntax error: Unexpected EOF encountered");
+            return accessor(currentPath);
         }
-        if (depth>0)    throw new Error("Syntax error: Unexpected EOF encountered");
-        return accessor(currentPath);
+        return parse(0);
     }
 
     return Object.create({},
     {
-        tokenizers: { get: { function()
+        getTokenizers:  { value: function()
         {
             var tokenizers  =
             [
@@ -295,29 +284,21 @@
                 new numeralTokenizer(),
                 new delimiterTokenizer('.', propertyDelimiter),
                 new delimiterTokenizer('[', openKeyDelimiter),
-                new delimiterTokenizer(']', closeKeyDelimiter),
-                new delimiterTokenizer('(', openParenDelimiter),
-                new delimiterTokenizer(')', closeParenDelimiter),
-                new operatorTokenizer('=='),
-                new operatorTokenizer('!='),
-                new operatorTokenizer('<'),
-                new operatorTokenizer('<='),
-                new operatorTokenizer('>'),
-                new operatorTokenizer('>=')
+                new delimiterTokenizer(']', closeKeyDelimiter)
             ];
             return tokenizers;
-        }}},
-        parser:
-        function parser(lexer, input, basePath)
+        }},
+        parser: { value: 
+        function parser(lexer)
         {
             Object.defineProperties(this,
             {
-                parse:  {value: function(input, depth)
+                parse:  {value: function(input)
                 {
                     lexer.read(input);
-                    return parse(0);
+                    return parse(lexer);
                 }}
             });
-        }
+        }}
     });
 });}();

@@ -6,25 +6,31 @@
     </style>
     <script type="text/javascript" src="lib/faker.js"></script>
     <script type="text/javascript" src="../namespaces.js"></script>
+    <script type="text/javascript" src="../utilities.js"></script>
     <script type="text/javascript" src="../html/viewAdapterFactory.js"></script>
     <script type="text/javascript" src="../scanner.js"></script>
+    <script type="text/javascript" src="../lexer.js"></script>
+    <script type="text/javascript" src="../tokenizer.js"></script>
+    <script type="text/javascript" src="../pathParser.js"></script>
     <script type="text/javascript" src="htmlDocumentLogger.js"></script>
     <script type="text/javascript" src="ion.js"></script>
     <script type="text/javascript" src="mock.js"></script>
     <script type="text/javascript" src="html/viewAdapterFactoryTests.js"></script>
     <script type="text/javascript" src="scannerTests.js"></script>
+    <script type="text/javascript" src="lexerTests.js"></script>
+    <script type="text/javascript" src="pathParser.integrationTests.js"></script>
     <script type="text/javascript" language="Javascript">
     window.onload   =
     function()
     {
         var mock    = new root.atomic.testUtilities.mock(new root.atomic.htmlDocumentLogger(document.querySelector("#debugLog")));
-        var ion     = new root.atomic.testUtilities.ion(mock, new root.atomic.htmlDocumentLogger(document.querySelector("#assertionsLog")));
+        var ion     = new root.atomic.testUtilities.ion(mock, new root.atomic.htmlDocumentLogger(document.querySelector("#assertionsLog")), window.performance);
         ion.execute(root.atomic.tests);
     }
     </script>
 </head>
 <body>
     <pre id="assertionsLog"></pre>
-    <div id="debugLog"></div>
+    <pre id="debugLog"></pre>
 </body>
 </html>

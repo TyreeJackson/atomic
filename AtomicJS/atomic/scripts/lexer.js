@@ -16,17 +16,19 @@
         read:           {value:
         function(input)
         {
+            if (!tokenizers || tokenizers.length === 0) throw new Error("No tokenizers were supplied");
             scanner.read(input);
             return this;
         }},
         getNextToken:   {value:
         function()
         {
+            if (!tokenizers || tokenizers.length === 0) throw new Error("No tokenizers were supplied");
             if (scanner.eof)    return true;
             var previousTokenizers  = [],
                 activeTokenizers    = [],
                 currentChar;
-            
+
             while(scanner.scan())
             {
                 currentChar = scanner.current;
@@ -35,8 +37,8 @@
                     previousTokenizers  = activeTokenizers.slice();
                     for(var counter=0, activeTokenizer;activeTokenizer=previousTokenizers[counter];counter++)
                     {
-                        if (activeTokenizer.readChar(currentChar))  continue;
-                        else                                        removeFromArray(activeTokenizer, counter);
+                        if (activeTokenizer.read(currentChar))  continue;
+                        else                                    removeFromArray(activeTokenizers, counter);
                     }
 
                     if (activeTokenizers.length > 0)    continue;
@@ -48,11 +50,11 @@
                     }
                 }
                 activeTokenizers    = [];
-                for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   if (tokenizer.readChar(currentChar))    activeTokenizers.push(tokenizer);
+                for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   {if (tokenizer.read(currentChar))    activeTokenizers.push(tokenizer); }
 
                 if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
             }
-            if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement.");
+            if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");
             
             priv.currentToken   = activeTokenizers[0].getToken();
             resetTokenizers();
@@ -64,4 +66,5 @@
         currentLineNumber:  { get: function(){return scanner.currentLineNumber;}},
         current:            { get: function(){return priv.currentToken;}}
     });
+    return lexer;
 });}();

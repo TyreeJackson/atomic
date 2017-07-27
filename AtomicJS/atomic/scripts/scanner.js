@@ -51,7 +51,8 @@
         currentColumnIndex: { get: function(){ return priv.currentColumnIndex; } },
         currentLineNumber:  { get: function(){ return priv.currentLineNumber; } },
         current:            { get: function(){ return priv.currentChar; } },
-        eof:                { get: function(){ return priv.eof; } }
+        eof:                { get: function(){ return priv.input === undefined || priv.input === null || priv.currentByteIndex >= priv.input.length-1; } },
+        input:              { get: function(){ return priv.input; } }
     });
     return scanner;
 });}();

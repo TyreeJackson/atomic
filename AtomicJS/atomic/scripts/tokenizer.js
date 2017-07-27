@@ -5,7 +5,7 @@
     {
         Object.defineProperties(prot,
         {
-            isClosed:   {value: false, writable: true}
+            isClosed:   {value: true, writable: true}
         });
         Object.defineProperties(this,
         {

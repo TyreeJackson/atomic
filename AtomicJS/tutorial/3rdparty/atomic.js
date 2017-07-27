@@ -1718,18 +1718,18 @@
 
     var operators   = Object.create({},
     {
-        "==":   (left, right)=>left==right,
-        "!=":   (left, right)=>left!=right,
-        "<":    (left, right)=>left<right,
-        "<=":   (left, right)=>left<=right,
-        ">":    (left, right)=>left>right,
-        ">=":   (left, right)=>left>=right,
+        "==":   function(left, right){return left==right;},
+        "!=":   function(left, right){return left!=right;},
+        "<":    function(left, right){return left<right;},
+        "<=":   function(left, right){return left<=right;},
+        ">":    function(left, right){return left>right;},
+        ">=":   function(left, right){return left>=right;}
     });
-    function value(value)                           { return {get: root=>value}; }
-    function accessor(path)                         { return {get: root=>navDataPath(root, path), set: (root,value)=>navDataPath(root, path, true, value)}; }
-    function compare(left, operator, right)         { return {get: root=>operators[operator](left.get(root), right.get(root))}; }
-    function boolCheck(value)                       { return {get: root=>value.get(root)}; }
-    function invokeFunction(functionName, criteria) { return {get: root=>functions[functionName]()}}
+    function value(value)                           { return {get: function(root){return value;}}; }
+    function accessor(path)                         { return {get: function(root){return navDataPath(root, path);}, set: function(root,value){return navDataPath(root, path, true, value);}}; }
+    function compare(left, operator, right)         { return {get: function(root){return operators[operator](left.get(root), right.get(root));}}; }
+    function boolCheck(value)                       { return {get: function(root){return value.get(root);}}; }
+    function invokeFunction(functionName, criteria) { return {get: function(root){return functions[functionName]();}}}
 
     function parseFunction(functionName, depth)
     {
