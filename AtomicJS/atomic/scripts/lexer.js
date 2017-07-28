@@ -35,26 +35,21 @@
                 if (activeTokenizers.length > 0)
                 {
                     previousTokenizers  = activeTokenizers.slice();
-                    for(var counter=0, activeTokenizer;activeTokenizer=previousTokenizers[counter];counter++)
-                    {
-                        if (activeTokenizer.read(currentChar))  continue;
-                        else                                    removeFromArray(activeTokenizers, counter);
-                    }
+                    for(var counter=previousTokenizers.length-1, activeTokenizer;activeTokenizer=previousTokenizers[counter];counter--) if (!activeTokenizer.read(currentChar)) removeFromArray(activeTokenizers, counter);
 
                     if (activeTokenizers.length > 0)    continue;
-                    else
-                    {
-                        if (!whiteSpaceCharacters.test(currentChar))    scanner.stepBack();
-                        activeTokenizers    = previousTokenizers;
-                        break;
-                    }
+
+                    if (!whiteSpaceCharacters.test(currentChar))    scanner.stepBack();
+
+                    activeTokenizers    = previousTokenizers;
+                    break;
                 }
                 activeTokenizers    = [];
                 for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   {if (tokenizer.read(currentChar))    activeTokenizers.push(tokenizer); }
 
                 if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
             }
-            if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");
+            if (activeTokenizers.length == 0)   {debugger; throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");}
             
             priv.currentToken   = activeTokenizers[0].getToken();
             resetTokenizers();

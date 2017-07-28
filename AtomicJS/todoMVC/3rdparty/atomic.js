@@ -1377,10 +1377,499 @@
     };
 });}();
 !function()
+{"use strict"; root.define("atomic.scanner", function scanner()
+{
+    var priv    =
+    {
+        input:              "",
+        currentByteIndex:   -1,
+        currentColumnIndex: 0,
+        currentLineNumber:  0,
+        currentChar:        ""
+    };
+    var scanner = Object.create({},
+    {
+        read:   {value:
+        function(input)
+        {
+            priv.input              = input;
+            priv.currentByteIndex   = -1;
+            priv.currentColumnIndex = 0;
+            priv.currentLineNumber  = 0;
+        }},
+        scan:   {value:
+        function()
+        {
+            priv.currentByteIndex++;
+            if (priv.currentByteIndex < priv.input.length)
+            {
+                priv.currentChar    = priv.input[priv.currentByteIndex];
+                if
+                (
+                    priv.currentByteIndex > 0
+                    &&
+                    priv.input[priv.currentByteIndex-1] == '\n'
+                )
+                {
+                    priv.currentLineNumber++;
+                    priv.currentColumnIndex = -1;
+                }
+                priv.currentColumnIndex++;
+            }
+            return priv.currentByteIndex < priv.input.length;
+        }},
+        stepBack:   {value:
+        function()
+        {
+            if (priv.currentByteIndex <= 0) throw new Error("Scanner is already at position 0.")
+            priv.currentByteIndex--;
+            if (priv.input[priv.currentByteIndex] == '\n')  priv.currentLineNumber--;
+        }},
+        currentByteIndex:   { get: function(){ return priv.currentByteIndex; } },
+        currentColumnIndex: { get: function(){ return priv.currentColumnIndex; } },
+        currentLineNumber:  { get: function(){ return priv.currentLineNumber; } },
+        current:            { get: function(){ return priv.currentChar; } },
+        eof:                { get: function(){ return priv.input === undefined || priv.input === null || priv.currentByteIndex >= priv.input.length-1; } },
+        input:              { get: function(){ return priv.input; } }
+    });
+    return scanner;
+});}();
+!function()
+{"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
+{
+    const   whiteSpaceCharacters    = /\s/;
+    var priv    =
+    {
+        currentToken:   null
+    };
+
+    function resetTokenizers()
+    {
+        for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   tokenizer.reset();
+    }
+    var lexer   = Object.create({},
+    {
+        read:           {value:
+        function(input)
+        {
+            if (!tokenizers || tokenizers.length === 0) throw new Error("No tokenizers were supplied");
+            scanner.read(input);
+            return this;
+        }},
+        getNextToken:   {value:
+        function()
+        {
+            if (!tokenizers || tokenizers.length === 0) throw new Error("No tokenizers were supplied");
+            if (scanner.eof)    return true;
+            var previousTokenizers  = [],
+                activeTokenizers    = [],
+                currentChar;
+
+            while(scanner.scan())
+            {
+                currentChar = scanner.current;
+                if (activeTokenizers.length > 0)
+                {
+                    previousTokenizers  = activeTokenizers.slice();
+                    for(var counter=previousTokenizers.length-1, activeTokenizer;activeTokenizer=previousTokenizers[counter];counter--) if (!activeTokenizer.read(currentChar)) removeFromArray(activeTokenizers, counter);
+
+                    if (activeTokenizers.length > 0)    continue;
+
+                    if (!whiteSpaceCharacters.test(currentChar))    scanner.stepBack();
+
+                    activeTokenizers    = previousTokenizers;
+                    break;
+                }
+                activeTokenizers    = [];
+                for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   {if (tokenizer.read(currentChar))    activeTokenizers.push(tokenizer); }
+
+                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
+            }
+            if (activeTokenizers.length == 0)   {debugger; throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");}
+            
+            priv.currentToken   = activeTokenizers[0].getToken();
+            resetTokenizers();
+            return false;
+        }},
+        eof:                { get: function(){return scanner.eof;}},
+        currentByteIndex:   { get: function(){return scanner.currentByteIndex;}},
+        currentColumnIndex: { get: function(){return scanner.currentColumnIndex;}},
+        currentLineNumber:  { get: function(){return scanner.currentLineNumber;}},
+        current:            { get: function(){return priv.currentToken;}}
+    });
+    return lexer;
+});}();
+!function()
+{"use strict"; root.define("atomic.tokenizer", function tokenizer()
+{
+    return function(prot, reset, read, getToken)
+    {
+        Object.defineProperties(prot,
+        {
+            isClosed:   {value: true, writable: true}
+        });
+        Object.defineProperties(this,
+        {
+            reset:      {value: function()
+            {
+                prot.isClosed   = true;
+                reset.call(this);
+                return this;
+            }},
+            read:       {value: read},
+            getToken:   {value: getToken}
+        });
+    }
+});}();
+!function()
+{"use strict"; root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
+{
+    const   LITERAL                     = 'literal';
+    const   WORD                        = 'word';
+    const   NUMERAL                     = 'numeral';
+    const   openKeyDelimiter            = 'openKeyDelimiter';
+    const   closeKeyDelimiter           = 'closeKeyDelimiter';
+    const   propertyDelimiter           = 'propertyDelimiter';
+    const   ROOTDIRECTIVE               = 'rootDirective';
+    const   EOF                         = 'EOF';
+    function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
+    function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
+    {
+        // This tokenizer allows for slash delimiter escaping but not double delimiter escaping
+        var priv    =
+        {
+            value:  ""
+        };
+        var prot    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (prot.isClosed && currentChar==delimiter && priv.value.length == 0)
+            {
+                prot.isClosed   = false;
+                handled         = true;
+            }
+            else if(!prot.isClosed && (!failOnCarriageReturnOrLineBreak || (currentChar != "\r" && currentChar != "\n")))
+            {
+                if (currentChar==delimiter && (priv.value.length == 0 || priv.value.slice(-1) != "\\")) prot.isClosed   = true;
+                else                                                                                    priv.value      += currentChar;
+
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, LITERAL);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(stringLiteralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function wordTokenizer()
+    {
+        var firstLetterCharacters   = /[a-zA-Z_$]/;
+        var wordCharacters          = /[a-zA-Z0-9_$]/;
+        var priv                    =
+        {
+            value:  ""
+        };
+        var prot                    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (!prot.isClosed && wordCharacters.test(currentChar))
+            {
+                priv.value  += currentChar;
+                handled     = true;
+            }
+            else if (prot.isClosed && firstLetterCharacters.test(currentChar))
+            {
+                prot.isClosed   = false;
+                priv.value      = currentChar;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, WORD);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(wordTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function numeralTokenizer()
+    {
+        var numerals    = /[0-9]/;
+        var priv        =
+        {
+            value:  ""
+        };
+        var prot        = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (numerals.test(currentChar))
+            {
+                if (prot.isClosed)  prot.isClosed   = false;
+                priv.value  += currentChar;
+                handled     = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, NUMERAL);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(numeralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function delimiterTokenizer(delimiter, type)
+    {
+        var priv    =
+        {
+            value:  ""
+        };
+        var prot    = {};
+        function reset(){ priv.value = ""; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (currentChar === delimiter && prot.isClosed)
+            {
+                priv.value      = currentChar;
+                prot.isClosed   = false;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(priv.value, type);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(delimiterTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+    function operatorTokenizer(operatorToken, type)
+    {
+        var priv    =
+        {
+            currentIndex:   0
+        };
+        var prot    = {};
+        function reset(){ priv.currentIndex = 0; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (priv.currentIndex < operatorToken.length && currentChar === operatorToken[priv.currentIndex])
+            {
+                prot.isClosed   = false;
+                priv.currentIndex++;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(operatorToken, type);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(operatorTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
+
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify)
+    {
+        if (typeof segment === "string")        segment = {value: segment, type: 0};
+
+        if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
+
+        if      (segment.value === "$root" || segment.value === "...")
+        {
+            return {type: 0, target: root.bag.item, newBasePath: []};
+        }
+        else if (segment.value === "$home")
+        {
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            return {type: 0, target: resolvedPath.value, newBasePath: root.basePath.split(".")};
+        }
+        else if (segment.value === "$parent")
+        {
+            newBasePath.pop();
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath};
+        }
+        else if (segment.value === "$key")
+        {
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : undefined};
+        }
+        else if (segment.value === "$path")
+        {
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : undefined};
+        }
+        else
+        {
+            newBasePath.push(segment.value);
+            if (current[segment.value] === undefined)
+            {
+                if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
+                else                return {type: 1, value: undefined, newBasePath: newBasePath};
+            }
+            return {type: 0, target: current[segment.value], newBasePath: newBasePath};
+        }
+    }
+
+    function resolvePath(root, paths, constructPath, notify)
+    {
+        var segments        = paths.prependBasePath ? root.basePath.split(".").filter(segment=>segment).concat(paths.segments) : paths.segments;
+        var current         = root.bag.item;
+        var newBasePath     = [];
+        var segmentsLength  = segments.length-(constructPath?1:0);
+
+        for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
+        {
+            var resolvedSegment = resolvePathSegment(root, segments[segmentCounter], current, newBasePath, constructPath, notify);
+
+            if (resolvedSegment.type === 1) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            else
+            {
+                current     = resolvedSegment.target;
+                newBasePath = resolvedSegment.newBasePath;
+            }
+        }
+        return  constructPath
+                ?   segmentsLength === -1
+                    ?   {isRoot: true}
+                    :   {target: current, segment: segments[segments.length-1], basePath: newBasePath.join(".")}
+                :   {value: current, pathSegments: newBasePath};
+    }
+
+    function getDataPath(root, paths, notify)
+    {
+        var result  = resolvePath(root, paths, false, notify);
+        if (typeof notify === "function")   notify(result.pathSegments);
+        return result;
+    }
+
+    function setDataPath(root, paths, value, notify)
+    {
+        var resolved    = resolvePath(root, paths, true);
+        var newValue    = value&&value.isObserver ? value.unwrap() : value;
+
+        if      (resolved.isRoot)
+        {
+            root.bag.item   = value;
+            if (typeof notify === "function")   notify("");
+        }
+        else if (typeof resolved.segment.value === "object")
+        {debugger;
+            resolved.segment.value.set({bag: root.bag, basePath: resolved.basePath}, newValue);
+            debugger;
+        }
+        else
+        {
+            resolved.target[resolved.segment.value]  = newValue;
+            if (typeof notify === "function")   notify((resolved.basePath.length>0?resolved.basePath+".":"")+resolved.segment.value);
+        }
+    }
+
+    function accessor(path) { return {get: (root, notify)=>getDataPath(root, path, notify), set: (root,value, notify)=>setDataPath(root, path, value, notify)}; }
+
+    function parse(lexer)
+    {
+        function parse(depth)
+        {
+            var handled     = false;
+            var nextType    = 0;
+            var currentPath = {segments: [], prependBasePath: true};
+            var needWord    = false;
+            while(!lexer.getNextToken())
+            {
+                var token       = lexer.current.value;
+                if (lexer.current.type === WORD || lexer.current.type === ROOTDIRECTIVE)
+                {
+                    currentPath.segments.push({value: token, type: 0});
+                    handled     = true;
+                    needWord    = false;
+                }
+                else if (lexer.current.type === NUMERAL)
+                {
+                    handled     = true;
+                    needWord    = false;
+                    currentPath.segments.push({value: lexer.current.value, type: 1});
+                }
+                else if (!needWord)
+                {
+                    if (lexer.current.type === propertyDelimiter && currentPath.segments.length > 0)
+                    {
+                        handled     = true;
+                        nextType    = 0;
+                        needWord    = true;
+                    }
+                    else if (lexer.current.type === openKeyDelimiter && currentPath.segments.length > 0)
+                    {
+                        handled     = true;
+                        currentPath.segments.push({value: parse(depth+1), type: 1});
+                    }
+                    else if (lexer.current.type === closeKeyDelimiter && currentPath.segments.length > 0 && depth > 0)
+                    {
+                        handled = true;
+                        return currentPath.segments.length === 1 && currentPath.segments[0].type === 1 ? currentPath.segments[0].value : accessor(currentPath);
+                    }
+                    else if (currentPath.segments.length == 0 && depth > 0 && lexer.current.type === LITERAL)
+                    {
+                        var segment = lexer.current.value;
+                        if (lexer.getNextToken() || lexer.current.type !== closeKeyDelimiter)   throw new Error ("Syntax error: Expected ']' but encountered " + (lexer.eof?"EOF":lexer.current.value) + " at position " + lexer.currentByteIndex + ".");
+                        return segment;
+                    }
+                }
+
+                if (handled == false)   {debugger; throw new Error("Syntax error: An unexpected token " + token + " was encountered at position " + lexer.currentByteIndex + ".");}
+            }
+            if (depth>0)    throw new Error("Syntax error: Unexpected EOF encountered");
+            return accessor(currentPath);
+        }
+        return parse(0);
+    }
+
+    return Object.create({},
+    {
+        getTokenizers:  { value: function()
+        {
+            var tokenizers  =
+            [
+                new stringLiteralTokenizer("'", true),
+                new stringLiteralTokenizer("\"", true),
+                new stringLiteralTokenizer("`", false),
+                new wordTokenizer(),
+                new numeralTokenizer(),
+                new delimiterTokenizer('.', propertyDelimiter),
+                new operatorTokenizer("...", ROOTDIRECTIVE),
+                new delimiterTokenizer('[', openKeyDelimiter),
+                new delimiterTokenizer(']', closeKeyDelimiter)
+            ];
+            return tokenizers;
+        }},
+        parser: { value: 
+        function parser(lexer)
+        {
+            Object.defineProperties(this,
+            {
+                parse:  {value: function(input)
+                {
+                    lexer.read(input!==undefined&&input!==null&&typeof input !== "string"?input.toString():input);
+                    return parse(lexer);
+                }}
+            });
+        }}
+    });
+});}();
+!function()
 {
     "use strict";
     var createObserver;
-    function buildConstructor(removeFromArray, isolatedFunctionFactory, each)
+    function buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser)
     {
         var getObserverEnum                             = {auto: 0, no: -1, yes: 1};
         var objectObserverFunctionFactory               = new isolatedFunctionFactory();
@@ -1416,71 +1905,12 @@
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath, getObserver, peek)
-        {
-            pathSegments    = pathSegments || [""];
-            if (!peek && this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-            var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
-            return returnValue;
-        }
-        function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
-        {
-            for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
-            {
-                var subSegment  = subSegments[subSegmentCounter];
-                // warning: string subsegments are not currently supported
-                if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
-                returnSegments.push({type:1, value: parseInt(subSegment)});
-            }
-        }
-        function extractPathSegments(path)
-        {if(typeof path.split !== "function") debugger;
-            var pathSegments    = path.split(".");
-            var returnSegments  = [];
-            for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
-            {
-                var pathSegment = pathSegments[segmentCounter];
-                var bracket     = pathSegment.indexOf("[");
-                if (bracket > -1)
-                {
-                    var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
-                    pathSegment     = pathSegment.substring(0, bracket);
-                    if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
-                    extractArrayPathSegmentsInto(subSegments, returnSegments, path);
-                }
-                else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
-            }
-            return returnSegments;
-        }
         function getFullPath(paths)
         {
             if (paths.length == 0) return "";
-            var path    = paths[0].value;
-            for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
+            var path    = paths[0];
+            for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter];
             return path;
-        }
-        function navDataPath(root, paths, value, forceSet)
-        {
-            if (paths.length == 0)
-            {
-                if(value === undefined) return root.item;
-                root.item   = value;
-                return;
-            }
-            var current     = root.item;
-            for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
-            {
-                var path    = paths[pathCounter];
-                if (current[path.value] === undefined)
-                {
-                    if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
-                    else                        return undefined;
-                }
-                current     = current[path.value];
-            }
-            if (value === undefined && !forceSet)   return current[paths[paths.length-1].value];
-            current[paths[paths.length-1].value]    = value&&value.isObserver ? value.unwrap() : value;
         }
         function addPropertyPath(properties, path, remainingPath)
         {
@@ -1490,11 +1920,11 @@
         {
             addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
             if (pathSegments.length === 0)  return;
-            var path    = pathSegments[0].value;
+            var path    = pathSegments[0];
             addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
             {
-                path    += "." + pathSegments[segmentCounter].value;
+                path    += "." + pathSegments[segmentCounter];
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
@@ -1555,21 +1985,23 @@
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet)
             {
-                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
-                if (path === undefined || path === null)        path    = "";
-                var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
-                                        ?   path.substr(3)
-                                        :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
-                var pathSegments    = extractPathSegments(resolvedPath);
-                var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined && !forceSet)   return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
-                if (this.__bag.rollingback) return;
-                var currentValue = navDataPath(this.__bag, pathSegments);
-                if (value !== currentValue)
+                var accessor        = pathParser.parse(path);
+
+                if (path === undefined || path === null)    path    = "";
+                if (value === undefined && !forceSet)
                 {
-                    navDataPath(this.__bag, pathSegments, value, forceSet);
-                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
+                    var result      = accessor.get({bag: this.__bag, basePath: this.__basePath}, (!peek && this.__bag.updating.length > 0 ? (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);}).bind(this) : undefined));
+                    var revisedPath = result.pathSegments !== undefined ? result.pathSegments.join(".") : undefined;
+                    return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path.length > 0 && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
+                    ?   createObserver(revisedPath, this.__bag, Array.isArray(result.value))
+                    :   result.value;
+                }
+
+                if (this.__bag.rollingback) return;
+                var currentValue    = accessor.get({bag: this.__bag, basePath: this.__basePath});
+                if (value !== currentValue.value)
+                {
+                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, (function(revisedPath){notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);}).bind(this));
                 }
             }},
             __notify:           {value: function(path, changes, directOnly)
@@ -1686,9 +2118,9 @@
         });
         return createObserver;
     }
-    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each)
+    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each, pathParser)
     {
-        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each);
+        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser);
         return function observer(_item)
         {
             var bag             =
@@ -1952,7 +2384,9 @@
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
-    var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each);
+    var pathParserFactory       = new root.atomic.pathParserFactory(new root.atomic.tokenizer());
+    var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
+    var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each, pathParser);
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
     var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray, defineDataProperties);

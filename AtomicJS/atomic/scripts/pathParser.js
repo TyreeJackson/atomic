@@ -7,6 +7,7 @@
     const   openKeyDelimiter            = 'openKeyDelimiter';
     const   closeKeyDelimiter           = 'closeKeyDelimiter';
     const   propertyDelimiter           = 'propertyDelimiter';
+    const   ROOTDIRECTIVE               = 'rootDirective';
     const   EOF                         = 'EOF';
     function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
     function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
@@ -128,34 +129,52 @@
         tokenizer.call(this, prot, reset, read, getToken);
     }
     Object.defineProperty(delimiterTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
-
-    var Operation   =
-    Object.create({},
+    function operatorTokenizer(operatorToken, type)
     {
-        left:       {value: null, writable: true},
-        operator:   {value: null, writable: true},
-        right:      {value: null, writable: true}
-    });
+        var priv    =
+        {
+            currentIndex:   0
+        };
+        var prot    = {};
+        function reset(){ priv.currentIndex = 0; }
+        function read(currentChar)
+        {
+            var handled = false;
+            if (priv.currentIndex < operatorToken.length && currentChar === operatorToken[priv.currentIndex])
+            {
+                prot.isClosed   = false;
+                priv.currentIndex++;
+                handled         = true;
+            }
+            return handled;
+        }
+        function getToken()
+        {
+            return new token(operatorToken, type);
+        }
+        tokenizer.call(this, prot, reset, read, getToken);
+    }
+    Object.defineProperty(operatorTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
 
-    function resolvePathSegment(root, segment, current, newBasePath, constructPath)
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify)
     {
         if (typeof segment === "string")        segment = {value: segment, type: 0};
 
-        if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({item: root.item, basePath: root.basePath})};
+        if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
 
-        if      (segment.value === "$root")
+        if      (segment.value === "$root" || segment.value === "...")
         {
-            return {type: 0, target: root.item, newBasePath: []};
+            return {type: 0, target: root.bag.item, newBasePath: []};
         }
         else if (segment.value === "$home")
         {
-            var resolvedPath    = resolvePath({item: root.item, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
             return {type: 0, target: resolvedPath.value, newBasePath: root.basePath.split(".")};
         }
         else if (segment.value === "$parent")
         {
             newBasePath.pop();
-            var resolvedPath    = resolvePath({item: root.item, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
             return {type: 0, target: resolvedPath.value, newBasePath: newBasePath};
         }
         else if (segment.value === "$key")
@@ -172,47 +191,67 @@
             if (current[segment.value] === undefined)
             {
                 if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
-                else                return {type: 1, value: undefined};
+                else                return {type: 1, value: undefined, newBasePath: newBasePath};
             }
             return {type: 0, target: current[segment.value], newBasePath: newBasePath};
         }
     }
 
-    function resolvePath(root, paths, constructPath)
+    function resolvePath(root, paths, constructPath, notify)
     {
         var segments        = paths.prependBasePath ? root.basePath.split(".").filter(segment=>segment).concat(paths.segments) : paths.segments;
-        var current         = root.item;
+        var current         = root.bag.item;
         var newBasePath     = [];
         var segmentsLength  = segments.length-(constructPath?1:0);
 
         for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var resolvedSegment = resolvePathSegment(root, segments[segmentCounter], current, newBasePath, constructPath);
+            var resolvedSegment = resolvePathSegment(root, segments[segmentCounter], current, newBasePath, constructPath, notify);
 
-            if (resolvedSegment.type === 1) return {value: resolvedSegment.value};
+            if (resolvedSegment.type === 1) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             else
             {
                 current     = resolvedSegment.target;
                 newBasePath = resolvedSegment.newBasePath;
             }
         }
-        return constructPath ? {target: current, segment: segments[segments.length-1], basePath: newBasePath.join(".")} : {value: current, pathSegments: newBasePath};
+        return  constructPath
+                ?   segmentsLength === -1
+                    ?   {isRoot: true}
+                    :   {target: current, segment: segments[segments.length-1], basePath: newBasePath.join(".")}
+                :   {value: current, pathSegments: newBasePath};
     }
 
-    function getDataPath(root, paths)
+    function getDataPath(root, paths, notify)
     {
-        return resolvePath(root, paths, false).value;
+        var result  = resolvePath(root, paths, false, notify);
+        if (typeof notify === "function")   notify(result.pathSegments);
+        return result;
     }
 
-    function setDataPath(root, paths, value)
+    function setDataPath(root, paths, value, notify)
     {
         var resolved    = resolvePath(root, paths, true);
         var newValue    = value&&value.isObserver ? value.unwrap() : value;
-        if (typeof resolved.segment.value === "object") resolved.segment.value.set({item: root.item, basePath: resolved.basePath}, newValue);
-        else                                            resolved.target[resolved.segment.value]  = newValue;
+
+        if      (resolved.isRoot)
+        {
+            root.bag.item   = value;
+            if (typeof notify === "function")   notify("");
+        }
+        else if (typeof resolved.segment.value === "object")
+        {debugger;
+            resolved.segment.value.set({bag: root.bag, basePath: resolved.basePath}, newValue);
+            debugger;
+        }
+        else
+        {
+            resolved.target[resolved.segment.value]  = newValue;
+            if (typeof notify === "function")   notify((resolved.basePath.length>0?resolved.basePath+".":"")+resolved.segment.value);
+        }
     }
 
-    function accessor(path) { return {get: root=>getDataPath(root, path), set: (root,value)=>setDataPath(root, path, value)}; }
+    function accessor(path) { return {get: (root, notify)=>getDataPath(root, path, notify), set: (root,value, notify)=>setDataPath(root, path, value, notify)}; }
 
     function parse(lexer)
     {
@@ -225,7 +264,7 @@
             while(!lexer.getNextToken())
             {
                 var token       = lexer.current.value;
-                if (lexer.current.type === WORD)
+                if (lexer.current.type === WORD || lexer.current.type === ROOTDIRECTIVE)
                 {
                     currentPath.segments.push({value: token, type: 0});
                     handled     = true;
@@ -263,7 +302,7 @@
                     }
                 }
 
-                if (handled == false)   throw new Error("Syntax error: An unexpected token " + token + " was encountered at position " + lexer.currentByteIndex + ".");
+                if (handled == false)   {debugger; throw new Error("Syntax error: An unexpected token " + token + " was encountered at position " + lexer.currentByteIndex + ".");}
             }
             if (depth>0)    throw new Error("Syntax error: Unexpected EOF encountered");
             return accessor(currentPath);
@@ -283,6 +322,7 @@
                 new wordTokenizer(),
                 new numeralTokenizer(),
                 new delimiterTokenizer('.', propertyDelimiter),
+                new operatorTokenizer("...", ROOTDIRECTIVE),
                 new delimiterTokenizer('[', openKeyDelimiter),
                 new delimiterTokenizer(']', closeKeyDelimiter)
             ];
@@ -295,7 +335,7 @@
             {
                 parse:  {value: function(input)
                 {
-                    lexer.read(input);
+                    lexer.read(input!==undefined&&input!==null&&typeof input !== "string"?input.toString():input);
                     return parse(lexer);
                 }}
             });

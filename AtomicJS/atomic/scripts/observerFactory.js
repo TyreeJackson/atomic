@@ -2,7 +2,7 @@
 {
     "use strict";
     var createObserver;
-    function buildConstructor(removeFromArray, isolatedFunctionFactory, each)
+    function buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser)
     {
         var getObserverEnum                             = {auto: 0, no: -1, yes: 1};
         var objectObserverFunctionFactory               = new isolatedFunctionFactory();
@@ -38,71 +38,12 @@
         {
             return new (isArray?arrayObserver:objectObserver)(revisedPath, bag);
         }
-        function getValue(pathSegments, revisedPath, getObserver, peek)
-        {
-            pathSegments    = pathSegments || [""];
-            if (!peek && this.__bag.updating.length > 0) addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);
-            var returnValue = navDataPath(this.__bag, pathSegments);
-            if (getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(revisedPath !== undefined && returnValue !== null && typeof returnValue == "object"))) return createObserver(revisedPath||"", this.__bag, Array.isArray(returnValue));
-            return returnValue;
-        }
-        function extractArrayPathSegmentsInto(subSegments, returnSegments, path)
-        {
-            for(var subSegmentCounter=0;subSegmentCounter<subSegments.length;subSegmentCounter++)
-            {
-                var subSegment  = subSegments[subSegmentCounter];
-                // warning: string subsegments are not currently supported
-                if (isNaN(subSegment))  { debugger; throw new Error("An error occured while attempting to parse a array subSegment index in the path " + path); }
-                returnSegments.push({type:1, value: parseInt(subSegment)});
-            }
-        }
-        function extractPathSegments(path)
-        {if(typeof path.split !== "function") debugger;
-            var pathSegments    = path.split(".");
-            var returnSegments  = [];
-            for(var segmentCounter=0;segmentCounter<pathSegments.length;segmentCounter++)
-            {
-                var pathSegment = pathSegments[segmentCounter];
-                var bracket     = pathSegment.indexOf("[");
-                if (bracket > -1)
-                {
-                    var subSegments = pathSegment.substring(bracket+1, pathSegment.length-1).split("][");
-                    pathSegment     = pathSegment.substring(0, bracket);
-                    if (pathSegment !=="")   returnSegments.push({type:1, value: pathSegment});
-                    extractArrayPathSegmentsInto(subSegments, returnSegments, path);
-                }
-                else    if (pathSegment !=="")   returnSegments.push({type:0, value: pathSegment});
-            }
-            return returnSegments;
-        }
         function getFullPath(paths)
         {
             if (paths.length == 0) return "";
-            var path    = paths[0].value;
-            for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter].value;
+            var path    = paths[0];
+            for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter];
             return path;
-        }
-        function navDataPath(root, paths, value, forceSet)
-        {
-            if (paths.length == 0)
-            {
-                if(value === undefined) return root.item;
-                root.item   = value;
-                return;
-            }
-            var current     = root.item;
-            for(var pathCounter=0;pathCounter<paths.length-1;pathCounter++)
-            {
-                var path    = paths[pathCounter];
-                if (current[path.value] === undefined)
-                {
-                    if (value !== undefined)    current[path.value]   = path.type===0?{}:[];
-                    else                        return undefined;
-                }
-                current     = current[path.value];
-            }
-            if (value === undefined && !forceSet)   return current[paths[paths.length-1].value];
-            current[paths[paths.length-1].value]    = value&&value.isObserver ? value.unwrap() : value;
         }
         function addPropertyPath(properties, path, remainingPath)
         {
@@ -112,11 +53,11 @@
         {
             addPropertyPath(properties, "", getFullPath(pathSegments.slice(0)));
             if (pathSegments.length === 0)  return;
-            var path    = pathSegments[0].value;
+            var path    = pathSegments[0];
             addPropertyPath(properties, path, getFullPath(pathSegments.slice(1)));
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
             {
-                path    += "." + pathSegments[segmentCounter].value;
+                path    += "." + pathSegments[segmentCounter];
                 addPropertyPath(properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
             }
         }
@@ -177,21 +118,23 @@
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet)
             {
-                if (path === "..." && value === undefined)      {return getValue.call(this, [], undefined, getObserver, peek);}
-                if (path === undefined && value === undefined)  return getValue.call(this, extractPathSegments(this.__basePath), undefined, getObserver, peek);
-                if (path === undefined || path === null)        path    = "";
-                var resolvedPath    =   typeof path === "string" && path.substr(0,3) === "..."
-                                        ?   path.substr(3)
-                                        :   this.__basePath + (typeof path === "string" && path.substr(0, 1) === "." ? "" : ".") + path.toString();
-                var pathSegments    = extractPathSegments(resolvedPath);
-                var revisedPath     = getFullPath(pathSegments);
-                if (value === undefined && !forceSet)   return getValue.call(this, pathSegments, revisedPath, getObserver, peek);
-                if (this.__bag.rollingback) return;
-                var currentValue = navDataPath(this.__bag, pathSegments);
-                if (value !== currentValue)
+                var accessor        = pathParser.parse(path);
+
+                if (path === undefined || path === null)    path    = "";
+                if (value === undefined && !forceSet)
                 {
-                    navDataPath(this.__bag, pathSegments, value, forceSet);
-                    notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);
+                    var result      = accessor.get({bag: this.__bag, basePath: this.__basePath}, (!peek && this.__bag.updating.length > 0 ? (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);}).bind(this) : undefined));
+                    var revisedPath = result.pathSegments !== undefined ? result.pathSegments.join(".") : undefined;
+                    return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path.length > 0 && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
+                    ?   createObserver(revisedPath, this.__bag, Array.isArray(result.value))
+                    :   result.value;
+                }
+
+                if (this.__bag.rollingback) return;
+                var currentValue    = accessor.get({bag: this.__bag, basePath: this.__basePath});
+                if (value !== currentValue.value)
+                {
+                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, (function(revisedPath){notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);}).bind(this));
                 }
             }},
             __notify:           {value: function(path, changes, directOnly)
@@ -308,9 +251,9 @@
         });
         return createObserver;
     }
-    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each)
+    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each, pathParser)
     {
-        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each);
+        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser);
         return function observer(_item)
         {
             var bag             =

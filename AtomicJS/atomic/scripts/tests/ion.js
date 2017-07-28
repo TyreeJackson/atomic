@@ -43,29 +43,37 @@
                 if (testsNamespace[testName].$isNamespace)  this.execute(testsNamespace[testName]);
                 else
                 {
-                    var tests       = new testsNamespace[testName](this, mock);
+                    var tests                   = new testsNamespace[testName](this, mock);
+                    var testContextPrototype    = {};
+                    if (tests.__setupSuite) tests.__setupSuite.call(testContextPrototype);
+
                     assertionsLogger("RUNNING " + getTestStatement(testName) + " tests...")
                     for(var testKey in tests)
                     {
-                        if (testKey == "__setup")   continue;
+                        if (testKey == "__setup" || testKey == "__setupSuite")  continue;
                         var testStart   = performance.now();
-                        testContext = {};
+                        var setupEnd    = undefined;
+                        testContext = Object.create(testContextPrototype, {});
                         try
                         {
-                            if (tests.__setup)  tests.__setup.call(testContext);
+                            if (tests.__setup)
+                            {
+                                tests.__setup.call(testContext);
+                                setupEnd    = performance.now();
+                            }
                             tests[testKey].call(testContext);
                         }
                         catch(error)
                         {
                             if (testContext.expectedException !== error.message)
                             {
-                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms.\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n");
+                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n");
                                 continue;
                             }
                         }
-                        assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms.");
+                        assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".");
                     }
-                    assertionsLogger(testName + " tests complete.\n\n")
+                    assertionsLogger(getTestStatement(testName) + " tests complete.\n\n")
                 }
             }
         }}

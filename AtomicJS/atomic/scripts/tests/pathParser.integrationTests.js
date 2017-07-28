@@ -1,7 +1,7 @@
 ﻿!function()
 {"use strict";root.define("atomic.tests.pathParser_integration", function pathParserIntegrationTests(ion, mock)
 {return{
-    __setup:
+    __setupSuite:
     function()
     {
         this.scanner        = new root.atomic.scanner();
@@ -116,9 +116,9 @@
         {
             ion.log("Testing input " + counter + " with base path {" + testInput.basePath + "} and path {" + testInput.path + "}");
             var accessor    = pathParser.parse(testInput.path);
-            ion.assert(accessor.get({item: dataObject, basePath: testInput.basePath}) === testInput.get(dataObject),    "The value " +  testInput.get(dataObject) + " was expected but instead the value " + accessor.get({item: dataObject, basePath: testInput.basePath}) + " was returned.");
-            accessor.set({item: dataObject, basePath: testInput.basePath}, testInput.newValue);
-            ion.assert(testInput.newValue === testInput.get(dataObject),                                                "The first name should have been updated to " + testInput.newValue + " but instead is set to " + testInput.get(dataObject) + ".");
+            ion.assert(accessor.get({bag: {item: dataObject}, basePath: testInput.basePath}).value === testInput.get(dataObject),  "The value " +  testInput.get(dataObject) + " was expected but instead the value " + accessor.get({bag: {item: dataObject}, basePath: testInput.basePath}).value + " was returned.");
+            accessor.set({bag: {item: dataObject}, basePath: testInput.basePath}, testInput.newValue);
+            ion.assert(testInput.newValue === testInput.get(dataObject),                                                    "The first name should have been updated to " + testInput.newValue + " but instead is set to " + testInput.get(dataObject) + ".");
         }
     }
 };});}();
