@@ -1053,7 +1053,7 @@ root.atomic.launch
                                                     people:
                                                     [
                                                         {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
-                                                        {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
+                                                        {name:"Bertie",     children: ["Boutros-Boutros","Bee-bop","Brianna","Barbie"]},
                                                         {name:"Charles",    children: ["Cayenne","Cleopatra"]}
                                                     ]
                                                 });
@@ -1121,7 +1121,7 @@ root.atomic.launch
             people:
             [
                 {name:"Anabelle",   children: ["Arnie","Anders","Apple"]},
-                {name:"Bertie",     children: ["Boutros-Boutros","Brianna","Barbie","Bee-bop"]},
+                {name:"Bertie",     children: ["Boutros-Boutros","Bee-bop","Brianna","Barbie"]},
                 {name:"Charles",    children: ["Cayenne","Cleopatra"]}
             ]
         });
@@ -1300,25 +1300,28 @@ root.atomic.launch
                                                 example10container:
                                                 {
                                                     type:       "panel",
-                                                    classes:    "example",
+                                                    classes:    ["example", "well"],
                                                     controls:
                                                     {
                                                         well:
                                                         {
                                                             selector:   ".well",
                                                             type:       "panel",
-                                                            classes:    "well form-group",
+                                                            classes:    ["well", "form-group"],
                                                             controls:
                                                             {
                                                                 betterNewItem10:
                                                                 {
                                                                     type:       "input",
+                                                                    classes:    ["form-control"],
                                                                     bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
                                                                     onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
                                                                 },
                                                                 betterAddNewItemButton10:
                                                                 {
                                                                     type:       "button",
+                                                                    classes:    ["btn"],
+                                                                    value:      "Add",
                                                                     bind:       { enabled: "newItem.length" },
                                                                     onclick:
                                                                     function()
@@ -1339,25 +1342,38 @@ root.atomic.launch
                                                         {
                                                             selector:   ".listContainer",
                                                             type:       "panel",
-                                                            classes:    "listContainer form-group",
+                                                            classes:    ["listContainer", "well", "form-group"],
                                                             controls:
                                                             {
                                                                 betterItemsList10:
                                                                 {
-                                                                    type:   "multiselect",
-                                                                    bind:   {value: "selected", items: "items"}
+                                                                    type:       "multiselect",
+                                                                    classes:    ["form-control"],
+                                                                    bind:       { value: "selected", items: "items" }
                                                                 },
-                                                                removeItemButton10:
+                                                                listButtons:
                                                                 {
-                                                                    type:       "button",
-                                                                    bind:       {enabled: "items.length"},
-                                                                    onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
-                                                                },
-                                                                sortItemsButton:
-                                                                {
-                                                                    type:       "button",
-                                                                    bind:       { enabled: { when: "items.length", ">": 1 } },
-                                                                    onclick:    function(){this.data("items").sort();}
+                                                                    selector:   ".listButtons",
+                                                                    type:       "panel",
+                                                                    controls:
+                                                                    {
+                                                                        removeItemButton10:
+                                                                        {
+                                                                            type:       "button",
+                                                                            classes:    ["btn"],
+                                                                            value:      "Remove",
+                                                                            bind:       {enabled: "items.length"},
+                                                                            onclick:    function(){this.data("items").removeAll(this.parent.parent.controls.betterItemsList10.value());}
+                                                                        },
+                                                                        sortItemsButton:
+                                                                        {
+                                                                            type:       "button",
+                                                                            classes:    ["btn"],
+                                                                            value:      "Sort",
+                                                                            bind:       { enabled: { when: "items.length", ">": 1 } },
+                                                                            onclick:    function(){this.data("items").sort();}
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -1385,30 +1401,33 @@ root.atomic.launch
         example10container:
         {
             type:       "panel",
-            classes:    "example",
+            classes:    ["example", "well"],
             controls:
             {
                 well:
                 {
                     selector:   ".well",
                     type:       "panel",
-                    classes:    "well form-group",
+                    classes:    ["well", "form-group"],
                     controls:
                     {
                         betterNewItem10:
                         {
                             type:       "input",
+                            classes:    ["form-control"],
                             bind:       { value: { to: "newItem", updateon: ["keydown", "keyup", "change"] } },
                             onenter:    function(){this.parent.controls.betterAddNewItemButton10.click();}
                         },
                         betterAddNewItemButton10:
                         {
                             type:       "button",
+                            classes:    ["btn"],
+                            value:      "Add",
                             bind:       { enabled: "newItem.length" },
                             onclick:
                             function()
                             {
-                                if (this.data("newItem.length")&gt;0 &amp;&amp; this.data("items").indexOf(this.data("newItem"))==-1)
+                                if (this.data("newItem.length")&gt;0 && this.data("items").indexOf(this.data("newItem"))==-1)
                                 this.data("items").push(this.data("newItem"));
                                 this.data("newItem","");
                             }
@@ -1424,25 +1443,38 @@ root.atomic.launch
                 {
                     selector:   ".listContainer",
                     type:       "panel",
-                    classes:    "listContainer form-group",
+                    classes:    ["listContainer", "well", "form-group"],
                     controls:
                     {
                         betterItemsList10:
                         {
-                            type:   "multiselect",
-                            bind:   {value: "selected", items: "items"}
+                            type:       "multiselect",
+                            classes:    ["form-control"],
+                            bind:       { value: "selected", items: "items" }
                         },
-                        removeItemButton10:
+                        listButtons:
                         {
-                            type:       "button",
-                            bind:       {enabled: "items.length"},
-                            onclick:    function(){this.data("items").removeAll(this.parent.controls.betterItemsList10.value());}
-                        },
-                        sortItemsButton:
-                        {
-                            type:       "button",
-                            bind:       { enabled: { when: "items.length", "&gt;": 1 } },
-                            onclick:    function(){this.data("items").sort();}
+                            selector:   ".listButtons",
+                            type:       "panel",
+                            controls:
+                            {
+                                removeItemButton10:
+                                {
+                                    type:       "button",
+                                    classes:    ["btn"],
+                                    value:      "Remove",
+                                    bind:       {enabled: "items.length"},
+                                    onclick:    function(){this.data("items").removeAll(this.parent.parent.controls.betterItemsList10.value());}
+                                },
+                                sortItemsButton:
+                                {
+                                    type:       "button",
+                                    classes:    ["btn"],
+                                    value:      "Sort",
+                                    bind:       { enabled: { when: "items.length", "&gt;": 1 } },
+                                    onclick:    function(){this.data("items").sort();}
+                                }
+                            }
                         }
                     }
                 }
