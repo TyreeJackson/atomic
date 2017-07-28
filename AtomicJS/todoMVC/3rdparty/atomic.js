@@ -1679,10 +1679,10 @@
     }
     Object.defineProperty(operatorTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
 
+    function stringToSegment(segment){return typeof segment === "string" ? {value: segment, type: 0} : segment;}
+
     function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify)
     {
-        if (typeof segment === "string")        segment = {value: segment, type: 0};
-
         if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
 
         if      (segment.value === "$root" || segment.value === "...")
@@ -1729,7 +1729,7 @@
 
         for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var resolvedSegment = resolvePathSegment(root, segments[segmentCounter], current, newBasePath, constructPath, notify);
+            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify);
 
             if (resolvedSegment.type === 1) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             else
@@ -1741,7 +1741,7 @@
         return  constructPath
                 ?   segmentsLength === -1
                     ?   {isRoot: true}
-                    :   {target: current, segment: segments[segments.length-1], basePath: newBasePath.join(".")}
+                    :   {target: current, segment: stringToSegment(segments[segments.length-1]), basePath: newBasePath.join(".")}
                 :   {value: current, pathSegments: newBasePath};
     }
 
