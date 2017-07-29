@@ -1987,12 +1987,11 @@
             {
                 var accessor        = pathParser.parse(path);
 
-                if (path === undefined || path === null)    path    = "";
                 if (value === undefined && !forceSet)
                 {
                     var result      = accessor.get({bag: this.__bag, basePath: this.__basePath}, (!peek && this.__bag.updating.length > 0 ? (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);}).bind(this) : undefined));
                     var revisedPath = result.pathSegments !== undefined ? result.pathSegments.join(".") : undefined;
-                    return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path.length > 0 && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
+                    return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path !== undefined && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
                     ?   createObserver(revisedPath, this.__bag, Array.isArray(result.value))
                     :   result.value;
                 }
