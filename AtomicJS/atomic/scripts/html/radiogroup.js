@@ -5,13 +5,26 @@
     {
         Object.defineProperty(this, "__rawValue", {value: value, configurable: true});
         if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) this.__options[counter].selected = this.__options[counter].value() == value;
+        else
+        {
+            var options = this.__element.querySelectorAll("input[name='" + this.__name + "']");
+            for(var counter=0;counter<options.length;counter++) options[counter].checked = options[counter].value == value;
+        }
     }
     function getRadioGroupValue()
     {
-        if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) if (this.__options[counter].selected)
+        if (this.__options.length > 0)
         {
-            Object.defineProperty(this, "__rawValue", {value: this.__options[counter].value(), configurable: true});
-            break;
+            for(var counter=0;counter<this.__options.length;counter++) if (this.__options[counter].selected)
+            {
+                Object.defineProperty(this, "__rawValue", {value: this.__options[counter].value(), configurable: true});
+                break;
+            }
+        }
+        else
+        {
+            var selectedOption  = this.__element.querySelector("input[name='" + this.__name + "']:checked");
+            if (selectedOption) Object.defineProperty(this, "__rawValue", {value: selectedOption.value, configurable: true});
         }
         return this.__rawValue;
     }
@@ -26,7 +39,7 @@
             clearRadioGroup(this.__element);
         }
     }
-    function radiooption(element, selector, name, parent)
+    function radiooption(element, selector, name, parent, index)
     {
         Object.defineProperties(this, 
         {
@@ -44,21 +57,9 @@
             text:   {get: function(){return this.__text;}, set: function(value){Object.defineProperty(this,"__text",{value: value}); if (this.__radioLabel != null) this.__radioLabel.innerHTML = value&&value.isObserver?value():value;}},
             value:  {get: function(){return this.__value;}, set: function(value){Object.defineProperty(this, "__value", {value: value}); if (this.__radioElement != null) this.__radioElement.value = value&&value.isObserver?value():value;}}
         });
-        this.__radioElement.name = name;
-        this.__element.addEventListener
-        (
-            "click", 
-            (function(event)
-            {
-                event=event||window.event; 
-                this.parent.value(this.value());
-                this.parent.triggerEvent("change");
-                event.cancelBubble=true;
-                if (event.stopPropagation) event.stopPropagation();
-                return false;
-            }).bind(this),
-            true
-        );
+        this.__radioElement.name    = name;
+        this.__radioElement.id      = name+"-"+index;
+        this.__radioLabel.setAttribute("for", this.__radioElement.id);
     }
     Object.defineProperties(radiooption.prototype,
     {
@@ -67,7 +68,7 @@
     });
     function createOption(sourceItem, index)
     {
-        var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__element.__selectorPath + (this.__element.id||"unknown"), this);
+        var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__name, this, index);
         option.text.bind    = this.optionText||"";
         option.value.bind   = this.optionValue||"";
         option.source       = sourceItem;
@@ -79,7 +80,8 @@
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},
-            "__options":    {value: []}
+            "__options":    {value: []},
+            "__name":       {value: (this.__element.__selectorPath||"") + (this.__element.id||"unknown")}
         });
         this.__binder.defineDataProperties(this,
         {
@@ -96,6 +98,23 @@
                 }
             }
         });
+        this.__element.addEventListener
+        (
+            "click", 
+            (function(event)
+            {
+                event=event||window.event; 
+                if (event.target.name === this.__name)
+                {
+                    this.value(getRadioGroupValue.call(this));
+                    this.triggerEvent("change");
+                }
+                event.cancelBubble=true;
+                if (event.stopPropagation) event.stopPropagation();
+                return false;
+            }).bind(this),
+            true
+        );
     }
     Object.defineProperty(radiogroup, "prototype", {value: Object.create(input.prototype)});
     Object.defineProperties(radiogroup.prototype,
