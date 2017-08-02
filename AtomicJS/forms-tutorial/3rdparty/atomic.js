@@ -1681,24 +1681,25 @@
 
     function stringToSegment(segment){return typeof segment === "string" ? {value: segment, type: 0} : segment;}
 
-    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify)
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals)
     {
         if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
 
         if      (segment.value === "$root" || segment.value === "...")
         {
-            return {type: 0, target: root.bag.item, newBasePath: []};
+            return {type: 0, target: root.bag.item, newBasePath: [], currentVirtuals: [root.bag.virtualProperties]};
         }
         else if (segment.value === "$home")
         {
             var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
-            return {type: 0, target: resolvedPath.value, newBasePath: root.basePath.split(".")};
+            newBasePath         = root.basePath.split(".");
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$parent")
         {
             newBasePath.pop();
             var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
-            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath};
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$key")
         {
@@ -1711,38 +1712,80 @@
         else
         {
             newBasePath.push(segment.value);
+            var nextVirtuals    = [];
+            for(var virtualCounter=0;virtualCounter<currentVirtuals.length;virtualCounter++)
+            {
+                var currentVirtual  = currentVirtuals[virtualCounter];
+                if (currentVirtual !== undefined)
+                {
+                    if (currentVirtual.paths[segment.value] !== undefined)
+                    {
+                        var nextVirtual = currentVirtual.paths[segment.value];
+                        if (nextVirtual.property !== undefined)
+                        {
+                            if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                            return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                        }
+                        nextVirtuals.push(nextVirtual);
+                    }
+                    else
+                    {
+                        for(var counter=0;counter<currentVirtual.matchers.length;counter++)
+                        {
+                            var matcher = currentVirtual.matchers[counter];
+                            if (matcher.test(segment.value))
+                            {
+                                if (matcher.property !== undefined)
+                                {
+                                    if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                                    return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                                }
+                                nextVirtuals.push(matcher);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // virtual only
+            if (current === undefined)  return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+
             if (current[segment.value] === undefined)
             {
                 if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
-                else                return {type: 1, value: undefined, newBasePath: newBasePath};
+                else                return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
             }
-            return {type: 0, target: current[segment.value], newBasePath: newBasePath};
+            return {type: 0, target: current[segment.value], newBasePath: newBasePath, currentVirtuals: nextVirtuals};
         }
     }
 
     function resolvePath(root, paths, constructPath, notify)
     {
-        var segments        = paths.prependBasePath ? root.basePath.split(".").filter(segment=>segment).concat(paths.segments) : paths.segments;
-        var current         = root.bag.item;
-        var newBasePath     = [];
-        var segmentsLength  = segments.length-(constructPath?1:0);
+        var segments            = paths.prependBasePath ? root.basePath.split(".").filter(function(segment){return segment.length>0;}).concat(paths.segments) : paths.segments;
+        var current             = root.bag.item;
+        var currentVirtuals     = [root.bag.virtualProperties];
+        var newBasePath         = [];
+        var segmentsLength      = segments.length-(constructPath?1:0);
 
         for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify);
+            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            else
+            if (resolvedSegment.type === 1)
             {
-                current     = resolvedSegment.target;
-                newBasePath = resolvedSegment.newBasePath;
+                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)                       return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, segments.slice(segmentCounter), constructPath, notify);
+                else if (resolvedSegment.currentVirtuals === undefined || resolvedSegment.currentVirtuals.length === 0) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             }
+
+            current         = resolvedSegment.target;
+            newBasePath     = resolvedSegment.newBasePath;
+            currentVirtuals = resolvedSegment.currentVirtuals;
         }
         return  constructPath
                 ?   segmentsLength === -1
                     ?   {isRoot: true}
                     :   {target: current, segment: stringToSegment(segments[segments.length-1]), basePath: newBasePath.join(".")}
-                :   {value: current, pathSegments: newBasePath};
+                :   {value: current, pathSegments: newBasePath, virtuals: currentVirtuals};
     }
 
     function getDataPath(root, paths, notify)
@@ -1892,7 +1935,6 @@
         arrayObserverFunctionFactory.create
         (function arrayObserver(basePath, bag)
         {
-            //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             Object.defineProperties(this,
             {
                 ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
@@ -1981,6 +2023,7 @@
             }
             return changes;
         }
+        var regExMatch  = /^\/.*\/$/g;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet)
@@ -2016,6 +2059,95 @@
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
+            define:             
+            {value: function(path, property, overwrite)
+            {
+                var current = this.__bag.virtualProperties;
+                if (property && typeof property.get === "function"||typeof property.set === "function")
+                {
+                    var virtualProperty = {};
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath){return property.get.call(createObserver(basePath, this.__bag, false));}).bind(this);
+                    if (property.set !== undefined) virtualProperty.set = (function(basePath, value){return property.set.call(createObserver(basePath, this.__bag, false), value);}).bind(this);
+
+                    var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
+                    for(var counter=0;counter<pathSegments.length;counter++)
+                    {
+                        var pathSegment = pathSegments[counter];
+                        if (regExMatch.test(pathSegment))
+                        {
+                            var matcher;
+                            for(var matcherCounter=0;matcherCounter<current.matchers.length;matcherCounter++)
+                            if (current.matchers[matcherCounter].key === pathSegment)
+                            {
+                                matcher = current.matchers[matcherCounter];
+                                break;
+                            }
+                            if (counter==pathSegments.length-1)
+                            {
+                                if (matcher !== undefined)
+                                {
+                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                    delete matcher.paths;
+                                    delete matcher.matchers;
+                                    matcher.property    = virtualProperty;
+                                }
+                                else
+                                {
+                                    current.matchers.push
+                                    ({
+                                        key:        pathSegment,
+                                        test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
+                                        property:   virtualProperty
+                                    });
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                if (matcher === undefined)
+                                {
+                                    matcher =
+                                    {
+                                        key:        pathSegment,
+                                        test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
+                                        paths:      {}, 
+                                        matchers:   []
+                                    };
+                                    current.matchers.push(matcher);
+                                }
+
+                                if (matcher.property !== undefined)
+                                {
+                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                    delete  matcher.property;
+                                    matcher.paths       = {};
+                                    matcher.matchers    = [];
+                                }
+                                current = matcher;
+                            }
+                        }
+                        else
+                        {
+                            if (counter==pathSegments.length-1)
+                            {
+                                if (current.paths[pathSegment] !== undefined && !overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                current.paths[pathSegment]  = {property: virtualProperty};
+                                return;
+                            }
+                            else
+                            {
+                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
+                                current = current.paths[pathSegment];
+                                if (current.property !== undefined)
+                                {
+                                    if (overwrite)  delete  current.property;
+                                    else            throw new Error("A computed path already exists at the location '" + path + "'.");
+                                }
+                            }
+                        }
+                    }
+                }
+            }},
             ignore:             {value: function(callback)
             {
                 for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
@@ -2124,12 +2256,13 @@
         {
             var bag             =
             {
-                item:           _item,
-                itemListeners:  [],
-                rootListeners:  [],
-                propertyKeys:   [],
-                updating:       [],
-                rollingback:    false
+                item:               _item,
+                virtualProperties:  {paths:{}, matchers: []},
+                itemListeners:      [],
+                rootListeners:      [],
+                propertyKeys:       [],
+                updating:           [],
+                rollingback:        false
             };
             return createObserver("", bag, Array.isArray(_item));
         };

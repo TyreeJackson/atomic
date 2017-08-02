@@ -158,24 +158,25 @@
 
     function stringToSegment(segment){return typeof segment === "string" ? {value: segment, type: 0} : segment;}
 
-    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify)
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals)
     {
         if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
 
         if      (segment.value === "$root" || segment.value === "...")
         {
-            return {type: 0, target: root.bag.item, newBasePath: []};
+            return {type: 0, target: root.bag.item, newBasePath: [], currentVirtuals: [root.bag.virtualProperties]};
         }
         else if (segment.value === "$home")
         {
             var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
-            return {type: 0, target: resolvedPath.value, newBasePath: root.basePath.split(".")};
+            newBasePath         = root.basePath.split(".");
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$parent")
         {
             newBasePath.pop();
             var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
-            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath};
+            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$key")
         {
@@ -188,38 +189,80 @@
         else
         {
             newBasePath.push(segment.value);
+            var nextVirtuals    = [];
+            for(var virtualCounter=0;virtualCounter<currentVirtuals.length;virtualCounter++)
+            {
+                var currentVirtual  = currentVirtuals[virtualCounter];
+                if (currentVirtual !== undefined)
+                {
+                    if (currentVirtual.paths[segment.value] !== undefined)
+                    {
+                        var nextVirtual = currentVirtual.paths[segment.value];
+                        if (nextVirtual.property !== undefined)
+                        {
+                            if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                            return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                        }
+                        nextVirtuals.push(nextVirtual);
+                    }
+                    else
+                    {
+                        for(var counter=0;counter<currentVirtual.matchers.length;counter++)
+                        {
+                            var matcher = currentVirtual.matchers[counter];
+                            if (matcher.test(segment.value))
+                            {
+                                if (matcher.property !== undefined)
+                                {
+                                    if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                                    return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                                }
+                                nextVirtuals.push(matcher);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // virtual only
+            if (current === undefined)  return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+
             if (current[segment.value] === undefined)
             {
                 if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
-                else                return {type: 1, value: undefined, newBasePath: newBasePath};
+                else                return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
             }
-            return {type: 0, target: current[segment.value], newBasePath: newBasePath};
+            return {type: 0, target: current[segment.value], newBasePath: newBasePath, currentVirtuals: nextVirtuals};
         }
     }
 
     function resolvePath(root, paths, constructPath, notify)
     {
-        var segments        = paths.prependBasePath ? root.basePath.split(".").filter(segment=>segment).concat(paths.segments) : paths.segments;
-        var current         = root.bag.item;
-        var newBasePath     = [];
-        var segmentsLength  = segments.length-(constructPath?1:0);
+        var segments            = paths.prependBasePath ? root.basePath.split(".").filter(function(segment){return segment.length>0;}).concat(paths.segments) : paths.segments;
+        var current             = root.bag.item;
+        var currentVirtuals     = [root.bag.virtualProperties];
+        var newBasePath         = [];
+        var segmentsLength      = segments.length-(constructPath?1:0);
 
         for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify);
+            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            else
+            if (resolvedSegment.type === 1)
             {
-                current     = resolvedSegment.target;
-                newBasePath = resolvedSegment.newBasePath;
+                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)                       return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, segments.slice(segmentCounter), constructPath, notify);
+                else if (resolvedSegment.currentVirtuals === undefined || resolvedSegment.currentVirtuals.length === 0) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             }
+
+            current         = resolvedSegment.target;
+            newBasePath     = resolvedSegment.newBasePath;
+            currentVirtuals = resolvedSegment.currentVirtuals;
         }
         return  constructPath
                 ?   segmentsLength === -1
                     ?   {isRoot: true}
                     :   {target: current, segment: stringToSegment(segments[segments.length-1]), basePath: newBasePath.join(".")}
-                :   {value: current, pathSegments: newBasePath};
+                :   {value: current, pathSegments: newBasePath, virtuals: currentVirtuals};
     }
 
     function getDataPath(root, paths, notify)

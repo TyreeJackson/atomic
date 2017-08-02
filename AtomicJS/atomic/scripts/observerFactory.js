@@ -25,7 +25,6 @@
         arrayObserverFunctionFactory.create
         (function arrayObserver(basePath, bag)
         {
-            //function each(array, callback) { for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++) callback(array[arrayCounter], arrayCounter); }
             Object.defineProperties(this,
             {
                 ___invoke:  {value: function(path, value){return this.__invoke(path, value, getObserverEnum.auto, false);}},
@@ -114,6 +113,7 @@
             }
             return changes;
         }
+        var regExMatch  = /^\/.*\/$/g;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet)
@@ -149,6 +149,95 @@
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
+            define:             
+            {value: function(path, property, overwrite)
+            {
+                var current = this.__bag.virtualProperties;
+                if (property && typeof property.get === "function"||typeof property.set === "function")
+                {
+                    var virtualProperty = {};
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath){return property.get.call(createObserver(basePath, this.__bag, false));}).bind(this);
+                    if (property.set !== undefined) virtualProperty.set = (function(basePath, value){return property.set.call(createObserver(basePath, this.__bag, false), value);}).bind(this);
+
+                    var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
+                    for(var counter=0;counter<pathSegments.length;counter++)
+                    {
+                        var pathSegment = pathSegments[counter];
+                        if (regExMatch.test(pathSegment))
+                        {
+                            var matcher;
+                            for(var matcherCounter=0;matcherCounter<current.matchers.length;matcherCounter++)
+                            if (current.matchers[matcherCounter].key === pathSegment)
+                            {
+                                matcher = current.matchers[matcherCounter];
+                                break;
+                            }
+                            if (counter==pathSegments.length-1)
+                            {
+                                if (matcher !== undefined)
+                                {
+                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                    delete matcher.paths;
+                                    delete matcher.matchers;
+                                    matcher.property    = virtualProperty;
+                                }
+                                else
+                                {
+                                    current.matchers.push
+                                    ({
+                                        key:        pathSegment,
+                                        test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
+                                        property:   virtualProperty
+                                    });
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                if (matcher === undefined)
+                                {
+                                    matcher =
+                                    {
+                                        key:        pathSegment,
+                                        test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
+                                        paths:      {}, 
+                                        matchers:   []
+                                    };
+                                    current.matchers.push(matcher);
+                                }
+
+                                if (matcher.property !== undefined)
+                                {
+                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                    delete  matcher.property;
+                                    matcher.paths       = {};
+                                    matcher.matchers    = [];
+                                }
+                                current = matcher;
+                            }
+                        }
+                        else
+                        {
+                            if (counter==pathSegments.length-1)
+                            {
+                                if (current.paths[pathSegment] !== undefined && !overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
+                                current.paths[pathSegment]  = {property: virtualProperty};
+                                return;
+                            }
+                            else
+                            {
+                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
+                                current = current.paths[pathSegment];
+                                if (current.property !== undefined)
+                                {
+                                    if (overwrite)  delete  current.property;
+                                    else            throw new Error("A computed path already exists at the location '" + path + "'.");
+                                }
+                            }
+                        }
+                    }
+                }
+            }},
             ignore:             {value: function(callback)
             {
                 for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
@@ -257,12 +346,13 @@
         {
             var bag             =
             {
-                item:           _item,
-                itemListeners:  [],
-                rootListeners:  [],
-                propertyKeys:   [],
-                updating:       [],
-                rollingback:    false
+                item:               _item,
+                virtualProperties:  {paths:{}, matchers: []},
+                itemListeners:      [],
+                rootListeners:      [],
+                propertyKeys:       [],
+                updating:           [],
+                rollingback:        false
             };
             return createObserver("", bag, Array.isArray(_item));
         };
