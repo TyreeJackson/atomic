@@ -64,7 +64,7 @@
         {
             if (controlDeclaration === undefined)  return;
             this.appendControl(controlKey, this.createControl(controlDeclaration, undefined, this, "#" + controlKey));
-            this.controls[controlKey].data  = this.data;
+            if (this.data !== undefined)    this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
         }},
         attachControls:     {value: function(controlDeclarations)

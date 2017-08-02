@@ -521,7 +521,7 @@
         {
             if (controlDeclaration === undefined)  return;
             this.appendControl(controlKey, this.createControl(controlDeclaration, undefined, this, "#" + controlKey));
-            this.controls[controlKey].data  = this.data;
+            if (this.data !== undefined)    this.controls[controlKey].data  = this.data;
             return this.controls[controlKey];
         }},
         attachControls:     {value: function(controlDeclarations)
@@ -1773,11 +1773,11 @@
 
             if (resolvedSegment.type === 1)
             {
-                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)                       return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, segments.slice(segmentCounter), constructPath, notify);
-                else if (resolvedSegment.currentVirtuals === undefined || resolvedSegment.currentVirtuals.length === 0) return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)   return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, segments.slice(segmentCounter), constructPath, notify);
+                else if (resolvedSegment.currentVirtuals === undefined)                             return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             }
 
-            current         = resolvedSegment.target;
+            current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;
             currentVirtuals = resolvedSegment.currentVirtuals;
         }
