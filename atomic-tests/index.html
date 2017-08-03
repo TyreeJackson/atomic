@@ -1,0 +1,31 @@
+<html>
+<head>
+    <title>AtomicJS unit tests - </title>
+    <style>
+       #debugLog{background-color: rgba(192,192,192,1); font: courier;margin-top: 100px;opacity:.5}
+    </style>
+    <script type="text/javascript" src="3rdparty/faker.js"></script>
+    <script type="text/javascript" src="3rdparty/atomic.js"></script>
+    <script type="text/javascript" src="3rdparty/htmlDocumentLogger.js"></script>
+    <script type="text/javascript" src="3rdparty/ion.js"></script>
+    <script type="text/javascript" src="3rdparty/mock.js"></script>
+    <script type="text/javascript" src="tests/html/viewAdapterFactoryTests.js"></script>
+    <script type="text/javascript" src="tests/scannerTests.js"></script>
+    <script type="text/javascript" src="tests/lexerTests.js"></script>
+    <script type="text/javascript" src="tests/pathParser.integrationTests.js"></script>
+    <script type="text/javascript" src="tests/observer.integrationTests.js"></script>
+    <script type="text/javascript" language="Javascript">
+    window.onload   =
+    function()
+    {
+        var mock    = new root.atomic.testUtilities.mock(new root.atomic.htmlDocumentLogger(document.querySelector("#debugLog")));
+        var ion     = new root.atomic.testUtilities.ion(mock, new root.atomic.htmlDocumentLogger(document.querySelector("#assertionsLog")), window.performance);
+        ion.execute(root.atomic.tests);
+    }
+    </script>
+</head>
+<body>
+    <pre id="assertionsLog"></pre>
+    <pre id="debugLog"></pre>
+</body>
+</html>
