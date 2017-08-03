@@ -168,15 +168,22 @@
         }
         else if (segment.value === "$home")
         {
-            var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath, pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath}, {segments: [], prependBasePath: true}, false);
             newBasePath         = root.basePath.split(".");
             return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$parent")
         {
             newBasePath.pop();
-            var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join("."), pathTracker: root.pathTracker}, {segments: [], prependBasePath: true}, false);
+            var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join(".")}, {segments: [], prependBasePath: true}, false);
             return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
+        }
+        else if (segment.value === "$shadow")
+        {
+            var shadowPath  = newBasePath.join(".");
+            newBasePath.push(segment.value);
+            if (root.bag.shadows[shadowPath] === undefined) root.bag.shadows[shadowPath]    = {};
+            return {type: 0, target: root.bag.shadows[shadowPath], newBasePath: newBasePath, currentVirtuals: []};
         }
         else if (segment.value === "$key")
         {
@@ -201,6 +208,7 @@
                         if (nextVirtual.property !== undefined)
                         {
                             if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                            if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
                             return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
                         }
                         nextVirtuals.push(nextVirtual);
@@ -258,6 +266,11 @@
             newBasePath     = resolvedSegment.newBasePath;
             currentVirtuals = resolvedSegment.currentVirtuals;
         }
+        if (constructPath && segmentsLength > -1 && currentVirtuals.length > 0)
+        {
+            var finalSegment    = resolvePathSegment(root, stringToSegment(segments[segmentsLength]), current, newBasePath.slice(), true, notify, currentVirtuals);
+            if (finalSegment.virtualProperty !== undefined) return {isVirtual: true, property: finalSegment.virtualProperty, basePath: finalSegment.basePath, key: finalSegment.key};
+        }
         return  constructPath
                 ?   segmentsLength === -1
                     ?   {isRoot: true}
@@ -281,6 +294,11 @@
         {
             root.bag.item   = value;
             if (typeof notify === "function")   notify("");
+        }
+        else if (resolved.isVirtual)
+        {
+            if (resolved.property.set === undefined)    throw new Error("Computed property is read-only.");
+            resolved.property.set(resolved.basePath, resolved.key, newValue);
         }
         else if (typeof resolved.segment.value === "object")
         {debugger;

@@ -75,6 +75,8 @@
                         listener.nestedUpdatesRootPath !== undefined
                         &&
                         propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath
+                        &&
+                        propertyKey.indexOf(".$shadow", listener.nestedUpdatesRootPath.length) == -1
                     )
                     ||
                     (
@@ -147,6 +149,7 @@
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
+            shadows:            {get: function(){return this.__bag.shadows;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
             define:             
@@ -352,6 +355,7 @@
                 rootListeners:      [],
                 propertyKeys:       [],
                 updating:           [],
+                shadows:            {},
                 rollingback:        false
             };
             return createObserver("", bag, Array.isArray(_item));

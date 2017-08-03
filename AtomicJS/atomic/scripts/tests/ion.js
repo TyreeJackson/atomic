@@ -24,9 +24,27 @@
             return this.assert(false, failureMessage);
         }},
         expectException:
-        {value: function(exceptionMessage)
+        {value: function(exceptionMessage, callback)
         {
-            Object.defineProperty(testContext, "expectedException", {value: exceptionMessage});
+            if (callback !== undefined)
+            {
+                var thrownException;
+                try
+                {
+                    callback();
+                }
+                catch(error)
+                {
+                    thrownException = error;
+                }
+                if (thrownException === undefined || exceptionMessage !== thrownException.message)
+                {
+                    Object.defineProperty(testContext, "expectedException", {value: exceptionMessage});
+                    Object.defineProperty(testContext, "thrownException", {value: thrownException});
+                    throw new Error("Unexpected exception");
+                }
+            }
+            else    Object.defineProperty(testContext, "expectedException", {value: exceptionMessage, configurable: true});
         }},
         log:
         {value: function(message)
@@ -65,13 +83,23 @@
                         }
                         catch(error)
                         {
-                            if (testContext.expectedException !== error.message)
+                            if (error.message === "Unexpected exception" && testContext.thrownException !== undefined)
+                            {
+                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + " but instead caught an exception with message " + testContext.thrownException.message + ".\n                Stack:      " + testContext.thrownException.stack.replace(/\n/g, "\n                            ") + "\n\n");
+                                continue;
+                            }
+                            else if (testContext.expectedException !== error.message)
                             {
                                 assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n");
                                 continue;
                             }
+                            else
+                            {
+                                Object.defineProperty(testContext, "expectedException", {value: undefined});
+                            }
                         }
-                        assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".");
+                        if (testContext.expectedException !== undefined)    assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + "` but no exception was thrown.");
+                        else                                                assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".");
                     }
                     assertionsLogger(getTestStatement(testName) + " tests complete.\n\n")
                 }
