@@ -1722,11 +1722,11 @@
         }
         else if (segment.value === "$key")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : undefined};
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : undefined, newBasePath: newBasePath};
         }
         else if (segment.value === "$path")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : undefined};
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : undefined, newBasePath: newBasePath};
         }
         else
         {
@@ -1743,7 +1743,7 @@
                         if (nextVirtual.property !== undefined)
                         {
                             if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                            return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                            return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
                         }
                         nextVirtuals.push(nextVirtual);
                     }
@@ -1757,7 +1757,7 @@
                                 if (matcher.property !== undefined)
                                 {
                                     if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                                    return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join(".")), newBasePath: newBasePath};
+                                    return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
                                 }
                                 nextVirtuals.push(matcher);
                             }
@@ -1792,7 +1792,7 @@
 
             if (resolvedSegment.type === 1)
             {
-                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)   return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, segments.slice(segmentCounter), constructPath, notify);
+                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)   return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
                 else if (resolvedSegment.currentVirtuals === undefined)                             return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
             }
 
@@ -2074,7 +2074,7 @@
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
-            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -2085,8 +2085,8 @@
                 if (property && typeof property.get === "function"||typeof property.set === "function")
                 {
                     var virtualProperty = {};
-                    if (property.get !== undefined) virtualProperty.get = (function(basePath){return property.get.call(createObserver(basePath, this.__bag, false));}).bind(this);
-                    if (property.set !== undefined) virtualProperty.set = (function(basePath, value){return property.set.call(createObserver(basePath, this.__bag, false), value);}).bind(this);
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key){return property.get.call(createObserver(basePath, this.__bag, false), key);}).bind(this);
+                    if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
                     for(var counter=0;counter<pathSegments.length;counter++)

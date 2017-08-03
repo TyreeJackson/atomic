@@ -145,7 +145,7 @@
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
-            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, true);}},
+            unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
@@ -156,8 +156,8 @@
                 if (property && typeof property.get === "function"||typeof property.set === "function")
                 {
                     var virtualProperty = {};
-                    if (property.get !== undefined) virtualProperty.get = (function(basePath){return property.get.call(createObserver(basePath, this.__bag, false));}).bind(this);
-                    if (property.set !== undefined) virtualProperty.set = (function(basePath, value){return property.set.call(createObserver(basePath, this.__bag, false), value);}).bind(this);
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key){return property.get.call(createObserver(basePath, this.__bag, false), key);}).bind(this);
+                    if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
                     for(var counter=0;counter<pathSegments.length;counter++)
