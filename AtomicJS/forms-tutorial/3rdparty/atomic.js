@@ -1701,6 +1701,46 @@
 
     function stringToSegment(segment){return typeof segment === "string" ? {value: segment, type: 0} : segment;}
 
+    function getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)
+    {
+        var nextVirtuals    = [];
+        for(var virtualCounter=0;virtualCounter<currentVirtuals.length;virtualCounter++)
+        {
+            var currentVirtual  = currentVirtuals[virtualCounter];
+            if (currentVirtual !== undefined)
+            {
+                if (currentVirtual.paths[segment.value] !== undefined)
+                {
+                    var nextVirtual = currentVirtual.paths[segment.value];
+                    if (nextVirtual.property !== undefined)
+                    {
+                        if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                        if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
+                        return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                    }
+                    nextVirtuals.push(nextVirtual);
+                }
+                else
+                {
+                    for(var counter=0;counter<currentVirtual.matchers.length;counter++)
+                    {
+                        var matcher = currentVirtual.matchers[counter];
+                        if (matcher.test(segment.value))
+                        {
+                            if (matcher.property !== undefined)
+                            {
+                                if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                                return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                            }
+                            nextVirtuals.push(matcher);
+                        }
+                    }
+                }
+            }
+        }
+        return nextVirtuals;
+    }
+
     function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals)
     {
         if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
@@ -1726,7 +1766,7 @@
             var shadowPath  = newBasePath.join(".");
             newBasePath.push(segment.value);
             if (root.bag.shadows[shadowPath] === undefined) root.bag.shadows[shadowPath]    = {};
-            return {type: 0, target: root.bag.shadows[shadowPath], newBasePath: newBasePath, currentVirtuals: []};
+            return {type: 0, target: root.bag.shadows[shadowPath], newBasePath: newBasePath, currentVirtuals: getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)};
         }
         else if (segment.value === "$key")
         {
@@ -1739,41 +1779,8 @@
         else
         {
             newBasePath.push(segment.value);
-            var nextVirtuals    = [];
-            for(var virtualCounter=0;virtualCounter<currentVirtuals.length;virtualCounter++)
-            {
-                var currentVirtual  = currentVirtuals[virtualCounter];
-                if (currentVirtual !== undefined)
-                {
-                    if (currentVirtual.paths[segment.value] !== undefined)
-                    {
-                        var nextVirtual = currentVirtual.paths[segment.value];
-                        if (nextVirtual.property !== undefined)
-                        {
-                            if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                            if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
-                            return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
-                        }
-                        nextVirtuals.push(nextVirtual);
-                    }
-                    else
-                    {
-                        for(var counter=0;counter<currentVirtual.matchers.length;counter++)
-                        {
-                            var matcher = currentVirtual.matchers[counter];
-                            if (matcher.test(segment.value))
-                            {
-                                if (matcher.property !== undefined)
-                                {
-                                    if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                                    return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
-                                }
-                                nextVirtuals.push(matcher);
-                            }
-                        }
-                    }
-                }
-            }
+            var nextVirtuals    = getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals);
+            if (!Array.isArray(nextVirtuals))   return nextVirtuals;
 
             // virtual only
             if (current === undefined)  return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
