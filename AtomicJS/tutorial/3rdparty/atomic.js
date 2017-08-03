@@ -22,6 +22,7 @@
         if (value === undefined)    return namespace[paths[paths.length-1]];
         Object.defineProperty(namespace, [paths[paths.length-1]], {value: value});
     }
+    Object.defineProperty(__namespace.prototype, "$isNamespace", {value: true});
     window.root = window.root || __root;
 }();
 !function()
