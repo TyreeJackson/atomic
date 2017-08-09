@@ -152,7 +152,7 @@
             shadows:            {get: function(){return this.__bag.shadows;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
-            define:             
+            define:
             {value: function(path, property, overwrite)
             {
                 var current = this.__bag.virtualProperties;
