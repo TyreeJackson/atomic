@@ -118,19 +118,25 @@
                 }
             }
         });
-        var person          = dataObject("data.person");
-        var fullName        = person("firstName") + " " + person("lastName");
-        var newFirstName    = faker.name.firstName();
-        var newLastName     = faker.name.lastName();
-        var address0        = person.unwrap("addresses.0");
-        address0            = address0.addressLine1 + "\n" + address0.addressLine2 + "\n" + address0.city + ", " + address0.state + " " + address0.postalCode;
-        var address1        = person.unwrap("addresses.1");
-        address1            = address1.addressLine1 + "\n" + address1.city + ", " + address1.state + " " + address1.postalCode;
-        var address2        = person.unwrap("addresses.2");
-        address2            = address2.city + ", " + address2.state;
-        var mainNumber      = person("phones.0.number");
-        var homeNumber      = person("phones.1.number");
-        var cellNumber      = person("phones.2.number");
+        var person              = dataObject("data.person");
+        var fullName            = person("firstName") + " " + person("lastName");
+        var newFirstName        = faker.name.firstName();
+        var newLastName         = faker.name.lastName();
+        var address0            = person.unwrap("addresses.0");
+        address0                = address0.addressLine1 + "\n" + address0.addressLine2 + "\n" + address0.city + ", " + address0.state + " " + address0.postalCode;
+        var address1            = person.unwrap("addresses.1");
+        address1                = address1.addressLine1 + "\n" + address1.city + ", " + address1.state + " " + address1.postalCode;
+        var address2            = person.unwrap("addresses.2");
+        address2                = address2.city + ", " + address2.state;
+        var mainNumber          = person("phones.0.number");
+        var newMainNumber       = faker.phone.phoneNumberFormat();
+        var supportNumber       = faker.phone.phoneNumberFormat();
+        var newSupportNumber    = faker.phone.phoneNumberFormat();
+        var newSupportNumber2   = faker.phone.phoneNumberFormat();
+        var homeNumber          = person("phones.1.number");
+        var cellNumber          = person("phones.2.number");
+        var changedMainNumber   = undefined;
+        var addedSupportNumber  = undefined;
 
         person.define("fullName", {get: function(key){return this("firstName") + (this.hasValue("firstName")&&this.hasValue("lastName")?" " : "") + this("lastName");}, set: function(key, value){var names = value.split(" ", 2);this("firstName", names[0]);this("lastName", names[1]);}});
         person.define("/.*/.person", {get: function(key){return this("$parent");}});
@@ -145,7 +151,7 @@
             return line1 + (line1&&line2?"\n":"") + line2 + ((line1||line2)&&(city||state||postalCode)?"\n":"") + city + (city&&state?", ":"") + state + (state&&postalCode?" ":"") + postalCode;
         }});
         person.define("phonesByType./.*/", {get: function(key)
-        {
+        {ion.log("\t\t**************** DIAG: Computing phonesByType for key `" + key + "`... ****************");
             var phones  = this("$parent.phones");
             if (phones !== undefined && phones.isArrayObserver)
             for(var counter=0;counter<phones.count;counter++)  if (phones(counter+".type") === key)  return phones(counter);
@@ -180,8 +186,45 @@
         ion.log("Testing that the phonesByType.cell.number computed property path returns " + cellNumber + ".");
         ion.assert(person("phonesByType.cell.number") === cellNumber,       "The phonesByType.cell.number should have been equal to " + cellNumber + " but was set to " + person("phonesByType.cell.number") + ".");
 
+        ion.log("Defining main number listener");
+        person.listen(function(){
+            changedMainNumber   = person.unwrap("phonesByType.main.number");
+        }, "")
+        
+        person("phones.0.number", newMainNumber);
+
+        ion.log("Testing that the phonesByType.main.number computed property being indirectly changed was observed by the changedMainNumber being changed to " + newMainNumber +".");
+        ion.assert(changedMainNumber === newMainNumber,                     "The changedMainNumber should have been equal to " + newMainNumber + " but was set to " + changedMainNumber + ".");
+
+        ion.log("Testing that the phonesByType.main.number computed property path returns " + newMainNumber + ".");
+        ion.assert(person("phonesByType.main.number") === newMainNumber,    "The phonesByType.main.number should have been equal to " + newMainNumber + " but was set to " + person("phonesByType.main.number") + ".");
+
         ion.log("Testing that the phonesByType.business.number computed property path returns undefined.");
         ion.assert(person("phonesByType.business.number") === undefined,    "The phonesByType.cell.number should have been undefined but was set to " + person("phonesByType.cell.number") + ".");
+
+        ion.log("Defining support number listener");
+        person.listen(function(){
+            addedSupportNumber  = person.unwrap("phonesByType.support.number");
+        }, "")
+        
+        ion.log("Adding support number");
+        person("phones").push({type: "support", number: supportNumber});
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + supportNumber +".");
+        ion.assert(addedSupportNumber === supportNumber,                    "The addedSupportNumber should have been equal to " + supportNumber + " but was set to " + addedSupportNumber + ".");
+
+        ion.log("Changing support number object");
+        person("phones.3", {type: "support", number: newSupportNumber});
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + newSupportNumber +".");
+        ion.assert(addedSupportNumber === newSupportNumber,                 "The addedSupportNumber should have been equal to " + newSupportNumber + " but was set to " + addedSupportNumber + ".");
+
+        ion.log("Changing support number");
+        person("phones.3.number", newSupportNumber2);
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + newSupportNumber2 +".");
+        ion.assert(addedSupportNumber === newSupportNumber2,                "The addedSupportNumber should have been equal to " + newSupportNumber2 + " but was set to " + addedSupportNumber + ".");
+
     },
     Observers_support_shadow_properties:
     function()

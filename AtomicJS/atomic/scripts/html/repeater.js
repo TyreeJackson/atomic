@@ -109,7 +109,7 @@
                 (function(data)
                 {
                     bindRepeatedList.call(this, data);
-                }).bind(this, this.data.observe(this.bind)),
+                }).bind(this, (typeof(this.bind) === "function" ? value : this.data.observe(this.bind))),
                 0
             );
         }}});

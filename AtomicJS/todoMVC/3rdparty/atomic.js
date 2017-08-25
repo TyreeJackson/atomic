@@ -748,7 +748,7 @@
                 (function(data)
                 {
                     bindRepeatedList.call(this, data);
-                }).bind(this, this.data.observe(this.bind)),
+                }).bind(this, (typeof(this.bind) === "function" ? value : this.data.observe(this.bind))),
                 0
             );
         }}});
@@ -1716,7 +1716,7 @@
                     {
                         if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
                         if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
-                        return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                        return {type: 2, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
                     }
                     nextVirtuals.push(nextVirtual);
                 }
@@ -1730,7 +1730,7 @@
                             if (matcher.property !== undefined)
                             {
                                 if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                                return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                                return {type: 2, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
                             }
                             nextVirtuals.push(matcher);
                         }
@@ -1806,11 +1806,8 @@
         {
             var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1)
-            {
-                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)   return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
-                else if (resolvedSegment.currentVirtuals === undefined)                             return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            }
+            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target.isObserver)    return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;
@@ -2095,8 +2092,8 @@
             }},
             __notify:           {value: function(path, changes, directOnly)
             {
-                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
@@ -2113,8 +2110,21 @@
                 var current = this.__bag.virtualProperties;
                 if (property && typeof property.get === "function"||typeof property.set === "function")
                 {
-                    var virtualProperty = {};
-                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key){return property.get.call(createObserver(basePath, this.__bag, false), key);}).bind(this);
+                    var virtualProperty = {cachedValues: {}};
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key)
+                    {
+                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "." : "") + key;
+                        if (virtualProperty.cachedValues[path] === undefined)
+                        {
+                            virtualProperty.cachedValues[path]  = { listener: (function()
+                            {
+                                virtualProperty.cachedValues[path].value = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                notifyPropertyListeners.call(this, path, virtualProperty.cachedValues[path].value, this.__bag, false);
+                            }).bind(this)};
+                            this.listen(virtualProperty.cachedValues[path].listener);
+                        }
+                        return virtualProperty.cachedValues[path].value;
+                    }).bind(this);
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
@@ -2184,13 +2194,13 @@
                             }
                             else
                             {
-                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
-                                current = current.paths[pathSegment];
                                 if (current.property !== undefined)
                                 {
                                     if (overwrite)  delete  current.property;
                                     else            throw new Error("A computed path already exists at the location '" + path + "'.");
                                 }
+                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
+                                current = current.paths[pathSegment];
                             }
                         }
                     }
@@ -2291,6 +2301,13 @@
                 }
                 items.length = 0;
                 items.push.apply(items, keepers);
+            }},
+            filter:             {value: function(filter)
+            {
+                var items       = this();
+                var filtered    = [];
+                for(var counter=0;counter<items.length;counter++)   if (filter(items[counter])) filtered.push(items[counter]);
+                return filtered;
             }},
             isArrayObserver:    {value: true},
             count:              {get: function(){return this().length;}}

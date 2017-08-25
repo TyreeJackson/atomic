@@ -140,8 +140,8 @@
             }},
             __notify:           {value: function(path, changes, directOnly)
             {
-                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
@@ -158,8 +158,21 @@
                 var current = this.__bag.virtualProperties;
                 if (property && typeof property.get === "function"||typeof property.set === "function")
                 {
-                    var virtualProperty = {};
-                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key){return property.get.call(createObserver(basePath, this.__bag, false), key);}).bind(this);
+                    var virtualProperty = {cachedValues: {}};
+                    if (property.get !== undefined) virtualProperty.get = (function(basePath, key)
+                    {
+                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "." : "") + key;
+                        if (virtualProperty.cachedValues[path] === undefined)
+                        {
+                            virtualProperty.cachedValues[path]  = { listener: (function()
+                            {
+                                virtualProperty.cachedValues[path].value = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                notifyPropertyListeners.call(this, path, virtualProperty.cachedValues[path].value, this.__bag, false);
+                            }).bind(this)};
+                            this.listen(virtualProperty.cachedValues[path].listener);
+                        }
+                        return virtualProperty.cachedValues[path].value;
+                    }).bind(this);
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
@@ -229,13 +242,13 @@
                             }
                             else
                             {
-                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
-                                current = current.paths[pathSegment];
                                 if (current.property !== undefined)
                                 {
                                     if (overwrite)  delete  current.property;
                                     else            throw new Error("A computed path already exists at the location '" + path + "'.");
                                 }
+                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
+                                current = current.paths[pathSegment];
                             }
                         }
                     }
@@ -336,6 +349,13 @@
                 }
                 items.length = 0;
                 items.push.apply(items, keepers);
+            }},
+            filter:             {value: function(filter)
+            {
+                var items       = this();
+                var filtered    = [];
+                for(var counter=0;counter<items.length;counter++)   if (filter(items[counter])) filtered.push(items[counter]);
+                return filtered;
             }},
             isArrayObserver:    {value: true},
             count:              {get: function(){return this().length;}}

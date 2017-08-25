@@ -173,7 +173,7 @@
                     {
                         if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
                         if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
-                        return {type: 1, value: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                        return {type: 2, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
                     }
                     nextVirtuals.push(nextVirtual);
                 }
@@ -187,7 +187,7 @@
                             if (matcher.property !== undefined)
                             {
                                 if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                                return {type: 1, value: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath};
+                                return {type: 2, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
                             }
                             nextVirtuals.push(matcher);
                         }
@@ -263,11 +263,8 @@
         {
             var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1)
-            {
-                if      (resolvedSegment.value !== undefined && resolvedSegment.value.isObserver)   return resolvePath({bag: resolvedSegment.value.__bag, basePath: resolvedSegment.value.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
-                else if (resolvedSegment.currentVirtuals === undefined)                             return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            }
+            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target.isObserver)    return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;
