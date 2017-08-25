@@ -161,6 +161,7 @@
     function getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)
     {
         var nextVirtuals    = [];
+        var virtualProperty = undefined;
         for(var virtualCounter=0;virtualCounter<currentVirtuals.length;virtualCounter++)
         {
             var currentVirtual  = currentVirtuals[virtualCounter];
@@ -171,9 +172,10 @@
                     var nextVirtual = currentVirtual.paths[segment.value];
                     if (nextVirtual.property !== undefined)
                     {
-                        if (nextVirtual.property.get === undefined)  throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                        if (constructPath)  return {virtualProperty: nextVirtual.property, basePath: newBasePath.slice(0, -1).join("."), key: newBasePath[newBasePath.length-1]};
-                        return {type: 2, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
+                        if (nextVirtual.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
+                        if (virtualProperty !== undefined)          throw new Error("A Computed property was already found at the path '" + newBasePath.join(".")+ "'.");
+
+                        virtualProperty = {type: 2, virtualProperty: nextVirtual.property, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
                     }
                     nextVirtuals.push(nextVirtual);
                 }
@@ -187,7 +189,8 @@
                             if (matcher.property !== undefined)
                             {
                                 if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
-                                return {type: 2, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: []};
+                                if (virtualProperty !== undefined)      throw new Error("A Computed property was already found at the path '" + newBasePath.join(".")+ "'.");
+                                virtualProperty = {type: 2, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
                             }
                             nextVirtuals.push(matcher);
                         }
@@ -195,7 +198,7 @@
                 }
             }
         }
-        return nextVirtuals;
+        return virtualProperty === undefined ? nextVirtuals : virtualProperty;
     }
 
     function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals)
@@ -273,7 +276,7 @@
         if (constructPath && segmentsLength > -1 && currentVirtuals.length > 0)
         {
             var finalSegment    = resolvePathSegment(root, stringToSegment(segments[segmentsLength]), current, newBasePath.slice(), true, notify, currentVirtuals);
-            if (finalSegment.virtualProperty !== undefined) return {isVirtual: true, property: finalSegment.virtualProperty, basePath: finalSegment.basePath, key: finalSegment.key};
+            if (finalSegment.type === 2) return {isVirtual: true, property: finalSegment.virtualProperty, basePath: finalSegment.newBasePath.slice(0, -1).join("."), key: finalSegment.newBasePath[finalSegment.newBasePath.length-1]};
         }
         return  constructPath
                 ?   segmentsLength === -1

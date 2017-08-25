@@ -152,7 +152,7 @@
             shadows:            {get: function(){return this.__bag.shadows;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
-            define:
+            define:             
             {value: function(path, property, overwrite)
             {
                 var current = this.__bag.virtualProperties;
@@ -192,9 +192,6 @@
                             {
                                 if (matcher !== undefined)
                                 {
-                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
-                                    delete matcher.paths;
-                                    delete matcher.matchers;
                                     matcher.property    = virtualProperty;
                                 }
                                 else
@@ -203,7 +200,9 @@
                                     ({
                                         key:        pathSegment,
                                         test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
-                                        property:   virtualProperty
+                                        property:   virtualProperty,
+                                        paths:      {},
+                                        matchers:   []
                                     });
                                     return;
                                 }
@@ -222,32 +221,19 @@
                                     current.matchers.push(matcher);
                                 }
 
-                                if (matcher.property !== undefined)
-                                {
-                                    if (!overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
-                                    delete  matcher.property;
-                                    matcher.paths       = {};
-                                    matcher.matchers    = [];
-                                }
                                 current = matcher;
                             }
                         }
                         else
                         {
+                            if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
                             if (counter==pathSegments.length-1)
                             {
-                                if (current.paths[pathSegment] !== undefined && !overwrite) throw new Error("A computed path already exists at the location '" + path + "'.");
-                                current.paths[pathSegment]  = {property: virtualProperty};
+                                current.paths[pathSegment].property = virtualProperty;
                                 return;
                             }
                             else
                             {
-                                if (current.property !== undefined)
-                                {
-                                    if (overwrite)  delete  current.property;
-                                    else            throw new Error("A computed path already exists at the location '" + path + "'.");
-                                }
-                                if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
                                 current = current.paths[pathSegment];
                             }
                         }
