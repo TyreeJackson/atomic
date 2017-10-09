@@ -599,6 +599,12 @@
     {
         base.call(this, elements, selector, parent);
     }
+    function forwardProperty(propertyKey, property)
+    {
+        var propertyValue   = property.call(this);
+        if (propertyValue.isDataProperty)   this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
+        else                                Object.defineProperty(this, propertyKey, {value: propertyValue});
+    }
     Object.defineProperty(composite, "prototype", {value: Object.create(base.prototype)});
     Object.defineProperties(composite.prototype,
     {
@@ -609,27 +615,15 @@
             for(var propertyKey in propertyDeclarations)
             {
                 var property    = propertyDeclarations[propertyKey];
-                if (typeof property === "function")     Object.defineProperty(this, propertyKey, {value: property.call(this)});
+                if (typeof property === "function")     forwardProperty.call(this, propertyKey, property);
                 else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate});}
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
-        data:
-        {
-            get:    function(){return this.__binder.data;},
-            set:    function(value)
-            {
-                this.__binder.data = value;
-                each(this.__controlKeys, (function(controlKey)
-                {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
-                }).bind(this));
-            }
-        },
         init:               {value: function(definition)
         {
             base.prototype.init.call(this, definition);
-            if (definition.properties !== undefined)    Object.defineProperty(this, "bind", { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});}, configurable: true });
+            if (definition.properties !== undefined)    this.__binder.defineDataProperties(this, {value: {get: function(){return this.__value;}, set: function(value){this.__value = value;},  onchange: this.getEvents("change")}});
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
         }},
@@ -1306,7 +1300,8 @@
         else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
         else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
         else if (binding["hasValue"]!== undefined)  viewAdapter[name].bind  = function(item){return item.hasValue(binding.when) == binding["hasValue"];};
-        else                                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+        else if (binding["isDefined"]!==undefined)  viewAdapter[name].bind  = function(item){return item.isDefined(binding.when) === binding["isDefined"];};
+        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
     }
     function bindProperty(viewAdapter, name, binding)
     {
@@ -1369,7 +1364,7 @@
     initializers.classes = function(viewAdapter, value) { each(value, function(val){viewAdapter.toggleClass(val, true);}); };
     each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
-    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"], function(val)
+    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel", "transitionend"], function(val)
     {
         initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
     });
@@ -1809,8 +1804,8 @@
         {
             var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target.isObserver)    return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
+            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver) return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;
@@ -1862,7 +1857,7 @@
         }
     }
 
-    function accessor(path) { return {get: (root, notify)=>getDataPath(root, path, notify), set: (root,value, notify)=>setDataPath(root, path, value, notify)}; }
+    function accessor(path) { return {get: function(root, notify){return getDataPath(root, path, notify);}, set: function(root,value, notify){return setDataPath(root, path, value, notify);}}; }
 
     function parse(lexer)
     {
@@ -1971,7 +1966,7 @@
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}},
                 isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
-                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && !(!value);}}
+                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && value!==null;}}
             });
             return this;
         });
@@ -2513,6 +2508,7 @@
                     else                                                            {debugger; throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
+            isDataProperty: {value: true, configurable: false, writable: false},
             onchange:
             {
                 get:    function(){return this.__onchange;},

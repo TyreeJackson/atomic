@@ -266,8 +266,8 @@
         {
             var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
-            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target.isObserver)    return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
+            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver) return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;
@@ -319,7 +319,7 @@
         }
     }
 
-    function accessor(path) { return {get: (root, notify)=>getDataPath(root, path, notify), set: (root,value, notify)=>setDataPath(root, path, value, notify)}; }
+    function accessor(path) { return {get: function(root, notify){return getDataPath(root, path, notify);}, set: function(root,value, notify){return setDataPath(root, path, value, notify);}}; }
 
     function parse(lexer)
     {

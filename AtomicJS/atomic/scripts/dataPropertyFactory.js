@@ -121,6 +121,7 @@
                     else                                                            {debugger; throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
+            isDataProperty: {value: true, configurable: false, writable: false},
             onchange:
             {
                 get:    function(){return this.__onchange;},
