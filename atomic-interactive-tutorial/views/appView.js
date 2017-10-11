@@ -5,7 +5,7 @@
     function getActiveExamplePath(item, withLesson)
     {
         var active          = item("...active");
-        var activeLesson    = item.peek("...activeLesson");
+        var activeLesson    = item("...activeLesson");
         var activeTutorial;
         if (active !== undefined && item.peek("...examples") !== undefined)
         for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) { activeTutorial = "...examples."+counter+".example"; break; }
