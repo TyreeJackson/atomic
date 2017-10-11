@@ -47,7 +47,7 @@
                     {
                         var value = this.__getDataValue();
                         if (!this.__notifyingObserver) this.__setter(value);
-                        notifyOnDataUpdate.call(this, this.data); 
+                        setTimeout((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this),0); 
                     }).bind(this)
                 });
                 each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
@@ -57,7 +57,7 @@
             }
             else if (this.__onupdate)
             {
-                Object.defineProperty(this, "__bindListener", {configurable: true, value: (function(){ notifyOnDataUpdate.call(this, this.data); }).bind(this)});
+                Object.defineProperty(this, "__bindListener", {configurable: true, value: (function(){ this.__getDataValue(); setTimeout((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this),0); }).bind(this)});
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
             }

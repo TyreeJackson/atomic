@@ -16,7 +16,7 @@
                 __basePath: {get:   function(){return basePath;}},
                 __bag:      {get:   function(){return bag;}},
                 isDefined:  {value: function(propertyName){return this(propertyName)!==undefined;}},
-                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && value!==null;}}
+                hasValue:   {value: function(propertyName){var value=this(propertyName); return value!==undefined && value!==null && value!=="";}}
             });
             return this;
         });
