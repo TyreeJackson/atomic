@@ -571,7 +571,8 @@
         container.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
-            var subData = typeof this.bind === "string" ? this.data.observe(this.bind) : typeof this.bind === "function" ? this.bind(this.data) : "";
+            var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
+            if (typeof subData === "string")    subData = this.data.observe(subData);
             each(this.__controlKeys, (function(controlKey)
             {
                 if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
