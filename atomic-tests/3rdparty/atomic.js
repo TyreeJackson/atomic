@@ -571,10 +571,11 @@
         container.call(this, elements, selector, parent);
         this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
-            var bind    = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
+            var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
+            if (typeof subData === "string")    subData = this.data.observe(subData);
             each(this.__controlKeys, (function(controlKey)
             {
-                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = this.data.observe(bind);
+                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
             }).bind(this));
         }}});
         this.bind   = "";
@@ -1819,7 +1820,11 @@
             var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
 
             if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver) return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
+            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
+            {
+                if (typeof notify === "function")   notify(newBasePath);
+                return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
+            }
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
             newBasePath     = resolvedSegment.newBasePath;

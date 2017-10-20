@@ -37,7 +37,7 @@
             {
                 bind:
                 {
-                    value:  {to : "active", onupdate: function(){ updateIframe.call(this, true, true); } },
+                    value:  "active",
                     items:
                     {
                         to:     "examples",
@@ -86,13 +86,21 @@
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
                     cssEditor:              { factory:  editorControl,  mode:   "css",          bind: { value: "css",          theme: "...editorTheme" } },
                     htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",         theme: "...editorTheme" } },
-                    preview:                { bind:     { value: { onupdate: function(item){updateIframe.call(this, item("...livePreview")); } } } }
+                    preview:                { }
                 }
             },
             engineFooter:               { bind: { display: "viewEngineModel" } },
             model:                      { bind: { value: { to: function(item){return this.data("viewEngineModel") && JSON.stringify(this.data(), null, '    ').replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "" } } }
         },
-        events: ["savePlayground", "resetPlayground", "exportPlayground", "downloadPlayground", "importPlayground"]
+        events: ["savePlayground", "resetPlayground", "exportPlayground", "downloadPlayground", "importPlayground"],
+        members:
+        {
+            construct:
+            function()
+            {
+                this.data.listen((function(){updateIframe.call(this.controls.playground.controls.preview, this.data("...livePreview"));}).bind(this));
+            }
+        }
     };
     return adapterDefinition;
 }});}();
