@@ -1,6 +1,7 @@
 !function()
 {"use strict";root.define("atomic.playground.controls.editorControl", function(ace)
 {return {
+    customBind: true,
     properties:
     {
         value:

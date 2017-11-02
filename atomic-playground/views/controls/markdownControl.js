@@ -1,6 +1,7 @@
 !function()
 {"use strict";root.define("atomic.playground.controls.markdownControl", function(marked)
 {return {
+    customBind: true,
     properties:
     {
         value:

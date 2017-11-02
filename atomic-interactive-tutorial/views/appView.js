@@ -17,7 +17,6 @@
         var cssPath     = this.data("activeExamplePath") + ".css";
         var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body><div id="output">' + (this.data.read(examplePath+(isTarget?".targetHTML":".html"), peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '</div><style>' + this.data.read(cssPath, peek) + '</style><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+(isTarget?".targetJavascript":".javascript"), peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
-        debugger;
         clearIframe(parent);
         function doIt()
         {

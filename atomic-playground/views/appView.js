@@ -10,10 +10,10 @@
         return "...examples.0.example";
     }
     var updaterId;
-    function updateIframe(execute, peek)
+    function updateIframe(data, execute, peek)
     {
-        var examplePath = getActiveExamplePath(this.data);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (this.data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + this.data.read(examplePath+".css", peek) + '</style><scr' + 'ipt type="application/javascript">' + this.data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
+        var examplePath = getActiveExamplePath(data);
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + data.read(examplePath+".css", peek) + '</style><scr' + 'ipt type="application/javascript">' + data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         function doIt()
         {
@@ -31,7 +31,7 @@
     {
         controls:
         {
-            runButton:                  { onclick:  function(){ updateIframe.call(this, true); }, bind: { display: { when: "livePreview", "!=": true } } },
+            runButton:                  { onclick:  function(){ updateIframe.call(this, this.data, true); }, bind: { display: { when: "livePreview", "!=": true } } },
             editorThemeList:            { bind: "editorTheme" },
             exampleList:
             {
@@ -98,7 +98,7 @@
             construct:
             function()
             {
-                this.data.listen((function(){updateIframe.call(this.controls.playground.controls.preview, this.data("...livePreview"));}).bind(this));
+                this.data.listen((function(){updateIframe.call(this.controls.playground.controls.preview, this.data, this.data("...livePreview"));}).bind(this));
             }
         }
     };
