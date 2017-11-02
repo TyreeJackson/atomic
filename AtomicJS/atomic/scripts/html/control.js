@@ -56,13 +56,14 @@
                     for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
                 }
             },
-            disabled:           {get: function(){return this.__element.disabled;},              set: function(value){this.__element.disabled=!(!value);}},
-            display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
-            enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
-            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
-            id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
-            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){this.__element.title = value||"";}},
-            value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
+            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value);}},
+            display:            {get: function(){return this.__element.style.display=="";},         set: function(value){this[value?"show":"hide"]();}},
+            draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value);}},
+            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){this.__element.disabled=!value;}},
+            for:                {get: function(){return this.__element.getAttribute("for");},       set: function(value){this.__element.setAttribute("for", value);}},
+            id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value;}},
+            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||"";}},
+            value:              {get: function(){return this.__element.value;},                     set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
     function notifyClassEvent(className, exists)

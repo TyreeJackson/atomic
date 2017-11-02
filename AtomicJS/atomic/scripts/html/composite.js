@@ -22,7 +22,7 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")     forwardProperty.call(this, propertyKey, property);
-                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate});}
+                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});}
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
@@ -31,12 +31,23 @@
             get:    function(){return this.__binder.data;},
             set:    function(value)
             {
-                this.__binder.data = value;
+                this.__binder.data  = value;
                 if (this.__customBind == true)  return;
-                each(this.__controlKeys, (function(controlKey)
-                {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
-                }).bind(this));
+                var subData         = value.observe(this.bind);
+                if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+                this.__updateDataOnChildControlsTimeoutId   =
+                setTimeout
+                (
+                    (function()
+                    {
+                        delete  this.__updateDataOnChildControlsTimeoutId;
+                        each(this.__controlKeys, (function(controlKey)
+                        {
+                            if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                        }).bind(this));
+                    }).bind(this),
+                    0
+                );
             }
         },
         init:               {value: function(definition)

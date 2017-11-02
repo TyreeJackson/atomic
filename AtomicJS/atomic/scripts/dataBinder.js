@@ -49,7 +49,7 @@
                 notifyProperties.call(this);
             }
         },
-        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty)}},
+        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
         isBinder:   {value: true},
         isRoot:
         {

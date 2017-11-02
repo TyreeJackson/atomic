@@ -7,7 +7,7 @@
         var functionFactory = new isolatedFunctionFactory();
         var dataProperty    =
         functionFactory.create
-        (function dataProperty(owner, getter, setter, onchange, binder)
+        (function dataProperty(owner, getter, setter, onchange, binder, delay)
         {
             var property    = this;
             Object.defineProperties(this,
@@ -23,6 +23,7 @@
                 }},
                 __owner:                {value: owner},
                 __binder:               {value: binder, configurable: true},
+                __delay:                {value: delay, configurable: true},
                 __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
@@ -95,10 +96,20 @@
             }},
             ___inputListener:   {value: function()
             {
-                if (this.__bounded===false) return;
-                this.__notifyingObserver    = true;
-                this.__setDataValue();
-                this.__notifyingObserver    = false;
+                if (this.__delayId !== undefined)
+                {
+                    clearTimeout(this.__delayId);
+                    delete this.__delayId;
+                }
+                function notifyObserver()
+                {
+                    if (this.__bounded===false) return;
+                    this.__notifyingObserver    = true;
+                    this.__setDataValue();
+                    this.__notifyingObserver    = false;
+                }
+                if (this.__delay === undefined) notifyObserver.call(this);
+                else                            this.__delayId  = setTimeout(notifyObserver.bind(this), this.__delay);
             }},
             __getDataValue:
             {
@@ -148,7 +159,7 @@
                 }
             });
         });
-        each(["onbind","onupdate","onunbind"],function(name)
+        each(["onbind","onupdate","onunbind","delay"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -159,8 +170,8 @@
         function defineDataProperty(target, binder, propertyName, property)
         {
             if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
-            each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
+            each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)
         {

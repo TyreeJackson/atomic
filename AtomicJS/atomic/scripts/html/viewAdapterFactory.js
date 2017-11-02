@@ -32,7 +32,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            return (function(parent, containerElement, selector)
+            var factory = (function(parent, containerElement, selector)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -47,7 +47,7 @@
                 (
                     typeof viewAdapterDefinitionConstructor !== "function"
                     ?   function(control){return viewAdapterDefinitionConstructor}
-                    :   viewAdapterDefinitionConstructor,
+                    :   function(control){return viewAdapterDefinitionConstructor(control, factory);},
                     viewElement,
                     container,
                     selector,
@@ -55,6 +55,7 @@
                 );
                 return view;
             }).bind(this);
+            return factory;
         },
         launch:         function(viewElement, controlsOrAdapter, callback)
         {

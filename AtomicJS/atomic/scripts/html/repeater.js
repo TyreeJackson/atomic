@@ -10,12 +10,14 @@
     {
         while(element.lastChild)    element.removeChild(element.lastChild);
     }
-    function locate(item, retained)
+    function locate(item, templateKey, retained)
     {
-        for(var counter=0;counter<retained.length;counter++) if (retained[counter].data() === item)
+        var retainedArray   = retained[templateKey];
+        if (retainedArray === undefined)    return null;
+        for(var counter=0;counter<retainedArray.length;counter++) if ( retainedArray[counter].data() === item)
         {
-            var retainedControl = retained[counter];
-            removeFromArray(retained, counter);
+            var retainedControl = retainedArray[counter];
+            removeFromArray(retainedArray, counter);
             return retainedControl;
         }
         return null;
@@ -25,13 +27,21 @@
         var templateElement = this.__templateElements[templateKey];
         if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
         var key             = templateElement.declaration.getKey.call({parent: this, index: counter}, subDataItem);
+        var originalPath    = subDataItem("$path");
 
-        var retainedControl = locate(subDataItem(), retained);
-        if (retainedControl !== null)   return { key: key, parent: templateElement.parent, control: retainedControl };
+        var retainedControl = locate(subDataItem(), templateKey, retained);
+        if (retainedControl !== null)
+        {
+            retainedControl.__element.setAttribute("id", key);
+            retainedControl.__element.setAttribute("data-current-path", originalPath);
+            return { key: key, parent: templateElement.parent, control: retainedControl };
+        }
 
         var elementCopy     = templateElement.element.cloneNode(true);
         elementCopy.setAttribute("id", key);
+        elementCopy.setAttribute("data-original-path", originalPath);
         var clone           = { key: key, parent: templateElement.parent, control: this.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
         clone.control.data  = subDataItem;
         return clone;
     };
@@ -81,13 +91,14 @@
     }
     function unbindRepeatedList(keepList)
     {
-        var retain  = [];
+        var retain  = {};
         if (this.__repeatedControls !== undefined)
         for(var repeatedControlKey in this.__repeatedControls)
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
-            if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
-            else                                                {repeatedControl.data    = undefined;}
+            if (retain[repeatedControl.__templateKey] === undefined)    retain[repeatedControl.__templateKey]   = [];
+            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
+            else                                                        {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
         }
         this.__repeatedControls     = {};
@@ -104,10 +115,13 @@
         });
         this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
+            if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+            this.__updateDataOnChildControlsTimeoutId   =
             setTimeout
             (
                 (function(data)
                 {
+                    delete  this.__updateDataOnChildControlsTimeoutId;
                     bindRepeatedList.call(this, data);
                 }).bind(this, (typeof(this.bind) === "function" ? value : this.data.observe(this.bind))),
                 0
@@ -125,7 +139,8 @@
             control.prototype.init.call(this, definition);
         }},
         children:   {value: function(){return this.__repeatedControls || null;}},
-        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}}
+        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}},
+        pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;
 });}();

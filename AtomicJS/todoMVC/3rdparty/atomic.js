@@ -33,7 +33,11 @@
         else if (array !== undefined)
         {
             var keys    = Object.keys(array);
-            for(var keyCounter=0;keyCounter<keys.length;keyCounter++)                                       callback(array[keys[keyCounter]], keys[keyCounter]);
+            for(var keyCounter=0;keyCounter<keys.length;keyCounter++)
+            {
+                var key = keys[keyCounter];
+                callback(array[key], key);
+            }
         }
     });
     root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
@@ -211,13 +215,14 @@
                     for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
                 }
             },
-            disabled:           {get: function(){return this.__element.disabled;},              set: function(value){this.__element.disabled=!(!value);}},
-            display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
-            enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){this.__element.disabled=!value;}},
-            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){this.__element.setAttribute("for", value);}},
-            id:                 {get: function(){return this.__element.id;},                    set: function(value){this.__element.id=value;}},
-            tooltip:            {get: function(){return this.__element.title;},                 set: function(value){this.__element.title = value||"";}},
-            value:              {get: function(){return this.__element.value;},                 set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
+            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value);}},
+            display:            {get: function(){return this.__element.style.display=="";},         set: function(value){this[value?"show":"hide"]();}},
+            draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value);}},
+            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){this.__element.disabled=!value;}},
+            for:                {get: function(){return this.__element.getAttribute("for");},       set: function(value){this.__element.setAttribute("for", value);}},
+            id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value;}},
+            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||"";}},
+            value:              {get: function(){return this.__element.value;},                     set: function(value){this.__element.value = value;},  onchange: this.getEvents("change")}
         });
     }
     function notifyClassEvent(className, exists)
@@ -330,7 +335,7 @@
     each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
     {
-        var args            = Array.prototype.slice.apply(arguments, 0, arguments.length-2),
+        var args            = Array.prototype.slice.apply(arguments, 0, arguments[arguments.length-2]),
             milliseconds    = arguments[arguments.length-2],
             onComplete      = arguments[arguments.length-1];
         this[on].apply(this, args);
@@ -573,10 +578,20 @@
         {
             var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
             if (typeof subData === "string")    subData = this.data.observe(subData);
-            each(this.__controlKeys, (function(controlKey)
-            {
-                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
-            }).bind(this));
+            if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+            this.__updateDataOnChildControlsTimeoutId   =
+            setTimeout
+            (
+                (function()
+                {
+                    delete  this.__updateDataOnChildControlsTimeoutId;
+                    each(this.__controlKeys, (function(controlKey)
+                    {
+                        if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                    }).bind(this));
+                }).bind(this),
+                0
+            );
         }}});
         this.bind   = "";
     }
@@ -617,7 +632,7 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")     forwardProperty.call(this, propertyKey, property);
-                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate});}
+                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});}
                 else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
@@ -626,12 +641,23 @@
             get:    function(){return this.__binder.data;},
             set:    function(value)
             {
-                this.__binder.data = value;
+                this.__binder.data  = value;
                 if (this.__customBind == true)  return;
-                each(this.__controlKeys, (function(controlKey)
-                {
-                    if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = value.observe(this.bind);
-                }).bind(this));
+                var subData         = value.observe(this.bind);
+                if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+                this.__updateDataOnChildControlsTimeoutId   =
+                setTimeout
+                (
+                    (function()
+                    {
+                        delete  this.__updateDataOnChildControlsTimeoutId;
+                        each(this.__controlKeys, (function(controlKey)
+                        {
+                            if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                        }).bind(this));
+                    }).bind(this),
+                    0
+                );
             }
         },
         init:               {value: function(definition)
@@ -658,12 +684,14 @@
     {
         while(element.lastChild)    element.removeChild(element.lastChild);
     }
-    function locate(item, retained)
+    function locate(item, templateKey, retained)
     {
-        for(var counter=0;counter<retained.length;counter++) if (retained[counter].data() === item)
+        var retainedArray   = retained[templateKey];
+        if (retainedArray === undefined)    return null;
+        for(var counter=0;counter<retainedArray.length;counter++) if ( retainedArray[counter].data() === item)
         {
-            var retainedControl = retained[counter];
-            removeFromArray(retained, counter);
+            var retainedControl = retainedArray[counter];
+            removeFromArray(retainedArray, counter);
             return retainedControl;
         }
         return null;
@@ -673,13 +701,21 @@
         var templateElement = this.__templateElements[templateKey];
         if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
         var key             = templateElement.declaration.getKey.call({parent: this, index: counter}, subDataItem);
+        var originalPath    = subDataItem("$path");
 
-        var retainedControl = locate(subDataItem(), retained);
-        if (retainedControl !== null)   return { key: key, parent: templateElement.parent, control: retainedControl };
+        var retainedControl = locate(subDataItem(), templateKey, retained);
+        if (retainedControl !== null)
+        {
+            retainedControl.__element.setAttribute("id", key);
+            retainedControl.__element.setAttribute("data-current-path", originalPath);
+            return { key: key, parent: templateElement.parent, control: retainedControl };
+        }
 
         var elementCopy     = templateElement.element.cloneNode(true);
         elementCopy.setAttribute("id", key);
+        elementCopy.setAttribute("data-original-path", originalPath);
         var clone           = { key: key, parent: templateElement.parent, control: this.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
+        Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
         clone.control.data  = subDataItem;
         return clone;
     };
@@ -729,13 +765,14 @@
     }
     function unbindRepeatedList(keepList)
     {
-        var retain  = [];
+        var retain  = {};
         if (this.__repeatedControls !== undefined)
         for(var repeatedControlKey in this.__repeatedControls)
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
-            if (keepList.indexOf(repeatedControl.data()) > -1)  retain.push(repeatedControl);
-            else                                                {repeatedControl.data    = undefined;}
+            if (retain[repeatedControl.__templateKey] === undefined)    retain[repeatedControl.__templateKey]   = [];
+            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
+            else                                                        {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
         }
         this.__repeatedControls     = {};
@@ -752,10 +789,13 @@
         });
         this.__binder.defineDataProperties(this, {value: {set: function(value)
         {
+            if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+            this.__updateDataOnChildControlsTimeoutId   =
             setTimeout
             (
                 (function(data)
                 {
+                    delete  this.__updateDataOnChildControlsTimeoutId;
                     bindRepeatedList.call(this, data);
                 }).bind(this, (typeof(this.bind) === "function" ? value : this.data.observe(this.bind))),
                 0
@@ -773,7 +813,8 @@
             control.prototype.init.call(this, definition);
         }},
         children:   {value: function(){return this.__repeatedControls || null;}},
-        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}}
+        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}},
+        pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;
 });}();
@@ -1070,6 +1111,7 @@
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
+        this.__options.splice(0, this.__options.length);
         Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
         for(var counter=0;counter<items.count;counter++)
@@ -1220,7 +1262,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            return (function(parent, containerElement, selector)
+            var factory = (function(parent, containerElement, selector)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -1235,7 +1277,7 @@
                 (
                     typeof viewAdapterDefinitionConstructor !== "function"
                     ?   function(control){return viewAdapterDefinitionConstructor}
-                    :   viewAdapterDefinitionConstructor,
+                    :   function(control){return viewAdapterDefinitionConstructor(control, factory);},
                     viewElement,
                     container,
                     selector,
@@ -1243,6 +1285,7 @@
                 );
                 return view;
             }).bind(this);
+            return factory;
         },
         launch:         function(viewElement, controlsOrAdapter, callback)
         {
@@ -1337,6 +1380,7 @@
                 if (binding[option] !== undefined)                          viewAdapter[optionName]     = binding[option];
             }).bind(this));
             if (Array.isArray(binding.updateon))                            viewAdapter[name].onchange  = viewAdapter.getEvents(binding.updateon);
+            if (binding.delay !== undefined)                                viewAdapter[name].delay     = binding.delay;
         }
     }
     function bindClassProperty(viewAdapter, name, binding)
@@ -1379,7 +1423,7 @@
     initializers.classes = function(viewAdapter, value) { each(value, function(val){viewAdapter.toggleClass(val, true);}); };
     each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
     each(["show", "hide"], function(val){ initializers["on"+val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, function(event){ callback.call(viewAdapter); }, false, true); }; });
-    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "drageend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel", "transitionend"], function(val)
+    each(["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusin", "focusout", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "search", "select", "touchcancel", "touchend", "touchmove", "touchstart", "wheel", "transitionend"], function(val)
     {
         initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
     });
@@ -2073,7 +2117,8 @@
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   
+                notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -2083,6 +2128,12 @@
                 if (oldItems.length<=counter||oldItems[counter]!==newItems[counter])    changes.changed.push(counter);
             }
             return changes;
+        }
+        function swap(index, toIndex)
+        {
+            var item    = this[index];
+            removeFromArray(this, index);
+            this.splice(toIndex, 0, item);
         }
         var regExMatch  = /^\/.*\/$/g;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
@@ -2110,7 +2161,7 @@
             __notify:           {value: function(path, changes, directOnly)
             {
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
-                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
@@ -2243,14 +2294,15 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name==="sort" || name==="reverse");
                         if(name!=="sort" && name!=="reverse")   notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result === items ? this : result; 
                     }
                 }
             );
         });
-        each(["remove","removeAll"], function(name)
+        each(["remove","removeAll","move","swap"], function(name)
         {
             Object.defineProperty
             (
@@ -2262,7 +2314,7 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), false);
                         notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result; 
                     }
@@ -2286,6 +2338,18 @@
         });
         Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
         {
+            __move:             {value: function(value, toIndex)
+            {
+                var items   = this();
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                swap.call(items, items.indexOf(value), toIndex);
+            }},
+            __swap:             {value: function(index, toIndex)
+            {
+                var items   = this();
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                swap.call(items, index, toIndex);
+            }},
             __remove:           {value: function(value)
             {
                 var items   = this();
@@ -2388,7 +2452,7 @@
                 notifyProperties.call(this);
             }
         },
-        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty)}},
+        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
         isBinder:   {value: true},
         isRoot:
         {
@@ -2413,7 +2477,7 @@
         var functionFactory = new isolatedFunctionFactory();
         var dataProperty    =
         functionFactory.create
-        (function dataProperty(owner, getter, setter, onchange, binder)
+        (function dataProperty(owner, getter, setter, onchange, binder, delay)
         {
             var property    = this;
             Object.defineProperties(this,
@@ -2429,6 +2493,7 @@
                 }},
                 __owner:                {value: owner},
                 __binder:               {value: binder, configurable: true},
+                __delay:                {value: delay, configurable: true},
                 __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
                 __notifyingObserver:    {value: undefined, writable: true},
@@ -2501,10 +2566,20 @@
             }},
             ___inputListener:   {value: function()
             {
-                if (this.__bounded===false) return;
-                this.__notifyingObserver    = true;
-                this.__setDataValue();
-                this.__notifyingObserver    = false;
+                if (this.__delayId !== undefined)
+                {
+                    clearTimeout(this.__delayId);
+                    delete this.__delayId;
+                }
+                function notifyObserver()
+                {
+                    if (this.__bounded===false) return;
+                    this.__notifyingObserver    = true;
+                    this.__setDataValue();
+                    this.__notifyingObserver    = false;
+                }
+                if (this.__delay === undefined) notifyObserver.call(this);
+                else                            this.__delayId  = setTimeout(notifyObserver.bind(this), this.__delay);
             }},
             __getDataValue:
             {
@@ -2554,7 +2629,7 @@
                 }
             });
         });
-        each(["onbind","onupdate","onunbind"],function(name)
+        each(["onbind","onupdate","onunbind","delay"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -2565,8 +2640,8 @@
         function defineDataProperty(target, binder, propertyName, property)
         {
             if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
-            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder), configurable: true})
-            each(["onbind","onupdate","onunbind"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
+            each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)
         {

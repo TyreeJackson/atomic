@@ -8,10 +8,20 @@
         {
             var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
             if (typeof subData === "string")    subData = this.data.observe(subData);
-            each(this.__controlKeys, (function(controlKey)
-            {
-                if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
-            }).bind(this));
+            if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+            this.__updateDataOnChildControlsTimeoutId   =
+            setTimeout
+            (
+                (function()
+                {
+                    delete  this.__updateDataOnChildControlsTimeoutId;
+                    each(this.__controlKeys, (function(controlKey)
+                    {
+                        if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                    }).bind(this));
+                }).bind(this),
+                0
+            );
         }}});
         this.bind   = "";
     }

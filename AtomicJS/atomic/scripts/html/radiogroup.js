@@ -144,6 +144,7 @@
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
+        this.options.clear();
         Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
         for(var counter=0;counter<items.count;counter++)

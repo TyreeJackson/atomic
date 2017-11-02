@@ -104,7 +104,8 @@
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
             var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   
+                notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -114,6 +115,12 @@
                 if (oldItems.length<=counter||oldItems[counter]!==newItems[counter])    changes.changed.push(counter);
             }
             return changes;
+        }
+        function swap(index, toIndex)
+        {
+            var item    = this[index];
+            removeFromArray(this, index);
+            this.splice(toIndex, 0, item);
         }
         var regExMatch  = /^\/.*\/$/g;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
@@ -141,7 +148,7 @@
             __notify:           {value: function(path, changes, directOnly)
             {
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
-                notifyPropertyListeners.call(this, path, changes.items, this.__bag, directOnly);
+                notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
@@ -274,14 +281,15 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = items[name].apply(items, arguments);
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), name==="sort" || name==="reverse");
                         if(name!=="sort" && name!=="reverse")   notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result === items ? this : result; 
                     }
                 }
             );
         });
-        each(["remove","removeAll"], function(name)
+        each(["remove","removeAll","move","swap"], function(name)
         {
             Object.defineProperty
             (
@@ -293,7 +301,7 @@
                         var items       = this();
                         var oldItems    = items.slice();
                         var result      = this["__"+name].apply(this, arguments); 
-                        this.__notify(this.__basePath, getItemChanges(oldItems, items), true);
+                        this.__notify(this.__basePath, getItemChanges(oldItems, items), false);
                         notifyPropertyListeners.call(this, this.__basePath + ".length", items.length, this.__bag, true);
                         return result; 
                     }
@@ -317,6 +325,18 @@
         });
         Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
         {
+            __move:             {value: function(value, toIndex)
+            {
+                var items   = this();
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                swap.call(items, items.indexOf(value), toIndex);
+            }},
+            __swap:             {value: function(index, toIndex)
+            {
+                var items   = this();
+                if (!Array.isArray(items))  throw new Error("Observer does not wrap an Array.");
+                swap.call(items, index, toIndex);
+            }},
             __remove:           {value: function(value)
             {
                 var items   = this();

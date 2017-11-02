@@ -6,7 +6,11 @@
         else if (array !== undefined)
         {
             var keys    = Object.keys(array);
-            for(var keyCounter=0;keyCounter<keys.length;keyCounter++)                                       callback(array[keys[keyCounter]], keys[keyCounter]);
+            for(var keyCounter=0;keyCounter<keys.length;keyCounter++)
+            {
+                var key = keys[keyCounter];
+                callback(array[key], key);
+            }
         }
     });
     root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
