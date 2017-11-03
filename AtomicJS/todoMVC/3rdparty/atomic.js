@@ -336,8 +336,8 @@
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
     {
         var args            = Array.prototype.slice.call(arguments, 0, arguments.length-2),
-            milliseconds    = arguments[arguments.length-2],
-            onComplete      = arguments[arguments.length-1];
+            milliseconds    = arguments[0],
+            onComplete      = arguments[1];
         this[on].apply(this, args);
         setTimeout
         (
