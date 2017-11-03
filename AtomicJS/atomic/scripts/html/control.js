@@ -176,7 +176,7 @@
     each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
     {
-        var args            = Array.prototype.slice.apply(arguments, 0, arguments.length-2),
+        var args            = Array.prototype.slice.call(arguments, 0, arguments.length-2),
             milliseconds    = arguments[arguments.length-2],
             onComplete      = arguments[arguments.length-1];
         this[on].apply(this, args);

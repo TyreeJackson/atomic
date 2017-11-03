@@ -230,11 +230,11 @@
         }
         else if (segment.value === "$key")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : undefined, newBasePath: newBasePath};
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : "$root", newBasePath: newBasePath};
         }
         else if (segment.value === "$path")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : undefined, newBasePath: newBasePath};
+            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : "$root", newBasePath: newBasePath};
         }
         else
         {
