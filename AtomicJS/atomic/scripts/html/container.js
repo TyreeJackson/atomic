@@ -41,8 +41,8 @@
         control.call(this, elements, selector, parent);
         Object.defineProperties(this,
         {
-            "__controlKeys":    {value: []},
-            controls:           {value: {}}
+            "__controlKeys":    {value: [], configurable: true},
+            controls:           {value: {}, configurable: true}
         });
     }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
@@ -90,6 +90,22 @@
             else    control = viewAdapterFactory.create(controlDeclaration.adapter||function(){ return controlDeclaration; }, controlElement, parent, selector, getControlTypeForElement(controlDeclaration, controlElement, multipleElements));
             initializeViewAdapter(control, controlDeclaration);
             return control;
+        }},
+        destroy:
+        {value: function()
+        {
+            each(this.controls, function(control){control.destroy();});
+            each
+            ([
+                "__controlKeys",
+                "controls"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+            control.prototype.destroy.call(this);
         }},
         removeControl:      {value: function(key)
         {

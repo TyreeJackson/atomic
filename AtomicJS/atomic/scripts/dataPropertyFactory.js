@@ -20,15 +20,15 @@
                         if (Object.keys(this.__onchange).length===0)    property.__inputListener();
                     }
                     else                                    return getter.call(owner);
-                }},
-                __owner:                {value: owner},
+                }, configurable: true},
+                __owner:                {value: owner, configurable: true},
                 __binder:               {value: binder, configurable: true},
                 __delay:                {value: delay, configurable: true},
-                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
-                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
-                __notifyingObserver:    {value: undefined, writable: true},
-                __onchange:             {value: {}},
-                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}}
+                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}, configurable: true},
+                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}, configurable: true},
+                __notifyingObserver:    {value: undefined, writable: true, configurable: true},
+                __onchange:             {value: {}, configurable: true},
+                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true}
             });
             if (typeof onchange === "string") debugger;
             property.onchange = onchange;
@@ -70,8 +70,8 @@
             var notify = false;
             if (this.__bindListener !== undefined)
             {
-                if (notify = this.data !== undefined)   this.data.ignore(this.__bindListener);
-                this.__bindListener.ignore = true;
+                if (notify = (this.data !== undefined)) this.data.ignore(this.__bindListener);
+                this.__bindListener.ignore  = true;
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: undefined});
             }
             each(this.__onchange, (function(onchange){onchange.ignore(this.__inputListener);}).bind(this));
@@ -88,11 +88,33 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            __destroy:          {value: function()
+            destroy:            {value: function()
             {
-                if (this.__binder)  this.__binder.unregister(this);
-                Object.defineProperty(this, "__binder", {value: undefined, writable: true});
-                delete this.__binder;
+                unbindData.call(this);
+                each
+                ([
+                    "___invoke",
+                    "__owner",
+                    "__binder",
+                    "__delay",
+                    "__getter",
+                    "__setter",
+                    "__notifyingObserver",
+                    "__onchange",
+                    "__inputListener",
+                    "__data",
+                    "__bind",
+                    "__root",
+                    "__onbind",
+                    "__onupdate",
+                    "__onunbind"
+                ],
+                (function(name)
+                {
+                    Object.defineProperty(this, name, {value: null, configurable: true});
+                    delete this[name];
+                }).bind(this));
+                Object.defineProperty(this, "isDestroyed", {value: true});
             }},
             ___inputListener:   {value: function()
             {
@@ -169,7 +191,7 @@
         });
         function defineDataProperty(target, binder, propertyName, property)
         {
-            if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
+            if (target.hasOwnProperty(propertyName)) target[propertyName].destroy();
             Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
             each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }

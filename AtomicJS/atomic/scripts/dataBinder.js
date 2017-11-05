@@ -12,9 +12,9 @@
     {
         Object.defineProperties(this,
         {
-            "__properties": {value: []},
+            "__properties": {value: [], configurable: true},
             "__forceRoot":  {value: false, configurable: true},
-            "__target":     {value: target}
+            "__target":     {value: target, configurable: true}
         });
         this.__makeRoot();
         if (data) this.data = data;
@@ -50,6 +50,23 @@
             }
         },
         defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
+        destroy:                
+        {value: function()
+        {
+            each(this.__properties,(function(property){property.destroy();}).bind(this));
+            each
+            ([
+                "__properties",
+                "__forceRoot",
+                "__target",
+                "__data"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+        }},
         isBinder:   {value: true},
         isRoot:
         {

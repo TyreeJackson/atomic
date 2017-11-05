@@ -31,9 +31,9 @@
     {
         Object.defineProperties(this,
         {
-            "__target":                     {value: target}, 
-            "__listenersUsingCapture":      {value:{}}, 
-            "__listenersNotUsingCapture":   {value:{}}
+            "__target":                     {value: target, configurable: true}, 
+            "__listenersUsingCapture":      {value:{}, configurable: true}, 
+            "__listenersNotUsingCapture":   {value:{}, configurable: true}
         });
     }
     function getListener(name, withCapture, add)
@@ -46,7 +46,22 @@
     Object.defineProperties(eventsSet.prototype,
     {
         getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
-        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }}
+        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }},
+        destroy:
+        {value: function()
+        {
+            each
+            ([
+                "__target",
+                "__listenersUsingCapture",
+                "__listenersNotUsingCapture"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+        }}
     });
     return eventsSet;
 });}();

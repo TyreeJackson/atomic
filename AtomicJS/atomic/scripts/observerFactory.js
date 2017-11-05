@@ -94,8 +94,7 @@
             )
             {
                 bag.updating.push(listener);
-                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
-                listener.properties = {};
+                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties; listener.properties = {};
                 var postCallback = listener.callback(value);
                 bag.updating.pop();
                 if (postCallback !== undefined) postCallback();
@@ -151,6 +150,7 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
+            equals:             {value: function(other){return other !== undefined && other !== null && this.__bag === other.__bag && this.__basePath === other.__basePath;}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
@@ -249,9 +249,14 @@
             }},
             ignore:             {value: function(callback)
             {
+                var callbackFound   = false;
                 for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
                 if (this.__bag.itemListeners[listenerCounter].callback === callback)
-                removeFromArray(this.__bag.itemListeners, listenerCounter);
+                {
+                    removeFromArray(this.__bag.itemListeners, listenerCounter);
+                    callbackFound   = true;
+                }
+                if (!callbackFound) debugger;
             }},
             isObserver:         {value: true},
             listen:             {value: function(callback, nestedUpdatesRootPath)

@@ -3,11 +3,13 @@
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
-    var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each);
+    var pathParserFactory       = new root.atomic.pathParserFactory(new root.atomic.tokenizer());
+    var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
+    var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each, pathParser);
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
     var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray, defineDataProperties);
-    var eventsSet               = new root.atomic.html.eventsSet(pubSub);
+    var eventsSet               = new root.atomic.html.eventsSet(pubSub, each);
     var controlTypes            = {};
     var viewAdapterFactory      =   new root.atomic.html.viewAdapterFactory
                                     (

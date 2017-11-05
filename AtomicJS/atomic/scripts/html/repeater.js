@@ -97,9 +97,9 @@
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
             if (retain[repeatedControl.__templateKey] === undefined)    retain[repeatedControl.__templateKey]   = [];
-            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
-            else                                                        {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
+            else                                                        {repeatedControl.destroy();}
         }
         this.__repeatedControls     = {};
         return retain;

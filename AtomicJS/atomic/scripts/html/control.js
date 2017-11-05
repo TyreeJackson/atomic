@@ -32,15 +32,15 @@
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
-            __elementPlaceholder:   {value: []},
-            __events:               {value: new eventsSet(this)},
-            on:                     {value: {}},
-            __attributes:           {value: {}, writable: true},
-            __selector:             {value: selector},
-            parent:                 {value: parent},
-            __binder:               {value: new dataBinder(this)},
+            __elementPlaceholder:   {value: [], configurable: true},
+            __events:               {value: new eventsSet(this), configurable: true},
+            on:                     {value: {}, configurable: true},
+            __attributes:           {value: {}, writable: true, configurable: true},
+            __selector:             {value: selector, configurable: true},
+            parent:                 {value: parent, configurable: true},
+            __binder:               {value: new dataBinder(this), configurable: true},
             __forceRoot:            {value: false, configurable: true},
-            classes:                {value: {}}
+            classes:                {value: {}, configurable: true}
         });
         this.__binder.defineDataProperties(this,
         {
@@ -102,7 +102,6 @@
             return this;
         }},
         bind:               {get:   function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
-        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
         bindClass:          {value: function(className)
         {
             this.__binder.defineDataProperties(this.classes, className, 
@@ -112,6 +111,32 @@
                 set:        function(value){this.toggleClass(className, value===true, true);}, 
                 onchange:   [this.__events.getOrAdd("class-"+className)]
             })
+        }},
+        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        destroy:
+        {value: function()
+        {
+            this.__events.destroy();
+            this.__binder.destroy();
+            each
+            ([
+                "__element",
+                "__elementPlaceholder",
+                "__events",
+                "on",
+                "__attributes",
+                "__selector",
+                "parent",
+                "__binder",
+                "__forceRoot",
+                "classes"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+            Object.defineProperty(this, "isDestroyed", {value: true});
         }},
         getEvents:          {value: function(eventNames)
         {

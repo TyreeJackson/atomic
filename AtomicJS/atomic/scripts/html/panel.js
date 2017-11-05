@@ -17,7 +17,8 @@
                     delete  this.__updateDataOnChildControlsTimeoutId;
                     each(this.__controlKeys, (function(controlKey)
                     {
-                        if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                        var control = this.controls[controlKey];
+                        if (!control.isDataRoot && (control.data == null || !control.data.equals(subData))) this.controls[controlKey].data = subData;
                     }).bind(this));
                 }).bind(this),
                 0
