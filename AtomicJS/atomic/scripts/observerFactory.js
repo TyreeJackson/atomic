@@ -94,7 +94,8 @@
             )
             {
                 bag.updating.push(listener);
-                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties; listener.properties = {};
+                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
+                listener.properties = {};
                 var postCallback = listener.callback(value);
                 bag.updating.pop();
                 if (postCallback !== undefined) postCallback();
