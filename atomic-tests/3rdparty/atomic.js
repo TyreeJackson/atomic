@@ -138,9 +138,9 @@
     {
         Object.defineProperties(this,
         {
-            "__target":                     {value: target}, 
-            "__listenersUsingCapture":      {value:{}}, 
-            "__listenersNotUsingCapture":   {value:{}}
+            "__target":                     {value: target, configurable: true}, 
+            "__listenersUsingCapture":      {value:{}, configurable: true}, 
+            "__listenersNotUsingCapture":   {value:{}, configurable: true}
         });
     }
     function getListener(name, withCapture, add)
@@ -153,7 +153,22 @@
     Object.defineProperties(eventsSet.prototype,
     {
         getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
-        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }}
+        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }},
+        destroy:
+        {value: function()
+        {
+            each
+            ([
+                "__target",
+                "__listenersUsingCapture",
+                "__listenersNotUsingCapture"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+        }}
     });
     return eventsSet;
 });}();
@@ -191,15 +206,15 @@
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
-            __elementPlaceholder:   {value: []},
-            __events:               {value: new eventsSet(this)},
-            on:                     {value: {}},
-            __attributes:           {value: {}, writable: true},
-            __selector:             {value: selector},
-            parent:                 {value: parent},
-            __binder:               {value: new dataBinder(this)},
+            __elementPlaceholder:   {value: [], configurable: true},
+            __events:               {value: new eventsSet(this), configurable: true},
+            on:                     {value: {}, configurable: true},
+            __attributes:           {value: {}, writable: true, configurable: true},
+            __selector:             {value: selector, configurable: true},
+            parent:                 {value: parent, configurable: true},
+            __binder:               {value: new dataBinder(this), configurable: true},
             __forceRoot:            {value: false, configurable: true},
-            classes:                {value: {}}
+            classes:                {value: {}, configurable: true}
         });
         this.__binder.defineDataProperties(this,
         {
@@ -261,7 +276,6 @@
             return this;
         }},
         bind:               {get:   function(){return this.value.bind;},      set: function(value){this.value.bind = value;}},
-        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
         bindClass:          {value: function(className)
         {
             this.__binder.defineDataProperties(this.classes, className, 
@@ -271,6 +285,32 @@
                 set:        function(value){this.toggleClass(className, value===true, true);}, 
                 onchange:   [this.__events.getOrAdd("class-"+className)]
             })
+        }},
+        data:               {get:   function(){return this.__binder.data;},   set: function(value){this.__binder.data = value;}},
+        destroy:
+        {value: function()
+        {
+            this.__events.destroy();
+            this.__binder.destroy();
+            each
+            ([
+                "__element",
+                "__elementPlaceholder",
+                "__events",
+                "on",
+                "__attributes",
+                "__selector",
+                "parent",
+                "__binder",
+                "__forceRoot",
+                "classes"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+            Object.defineProperty(this, "isDestroyed", {value: true});
         }},
         getEvents:          {value: function(eventNames)
         {
@@ -504,8 +544,8 @@
         control.call(this, elements, selector, parent);
         Object.defineProperties(this,
         {
-            "__controlKeys":    {value: []},
-            controls:           {value: {}}
+            "__controlKeys":    {value: [], configurable: true},
+            controls:           {value: {}, configurable: true}
         });
     }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
@@ -554,6 +594,22 @@
             initializeViewAdapter(control, controlDeclaration);
             return control;
         }},
+        destroy:
+        {value: function()
+        {
+            each(this.controls, function(control){control.destroy();});
+            each
+            ([
+                "__controlKeys",
+                "controls"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+            control.prototype.destroy.call(this);
+        }},
         removeControl:      {value: function(key)
         {
             var childControl    = this.controls[key];
@@ -587,7 +643,8 @@
                     delete  this.__updateDataOnChildControlsTimeoutId;
                     each(this.__controlKeys, (function(controlKey)
                     {
-                        if (!this.controls[controlKey].isDataRoot) this.controls[controlKey].data = subData;
+                        var control = this.controls[controlKey];
+                        if (!control.isDataRoot && (control.data == null || !control.data.equals(subData))) this.controls[controlKey].data = subData;
                     }).bind(this));
                 }).bind(this),
                 0
@@ -771,9 +828,9 @@
         {
             var repeatedControl     = this.__repeatedControls[repeatedControlKey];
             if (retain[repeatedControl.__templateKey] === undefined)    retain[repeatedControl.__templateKey]   = [];
-            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
-            else                                                        {repeatedControl.data    = undefined;}
             repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
+            else                                                        {repeatedControl.destroy();}
         }
         this.__repeatedControls     = {};
         return retain;
@@ -2164,6 +2221,7 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
+            equals:             {value: function(other){return other !== undefined && other !== null && this.__bag === other.__bag && this.__basePath === other.__basePath;}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
             peek:               {value: function(path){return this.__invoke(path, undefined, getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
@@ -2262,9 +2320,14 @@
             }},
             ignore:             {value: function(callback)
             {
+                var callbackFound   = false;
                 for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
                 if (this.__bag.itemListeners[listenerCounter].callback === callback)
-                removeFromArray(this.__bag.itemListeners, listenerCounter);
+                {
+                    removeFromArray(this.__bag.itemListeners, listenerCounter);
+                    callbackFound   = true;
+                }
+                if (!callbackFound) debugger;
             }},
             isObserver:         {value: true},
             listen:             {value: function(callback, nestedUpdatesRootPath)
@@ -2415,9 +2478,9 @@
     {
         Object.defineProperties(this,
         {
-            "__properties": {value: []},
+            "__properties": {value: [], configurable: true},
             "__forceRoot":  {value: false, configurable: true},
-            "__target":     {value: target}
+            "__target":     {value: target, configurable: true}
         });
         this.__makeRoot();
         if (data) this.data = data;
@@ -2453,6 +2516,23 @@
             }
         },
         defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
+        destroy:                
+        {value: function()
+        {
+            each(this.__properties,(function(property){property.destroy();}).bind(this));
+            each
+            ([
+                "__properties",
+                "__forceRoot",
+                "__target",
+                "__data"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+        }},
         isBinder:   {value: true},
         isRoot:
         {
@@ -2490,15 +2570,15 @@
                         if (Object.keys(this.__onchange).length===0)    property.__inputListener();
                     }
                     else                                    return getter.call(owner);
-                }},
-                __owner:                {value: owner},
+                }, configurable: true},
+                __owner:                {value: owner, configurable: true},
                 __binder:               {value: binder, configurable: true},
                 __delay:                {value: delay, configurable: true},
-                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}},
-                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}},
-                __notifyingObserver:    {value: undefined, writable: true},
-                __onchange:             {value: {}},
-                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}}
+                __getter:               {value: function(){if(getter === undefined) debugger; return getter.call(owner);}, configurable: true},
+                __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}, configurable: true},
+                __notifyingObserver:    {value: undefined, writable: true, configurable: true},
+                __onchange:             {value: {}, configurable: true},
+                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true}
             });
             if (typeof onchange === "string") debugger;
             property.onchange = onchange;
@@ -2540,8 +2620,8 @@
             var notify = false;
             if (this.__bindListener !== undefined)
             {
-                if (notify = this.data !== undefined)   this.data.ignore(this.__bindListener);
-                this.__bindListener.ignore = true;
+                if (notify = (this.data !== undefined)) this.data.ignore(this.__bindListener);
+                this.__bindListener.ignore  = true;
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: undefined});
             }
             each(this.__onchange, (function(onchange){onchange.ignore(this.__inputListener);}).bind(this));
@@ -2558,11 +2638,33 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            __destroy:          {value: function()
+            destroy:            {value: function()
             {
-                if (this.__binder)  this.__binder.unregister(this);
-                Object.defineProperty(this, "__binder", {value: undefined, writable: true});
-                delete this.__binder;
+                unbindData.call(this);
+                each
+                ([
+                    "___invoke",
+                    "__owner",
+                    "__binder",
+                    "__delay",
+                    "__getter",
+                    "__setter",
+                    "__notifyingObserver",
+                    "__onchange",
+                    "__inputListener",
+                    "__data",
+                    "__bind",
+                    "__root",
+                    "__onbind",
+                    "__onupdate",
+                    "__onunbind"
+                ],
+                (function(name)
+                {
+                    Object.defineProperty(this, name, {value: null, configurable: true});
+                    delete this[name];
+                }).bind(this));
+                Object.defineProperty(this, "isDestroyed", {value: true});
             }},
             ___inputListener:   {value: function()
             {
@@ -2639,7 +2741,7 @@
         });
         function defineDataProperty(target, binder, propertyName, property)
         {
-            if (target.hasOwnProperty(propertyName)) target[propertyName].__destroy();
+            if (target.hasOwnProperty(propertyName)) target[propertyName].destroy();
             Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
             each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
@@ -2667,7 +2769,7 @@
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
     var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray, defineDataProperties);
-    var eventsSet               = new root.atomic.html.eventsSet(pubSub);
+    var eventsSet               = new root.atomic.html.eventsSet(pubSub, each);
     var controlTypes            = {};
     var viewAdapterFactory      =   new root.atomic.html.viewAdapterFactory
                                     (
