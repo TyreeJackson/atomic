@@ -122,7 +122,7 @@
             removeFromArray(this, index);
             this.splice(toIndex, 0, item);
         }
-        var regExMatch  = /^\/.*\/$/g;
+        var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet)
@@ -183,13 +183,13 @@
                     }).bind(this);
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
-                    var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*\/)/g)).filter(function(s){return s!=null&&s.length>0;});
+                    var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*?\/)/g)).filter(function(s){return s!=null&&s.length>0;});
                     for(var counter=0;counter<pathSegments.length;counter++)
                     {
                         var pathSegment = pathSegments[counter];
                         if (regExMatch.test(pathSegment))
                         {
-                            var matcher;
+                            var matcher = undefined;
                             for(var matcherCounter=0;matcherCounter<current.matchers.length;matcherCounter++)
                             if (current.matchers[matcherCounter].key === pathSegment)
                             {

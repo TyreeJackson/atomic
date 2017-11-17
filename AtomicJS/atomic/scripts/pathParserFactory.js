@@ -179,7 +179,7 @@
                     }
                     nextVirtuals.push(nextVirtual);
                 }
-                else
+                if(currentVirtual.matchers !== undefined)
                 {
                     for(var counter=0;counter<currentVirtual.matchers.length;counter++)
                     {
