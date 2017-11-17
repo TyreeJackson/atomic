@@ -118,23 +118,29 @@
                 }
             }
         });
-        var person          = dataObject("data.person");
-        var fullName        = person("firstName") + " " + person("lastName");
-        var newFirstName    = faker.name.firstName();
-        var newLastName     = faker.name.lastName();
-        var address0        = person.unwrap("addresses.0");
-        address0            = address0.addressLine1 + "\n" + address0.addressLine2 + "\n" + address0.city + ", " + address0.state + " " + address0.postalCode;
-        var address1        = person.unwrap("addresses.1");
-        address1            = address1.addressLine1 + "\n" + address1.city + ", " + address1.state + " " + address1.postalCode;
-        var address2        = person.unwrap("addresses.2");
-        address2            = address2.city + ", " + address2.state;
-        var mainNumber      = person("phones.0.number");
-        var homeNumber      = person("phones.1.number");
-        var cellNumber      = person("phones.2.number");
+        var person              = dataObject("data.person");
+        var fullName            = person("firstName") + " " + person("lastName");
+        var newFirstName        = faker.name.firstName();
+        var newLastName         = faker.name.lastName();
+        var address0            = person.unwrap("addresses.0");
+        address0                = address0.addressLine1 + "\n" + address0.addressLine2 + "\n" + address0.city + ", " + address0.state + " " + address0.postalCode;
+        var address1            = person.unwrap("addresses.1");
+        address1                = address1.addressLine1 + "\n" + address1.city + ", " + address1.state + " " + address1.postalCode;
+        var address2            = person.unwrap("addresses.2");
+        address2                = address2.city + ", " + address2.state;
+        var mainNumber          = person("phones.0.number");
+        var newMainNumber       = faker.phone.phoneNumberFormat();
+        var supportNumber       = faker.phone.phoneNumberFormat();
+        var newSupportNumber    = faker.phone.phoneNumberFormat();
+        var newSupportNumber2   = faker.phone.phoneNumberFormat();
+        var homeNumber          = person("phones.1.number");
+        var cellNumber          = person("phones.2.number");
+        var changedMainNumber   = undefined;
+        var addedSupportNumber  = undefined;
 
         person.define("fullName", {get: function(key){return this("firstName") + (this.hasValue("firstName")&&this.hasValue("lastName")?" " : "") + this("lastName");}, set: function(key, value){var names = value.split(" ", 2);this("firstName", names[0]);this("lastName", names[1]);}});
         person.define("/.*/.person", {get: function(key){return this("$parent");}});
-        person.define("/.*/./.*/.person", {get: function(key){return this("$parent");}});
+        person.define("/.*/./.*/.person", {get: function(key){return this("$parent.$parent");}});
         person.define("addresses./\\d/.fullAddress", {get: function(key)
         {
             var line1       = this("addressLine1")||"";
@@ -145,7 +151,7 @@
             return line1 + (line1&&line2?"\n":"") + line2 + ((line1||line2)&&(city||state||postalCode)?"\n":"") + city + (city&&state?", ":"") + state + (state&&postalCode?" ":"") + postalCode;
         }});
         person.define("phonesByType./.*/", {get: function(key)
-        {
+        {ion.log("\t\t**************** DIAG: Computing phonesByType for key `" + key + "`... ****************");
             var phones  = this("$parent.phones");
             if (phones !== undefined && phones.isArrayObserver)
             for(var counter=0;counter<phones.count;counter++)  if (phones(counter+".type") === key)  return phones(counter);
@@ -165,11 +171,20 @@
         ion.log("Testing that the fullAddress property of the first address returns " + address0.replace(/\n/g, "\\n"));
         ion.assert(person("addresses.0.fullAddress") === address0,          "The first full address should have been equal to " + address0 + " but was set to " + person("addresses.0.fullAddress") + ".");
 
+        ion.log("Testing that the person property of the first address returns the person object itself");
+        ion.assert(person.unwrap("addresses.0.person") === person(),               "The person of the first address should have been equal to to the person but was not.");
+
         ion.log("Testing that the fullAddress property of the second address returns " + address1.replace(/\n/g, "\\n"));
         ion.assert(person("addresses.1.fullAddress") === address1,          "The second full address should have been equal to " + address1 + " but was set to " + person("addresses.1.fullAddress") + ".");
 
+        ion.log("Testing that the person property of the second address returns the person object itself");
+        ion.assert(person.unwrap("addresses.1.person") === person(),               "The person of the second address should have been equal to to the person but was not.");
+
         ion.log("Testing that the fullAddress property of the third address returns " + address2.replace(/\n/g, "\\n"));
         ion.assert(person("addresses.2.fullAddress") === address2,          "The third full address should have been equal to " + address2 + " but was set to " + person("addresses.2.fullAddress") + ".");
+
+        ion.log("Testing that the person property of the third address returns the person object itself");
+        ion.assert(person.unwrap("addresses.2.person") === person(),               "The person of the third address should have been equal to to the person but was not.");
 
         ion.log("Testing that the phonesByType.main.number computed property path returns " + mainNumber + ".");
         ion.assert(person("phonesByType.main.number") === mainNumber,       "The phonesByType.main.number should have been equal to " + mainNumber + " but was set to " + person("phonesByType.main.number") + ".");
@@ -180,8 +195,111 @@
         ion.log("Testing that the phonesByType.cell.number computed property path returns " + cellNumber + ".");
         ion.assert(person("phonesByType.cell.number") === cellNumber,       "The phonesByType.cell.number should have been equal to " + cellNumber + " but was set to " + person("phonesByType.cell.number") + ".");
 
+        ion.log("Defining main number listener");
+        person.listen(function(){changedMainNumber   = person.unwrap("phonesByType.main.number");}, "")
+        
+        person("phones.0.number", newMainNumber);
+
+        ion.log("Testing that the phonesByType.main.number computed property being indirectly changed was observed by the changedMainNumber being changed to " + newMainNumber +".");
+        ion.assert(changedMainNumber === newMainNumber,                     "The changedMainNumber should have been equal to " + newMainNumber + " but was set to " + changedMainNumber + ".");
+
+        ion.log("Testing that the phonesByType.main.number computed property path returns " + newMainNumber + ".");
+        ion.assert(person("phonesByType.main.number") === newMainNumber,    "The phonesByType.main.number should have been equal to " + newMainNumber + " but was set to " + person("phonesByType.main.number") + ".");
+
         ion.log("Testing that the phonesByType.business.number computed property path returns undefined.");
         ion.assert(person("phonesByType.business.number") === undefined,    "The phonesByType.cell.number should have been undefined but was set to " + person("phonesByType.cell.number") + ".");
+
+        ion.log("Defining support number listener");
+        person.listen(function(){
+            addedSupportNumber  = person.unwrap("phonesByType.support.number");
+        }, "")
+        
+        ion.log("Adding support number");
+        person("phones").push({type: "support", number: supportNumber});
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + supportNumber +".");
+        ion.assert(addedSupportNumber === supportNumber,                    "The addedSupportNumber should have been equal to " + supportNumber + " but was set to " + addedSupportNumber + ".");
+
+        ion.log("Changing support number object");
+        person("phones.3", {type: "support", number: newSupportNumber});
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + newSupportNumber +".");
+        ion.assert(addedSupportNumber === newSupportNumber,                 "The addedSupportNumber should have been equal to " + newSupportNumber + " but was set to " + addedSupportNumber + ".");
+
+        ion.log("Changing support number");
+        person("phones.3.number", newSupportNumber2);
+        
+        ion.log("Testing that the phonesByType.support.number computed property being indirectly changed was observed by the addedSupportNumber being set to " + newSupportNumber2 +".");
+        ion.assert(addedSupportNumber === newSupportNumber2,                "The addedSupportNumber should have been equal to " + newSupportNumber2 + " but was set to " + addedSupportNumber + ".");
+
+    },
+    Updates_cascade_through_virtualProperties:
+    function()
+    {
+        var virtual1Counter = 0;
+        var virtual2Counter = 0;
+        var virtual3Counter = 0;
+        var cascadeCounter  = 0;
+
+        var data            =
+        {
+            value1: faker.random.uuid(),
+            value2: faker.random.uuid(),
+            value3: faker.random.uuid(),
+            value4: faker.random.uuid()
+        };
+
+        var dataObject      = new this.observer(data);
+
+        dataObject.define("virtual1", {get: function(key){virtual1Counter++; return this("value1") + " " + this("value2");}});
+        dataObject.define("virtual2", {get: function(key){virtual2Counter++; return this("virtual1") + " " + this("value3");}});
+        dataObject.define("virtual3", {get: function(key){virtual3Counter++; return this("virtual2") + " " + this("value4");}});
+        dataObject.listen(function(){dataObject("virtual3"); cascadeCounter++;})
+
+        ion.log("Checking that the virtual1Counter is correct.");
+        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1");
+        ion.log("Checking that the virtual2Counter is correct.");
+        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1");
+        ion.log("Checking that the virtual3Counter is correct.");
+        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1");
+        ion.log("Checking that the cascadeCounter is correct.");
+        ion.assert(cascadeCounter === 1,                                                                                "The cascadeCounter should be equal to 1");
+
+        ion.log("Testing that the virtual1 computed property returns " + data.value1 + " " + data.value2 + ".");
+        ion.assert(dataObject("virtual1") === data.value1 + " " + data.value2,                                          "The virtual1 computed property should have been equal to " + data.value1 + " " + data.value2 + " but was set to " + dataObject("virtual1") + ".");
+        ion.log("Checking that the virtual1Counter is correct.");
+        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1");
+
+        ion.log("Testing that the virtual2 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + ".");
+        ion.assert(dataObject("virtual2") === data.value1 + " " + data.value2 + " " + data.value3,                      "The virtual2 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " but was set to " + dataObject("virtual2") + ".");
+        ion.log("Checking that the virtual2Counter is correct.");
+        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1");
+
+        ion.log("Testing that the virtual3 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + ".");
+        ion.assert(dataObject("virtual3") === data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4,  "The virtual3 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + " but was set to " + dataObject("virtual3") + ".");
+        ion.log("Checking that the virtual3Counter is correct.");
+        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1");
+
+        dataObject("value1", faker.random.uuid());
+
+        ion.log("Checking that the virtual1Counter is correct.");
+        ion.assert(virtual1Counter === 2,                                                                               "The virtual1Counter should be equal to 2");
+        ion.log("Checking that the virtual2Counter is correct.");
+        ion.assert(virtual2Counter === 2,                                                                               "The virtual2Counter should be equal to 2");
+        ion.log("Checking that the virtual3Counter is correct.");
+        ion.assert(virtual3Counter === 2,                                                                               "The virtual3Counter should be equal to 2");
+        ion.log("Checking that the cascadeCounter is correct.");
+        ion.assert(cascadeCounter === 2,                                                                                "The cascadeCounter should be equal to 2");
+
+        ion.log("Testing that the virtual1 computed property returns " + data.value1 + " " + data.value2 + ".");
+        ion.assert(dataObject("virtual1") === data.value1 + " " + data.value2,                                          "The virtual1 computed property should have been equal to " + data.value1 + " " + data.value2 + " but was set to " + dataObject("virtual1") + ".");
+
+        ion.log("Testing that the virtual2 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + ".");
+        ion.assert(dataObject("virtual2") === data.value1 + " " + data.value2 + " " + data.value3,                      "The virtual2 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " but was set to " + dataObject("virtual2") + ".");
+
+        ion.log("Testing that the virtual3 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + ".");
+        ion.assert(dataObject("virtual3") === data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4,  "The virtual3 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + " but was set to " + dataObject("virtual3") + ".");
+
     },
     Observers_support_shadow_properties:
     function()
