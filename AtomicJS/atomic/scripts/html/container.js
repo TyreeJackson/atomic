@@ -7,9 +7,11 @@
         "input:checkbox":           "checkbox",
         "textarea":                 "input",
         "img":                      "image",
+        "audio":                    "audio",
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup",
+        "checkboxgroup":            "checkboxgroup",
         "a":                        "link",
         "label":                    "label"
     };

@@ -98,23 +98,6 @@
                 }
             }
         });
-        this.__element.addEventListener
-        (
-            "click", 
-            (function(event)
-            {
-                event=event||window.event; 
-                if (event.target.name === this.__name)
-                {
-                    this.value(getRadioGroupValue.call(this));
-                    this.triggerEvent("change");
-                }
-                event.cancelBubble=true;
-                if (event.stopPropagation) event.stopPropagation();
-                return false;
-            }).bind(this),
-            true
-        );
     }
     Object.defineProperty(radiogroup, "prototype", {value: Object.create(input.prototype)});
     Object.defineProperties(radiogroup.prototype,
@@ -123,7 +106,7 @@
         __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
-        __isValueSelected:  {value: function(value){return this.__rawValue === value;}},
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)
     {
@@ -144,7 +127,7 @@
     {
         var selectedValue   = this.value();
         clearRadioGroup(this.__element);
-        this.options.clear();
+        this.__options.splice(0, this.__options.length);
         Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
         for(var counter=0;counter<items.count;counter++)

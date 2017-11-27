@@ -34,8 +34,10 @@
     var checkbox                = new root.atomic.html.checkbox(control);
     var select                  = new root.atomic.html.select(input, dataBinder, each);
     var radiogroup              = new root.atomic.html.radiogroup(input, dataBinder, each);
+    var checkboxgroup           = new root.atomic.html.checkboxgroup(input, dataBinder, each);
     var multiselect             = new root.atomic.html.multiselect(select);
     var image                   = new root.atomic.html.image(control);
+    var audio                   = new root.atomic.html.audio(control);
     var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
@@ -53,8 +55,10 @@
         checkbox:       {value: checkbox},
         select:         {value: select},
         radiogroup:     {value: radiogroup},
+        checkboxgroup:  {value: checkboxgroup},
         multiselect:    {value: multiselect},
         image:          {value: image},
+        audio:          {value: audio},
         button:         {value: button}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };
