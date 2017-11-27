@@ -614,11 +614,19 @@ root.atomic.launch
                                                             <td class="table-cell"><select id="multipleListControl" multiple="multiple"></select></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="table-cell">Radio buttons:</td>
+                                                            <td class="table-cell">Radio group:</td>
                                                             <td class="table-cell">
                                                                 <radiogroup id="radioGroupControl">
                                                                     <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
                                                                 </radiogroup>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Checkbox group:</td>
+                                                            <td class="table-cell">
+                                                                <checkboxgroup id="checkboxGroupControl">
+                                                                    <checkboxgroupitem class="checkbox-inline"><input type="checkbox" /><label></label></checkboxgroupitem>
+                                                                </checkboxgroup>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -649,6 +657,18 @@ root.atomic.launch
                                                                 </radiogroup>
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Audio:</td>
+                                                            <td class="table-cell">
+                                                                <audio id="audioControl"></audio><br/>
+                                                                <radiogroup id="audioPathControl">
+                                                                    <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
+                                                                </radiogroup>
+                                                                <br/>
+                                                                Time lapsed: <span id="audioTimeLapsed"></span><br/>
+                                                                Volume: <input type="number" id="audioVolume" />
+                                                            </td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-4">
@@ -671,20 +691,20 @@ root.atomic.launch
                                                             <td class="table-cell" id="booleanValueReadout"></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="table-cell">Selected option:</td>
+                                                            <td class="table-cell">Selected option (single select and radio group):</td>
                                                             <td class="table-cell" id="selectedValueReadout"></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="table-cell">Multi-selected options:</td>
+                                                            <td class="table-cell">Multi-selected options (multi select and checkbox group):</td>
                                                             <td class="table-cell" id="multipleSelectedValuesReadout"></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="table-cell">Radio button selection:</td>
-                                                            <td class="table-cell" id="radioSelectedOptionReadout"></td>
                                                         </tr>
                                                         <tr>
                                                             <td class="table-cell">Image path value:</td>
                                                             <td class="table-cell" id="imagePathValueReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Audio path value:</td>
+                                                            <td class="table-cell" id="audioPathValueReadout"></td>
                                                         </tr>
                                                     </table>
                                                 </div>
@@ -704,6 +724,7 @@ root.atomic.launch
                                                 multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
                                                 radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
                                                 imagePathValueReadout:          { bind: "imageUrl" },
+                                                audioPathValueReadout:          { bind: "audioUrl" },
                                                 onChangeTextboxControl:         { bind: "stringValue" },
                                                 onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
                                                 textAreaControl:                { bind: "stringValue" },
@@ -711,7 +732,8 @@ root.atomic.launch
                                                 checkboxControl:                { bind: "booleanValue" },
                                                 singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
                                                 multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
-                                                radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
+                                                radioGroupControl:              { bind: { value: "selectedValue",           items: "items" } },
+                                                checkboxGroupControl:           { bind: { value: "multipleSelectedValues",  items: "items" } },
                                                 buttonControl:                  { bind: "stringValue" },
                                                 readonlyControl:                { bind: "stringValue" },
                                                 linkControl:                    { bind: {value: "stringValue", href: "urlValue" }},
@@ -727,6 +749,20 @@ root.atomic.launch
                                                 },
                                                 imageControl:                   { bind: "imageUrl" },
                                                 imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
+                                                audioControl:
+                                                {
+                                                    bind:
+                                                    {
+                                                        value:          "audioUrl",
+                                                        currentTime:    "$shadow.audioTimeLapsed",
+                                                        volume:         "audioVolume"
+                                                    },
+                                                    nativeControls: true,
+                                                    preload:        true
+                                                },
+                                                audioTimeLapsed:                { bind: function(){return this.data("$shadow.audioTimeLapsed")||0;} },
+                                                audioVolume:                    { bind: { value: { get: function(){return (this.data("audioVolume")||0)*100;}, set: function(data, value){this.data("audioVolume", value/100);} } } },
+                                                audioPathControl:               { bind: { value: "audioUrl",                items: { to: "sounds", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             },
                                             function(adapter)
@@ -741,6 +777,8 @@ root.atomic.launch
                                                     multipleSelectedValues: ["Beta"], 
                                                     radioSelectedValue:     "Alpha",
                                                     imageUrl:               "images/hammock_cat.jpg",
+                                                    audioUrl:               "audio/birds_after_rain.mp3",
+                                                    audioVolume:            1,
                                                     items:                  ["Alpha","Beta","Gamma"],
                                                     images:
                                                     [
@@ -755,6 +793,34 @@ root.atomic.launch
                                                         {
                                                             title:  "Nature Scene",
                                                             url:    "images/nature_scene.png"
+                                                        }
+                                                    ],
+                                                    sounds:
+                                                    [
+                                                        {
+                                                            title:  "Birds",
+                                                            type:   "audio/mpeg",
+                                                            url:    "audio/birds_after_rain.mp3"
+                                                        },
+                                                        {
+                                                            title:  "Clock",
+                                                            type:   "audio/mpeg",
+                                                            url:    "audio/clock_chimes.mp3"
+                                                        },
+                                                        {
+                                                            title:  "Ocean",
+                                                            type:   "audio/mpeg",
+                                                            url:    "audio/crisp_ocean_waves.mp3"
+                                                        },
+                                                        {
+                                                            title:  "Sunny Day",
+                                                            type:   "audio/mpeg",
+                                                            url:    "audio/sunny_day.mp3"
+                                                        },
+                                                        {
+                                                            title:  "Wind",
+                                                            type:   "audio/mpeg",
+                                                            url:    "audio/wind.mp3"
                                                         }
                                                     ]
                                                 });
@@ -783,6 +849,7 @@ root.atomic.launch
         multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
         radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
         imagePathValueReadout:          { bind: "imageUrl" },
+        audioPathValueReadout:          { bind: "audioUrl" },
         onChangeTextboxControl:         { bind: "stringValue" },
         onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
         textAreaControl:                { bind: "stringValue" },
@@ -790,7 +857,8 @@ root.atomic.launch
         checkboxControl:                { bind: "booleanValue" },
         singleDropdownListControl:      { bind: { value: "selectedValue",           items: "items" } },
         multipleListControl:            { bind: { value: "multipleSelectedValues",  items: "items" } },
-        radioGroupControl:              { bind: { value: "radioSelectedValue",      items: "items" } },
+        radioGroupControl:              { bind: { value: "selectedValue",           items: "items" } },
+        checkboxGroupControl:           { bind: { value: "multipleSelectedValues",  items: "items" } },
         buttonControl:                  { bind: "stringValue" },
         readonlyControl:                { bind: "stringValue" },
         linkControl:                    { bind: {value: "stringValue", href: "urlValue" }},
@@ -806,6 +874,20 @@ root.atomic.launch
         },
         imageControl:                   { bind: "imageUrl" },
         imagePathControl:               { bind: { value: "imageUrl",                items: { to: "images", text: "title", value: "url" } } },
+        audioControl:
+        {
+            bind:
+            {
+                value:          "audioUrl",
+                currentTime:    "$shadow.audioTimeLapsed",
+                volume:         "audioVolume"
+            },
+            nativeControls: true,
+            preload:        true
+        },
+        audioTimeLapsed:                { bind: function(){return this.data("$shadow.audioTimeLapsed")||0;} },
+        audioVolume:                    { bind: { value: { get: function(){return (this.data("audioVolume")||0)*100;}, set: function(data, value){this.data("audioVolume", value/100);} } } },
+        audioPathControl:               { bind: { value: "audioUrl",                items: { to: "sounds", text: "title", value: "url" } } },
         example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     },
     function(adapter)
@@ -820,6 +902,8 @@ root.atomic.launch
             multipleSelectedValues: ["Beta"], 
             radioSelectedValue:     "Alpha",
             imageUrl:               "images/hammock_cat.jpg",
+            audioUrl:               "audio/birds_after_rain.mp3",
+            audioVolume:            1,
             items:                  ["Alpha","Beta","Gamma"],
             images:
             [
@@ -834,6 +918,34 @@ root.atomic.launch
                 {
                     title:  "Nature Scene",
                     url:    "images/nature_scene.png"
+                }
+            ],
+            sounds:
+            [
+                {
+                    title:  "Birds",
+                    type:   "audio/mpeg",
+                    url:    "audio/birds_after_rain.mp3"
+                },
+                {
+                    title:  "Clock",
+                    type:   "audio/mpeg",
+                    url:    "audio/clock_chimes.mp3"
+                },
+                {
+                    title:  "Ocean",
+                    type:   "audio/mpeg",
+                    url:    "audio/crisp_ocean_waves.mp3"
+                },
+                {
+                    title:  "Sunny Day",
+                    type:   "audio/mpeg",
+                    url:    "audio/sunny_day.mp3"
+                },
+                {
+                    title:  "Wind",
+                    type:   "audio/mpeg",
+                    url:    "audio/wind.mp3"
                 }
             ]
         });
@@ -916,6 +1028,18 @@ root.atomic.launch
                                 &lt;/radiogroup&gt;
                             &lt;/td&gt;
                         &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Audio:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;audio id="audioControl"&gt;&lt;/audio&gt;&lt;br/&gt;
+                                &lt;radiogroup id="audioPathControl"&gt;
+                                    &lt;radiogroupitem class="radio-inline"&gt;&lt;input type="radio" /&gt;&lt;label&gt;&lt;/label&gt;&lt;/radiogroupitem&gt;
+                                &lt;/radiogroup&gt;
+                                &lt;br/&gt;
+                                Time lapsed: &lt;span id="audioTimeLapsed"&gt;&lt;/span&gt;&lt;br/&gt;
+                                Volume: &lt;input type="number" id="audioVolume" /&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
                     &lt;/table&gt;
                 &lt;/div&gt;
                 &lt;div class="col-md-4"&gt;
@@ -938,20 +1062,20 @@ root.atomic.launch
                             &lt;td class="table-cell" id="booleanValueReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
-                            &lt;td class="table-cell"&gt;Selected option:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;Selected option (single select and radio group):&lt;/td&gt;
                             &lt;td class="table-cell" id="selectedValueReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
-                            &lt;td class="table-cell"&gt;Multi-selected options:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;Multi-selected options (multi select and checkbox group):&lt;/td&gt;
                             &lt;td class="table-cell" id="multipleSelectedValuesReadout"&gt;&lt;/td&gt;
-                        &lt;/tr&gt;
-                        &lt;tr&gt;
-                            &lt;td class="table-cell"&gt;Radio button selection:&lt;/td&gt;
-                            &lt;td class="table-cell" id="radioSelectedOptionReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Image path value:&lt;/td&gt;
                             &lt;td class="table-cell" id="imagePathValueReadout"&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Audio path value:&lt;/td&gt;
+                            &lt;td class="table-cell" id="audioPathValueReadout"&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                     &lt;/table&gt;
                 &lt;/div&gt;
