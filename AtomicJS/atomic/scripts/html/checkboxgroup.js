@@ -6,7 +6,10 @@
         if (typeof values === "function")   values = values();
         if ( !Array.isArray(values)) values  = [values];
         Object.defineProperty(this, "__rawValues", {value: values, configurable: true});
-        if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) this.__options[counter].__checkboxElement.checked = values.indexOf(this.__options[counter].value()) > -1;
+        if (this.__options.length > 0)
+        {
+            for(var counter=0;counter<this.__options.length;counter++) this.__options[counter].__checkboxElement.checked = values.indexOf(this.__options[counter].value()) > -1;
+        }
         else
         {
             var options = this.__element.querySelectorAll("input[name='" + this.__name + "']");
@@ -17,7 +20,10 @@
     {
         if (this.__options.length == 0) return this.__rawValues;
         var values  = [];
-        if (this.__options.length > 0) for(var counter=0;counter<this.__options.length;counter++) if (this.__options[counter].__checkboxElement.checked) values.push(this.__options[counter].value());
+        if (this.__options.length > 0) 
+        {
+            for(var counter=0;counter<this.__options.length;counter++) if (this.__options[counter].__checkboxElement.checked) values.push(this.__options[counter].value());
+        }
         else
         {
             var selectedOptions = this.__element.querySelectorAll("input[name='" + this.__name + "']:checked");
