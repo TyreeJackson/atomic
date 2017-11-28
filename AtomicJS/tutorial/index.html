@@ -1002,6 +1002,14 @@ root.atomic.launch
                             &lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Checkbox group:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;checkboxgroup id="checkboxGroupControl"&gt;
+                                    &lt;checkboxgroupitem class="checkbox-inline"&gt;&lt;input type="checkbox" /&gt;&lt;label&gt;&lt;/label&gt;&lt;/checkboxgroupitem&gt;
+                                &lt;/checkboxgroup&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
                             &lt;td class="table-cell"&gt;Buttons:&lt;/td&gt;
                             &lt;td class="table-cell"&gt;
                                 &lt;button id="buttonControl"&gt;&lt;/button&gt;
@@ -1141,7 +1149,7 @@ root.atomic.launch
                                                                     bind:       { display: "...showRenderTimes" },
                                                                     controls:
                                                                     {
-                                                                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} }
+                                                                        renderTimeLabel:    { bind:     function(data){data("name"); return new Date().getSeconds();} }
                                                                     }
                                                                 },
                                                                 childList:
@@ -1156,7 +1164,7 @@ root.atomic.launch
                                                                             {
                                                                                 childNameLabel:         { bind: "" },
                                                                                 childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
-                                                                                childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
+                                                                                childRenderTimeLabel:   { bind: function(data){data(""); return new Date().getSeconds();} },
                                                                             }
                                                                         }
                                                                     }
@@ -1212,7 +1220,7 @@ root.atomic.launch
                         childCountLabel:    { bind:     "children.length" },
                         addChildLink:       { onclick:  function(){this.data("children").push({name:"New Child"});} },
                         renderTimeSection:  { bind:     { display: "...showRenderTimes" } },
-                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} },
+                        renderTimeLabel:    { bind:     function(data){data("name"); return new Date().getSeconds();} },
                         childList:
                         {
                             bind:   "children",
@@ -1225,7 +1233,7 @@ root.atomic.launch
                                     {
                                         childNameLabel:         { bind: "name" },
                                         childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
-                                        childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
+                                        childRenderTimeLabel:   { bind: function(data){data(""); return new Date().getSeconds();} },
                                     }
                                 }
                             }

@@ -2,8 +2,8 @@
 {"use strict";root.define("atomic.htmlDocumentLogger",
 function htmlDocumentLogger(loggerElement)
 {
-    return function log(message)
+    return function log(message, color)
     {
-        loggerElement.innerHTML += message + "<br />";
+        loggerElement.innerHTML += "<div style=\"color: " + (color||"black") + ";\">" + message + "</div>";
     }
 });}();
