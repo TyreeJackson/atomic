@@ -49,7 +49,7 @@
         log:
         {value: function(message)
         {
-            assertionsLogger("    LOG:        "+message.replace(/\n/g, "                \n"));
+            assertionsLogger("    LOG:        "+message.replace(/\n/g, "                \n"), "rgba(192,192,192,0.5)");
         }},
         execute:
         {value: function(testsNamespace, name)
@@ -65,7 +65,7 @@
                     var testContextPrototype    = {};
                     if (tests.__setupSuite) tests.__setupSuite.call(testContextPrototype);
 
-                    assertionsLogger("RUNNING " + getTestStatement(testName) + " tests...")
+                    assertionsLogger("RUNNING " + getTestStatement(testName) + " tests...", "rgba(255,255,255,0.8)");
                     for(var testKey in tests)
                     {
                         if (testKey == "__setup" || testKey == "__setupSuite")  continue;
@@ -85,12 +85,12 @@
                         {
                             if (error.message === "Unexpected exception" && testContext.thrownException !== undefined)
                             {
-                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + " but instead caught an exception with message " + testContext.thrownException.message + ".\n                Stack:      " + testContext.thrownException.stack.replace(/\n/g, "\n                            ") + "\n\n");
+                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + " but instead caught an exception with message " + testContext.thrownException.message + ".\n                Stack:      " + testContext.thrownException.stack.replace(/\n/g, "\n                            ") + "\n\n", "rgb(255,64,64)");
                                 continue;
                             }
                             else if (testContext.expectedException !== error.message)
                             {
-                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n");
+                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n", "rgb(255,64,64)");
                                 continue;
                             }
                             else
@@ -98,10 +98,10 @@
                                 Object.defineProperty(testContext, "expectedException", {value: undefined});
                             }
                         }
-                        if (testContext.expectedException !== undefined)    assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + "` but no exception was thrown.");
-                        else                                                assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".");
+                        if (testContext.expectedException !== undefined)    assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    Expected exception with message `" + testContext.expectedException + "` but no exception was thrown.", "rgb(255,64,64)");
+                        else                                                assertionsLogger("    SUCCESS:    \"" + getTestStatement(testKey) + "\" test passed successfully in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".", "rgb(64,255,64)");
                     }
-                    assertionsLogger(getTestStatement(testName) + " tests complete.\n\n")
+                    assertionsLogger(getTestStatement(testName) + " tests complete.\n\n", "rgba(255,255,255,0.8)")
                 }
             }
         }}
