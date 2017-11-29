@@ -270,9 +270,7 @@
             if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
             {
                 if (typeof notify === "function")   notify(newBasePath);
-                var redirectedSegment   = resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
-                redirectedSegment.pathSegments  = newBasePath.concat(redirectedSegment.pathSegments.splice(resolvedSegment.target.__basePath.split(".").length))
-                return redirectedSegment;
+                return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
             }
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;

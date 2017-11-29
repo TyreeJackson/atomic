@@ -725,6 +725,26 @@
             base.prototype.init.call(this, definition);
             if (this.__customBind = definition.customBind)  this.__binder.defineDataProperties(this, {value: {get: function(){return this.__value;}, set: function(value){this.__value = value;},  onchange: this.getEvents("change")}});
             else if (definition.properties !== undefined)   Object.defineProperty(this, "bind", { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});}, configurable: true });
+            else this.__binder.defineDataProperties(this, {value: {set: function(value)
+            {
+                var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
+                if (typeof subData === "string")    subData = this.data.observe(subData);
+                if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+                this.__updateDataOnChildControlsTimeoutId   =
+                setTimeout
+                (
+                    (function()
+                    {
+                        delete  this.__updateDataOnChildControlsTimeoutId;
+                        each(this.__controlKeys, (function(controlKey)
+                        {
+                            var control = this.controls[controlKey];
+                            if (!control.isDataRoot && (control.data == null || !control.data.equals(subData))) this.controls[controlKey].data = subData;
+                        }).bind(this));
+                    }).bind(this),
+                    0
+                );
+            }}});
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
         }},
@@ -2109,9 +2129,7 @@
             if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
             {
                 if (typeof notify === "function")   notify(newBasePath);
-                var redirectedSegment   = resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
-                redirectedSegment.pathSegments  = newBasePath.concat(redirectedSegment.pathSegments.splice(resolvedSegment.target.__basePath.split(".").length))
-                return redirectedSegment;
+                return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
             }
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
