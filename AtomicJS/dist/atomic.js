@@ -511,6 +511,7 @@
         "textarea":                 "input",
         "img":                      "image",
         "audio":                    "audio",
+        "video":                    "video",
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup",
@@ -1407,6 +1408,21 @@
         pause:          {value: function(){this.__element.pause();}}
     });
     return audio;
+});}();
+!function()
+{"use strict";root.define("atomic.html.video", function htmlVideo(audio)
+{
+    function video(elements, selector, parent)
+    {
+        audio.call(this, elements, selector, parent);
+    }
+    Object.defineProperty(video, "prototype", {value: Object.create(audio.prototype)});
+    Object.defineProperties(video.prototype,
+    {
+        constructor:    {value: video},
+        __createNode:   {value: function(){return document.createElement("video");}, configurable: true}
+    });
+    return video;
 });}();
 !function()
 {"use strict";root.define("atomic.html.button", function htmlButton(control)
@@ -2969,6 +2985,7 @@
     var multiselect             = new root.atomic.html.multiselect(select);
     var image                   = new root.atomic.html.image(control);
     var audio                   = new root.atomic.html.audio(control);
+    var video                   = new root.atomic.html.video(audio);
     var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
@@ -2990,6 +3007,7 @@
         multiselect:    {value: multiselect},
         image:          {value: image},
         audio:          {value: audio},
+        video:          {value: video},
         button:         {value: button}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };
