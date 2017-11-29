@@ -511,6 +511,7 @@
         "textarea":                 "input",
         "img":                      "image",
         "audio":                    "audio",
+        "video":                    "video",
         "select:select-multiple":   "multiselect",
         "select:select-one":        "select",
         "radiogroup":               "radiogroup",
@@ -724,6 +725,26 @@
             base.prototype.init.call(this, definition);
             if (this.__customBind = definition.customBind)  this.__binder.defineDataProperties(this, {value: {get: function(){return this.__value;}, set: function(value){this.__value = value;},  onchange: this.getEvents("change")}});
             else if (definition.properties !== undefined)   Object.defineProperty(this, "bind", { get: function(){return this.__bind;}, set: function(value){Object.defineProperty(this,"__bind", {value: value, configurable: true});}, configurable: true });
+            else this.__binder.defineDataProperties(this, {value: {set: function(value)
+            {
+                var subData = typeof this.bind === "string" ? this.bind : typeof this.bind === "function" ? this.bind(this.data) : "";
+                if (typeof subData === "string")    subData = this.data.observe(subData);
+                if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
+                this.__updateDataOnChildControlsTimeoutId   =
+                setTimeout
+                (
+                    (function()
+                    {
+                        delete  this.__updateDataOnChildControlsTimeoutId;
+                        each(this.__controlKeys, (function(controlKey)
+                        {
+                            var control = this.controls[controlKey];
+                            if (!control.isDataRoot && (control.data == null || !control.data.equals(subData))) this.controls[controlKey].data = subData;
+                        }).bind(this));
+                    }).bind(this),
+                    0
+                );
+            }}});
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
         }},
@@ -1407,6 +1428,21 @@
         pause:          {value: function(){this.__element.pause();}}
     });
     return audio;
+});}();
+!function()
+{"use strict";root.define("atomic.html.video", function htmlVideo(audio)
+{
+    function video(elements, selector, parent)
+    {
+        audio.call(this, elements, selector, parent);
+    }
+    Object.defineProperty(video, "prototype", {value: Object.create(audio.prototype)});
+    Object.defineProperties(video.prototype,
+    {
+        constructor:    {value: video},
+        __createNode:   {value: function(){return document.createElement("video");}, configurable: true}
+    });
+    return video;
 });}();
 !function()
 {"use strict";root.define("atomic.html.button", function htmlButton(control)
@@ -2093,9 +2129,7 @@
             if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
             {
                 if (typeof notify === "function")   notify(newBasePath);
-                var redirectedSegment   = resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
-                redirectedSegment.pathSegments  = newBasePath.concat(redirectedSegment.pathSegments.splice(resolvedSegment.target.__basePath.split(".").length))
-                return redirectedSegment;
+                return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
             }
 
             current         = resolvedSegment.target==undefined && segmentCounter<segmentsLength-1 ? {} : resolvedSegment.target;
@@ -2969,6 +3003,7 @@
     var multiselect             = new root.atomic.html.multiselect(select);
     var image                   = new root.atomic.html.image(control);
     var audio                   = new root.atomic.html.audio(control);
+    var video                   = new root.atomic.html.video(audio);
     var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
@@ -2990,6 +3025,7 @@
         multiselect:    {value: multiselect},
         image:          {value: image},
         audio:          {value: audio},
+        video:          {value: video},
         button:         {value: button}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };

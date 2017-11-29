@@ -4,7 +4,7 @@
     <title>AtomicJS • Tutorial</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="index.css" />
-    <script type="text/javascript" src="3rdparty/atomic.js"></script>
+    <script type="text/javascript" src="3rdParty/atomic.js"></script>
     <script type="text/javascript" src="3rdparty/path.min.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
@@ -669,6 +669,18 @@ root.atomic.launch
                                                                 Volume: <input type="number" id="audioVolume" />
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Video:</td>
+                                                            <td class="table-cell">
+                                                                <video id="videoControl" class="videoPlayer"></video><br/>
+                                                                <radiogroup id="videoPathControl">
+                                                                    <radiogroupitem class="radio-inline"><input type="radio" /><label></label></radiogroupitem>
+                                                                </radiogroup>
+                                                                <br/>
+                                                                Time lapsed: <span id="videoTimeLapsed"></span><br/>
+                                                                Volume: <input type="number" id="videoVolume" />
+                                                            </td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-4">
@@ -706,6 +718,10 @@ root.atomic.launch
                                                             <td class="table-cell">Audio path value:</td>
                                                             <td class="table-cell" id="audioPathValueReadout"></td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Video path value:</td>
+                                                            <td class="table-cell" id="videoPathValueReadout"></td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                             </div>
@@ -725,6 +741,7 @@ root.atomic.launch
                                                 radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
                                                 imagePathValueReadout:          { bind: "imageUrl" },
                                                 audioPathValueReadout:          { bind: "audioUrl" },
+                                                videoPathValueReadout:          { bind: "videoUrl" },
                                                 onChangeTextboxControl:         { bind: "stringValue" },
                                                 onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
                                                 textAreaControl:                { bind: "stringValue" },
@@ -763,6 +780,20 @@ root.atomic.launch
                                                 audioTimeLapsed:                { bind: function(){return this.data("$shadow.audioTimeLapsed")||0;} },
                                                 audioVolume:                    { bind: { value: { get: function(){return (this.data("audioVolume")||0)*100;}, set: function(data, value){this.data("audioVolume", value/100);} } } },
                                                 audioPathControl:               { bind: { value: "audioUrl",                items: { to: "sounds", text: "title", value: "url" } } },
+                                                videoControl:
+                                                {
+                                                    bind:
+                                                    {
+                                                        value:          "videoUrl",
+                                                        currentTime:    "$shadow.videoTimeLapsed",
+                                                        volume:         "videoVolume"
+                                                    },
+                                                    nativeControls: true,
+                                                    preload:        true
+                                                },
+                                                videoTimeLapsed:                { bind: function(){return this.data("$shadow.videoTimeLapsed")||0;} },
+                                                videoVolume:                    { bind: { value: { get: function(){return (this.data("videoVolume")||0)*100;}, set: function(data, value){this.data("videoVolume", value/100);} } } },
+                                                videoPathControl:               { bind: { value: "videoUrl",                items: { to: "videos", text: "title", value: "url" } } },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             },
                                             function(adapter)
@@ -778,7 +809,9 @@ root.atomic.launch
                                                     radioSelectedValue:     "Alpha",
                                                     imageUrl:               "images/hammock_cat.jpg",
                                                     audioUrl:               "audio/birds_after_rain.mp3",
+                                                    videoUrl:               "video/Countdown.mov",
                                                     audioVolume:            1,
+                                                    videoVolume:            1,
                                                     items:                  ["Alpha","Beta","Gamma"],
                                                     images:
                                                     [
@@ -822,6 +855,29 @@ root.atomic.launch
                                                             type:   "audio/mpeg",
                                                             url:    "audio/wind.mp3"
                                                         }
+                                                    ],
+                                                    videos:
+                                                    [
+                                                        {
+                                                            title:  "Background",
+                                                            type:   "video/mov",
+                                                            url:    "video/Background.mov"
+                                                        },
+                                                        {
+                                                            title:  "Countdown",
+                                                            type:   "video/mov",
+                                                            url:    "video/Countdown.mov"
+                                                        },
+                                                        {
+                                                            title:  "Earth",
+                                                            type:   "video/mov",
+                                                            url:    "video/Earth.mov"
+                                                        },
+                                                        {
+                                                            title:  "Milky Way",
+                                                            type:   "video/mp4",
+                                                            url:    "video/Milky_Way.mp4"
+                                                        }
                                                     ]
                                                 });
                                             }
@@ -850,6 +906,7 @@ root.atomic.launch
         radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
         imagePathValueReadout:          { bind: "imageUrl" },
         audioPathValueReadout:          { bind: "audioUrl" },
+        videoPathValueReadout:          { bind: "videoUrl" },
         onChangeTextboxControl:         { bind: "stringValue" },
         onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
         textAreaControl:                { bind: "stringValue" },
@@ -888,6 +945,20 @@ root.atomic.launch
         audioTimeLapsed:                { bind: function(){return this.data("$shadow.audioTimeLapsed")||0;} },
         audioVolume:                    { bind: { value: { get: function(){return (this.data("audioVolume")||0)*100;}, set: function(data, value){this.data("audioVolume", value/100);} } } },
         audioPathControl:               { bind: { value: "audioUrl",                items: { to: "sounds", text: "title", value: "url" } } },
+        videoControl:
+        {
+            bind:
+            {
+                value:          "videoUrl",
+                currentTime:    "$shadow.videoTimeLapsed",
+                volume:         "videoVolume"
+            },
+            nativeControls: true,
+            preload:        true
+        },
+        videoTimeLapsed:                { bind: function(){return this.data("$shadow.videoTimeLapsed")||0;} },
+        videoVolume:                    { bind: { value: { get: function(){return (this.data("videoVolume")||0)*100;}, set: function(data, value){this.data("videoVolume", value/100);} } } },
+        videoPathControl:               { bind: { value: "videoUrl",                items: { to: "sounds", text: "title", value: "url" } } },
         example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     },
     function(adapter)
@@ -903,7 +974,9 @@ root.atomic.launch
             radioSelectedValue:     "Alpha",
             imageUrl:               "images/hammock_cat.jpg",
             audioUrl:               "audio/birds_after_rain.mp3",
+            videoUrl:               "videos/Countdown.mov",
             audioVolume:            1,
+            videoVolume:            1,
             items:                  ["Alpha","Beta","Gamma"],
             images:
             [
@@ -999,6 +1072,14 @@ root.atomic.launch
                                         &lt;input type="radio" /&gt;&lt;label&gt;&lt;/label&gt;
                                     &lt;/radiogroupitem&gt;
                                 &lt;/radiogroup&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Checkbox group:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;checkboxgroup id="checkboxGroupControl"&gt;
+                                    &lt;checkboxgroupitem class="checkbox-inline"&gt;&lt;input type="checkbox" /&gt;&lt;label&gt;&lt;/label&gt;&lt;/checkboxgroupitem&gt;
+                                &lt;/checkboxgroup&gt;
                             &lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr&gt;
@@ -1141,7 +1222,7 @@ root.atomic.launch
                                                                     bind:       { display: "...showRenderTimes" },
                                                                     controls:
                                                                     {
-                                                                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} }
+                                                                        renderTimeLabel:    { bind:     function(data){data("name"); return new Date().getSeconds();} }
                                                                     }
                                                                 },
                                                                 childList:
@@ -1156,7 +1237,7 @@ root.atomic.launch
                                                                             {
                                                                                 childNameLabel:         { bind: "" },
                                                                                 childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
-                                                                                childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
+                                                                                childRenderTimeLabel:   { bind: function(data){data(""); return new Date().getSeconds();} },
                                                                             }
                                                                         }
                                                                     }
@@ -1212,7 +1293,7 @@ root.atomic.launch
                         childCountLabel:    { bind:     "children.length" },
                         addChildLink:       { onclick:  function(){this.data("children").push({name:"New Child"});} },
                         renderTimeSection:  { bind:     { display: "...showRenderTimes" } },
-                        renderTimeLabel:    { bind:     function(data){return new Date().getSeconds();} },
+                        renderTimeLabel:    { bind:     function(data){data("name"); return new Date().getSeconds();} },
                         childList:
                         {
                             bind:   "children",
@@ -1225,7 +1306,7 @@ root.atomic.launch
                                     {
                                         childNameLabel:         { bind: "name" },
                                         childRenderTimeSection: { bind: { display: "...showRenderTimes" } },
-                                        childRenderTimeLabel:   { bind: function(data){return new Date().getSeconds();} },
+                                        childRenderTimeLabel:   { bind: function(data){data(""); return new Date().getSeconds();} },
                                     }
                                 }
                             }
@@ -1424,7 +1505,7 @@ root.atomic.launch
                                                 example10container:
                                                 {
                                                     type:       "panel",
-                                                    classes:    ["example", "well"],
+                                                    classes:    ["example"],
                                                     controls:
                                                     {
                                                         well:
@@ -1525,7 +1606,7 @@ root.atomic.launch
         example10container:
         {
             type:       "panel",
-            classes:    ["example", "well"],
+            classes:    ["example"],
             controls:
             {
                 well:
