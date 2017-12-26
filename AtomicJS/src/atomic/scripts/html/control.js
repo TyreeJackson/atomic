@@ -75,7 +75,7 @@
     {
         getSelectorPath:    {value: function()
         {
-            return this.parent === undefined ? "" : this.parent.getSelectorPath() + "-" + (this.__selector||"root");
+            return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root");
         }},
         constructor:        {value: control},
         __createNode:       {value: function(selector){return document.createElement("div");}, configurable: true},

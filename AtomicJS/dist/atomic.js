@@ -249,7 +249,7 @@
     {
         getSelectorPath:    {value: function()
         {
-            return this.parent === undefined ? "" : this.parent.getSelectorPath() + "-" + (this.__selector||"root");
+            return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root");
         }},
         constructor:        {value: control},
         __createNode:       {value: function(selector){return document.createElement("div");}, configurable: true},
@@ -1128,7 +1128,7 @@
         {
             "__items":      {value: null, configurable: true},
             "__options":    {value: []},
-            "__name":       {value: this.getSelectorPath() + (this.__element.id||"unknown")}
+            "__name":       {value: this.getSelectorPath()}
         });
         this.__binder.defineDataProperties(this,
         {
