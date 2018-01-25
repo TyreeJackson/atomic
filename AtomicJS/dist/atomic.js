@@ -1672,7 +1672,7 @@
         {
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
             else                            {viewAdapter.bind  = value;}
-        }},
+        }}, 
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
             if (typeof value === "function" && !value.isObserver)   viewAdapter.data    = value.call(viewAdapter);
@@ -2410,7 +2410,7 @@
                     var revisedPath = result.pathSegments !== undefined ? result.pathSegments.join(".") : undefined;
                     return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path !== undefined && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
                     ?   createObserver(revisedPath, this.__bag, Array.isArray(result.value))
-                    :   result.value;
+                    :   getObserver === getObserverEnum.no && result.value && result.value.isObserver ? result.value() : result.value;
                 }
 
                 if (this.__bag.rollingback) return;
