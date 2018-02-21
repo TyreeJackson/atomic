@@ -2208,6 +2208,10 @@ root.atomic.ready(function(atomic)
                                                             <td class="table-cell"><input id="addPaddingCheckbox" type="checkbox" class="checkbox" /></td>
                                                         </tr>
                                                         <tr class="table-row">
+                                                            <td class="table-cell">Custom Class:</td>
+                                                            <td class="table-cell"><input id="customClassTextbox" /></td>
+                                                        </tr>
+                                                        <tr class="table-row">
                                                             <td class="table-cell">Alt:</td>
                                                             <td class="table-cell"><input id="altTextbox" /></td>
                                                         </tr>
@@ -2278,12 +2282,13 @@ root.atomic.ready(function(atomic)
                                                 {
                                                     bind:
                                                     {
+                                                        "class":    "classBindings.customClass",
                                                         classes:
                                                         {
-                                                            addBorder:  { when: "classes.addBorder" },                      // default operation is a bool check
-                                                            addItalics: { when: "classes.addItalics" }, 
-                                                            addBold:    { when: "classes.addBold",      equals: true },     // alternative operation equals
-                                                            addPadding: { when: "classes.addPadding",   notequals: false }  // alternative operation notequals
+                                                            addBorder:  { when: "classBindings.classes.addBorder" },                        // default operation is a bool check (customClass can affect this value)
+                                                            addItalics: { when: "classBindings.classes.addItalics" },                       // default operation is a bool check (customClass can affect this value)
+                                                            addBold:    { when: "classBindings.classes.addBold",      equals: true },       // alternative operation equals
+                                                            addPadding: { when: "classBindings.classes.addPadding",   notequals: false }    // alternative operation notequals
                                                         }
                                                     }
                                                 },
@@ -2299,10 +2304,11 @@ root.atomic.ready(function(atomic)
                                                 idTextbox:                              { bind: { value: { to: "settings.id",        updateon: ["keydown", "keyup", "change"] } } },
                                                 tooltipTextbox:                         { bind: { value: { to: "settings.tooltip",   updateon: ["keydown", "keyup", "change"] } } },
                                                 valueTextbox:                           { bind: { value: { to: "settings.value",     updateon: ["keydown", "keyup", "change"] } } },
-                                                addBorderCheckbox:                      { bind: "classes.addBorder" },
-                                                addBoldCheckbox:                        { bind: "classes.addBold" },
-                                                addItalicsCheckbox:                     { bind: "classes.addItalics" },
-                                                addPaddingCheckbox:                     { bind: "classes.addPadding" },
+                                                addBorderCheckbox:                      { bind: "classBindings.classes.addBorder" },
+                                                addBoldCheckbox:                        { bind: "classBindings.classes.addBold" },
+                                                addItalicsCheckbox:                     { bind: "classBindings.classes.addItalics" },
+                                                addPaddingCheckbox:                     { bind: "classBindings.classes.addPadding" },
+                                                customClassTextbox:                     { bind: { value: { to: "classBindings.customClass",     updateon: ["keydown", "keyup", "change"] } } },
                                                 altTextbox:                             { bind: { value: { to: "settings.alt",   updateon: ["keydown", "keyup", "change"] } } },
 
 
@@ -2328,7 +2334,7 @@ root.atomic.ready(function(atomic)
                                                 dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
                                                 tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
                                                 valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classes" } } },
+                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classBindings"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classBindings" } } },
                                                 altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
 
                                                 /* END: these controls are here to display the contents of the view */
@@ -2350,12 +2356,16 @@ root.atomic.ready(function(atomic)
                                                         value:          "A value fit for a control",
                                                         alt:            "Depending on your browser this text might appear when the value property of the image has not been set or bound or is non existent."
                                                     },
-                                                    classes:
+                                                    classBindings:
                                                     {
-                                                        addBorder:      false,
-                                                        addBold:        false,
-                                                        addItalics:     false,
-                                                        addPadding:     false
+                                                        classes:
+                                                        {
+                                                            addBorder:      false,
+                                                            addBold:        false,
+                                                            addItalics:     false,
+                                                            addPadding:     false
+                                                        },
+                                                        customClass:    "customClass"
                                                     },
                                                     controls:   ["disabledExampleControl", "displayExampleControl", "enabledExampleControl"]
                                                 });
@@ -2390,10 +2400,10 @@ root.atomic.launch
             {
                 classes:
                 {
-                    addBorder:  { when: "classes.addBorder" },                     // default operation is a bool check
-                    addItalics: { when: "classes.addItalics" }, 
-                    addBold:    { when: "classes.addBold",      equals: true },    // alternative operation equals
-                    addPadding: { when: "classes.addPadding",   notequals: false } // alternative operation notequals
+                    addBorder:  { when: "classBindings.classes.addBorder" },                        // default operation is a bool check (customClass can affect this value)
+                    addItalics: { when: "classBindings.classes.addItalics" },                       // default operation is a bool check (customClass can affect this value)
+                    addBold:    { when: "classBindings.classes.addBold",      equals: true },       // alternative operation equals
+                    addPadding: { when: "classBindings.classes.addPadding",   notequals: false }    // alternative operation notequals
                 }
             }
         },
@@ -2438,7 +2448,7 @@ root.atomic.launch
         dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
         tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
         valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
-        classesControlReadout:                  { bind: { value: { to: function(item){item("classes"); return this.parent.controls.classesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "classes" } } },
+        classesControlReadout:                  { bind: { value: { to: function(item){item("classBindings"); return this.parent.controls.classesControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");}, root: "classBindings" } } },
         altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\&lt;/g, "&lt;").replace(/\&gt;/g, "&gt;");} } } },
 
         /* END: these controls are here to display the contents of the view */
@@ -2460,12 +2470,16 @@ root.atomic.launch
                 value:          "A value fit for a control",
                 alt:            "Depending on your browser this text might appear when the value property of the image has not been set or bound or is non existent."
             },
-            classes:
+            classBindings:
             {
-                addBorder:      false,
-                addBold:        false,
-                addItalics:     false,
-                addPadding:     false
+                classes:
+                {
+                    addBorder:      false,
+                    addBold:        false,
+                    addItalics:     false,
+                    addPadding:     false
+                },
+                customClass:    "customClass"
             },
             controls:   ["disabledExampleControl", "displayExampleControl", "enabledExampleControl"]
         });
@@ -2577,6 +2591,10 @@ root.atomic.launch
                         &lt;tr class="table-row"&gt;
                             &lt;td class="table-cell"&gt;Add Padding:&lt;/td&gt;
                             &lt;td class="table-cell"&gt;&lt;input id="addPaddingCheckbox" type="checkbox" class="checkbox" /&gt;&lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr class="table-row"&gt;
+                            &lt;td class="table-cell"&gt;Custom Class:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;&lt;input id="customClassTextbox" /&gt;&lt;/td&gt;
                         &lt;/tr&gt;
                         &lt;tr class="table-row"&gt;
                             &lt;td class="table-cell"&gt;Alt:&lt;/td&gt;
