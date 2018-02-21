@@ -36,6 +36,7 @@
             __events:               {value: new eventsSet(this), configurable: true},
             on:                     {value: {}, configurable: true},
             __attributes:           {value: {}, writable: true, configurable: true},
+            __class:                {value: null, writable: true, configurable: true},
             __selector:             {value: selector, configurable: true},
             parent:                 {value: parent, configurable: true},
             __binder:               {value: new dataBinder(this), configurable: true},
@@ -56,6 +57,7 @@
                     for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
                 }
             },
+            "class":            {get: function(){return this.__class;},                             set: function(value){if (this.__class != null) this.removeClass(this.__class); this.__class=value; this.addClass(value);}},
             disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value);}},
             display:            {get: function(){return this.__element.style.display=="";},         set: function(value){this[value?"show":"hide"]();}},
             draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value);}},

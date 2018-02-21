@@ -210,6 +210,7 @@
             __events:               {value: new eventsSet(this), configurable: true},
             on:                     {value: {}, configurable: true},
             __attributes:           {value: {}, writable: true, configurable: true},
+            __class:                {value: null, writable: true, configurable: true},
             __selector:             {value: selector, configurable: true},
             parent:                 {value: parent, configurable: true},
             __binder:               {value: new dataBinder(this), configurable: true},
@@ -230,6 +231,7 @@
                     for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
                 }
             },
+            "class":            {get: function(){return this.__class;},                             set: function(value){if (this.__class != null) this.removeClass(this.__class); this.__class=value; this.addClass(value);}},
             disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value);}},
             display:            {get: function(){return this.__element.style.display=="";},         set: function(value){this[value?"show":"hide"]();}},
             draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value);}},
@@ -1611,17 +1613,17 @@
     }
     function bindWhenBinding(viewAdapter, name, binding)
     {
-        if (binding.equals          !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
-        else if (binding.notequals  !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
-        else if (binding["=="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding["=="];};
-        else if (binding["!="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding["!="];};
-        else if (binding[">"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) > binding[">"];};
-        else if (binding[">="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) >= binding[">="];};
-        else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
-        else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
-        else if (binding["hasValue"]!== undefined)  viewAdapter[name].bind  = function(item){return item.hasValue(binding.when) == binding["hasValue"];};
-        else if (binding["isDefined"]!==undefined)  viewAdapter[name].bind  = function(item){return item.isDefined(binding.when) === binding["isDefined"];};
-        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+        if (binding.equals          !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) == binding.equals;},                  set: function(item, value){}};
+        else if (binding.notequals  !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) != binding.notequals;},               set: function(item, value){}};
+        else if (binding["=="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) == binding["=="];},                   set: function(item, value){}};
+        else if (binding["!="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) != binding["!="];},                   set: function(item, value){}};
+        else if (binding[">"]       !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) > binding[">"];},                     set: function(item, value){}};
+        else if (binding[">="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) >= binding[">="];},                   set: function(item, value){}};
+        else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) < binding["<"];},                     set: function(item, value){}};
+        else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) <= binding["<="];},                   set: function(item, value){}};
+        else if (binding["hasValue"]!== undefined)  viewAdapter[name].bind  = { get: function(item){return item.hasValue(binding.when) == binding["hasValue"];},    set: function(item, value){}};
+        else if (binding["isDefined"]!==undefined)  viewAdapter[name].bind  = { get: function(item){return item.isDefined(binding.when) === binding["isDefined"];}, set: function(item, value){}};
+        else                                        viewAdapter[name].bind  = { get: function(item){return !(!item(binding.when));},                                set: function(item, value){item(binding.when, value);}};
     }
     function bindProperty(viewAdapter, name, binding)
     {
@@ -1672,7 +1674,7 @@
         {
             if (typeof value === "object")  bindMultipleProperties(viewAdapter, value);
             else                            {viewAdapter.bind  = value;}
-        }}, 
+        }},
         data:               {enumerable: true, value: function(viewAdapter, value)
         { 
             if (typeof value === "function" && !value.isObserver)   viewAdapter.data    = value.call(viewAdapter);

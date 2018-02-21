@@ -26,17 +26,17 @@
     }
     function bindWhenBinding(viewAdapter, name, binding)
     {
-        if (binding.equals          !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding.equals;};
-        else if (binding.notequals  !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding.notequals;};
-        else if (binding["=="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) == binding["=="];};
-        else if (binding["!="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) != binding["!="];};
-        else if (binding[">"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) > binding[">"];};
-        else if (binding[">="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) >= binding[">="];};
-        else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) < binding["<"];};
-        else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = function(item){return item(binding.when) <= binding["<="];};
-        else if (binding["hasValue"]!== undefined)  viewAdapter[name].bind  = function(item){return item.hasValue(binding.when) == binding["hasValue"];};
-        else if (binding["isDefined"]!==undefined)  viewAdapter[name].bind  = function(item){return item.isDefined(binding.when) === binding["isDefined"];};
-        else                                        viewAdapter[name].bind  = function(item){return !(!item(binding.when));};
+        if (binding.equals          !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) == binding.equals;},                  set: function(item, value){}};
+        else if (binding.notequals  !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) != binding.notequals;},               set: function(item, value){}};
+        else if (binding["=="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) == binding["=="];},                   set: function(item, value){}};
+        else if (binding["!="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) != binding["!="];},                   set: function(item, value){}};
+        else if (binding[">"]       !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) > binding[">"];},                     set: function(item, value){}};
+        else if (binding[">="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) >= binding[">="];},                   set: function(item, value){}};
+        else if (binding["<"]       !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) < binding["<"];},                     set: function(item, value){}};
+        else if (binding["<="]      !== undefined)  viewAdapter[name].bind  = { get: function(item){return item(binding.when) <= binding["<="];},                   set: function(item, value){}};
+        else if (binding["hasValue"]!== undefined)  viewAdapter[name].bind  = { get: function(item){return item.hasValue(binding.when) == binding["hasValue"];},    set: function(item, value){}};
+        else if (binding["isDefined"]!==undefined)  viewAdapter[name].bind  = { get: function(item){return item.isDefined(binding.when) === binding["isDefined"];}, set: function(item, value){}};
+        else                                        viewAdapter[name].bind  = { get: function(item){return !(!item(binding.when));},                                set: function(item, value){item(binding.when, value);}};
     }
     function bindProperty(viewAdapter, name, binding)
     {
