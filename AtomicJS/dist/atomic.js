@@ -1775,7 +1775,7 @@
 !function()
 {"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
 {
-    const   whiteSpaceCharacters    = /\s/;
+    var whiteSpaceCharacters    = /\s/;
     var priv    =
     {
         currentToken:   null
@@ -1862,14 +1862,14 @@
 !function()
 {"use strict"; root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
 {
-    const   LITERAL                     = 'literal';
-    const   WORD                        = 'word';
-    const   NUMERAL                     = 'numeral';
-    const   openKeyDelimiter            = 'openKeyDelimiter';
-    const   closeKeyDelimiter           = 'closeKeyDelimiter';
-    const   propertyDelimiter           = 'propertyDelimiter';
-    const   ROOTDIRECTIVE               = 'rootDirective';
-    const   EOF                         = 'EOF';
+    var LITERAL                     = 'literal';
+    var WORD                        = 'word';
+    var NUMERAL                     = 'numeral';
+    var openKeyDelimiter            = 'openKeyDelimiter';
+    var closeKeyDelimiter           = 'closeKeyDelimiter';
+    var propertyDelimiter           = 'propertyDelimiter';
+    var ROOTDIRECTIVE               = 'rootDirective';
+    var EOF                         = 'EOF';
     function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
     function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
     {

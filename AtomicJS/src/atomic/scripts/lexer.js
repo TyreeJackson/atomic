@@ -1,7 +1,7 @@
 !function()
 {"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
 {
-    const   whiteSpaceCharacters    = /\s/;
+    var whiteSpaceCharacters    = /\s/;
     var priv    =
     {
         currentToken:   null
