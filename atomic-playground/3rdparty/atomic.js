@@ -1775,7 +1775,7 @@
 !function()
 {"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
 {
-    const   whiteSpaceCharacters    = /\s/;
+    var whiteSpaceCharacters    = /\s/;
     var priv    =
     {
         currentToken:   null
@@ -1862,14 +1862,14 @@
 !function()
 {"use strict"; root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
 {
-    const   LITERAL                     = 'literal';
-    const   WORD                        = 'word';
-    const   NUMERAL                     = 'numeral';
-    const   openKeyDelimiter            = 'openKeyDelimiter';
-    const   closeKeyDelimiter           = 'closeKeyDelimiter';
-    const   propertyDelimiter           = 'propertyDelimiter';
-    const   ROOTDIRECTIVE               = 'rootDirective';
-    const   EOF                         = 'EOF';
+    var LITERAL                     = 'literal';
+    var WORD                        = 'word';
+    var NUMERAL                     = 'numeral';
+    var openKeyDelimiter            = 'openKeyDelimiter';
+    var closeKeyDelimiter           = 'closeKeyDelimiter';
+    var propertyDelimiter           = 'propertyDelimiter';
+    var ROOTDIRECTIVE               = 'rootDirective';
+    var EOF                         = 'EOF';
     function token(value, type) { return Object.create({},{value: {value: value}, type: {value: type} }); }
     function stringLiteralTokenizer(delimiter, failOnCarriageReturnOrLineBreak)
     {
@@ -2019,6 +2019,10 @@
 
     function stringToSegment(segment){return typeof segment === "string" ? {value: segment, type: 0} : segment;}
 
+    var unresolvedSegmentType   = 0;
+    var resolvedSegmentType     = 1;
+    var virtualSegmentType      = 2;
+
     function getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)
     {
         var nextVirtuals    = [];
@@ -2036,7 +2040,7 @@
                         if (nextVirtual.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
                         if (virtualProperty !== undefined)          throw new Error("A Computed property was already found at the path '" + newBasePath.join(".")+ "'.");
 
-                        virtualProperty = {type: 2, virtualProperty: nextVirtual.property, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+                        virtualProperty = {type: virtualSegmentType, virtualProperty: nextVirtual.property, target: nextVirtual.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
                     }
                     nextVirtuals.push(nextVirtual);
                 }
@@ -2051,7 +2055,7 @@
                             {
                                 if (matcher.property.get === undefined) throw new Error("Computed property is write only at path '" + newBasePath.join(".") + "'.");
                                 if (virtualProperty !== undefined)      throw new Error("A Computed property was already found at the path '" + newBasePath.join(".")+ "'.");
-                                virtualProperty = {type: 2, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+                                virtualProperty = {type: virtualSegmentType, target: matcher.property.get(newBasePath.slice(0,-1).join("."), newBasePath[newBasePath.length-1]), newBasePath: newBasePath, currentVirtuals: nextVirtuals};
                             }
                             nextVirtuals.push(matcher);
                         }
@@ -2062,60 +2066,64 @@
         return virtualProperty === undefined ? nextVirtuals : virtualProperty;
     }
 
-    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals)
+    function resolvePathSegment(root, segment, current, newBasePath, constructPath, notify, currentVirtuals, ignoreVirtuals)
     {
-        if (typeof segment.value === "object")  segment = {type: 0, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
+        if (typeof segment.value === "object")  segment = {type: unresolvedSegmentType, value: segment.value.get({bag: root.bag, basePath: root.basePath}, notify).value};
 
         if      (segment.value === "$root" || segment.value === "...")
         {
-            return {type: 0, target: root.bag.item, newBasePath: [], currentVirtuals: [root.bag.virtualProperties]};
+            return {type: unresolvedSegmentType, target: root.bag.item, newBasePath: [], currentVirtuals: [root.bag.virtualProperties]};
         }
         else if (segment.value === "$home")
         {
             var resolvedPath    = resolvePath({bag: root.bag, basePath: root.basePath}, {segments: [], prependBasePath: true}, false);
             newBasePath         = root.basePath.split(".");
-            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
+            return {type: unresolvedSegmentType, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$parent")
         {
             newBasePath.pop();
             var resolvedPath    = resolvePath({bag: root.bag, basePath: newBasePath.join(".")}, {segments: [], prependBasePath: true}, false);
-            return {type: 0, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
+            return {type: unresolvedSegmentType, target: resolvedPath.value, newBasePath: newBasePath, currentVirtuals: resolvedPath.virtuals};
         }
         else if (segment.value === "$shadow")
         {
             var shadowPath  = newBasePath.join(".");
             newBasePath.push(segment.value);
             if (root.bag.shadows[shadowPath] === undefined) root.bag.shadows[shadowPath]    = {};
-            return {type: 0, target: root.bag.shadows[shadowPath], newBasePath: newBasePath, currentVirtuals: getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)};
+            return {type: unresolvedSegmentType, target: root.bag.shadows[shadowPath], newBasePath: newBasePath, currentVirtuals: getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals)};
         }
         else if (segment.value === "$key")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : "$root", newBasePath: newBasePath};
+            return {type: resolvedSegmentType , value: newBasePath.length > 0 ? newBasePath[newBasePath.length-1] : "$root", newBasePath: newBasePath};
         }
         else if (segment.value === "$path")
         {
-            return {type: 1, value: newBasePath.length > 0 ? newBasePath.join(".") : "$root", newBasePath: newBasePath};
+            return {type: resolvedSegmentType, value: newBasePath.length > 0 ? newBasePath.join(".") : "$root", newBasePath: newBasePath};
         }
         else
         {
             newBasePath.push(segment.value);
-            var nextVirtuals    = getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals);
-            if (!Array.isArray(nextVirtuals))   return nextVirtuals;
+            var nextVirtuals;
+            if (!ignoreVirtuals)
+            {
+                nextVirtuals    = getNextVirtuals(segment, newBasePath, constructPath, currentVirtuals);
+                if (!Array.isArray(nextVirtuals))   return nextVirtuals;
+            }
 
             // virtual only
-            if (current === undefined)  return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+            if (current === undefined)  return {type: resolvedSegmentType, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
 
             if (current[segment.value] === undefined)
             {
                 if (constructPath)  current[segment.value]   = segment.type===0?{}:[];
-                else                return {type: 1, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+                else                return {type: resolvedSegmentType, value: undefined, newBasePath: newBasePath, currentVirtuals: nextVirtuals};
             }
-            return {type: 0, target: current[segment.value], newBasePath: newBasePath, currentVirtuals: nextVirtuals};
+            return {type: unresolvedSegmentType, target: current[segment.value], newBasePath: newBasePath, currentVirtuals: nextVirtuals};
         }
     }
 
-    function resolvePath(root, paths, constructPath, notify)
+    function resolvePath(root, paths, constructPath, notify, ignoreVirtuals)
     {
         var segments            = paths.prependBasePath ? root.basePath.split(".").filter(function(segment){return segment.length>0;}).concat(paths.segments) : paths.segments;
         var current             = root.bag.item;
@@ -2125,10 +2133,13 @@
 
         for(var segmentCounter=0;segmentCounter<segmentsLength;segmentCounter++)
         {
-            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals);
+            var resolvedSegment = resolvePathSegment(root, stringToSegment(segments[segmentCounter]), current, newBasePath, constructPath, notify, currentVirtuals, ignoreVirtuals);
 
-            if (resolvedSegment.type === 1 && resolvedSegment.currentVirtuals === undefined)                                                                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
-            if (resolvedSegment.type === 2 && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
+            if (resolvedSegment.type === resolvedSegmentType && resolvedSegment.currentVirtuals === undefined)
+            {
+                return {value: resolvedSegment.value, pathSegments: resolvedSegment.newBasePath};
+            }
+            if (resolvedSegment.type === virtualSegmentType && resolvedSegment.target !== undefined && resolvedSegment.target !== null && resolvedSegment.target.isObserver)
             {
                 if (typeof notify === "function")   notify(newBasePath);
                 return resolvePath({bag: resolvedSegment.target.__bag, basePath: resolvedSegment.target.__basePath}, {prependBasePath: true, segments: segments.slice(segmentCounter+1)}, constructPath, notify);
@@ -2138,9 +2149,9 @@
             newBasePath     = resolvedSegment.newBasePath;
             currentVirtuals = resolvedSegment.currentVirtuals;
         }
-        if (constructPath && segmentsLength > -1 && currentVirtuals.length > 0)
+        if (constructPath && segmentsLength > -1 && (ignoreVirtuals || currentVirtuals.length > 0))
         {
-            var finalSegment    = resolvePathSegment(root, stringToSegment(segments[segmentsLength]), current, newBasePath.slice(), true, notify, currentVirtuals);
+            var finalSegment    = resolvePathSegment(root, stringToSegment(segments[segmentsLength]), current, newBasePath.slice(), true, notify, currentVirtuals, ignoreVirtuals);
             if (finalSegment.type === 2) return {isVirtual: true, property: finalSegment.virtualProperty, basePath: finalSegment.newBasePath.slice(0, -1).join("."), key: finalSegment.newBasePath[finalSegment.newBasePath.length-1]};
         }
         return  constructPath
@@ -2150,16 +2161,16 @@
                 :   {value: current, pathSegments: newBasePath, virtuals: currentVirtuals};
     }
 
-    function getDataPath(root, paths, notify)
+    function getDataPath(root, paths, notify, ignoreVirtuals)
     {
-        var result  = resolvePath(root, paths, false, notify);
+        var result  = resolvePath(root, paths, false, notify, ignoreVirtuals);
         if (typeof notify === "function")   notify(result.pathSegments);
         return result;
     }
 
-    function setDataPath(root, paths, value, notify)
+    function setDataPath(root, paths, value, notify, ignoreVirtuals)
     {
-        var resolved    = resolvePath(root, paths, true);
+        var resolved    = resolvePath(root, paths, true, undefined, ignoreVirtuals);
         var newValue    = value&&value.isObserver ? value.unwrap() : value;
 
         if      (resolved.isRoot)
@@ -2184,7 +2195,7 @@
         }
     }
 
-    function accessor(path) { return {get: function(root, notify){return getDataPath(root, path, notify);}, set: function(root,value, notify){return setDataPath(root, path, value, notify);}}; }
+    function accessor(path) { return {get: function(root, notify, ignoreVirtuals){return getDataPath(root, path, notify, ignoreVirtuals);}, set: function(root, value, notify, ignoreVirtuals){return setDataPath(root, path, value, notify, ignoreVirtuals);}}; }
 
     function parse(lexer)
     {
@@ -2437,8 +2448,7 @@
             shadows:            {get: function(){return this.__bag.shadows;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
-            define:             
-            {value: function(path, property, overwrite)
+            define:             {value: function(path, property)
             {
                 var current = this.__bag.virtualProperties;
                 if (property && typeof property.get === "function"||typeof property.set === "function")
@@ -2451,7 +2461,9 @@
                         {
                             virtualProperty.cachedValues[path]  = { listener: (function()
                             {
-                                virtualProperty.cachedValues[path].value = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                var oldValue                                = virtualProperty.cachedValues[path].value;
+                                virtualProperty.cachedValues[path].value    = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                if (virtualProperty.cachedValues[path].value === oldValue)  return;
                                 notifyPropertyListeners.call(this, path, virtualProperty.cachedValues[path].value, this.__bag, false);
                             }).bind(this)};
                             this.listen(virtualProperty.cachedValues[path].listener);
@@ -2550,6 +2562,27 @@
                 delete this.__bag.backup;
                 notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag, false);
                 this.__bag.rollingback  = false;
+            }},
+            transform:          {value: function(path, property)
+            {
+                var accessor    = pathParser.parse(path);
+                var that        = this;
+                this.define(path, {get: function(key)
+                {
+                    return property.to(accessor.get({bag: that.__bag, basePath: that.__basePath}, undefined, true).value);
+                }});
+                this.listen((function()
+                {
+                    var virtual = accessor.get
+                    (
+                        {bag: this.__bag, basePath: this.__basePath},
+                        this.__bag.updating.length > 0
+                        ?   (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);}).bind(this)
+                        :   undefined
+                    );
+                    var value = property.back(virtual.value);
+                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, undefined, true);
+                }).bind(this), path);
             }}
         });});
         each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
