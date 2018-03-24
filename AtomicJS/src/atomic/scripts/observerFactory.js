@@ -160,8 +160,7 @@
             shadows:            {get: function(){return this.__bag.shadows;}},
             beginTransaction:   {value: function(){this.__bag.backup   = JSON.parse(JSON.stringify(this.__bag.item));}},
             commit:             {value: function(){delete this.__bag.backup;}},
-            define:             
-            {value: function(path, property, overwrite)
+            define:             {value: function(path, property)
             {
                 var current = this.__bag.virtualProperties;
                 if (property && typeof property.get === "function"||typeof property.set === "function")
@@ -174,7 +173,9 @@
                         {
                             virtualProperty.cachedValues[path]  = { listener: (function()
                             {
-                                virtualProperty.cachedValues[path].value = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                var oldValue                                = virtualProperty.cachedValues[path].value;
+                                virtualProperty.cachedValues[path].value    = property.get.call(createObserver(basePath, this.__bag, false), key);
+                                if (virtualProperty.cachedValues[path].value === oldValue)  return;
                                 notifyPropertyListeners.call(this, path, virtualProperty.cachedValues[path].value, this.__bag, false);
                             }).bind(this)};
                             this.listen(virtualProperty.cachedValues[path].listener);
@@ -273,6 +274,27 @@
                 delete this.__bag.backup;
                 notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag, false);
                 this.__bag.rollingback  = false;
+            }},
+            transform:          {value: function(path, property)
+            {
+                var accessor    = pathParser.parse(path);
+                var that        = this;
+                this.define(path, {get: function(key)
+                {
+                    return property.to(accessor.get({bag: that.__bag, basePath: that.__basePath}, undefined, true).value);
+                }});
+                this.listen((function()
+                {
+                    var virtual = accessor.get
+                    (
+                        {bag: this.__bag, basePath: this.__basePath},
+                        this.__bag.updating.length > 0
+                        ?   (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1].properties, pathSegments);}).bind(this)
+                        :   undefined
+                    );
+                    var value = property.back(virtual.value);
+                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, undefined, true);
+                }).bind(this), path);
             }}
         });});
         each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)

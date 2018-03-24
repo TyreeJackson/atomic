@@ -90,7 +90,7 @@
                             }
                             else if (testContext.expectedException !== error.message)
                             {
-                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n", "rgb(255,64,64)");
+                                assertionsLogger("\n    FAIL:       \"" + getTestStatement(testKey) + "\" test failed in " + (performance.now()-testStart) + " ms" + (setupEnd !== undefined ? " (setup time: " + (setupEnd-testStart) + " ms)" : "") + ".\n                Message:    " + error.message.replace(/\n/g, "\n                            ") + "\n                Stack:      " + error.stack.replace(/\n/g, "\n                            ") + "\n\n", "rgb(255,64,64)");
                                 continue;
                             }
                             else

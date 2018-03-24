@@ -257,39 +257,39 @@
         dataObject.listen(function(){dataObject("virtual3"); cascadeCounter++;})
 
         ion.log("Checking that the virtual1Counter is correct.");
-        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1");
+        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1 but instead was set to " + virtual1Counter);
         ion.log("Checking that the virtual2Counter is correct.");
-        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1");
+        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1 but instead was set to " + virtual2Counter);
         ion.log("Checking that the virtual3Counter is correct.");
-        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1");
+        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1 but instead was set to " + virtual3Counter);
         ion.log("Checking that the cascadeCounter is correct.");
-        ion.assert(cascadeCounter === 1,                                                                                "The cascadeCounter should be equal to 1");
+        ion.assert(cascadeCounter === 1,                                                                                "The cascadeCounter should be equal to 1 but instead was set to " + cascadeCounter);
 
         ion.log("Testing that the virtual1 computed property returns " + data.value1 + " " + data.value2 + ".");
         ion.assert(dataObject("virtual1") === data.value1 + " " + data.value2,                                          "The virtual1 computed property should have been equal to " + data.value1 + " " + data.value2 + " but was set to " + dataObject("virtual1") + ".");
         ion.log("Checking that the virtual1Counter is correct.");
-        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1");
+        ion.assert(virtual1Counter === 1,                                                                               "The virtual1Counter should be equal to 1 but instead was set to " + virtual1Counter);
 
         ion.log("Testing that the virtual2 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + ".");
         ion.assert(dataObject("virtual2") === data.value1 + " " + data.value2 + " " + data.value3,                      "The virtual2 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " but was set to " + dataObject("virtual2") + ".");
         ion.log("Checking that the virtual2Counter is correct.");
-        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1");
+        ion.assert(virtual2Counter === 1,                                                                               "The virtual2Counter should be equal to 1 but instead was set to " + virtual2Counter);
 
         ion.log("Testing that the virtual3 computed property returns " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + ".");
         ion.assert(dataObject("virtual3") === data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4,  "The virtual3 computed property should have been equal to " + data.value1 + " " + data.value2 + " " + data.value3 + " " + data.value4 + " but was set to " + dataObject("virtual3") + ".");
         ion.log("Checking that the virtual3Counter is correct.");
-        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1");
+        ion.assert(virtual3Counter === 1,                                                                               "The virtual3Counter should be equal to 1 but instead was set to " + virtual3Counter);
 
         dataObject("value1", faker.random.uuid());
 
         ion.log("Checking that the virtual1Counter is correct.");
-        ion.assert(virtual1Counter === 2,                                                                               "The virtual1Counter should be equal to 2");
+        ion.assert(virtual1Counter === 2,                                                                               "The virtual1Counter should be equal to 2 but instead was set to " + virtual1Counter);
         ion.log("Checking that the virtual2Counter is correct.");
-        ion.assert(virtual2Counter === 2,                                                                               "The virtual2Counter should be equal to 2");
+        ion.assert(virtual2Counter === 2,                                                                               "The virtual2Counter should be equal to 2 but instead was set to " + virtual2Counter);
         ion.log("Checking that the virtual3Counter is correct.");
-        ion.assert(virtual3Counter === 2,                                                                               "The virtual3Counter should be equal to 2");
+        ion.assert(virtual3Counter === 2,                                                                               "The virtual3Counter should be equal to 2 but instead was set to " + virtual3Counter);
         ion.log("Checking that the cascadeCounter is correct.");
-        ion.assert(cascadeCounter === 2,                                                                                "The cascadeCounter should be equal to 2");
+        ion.assert(cascadeCounter === 2,                                                                                "The cascadeCounter should be equal to 2 but instead was set to " + cascadeCounter);
 
         ion.log("Testing that the virtual1 computed property returns " + data.value1 + " " + data.value2 + ".");
         ion.assert(dataObject("virtual1") === data.value1 + " " + data.value2,                                          "The virtual1 computed property should have been equal to " + data.value1 + " " + data.value2 + " but was set to " + dataObject("virtual1") + ".");
@@ -395,5 +395,62 @@
 
         ion.log("Checking that the shadow properties do not serialize from anywhere in the model.");
         ion.assert(JSON.stringify(dataObject()).indexOf("$shadow") === -1,   "A shadow property should not have been found in the serialized copy of the wrapped model.");
+    },
+    Changes_to_sub_properties_of_a_virtualProperty_cascade_through_the_virtualProperty:
+    function()
+    {
+        var virtualCounter  = 0;
+        var subData         =
+        {
+            firstName:              faker.name.firstName(),
+            lastName:               faker.name.lastName(),
+            primaryPhoneType:       "home",
+            addresses:
+            [
+                {
+                    id:             faker.random.uuid(),
+                    addressLine1:   faker.address.streetAddress(3),
+                    addressLine2:   faker.address.secondaryAddress(),
+                    city:           faker.address.city(),
+                    state:          faker.address.state(),
+                    postalCode:     faker.address.zipCode()
+                },
+                {
+                    id:             faker.random.uuid(),
+                    addressLine1:   faker.address.streetAddress(3),
+                    city:           faker.address.city(),
+                    state:          faker.address.state(),
+                    postalCode:     faker.address.zipCode()
+                },
+                {
+                    id:             faker.random.uuid(),
+                    city:           faker.address.city(),
+                    state:          faker.address.state()
+                }
+            ]
+        }
+        var dataObject      = new this.observer
+        ({
+            data:
+            {
+                person: JSON.stringify(subData)
+            }
+        });
+
+        dataObject.transform("data.person",
+        {
+            to:     function(value) { return JSON.parse(value); },
+            back:   function(value) { return JSON.stringify(value); }
+        });
+
+        ion.log("Check that the initial value is correct.");
+        ion.assert(JSON.stringify(dataObject.unwrap("data.person")) === JSON.stringify(subData),    "The serialized values should be equal.\nExpected:   `" + JSON.stringify(subData) + "`\nActual:     `" + JSON.stringify(dataObject.unwrap("data.person")) + "`");
+
+        var newAddressLine1                 = faker.address.streetAddress(3);
+        subData.addresses[1].addressLine1   = newAddressLine1;
+        dataObject("data.person.addresses[1].addressLine1", newAddressLine1);
+
+        ion.log("Check that the updated value is correct.");
+        ion.assert(JSON.stringify(dataObject.unwrap("data.person")) === JSON.stringify(subData),    "The serialized values should be equal.\nExpected:   `" + JSON.stringify(subData) + "`\nActual:     `" + JSON.stringify(dataObject.unwrap("data.person")) + "`");
     }
 };});}();
