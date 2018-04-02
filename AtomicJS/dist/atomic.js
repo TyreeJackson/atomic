@@ -556,6 +556,7 @@
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperties(container.prototype,
     {
+        __getData:          {value: function(){ return this.data; }},
         constructor:        {value: container},
         init:               {value: function(definition)
         {
@@ -572,7 +573,7 @@
         {
             if (controlDeclaration === undefined)  return;
             this.appendControl(controlKey, this.createControl(controlDeclaration, undefined, this, "#" + controlKey));
-            if (this.data !== undefined)    this.controls[controlKey].data  = this.data;
+            if (this.data !== undefined)    this.controls[controlKey].data  = this.__getData();
             return this.controls[controlKey];
         }},
         attachControls:     {value: function(controlDeclarations)
@@ -686,6 +687,10 @@
     Object.defineProperty(composite, "prototype", {value: Object.create(base.prototype)});
     Object.defineProperties(composite.prototype,
     {
+        __getData:          {value: function()
+        {
+            return this.__customBind ? this.controlData : this.data;
+        }},
         constructor:        {value: composite},
         attachProperties:   {value: function(propertyDeclarations)
         {
