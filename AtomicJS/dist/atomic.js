@@ -1545,7 +1545,8 @@
                     viewElement,
                     container,
                     selector,
-                    "composite"
+                    "composite",
+                    function(){this.controlData = new observer({});}
                 );
                 return view;
             }).bind(this);
