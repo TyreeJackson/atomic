@@ -2287,8 +2287,8 @@ root.atomic.ready(function(atomic)
                                                         {
                                                             addBorder:  { when: "classBindings.classes.addBorder" },                        // default operation is a bool check (customClass can affect this value)
                                                             addItalics: { when: "classBindings.classes.addItalics" },                       // default operation is a bool check (customClass can affect this value)
-                                                            addBold:    { when: "classBindings.classes.addBold",      equals: true },       // alternative operation equals
-                                                            addPadding: { when: "classBindings.classes.addPadding",   notequals: false }    // alternative operation notequals
+                                                            addBold:    { when: "classBindings.classes.addBold",      equals: true },       // alternative operation equals (customClass can affect this value)
+                                                            addPadding: { when: "classBindings.classes.addPadding",   notequals: false }    // alternative operation notequals (customClass can affect this value)
                                                         }
                                                     }
                                                 },
