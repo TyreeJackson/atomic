@@ -59,8 +59,8 @@
             {
                 Object.defineProperties(this, 
                 {
-                    "__listenersChanged":   {value: listenersChanged},
-                    "__listeners":          {value: []},
+                    "__listenersChanged":   {value: listenersChanged, configurable: true},
+                    "__listeners":          {value: [], configurable: true},
                     "__lastPublished":      {writable: true, value: null},
                     "__publishTimeoutId":   {writable: true, value: null},
                     "limit":                {writable: true, value: null}
@@ -91,6 +91,21 @@
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
+                destroy:
+                {value: function()
+                {
+                    this.pubsub.destroy();
+                    each
+                    ([
+                        "__listenersChanged",
+                        "__listeners"
+                    ],
+                    (function(name)
+                    {
+                        Object.defineProperty(this, name, {value: null, configurable: true});
+                        delete this[name];
+                    }).bind(this));
+                }},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
                 ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
                 invoke:                     {value: function(){this.apply(this, arguments);}}
@@ -132,6 +147,22 @@
                 this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
                 Object.defineProperty(this, "__isAttached", {value: false, configurable: true});
             }
+        }},
+        destroy:
+        {value: function()
+        {
+            this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+            this.pubSub.destroy();
+            each
+            ([
+                "pubsub",
+                "__target"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
         }}
     });
     function eventsSet(target)
@@ -157,6 +188,23 @@
         destroy:
         {value: function()
         {
+            each
+            ([
+                "__listenersUsingCapture",
+                "__listenersNotUsingCapture"
+            ],
+            (function(listener)
+            {
+                each
+                (this[listener],
+                (function(name)
+                {
+                    this[listener][name].destroy();
+                    Object.defineProperty(this[listener], name, {value: null, configurable: true});
+                    delete this[listener][name];
+                }).bind(this));
+            }).bind(this));
+
             each
             ([
                 "__target",
@@ -2762,7 +2810,7 @@
             }
         },
         defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
-        destroy:                
+        destroy:
         {value: function()
         {
             each(this.__properties,(function(property){property.destroy();}).bind(this));
