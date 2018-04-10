@@ -59,8 +59,8 @@
             {
                 Object.defineProperties(this, 
                 {
-                    "__listenersChanged":   {value: listenersChanged},
-                    "__listeners":          {value: []},
+                    "__listenersChanged":   {value: listenersChanged, configurable: true},
+                    "__listeners":          {value: [], configurable: true},
                     "__lastPublished":      {writable: true, value: null},
                     "__publishTimeoutId":   {writable: true, value: null},
                     "limit":                {writable: true, value: null}
@@ -89,6 +89,21 @@
 
                     if (now>=limitOffset)   publish();
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
+                }},
+                destroy:
+                {value: function()
+                {
+                    this.pubsub.destroy();
+                    each
+                    ([
+                        "__listenersChanged",
+                        "__listeners"
+                    ],
+                    (function(name)
+                    {
+                        Object.defineProperty(this, name, {value: null, configurable: true});
+                        delete this[name];
+                    }).bind(this));
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
@@ -131,6 +146,22 @@
                 this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
                 Object.defineProperty(this, "__isAttached", {value: false, configurable: true});
             }
+        }},
+        destroy:
+        {value: function()
+        {
+            this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+            this.pubSub.destroy();
+            each
+            ([
+                "pubsub",
+                "__target"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
         }}
     });
     function eventsSet(target)
@@ -156,6 +187,23 @@
         destroy:
         {value: function()
         {
+            each
+            ([
+                "__listenersUsingCapture",
+                "__listenersNotUsingCapture"
+            ],
+            (function(listener)
+            {
+                each
+                (this[listener],
+                (function(name)
+                {
+                    this[listener][name].destroy();
+                    Object.defineProperty(this[listener], name, {value: null, configurable: true});
+                    delete this[listener][name];
+                }).bind(this));
+            }).bind(this));
+
             each
             ([
                 "__target",
@@ -530,8 +578,7 @@
                     if (value!==undefined)
                     for(var key in value)
                     {
-                        each(this.__elements, function(element){element.setAttribute("data-"+key, value[key]);});
-                        this.__element.setAttribute("data-" + key, value[key]);
+                        for(var counter=0;counter<this.__elements.length;counter++) this.__elements[counter].setAttribute("data-"+key, value[key]);
                     }
                 }
             },
@@ -539,7 +586,7 @@
             display:            {get: function(){return this.__element.style.display=="";},     set: function(value){this[value?"show":"hide"]();}},
             enabled:            {get: function(){return !this.__element.disabled;},             set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
             tooltip:            {get: function(){return this.__element.title;},                 set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
-            value:              {get: function(){return this.__element.innerHTML;},             set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.innerHTML = val;}); this.__element.innerHTML = val;}}
+            value:              {get: function(){return this.__value;},                         set: function(value){var val = value&&value.isObserver?value():value; this.__value=val; for(var counter=0;counter<this.__elements.length;counter++) this.__elements[counter].textContent = val;}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
@@ -888,7 +935,7 @@
             for(var counter=keyCounter;counter>=lowerBound;counter--)
             {
                 var key = keys[counter];
-                console.log("Collected: " + garbage[key].__selector);
+                //console.log("Collected: " + garbage[key].__selector);
                 garbage[key].destroy();
                 delete  garbage[key];
             }
@@ -927,7 +974,7 @@
         {
             var item    = this.__retained[itemKey];
             delete this.__retained[itemKey];
-            console.log("recycled: " + item.__selector)
+            //console.log("recycled: " + item.__selector)
             return item;
         }
         return null;
@@ -939,7 +986,7 @@
         var bindPath    = this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
         var clone       = { key: itemKey, parent: template.parent, control: this.createControl(template.declaration, elementCopy, "#" + itemKey, bindPath + (bindPath.length > 0 ? "." : "") + itemIndex) };
         Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
-        console.log("created: " + clone.control.__selector)
+        //console.log("created: " + clone.control.__selector)
         return clone;
     }
     function getTemplateCopy(templateKey, itemIndex)
@@ -963,7 +1010,7 @@
             for(var counter=this.__itemCount-1;counter>=itemCount;counter--)   removeListItem.call(this, counter);
             resetGarbageCollector.call(this);
         }
-        else
+        else if (this.__itemCount < itemCount)
         {
             var documentFragments   = createTemplateContainerDocumentFragments.call(this);
             for(var counter=this.__itemCount;counter<itemCount;counter++)   addListItem.call(this, counter, documentFragments.byKey);
@@ -2769,7 +2816,7 @@
     };
     Object.defineProperties(dataBinder.prototype,
     {
-        __makeRoot:   {value: function()
+        __makeRoot:             {value: function()
         {
             var parent  = this.__parentBinder;
             Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
@@ -2803,8 +2850,7 @@
             }
         },
         defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
-        destroy:                
-        {value: function()
+        destroy:                {value: function()
         {
             each(this.__properties,(function(property){property.destroy();}).bind(this));
             each
@@ -2820,7 +2866,7 @@
                 delete this[name];
             }).bind(this));
         }},
-        isBinder:   {value: true},
+        isBinder:               {value: true},
         isRoot:
         {
             get: function(){return this.__forceRoot || (this.__parentBinder==null&&this.__data!=null);}, 
@@ -2830,8 +2876,8 @@
                 Object.defineProperty(this, "__forceRoot", {value: value, configurable: true});
             }
         },
-        register:   {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.listen({data: this.data, bindPath: this.bindPath});}},
-        unregister: {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
+        register:               {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.listen({data: this.data, bindPath: this.bindPath});}},
+        unregister:             {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
     });
     return dataBinder;
 });}()
@@ -2880,11 +2926,11 @@
                 Object.defineProperty(this, "__bindListener", 
                 {
                     configurable:   true, 
-                    value:          (function()
+                    value:          (function(val, ignore)
                     {
                         var value = this.__getDataValue();
                         if (!this.__notifyingObserver) this.__setter(value);
-                        setTimeout((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this),0); 
+                        ignore((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this)); 
                     }).bind(this)
                 });
                 each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
