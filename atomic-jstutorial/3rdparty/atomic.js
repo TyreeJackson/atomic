@@ -837,7 +837,9 @@
         {console.warn("The `addControl` method maybe deprecated soon.");
             if (controlDeclaration === undefined)  return;
             var control;
-            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, this.bindPath));
+            // hack: This feels hacky.  Think this through and see if there is a better way to do incorporate the controlDeclaration.bind into the bind path.
+            var bindPath    = this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
+            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
             if (this.data !== undefined)    this.controls[controlKey].__setData(this.__getData());
             return control;
         }},
