@@ -22,10 +22,13 @@
         {
             updaterIds[parent.id()] = undefined;
             parent.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
-            var iframe  = parent.__element.getElementsByTagName("iframe")[0];
-            iframe.contentWindow.document.open();
-            iframe.contentWindow.document.write(html);
-            iframe.contentWindow.document.close();
+            parent.__setViewData("callback", function()
+            {
+                var iframe  = this.__element.getElementsByTagName("iframe")[0];
+                iframe.contentWindow.document.open();
+                iframe.contentWindow.document.write(html);
+                iframe.contentWindow.document.close();
+            });
         }
         if (updaterIds[parent.id()] !== undefined)  clearTimeout(updaterIds[parent.id()]);
         updaterIds[parent.id()] = setTimeout(doIt.bind(this), 1000);

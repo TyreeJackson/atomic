@@ -2,27 +2,22 @@
 {"use strict";root.define("atomic.playground.appView", function(editorControl, markdownControl, json)
 {return function playgroundAppView(viewAdapter)
 {
-    function getActiveExamplePath(item)
-    {
-        var active  = item("...active");
-        if (active !== undefined && item.peek("...examples") !== undefined)
-        for(var counter=0;counter<item.peek("...examples").count;counter++) if(item.peek("...examples."+counter+".name")==active) {return "...examples."+counter+".example"; }
-        return "...examples.0.example";
-    }
     var updaterId;
     function updateIframe(data, execute, peek)
     {
-        var examplePath = getActiveExamplePath(data);
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (data.read(examplePath+".html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + data.read(examplePath+".css", peek) + '</style><scr' + 'ipt type="application/javascript">' + data.read(examplePath+".javascript", peek) + '</scr' + 'ipt></body></html>';
+        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (data.read("$shadow.activeExample.html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + data.read("$shadow.activeExample.css", peek) + '</style><scr' + 'ipt type="application/javascript">' + data.read("$shadow.activeExample.javascript", peek) + '</scr' + 'ipt></body></html>';
         if (!execute) return;
         function doIt()
         {
             updaterId   = undefined;
             this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
-            var iframe  = this.root.controls.playground.controls.preview.__element.getElementsByTagName("iframe")[0];
-            iframe.contentWindow.document.open();
-            iframe.contentWindow.document.write(html);
-            iframe.contentWindow.document.close();
+            this.root.controls.playground.controls.preview.__setViewData("callback", function()
+            {
+                var iframe  = this.__element.getElementsByTagName("iframe")[0];
+                iframe.contentWindow.document.open();
+                iframe.contentWindow.document.write(html);
+                iframe.contentWindow.document.close();
+            });
         }
         if (updaterId !== undefined)    clearTimeout(updaterId);
         updaterId   = setTimeout(doIt.bind(this), 1000);
@@ -37,7 +32,7 @@
             {
                 bind:
                 {
-                    value:  "active",
+                    value:  "$shadow.active",
                     items:
                     {
                         to:     "examples",
@@ -55,13 +50,13 @@
                     if (name == null || name == '') return;
                     this.data("examples").push({name: name, example: {javascript: "", html: "", css: ""}});
                     var newPlayground = this.data("examples")(this.data("examples").count-1)("example");
-                    this.data("...active", name);
+                    this.data("$shadow.active", name);
                 }
             },
             savePlaygroundsButton:          { onclick: function() { viewAdapter.on.savePlayground(this.data());} },
             resetPlaygroundsButton:         { onclick: function() { viewAdapter.on.resetPlayground(); } },
-            exportCurrentPlaygroundButton:  { onclick: function() { alert(json.stringify(this.data(getActiveExamplePath(this.data))())); } },
-            downloadCurrentPlaygroundButton:{ onclick: function() { viewAdapter.on.downloadPlayground(this.data("...active"), this.data(getActiveExamplePath(this.data))()); } },
+            exportCurrentPlaygroundButton:  { onclick: function() { alert(json.stringify(this.data.unwrap("$shadow.activeExample"))); } },
+            downloadCurrentPlaygroundButton:{ onclick: function() { viewAdapter.on.downloadPlayground(this.data("$shadow.active"), this.data.unwrap("$shadow.activeExample")); } },
             importPlaygroundButton:
             {
                 onclick:
@@ -77,10 +72,10 @@
             livePreviewCheckbox:            { bind: "livePreview" },
             displayEditorsCheckbox:         { bind: "displayEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
-            description:                    { factory:  markdownControl, bind: { value: function(item) { return item(getActiveExamplePath(item)+".description"); }, display: function(item) { return item(getActiveExamplePath(item)+".description.length"); } } },
+            description:                    { factory:  markdownControl, bind: { value: "$shadow.activeExample.description", display: {when: "$shadow.activeExample.description", hasValue: true} } },
             playground: 
             {
-                bind:       { value: getActiveExamplePath, display: function(item) { return !item(getActiveExamplePath(item)+".placeholder"); }, classes: { displayEditors: "displayEditors" } }, 
+                bind:       { value: "$shadow.activeExample", display: {when: "$shadow.activeExample.placeHolder", "!=": true}, classes: { displayEditors: "displayEditors" } }, 
                 controls:
                 {
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
@@ -98,6 +93,14 @@
             construct:
             function()
             {
+                this.data.define("$shadow.activeExample", {get: function()
+                {
+                    var active      = this("active");
+                    var examples    = this.peek("$parent.examples", true);
+                    if (active !== undefined && examples !== undefined)
+                    for(var counter=0;counter<examples.length;counter++)  if(this.peek("$parent.examples."+counter+".name")==active) {return this("$parent.examples."+counter+".example"); }
+                    return this("$parent.examples.0.example");
+                }});
                 this.data.listen((function(){updateIframe.call(this.controls.playground.controls.preview, this.data, this.data("...livePreview"));}).bind(this));
             }
         }
