@@ -301,7 +301,7 @@
     {
         initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false, true); };
     });
-    each(["abort", "blur", "canplay", "canplaythrough", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "error", "focus", "focusin", "focusout", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend"], function(val)
+    each(["abort", "blur", "canplay", "canplaythrough", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "error", "focus", "focusin", "focusout", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"], function(val)
     {
         initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
     });
@@ -363,6 +363,7 @@
             __viewUpdateQueue:      {value: {}, configurable: true}
             //bindPath:               {value: bindPath, configurable: true} //parent == null || parent.basePath == null ? "" : parent.basePath + (parent.basePath.length>0 && parentBind.length>0 ? "." : "") + parentBind
         });
+        this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
         this.__binder.defineDataProperties(this,
         {
@@ -376,16 +377,17 @@
 
                     if (value!==undefined)
                     for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
+                    this.getEvents("viewupdated").viewupdated(Object.keys(value));
                 }
             },
             "class":            {get: function(){return this.__class;},                             set: function(value){if (this.__class != null) this.removeClass(this.__class); this.__class=value; this.addClass(value);}},
-            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value);}},
+            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){this.__element.disabled=!(!value); this.getEvents("viewupdated").viewupdated(["disabled"]);}},
             display:            {get: function(){return this.__getViewData("style.display")=="";},  set: function(value){this[value?"show":"hide"]();}},
-            draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value);}},
-            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){this.__element.disabled=!value;}},
-            for:                {get: function(){return this.__element.getAttribute("for");},       set: function(value){this.__element.setAttribute("for", value);}},
-            id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value;}},
-            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||"";}}
+            draggable:          {get: function(){return this.__element.getAttribute("draggable");}, set: function(value){this.__element.setAttribute("draggable", value); this.getEvents("viewupdated").viewupdated(["draggable"]);}},
+            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){this.__element.disabled=!value; this.getEvents("viewupdated").viewupdated(["disabled"]);}},
+            for:                {get: function(){return this.__element.getAttribute("for");},       set: function(value){this.__element.setAttribute("for", value); this.getEvents("viewupdated").viewupdated(["for"]);}},
+            id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value; this.getEvents("viewupdated").viewupdated(["id"]);}},
+            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||""; this.getEvents("viewupdated").viewupdated(["title"]);}}
         });
 
         //this.__observer.observe(this.__element, { attributes: false, childList: true, characterData: true });
@@ -397,10 +399,10 @@
     }
     var viewProperties  =
     {
-        className:          { reset:    true,   get: function(control){ return control.__element.className; },        set: function(control, value){ control.__element.className = value; } },
-        innerHTML:          { reset:    true,   get: function(control){ return control.__element.innerHTML; },        set: function(control, value){ control.__element.innerHTML = value; } },
-        src:                { reset:    true,   get: function(control){ return control.__element.src; },              set: function(control, value){ control.__element.src = value; } },
-        "style.display":    { reset:    true,   get: function(control){ return control.__element.style.display; },    set: function(control, value){ control.__element.style.display = value; } },
+        className:          { reset:    true,   get: function(control){ return control.__element.className; },                                                                                  set: function(control, value){ control.__element.className = value; } },
+        innerHTML:          { reset:    true,   get: function(control){ return control.__value !== undefined ? control.__value : control.__element.innerHTML; },                                set: function(control, value){ control.__value = control.__element.innerHTML = value; },                    value: function(control, value){ control.__value = value; } },
+        src:                { reset:    true,   get: function(control){ return control.__element.src; },                                                                                        set: function(control, value){ control.__element.src = value; } },
+        "style.display":    { reset:    true,   get: function(control){ return control.__element.__display !== undefined ? control.__element.__display : control.__element.style.display; },    set: function(control, value){ control.__element.__display = control.__element.style.display = value; },    value: function(control, value){ control.__element.__display = value; } },
         appendChild:        { reset:    false,  set: function(control, value){ control.__element.appendChild(value); } },
         removeChild:        { reset:    false,  set: function(control, value){ control.__element.removeChild(value); } },
         callback:           { reset:    false,  set: function(control, value){ value.call(control); } },
@@ -413,13 +415,13 @@
         // properties
         bindPath:           {get:   function(){return this.__binder.bindPath||"";},                                                             set:    function(value){this.__binder.bindPath = value;}},
         bind:               {get:   function(){return this.value.bind;}},
-        data:               {get:   function(){return this.__binder.data(this.bindPath);}},
-        height:             {get:   function(){return this.__element.offsetHeight;},                                                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px";}},
+        data:               {get:   function(){return this.__binder.data.observe(this.bindPath);}},
+        height:             {get:   function(){return this.__element.offsetHeight;},                                                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetHeight"]);}},
         isDataRoot:         {get:   function(){return this.__isDataRoot;},                                                                      set:    function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
         isRoot:             {get:   function(){return this.__forceRoot||this.parent===undefined;},                                              set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}},
         root:               {get:   function(){return !this.isRoot && this.parent ? this.parent.root : this;}},
         updateon:           {get:   function(){var names = []; each(this.value.onchange,function(e, name){names.push(name);}); return names;},  set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
-        width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px";}},
+        width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
         // methods
         __createNode:       {value: function(selector)                      { return document.createElement("div"); }, configurable: true},
         __getData:          {value: function()                              { return this.__binder.data; }},
@@ -430,13 +432,14 @@
                     ?   property.reset
                         ?   this.__viewUpdateQueue[name]
                         :   this.__viewUpdateQueue[name][this.__viewUpdateQueue[name].length-1]
-                    :   this.constructor.__getViewProperty(name).get(this);
+                    :   property.get(this);
         }},
         __setViewData:      {value: function(name, value)
         {
             var property    = this.constructor.__getViewProperty(name);
             if (property.reset) this.__viewUpdateQueue[name]    = value;
             else                (this.__viewUpdateQueue[name]=this.__viewUpdateQueue[name]||[]).push(value);
+            if (property.value) property.value(this, value);
             (!this.isRoot ? this.parent : this).__deferViewUpdate(this);
         }},
         __updateView:       {value: function()
@@ -456,6 +459,7 @@
                     while(operations.length > 0)  property.set(this, operations.shift());
                 }
             }
+            this.getEvents("viewupdated").viewupdated(keys);
         }},
         __reattach:         {value: function()
         {
@@ -562,7 +566,7 @@
         select:             {value: function()                              { selectContents(this.__element); return this; }},
         show:               {value: function()                              { this.__setViewData("style.display", ""); this.triggerEvent("show"); return this; }},
         toggleClass:        {value: function(className, condition, silent)  { if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent); }},
-        toggleEdit:         {value: function(condition)                     { if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); return this; }},
+        toggleEdit:         {value: function(condition)                     { if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); this.getEvents("viewupdated").viewupdated(["contentEditable"]); return this; }},
         toggleDisplay:      {value: function(condition)                     { if (condition === undefined) condition = this.__getViewData("style.display")=="none"; this[condition?"show":"hide"](); return this; }},
         triggerEvent:       {value: function(eventName)                     { var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this; }}
     });
@@ -630,24 +634,27 @@
                     this.__attributes=value;
 
                     if (value!==undefined)
-                    for(var key in value)
                     {
-                        for(var counter=0;counter<this.__elements.length;counter++) this.__elements[counter].setAttribute("data-"+key, value[key]);
+                        for(var key in value)
+                        {
+                            for(var counter=0;counter<this.__elements.length;counter++) this.__elements[counter].setAttribute("data-"+key, value[key]);
+                        }
+                        this.getEvents("viewupdated").viewupdated(Object.keys(value));
                     }
                 }
             },
-            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value);}},
+            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value); this.getEvents("viewupdated").viewupdated(["disabled"]);}},
             display:            {get: function(){return this.__getViewData("styles.display")=="";}, set: function(value){this[value?"show":"hide"]();}},
-            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value;}},
-            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val;}},
-            value:              {get: function(){return this.__value;},                             set: function(value){this.__setViewData("innerHTMLs", value);}}
+            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value; this.getEvents("viewupdated").viewupdated(["disabled"]);}},
+            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val; this.getEvents("viewupdated").viewupdated(["title"]);}},
+            value:              {get: function(){return this.__getViewData("innerHTMLs");},         set: function(value){this.__setViewData("innerHTMLs", value);}}
         });
     }
     Object.defineProperty(readonly, "prototype", {value: Object.create(control.prototype)});
     var viewProperties  =
     {
-        innerHTMLs:         { reset:    false,  get: function(control){ return control.__value; },                  set: function(control, value){ var val = value&&value.isObserver?value():value; control.__value=val; for(var counter=0;counter<control.__elements.length;counter++) control.__elements[counter].innerHTML = val;} },
-        "styles.display":   { reset:    true,   get: function(control){ return control.__element.style.display; },  set: function(control, value){ for(var counter=0;counter<control.__elements.length;counter++) control.__elements[counter].style.display=value; control.__element.style.display=value; } }
+        innerHTMLs:         { reset:    false,  get: function(control){ return control.__value !== undefined ? control.__value : control.__element.innerHTML; },                                set: function(control, value){ var val = value&&value.isObserver?value():value; control.__value=val; for(var counter=0;counter<control.__elements.length;counter++) control.__value = control.__elements[counter].innerHTML = val;},    value: function(control, value){ control.__value = value; } },
+        "styles.display":   { reset:    true,   get: function(control){ return control.__element.__display !== undefined ? control.__element.__display : control.__element.style.display; },    set: function(control, value){ for(var counter=0;counter<control.__elements.length;counter++) control.__elements[counter].style.display=value; control.__element.__display = control.__element.style.display=value; },                  value: function(control, value){ control.__element.__display = value; } }
     };
     Object.defineProperty(readonly, "__getViewProperty", {value: function(name) { return viewProperties[name]||control.__getViewProperty(name); }});
     Object.defineProperties(readonly.prototype,
@@ -668,7 +675,7 @@
         Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
         this.__binder.defineDataProperties(this,
         {
-            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value);}}
+            for:                {get: function(){return this.__element.getAttribute("for");},   set: function(value){each(this.__elements, function(element){element.setAttribute("for", value);}); this.__element.setAttribute("for", value); this.getEvents("viewupdated").viewupdated(["for"]);}}
         });
     }
     Object.defineProperty(label, "prototype", {value: Object.create(control.prototype)});
@@ -688,7 +695,7 @@
         base.call(this, elements, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            href: {get: function(){return this.__element.href;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.href = val;}); this.__element.href = val;}}
+            href: {get: function(){return this.__element.href;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.href = val;}); this.__element.href = val; this.getEvents("viewupdated").viewupdated(["href"]);}}
         });
     }
     Object.defineProperty(link, "prototype", {value: Object.create(base.prototype)});
@@ -759,6 +766,8 @@
         if (this.__customBind && propertyValue.isDataProperty)  this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
         else                                                    Object.defineProperty(this, propertyKey, {value: propertyValue});
     }
+    function buildGet(property)                     { return function(){return this.controlData(property);} }
+    function buildSet(property)                     { return function(value){this.controlData(property, value);} }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperty(container, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(container.prototype,
@@ -792,12 +801,12 @@
             Object.defineProperty(this, "__controlsToUpdate", {value: {}, configurable: true});
             var keys            = Object.keys(queue);
             var detachLocally   = detach && keys.length > 1;
-            if (detachLocally)  this.__element.style.display    = "none";
+            if (detachLocally)  {this.__element.style.display    = "none";}
                     
             control.prototype.__updateView.call(this);
             for(var counter=0;counter<keys.length;counter++)    queue[keys[counter]].__updateView(detach && !detachLocally);
 
-            if (detachLocally)  this.__element.style.display    = "";
+            if (detachLocally)  this.__element.style.display    = this.__getViewData("style.display");
         }},
         __getData:              {value: function()
         {
@@ -821,6 +830,7 @@
             this.__element.appendChild(childControl.__element); 
             this.__controlKeys.push(key);
             this.controls[key] = childControl;
+            this.getEvents("viewupdated").viewupdated(["innerHTML"]);
             return this;
         }},
         addControl:             {value: function(controlKey, controlDeclaration)
@@ -842,9 +852,9 @@
                 var selector    = (declaration.selector||("#"+controlKey));
                 var elements    = viewAdapterFactory.selectAll(this.__element, selector, selectorPath);
                 var control     = this.controls[controlKey] = this.createControl(declaration, elements&&elements[0], selector, controlKey, this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath, elements && elements.length > 1);
-                var data        = this.__getData();
-                if (data !== undefined) control.__setData(data);
             }
+            var data            = this.__getData();
+            if (data !== undefined) for(var controlKey in controlDeclarations)  this.controls[controlKey].__setData(data);
         }},
         attachProperties:       {value: function(propertyDeclarations)
         {
@@ -852,9 +862,10 @@
             for(var propertyKey in propertyDeclarations)
             {
                 var property    = propertyDeclarations[propertyKey];
-                if (typeof property === "function")     forwardProperty.call(this, propertyKey, property);
-                else    if (property.bound === true)    {this.__binder.defineDataProperties(this, propertyKey, {get: property.get, set: property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});}
-                else                                    Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+                if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
+                else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property) });
+                else    if (property.bound === true)        this.__binder.defineDataProperties(this, propertyKey, {get: typeof property.get === "string" ? buildGet(property) : property.get, set: typeof property.set === "string" ? buildSet(property) : property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});
+                else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
         children:               {value: function(){return this.controls || null;}},
@@ -920,6 +931,7 @@
                 delete this.controls[key];
             }
             removeItemFromArray(this.__controlKeys, key);
+            this.getEvents("viewupdated").viewupdated(["innerHTML"]);
             return this;
         }},
         value:                  {value: {listen: function(){}}, configurable: true}
@@ -1025,6 +1037,7 @@
                 repeatedControl.__setData(null);
             }
         }
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
     }
     function collectGarbage()
     {
@@ -1070,6 +1083,7 @@
                 parent                              = clone.parent;
             }
         }
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
     }
     function getRetainedTemplateCopy(itemKey)
     {
@@ -1227,7 +1241,7 @@
         control.call(this, elements, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||"";},    onchange: this.getEvents("change")}
+            value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||""; this.getEvents("viewupdated").viewupdated(["value"]);},    onchange: this.getEvents("change")}
         });
     }
     Object.defineProperty(input, "prototype", {value: Object.create(control.prototype)});
@@ -1251,7 +1265,7 @@
         control.call(this, elements, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.checked;}, set: function(value){this.__element.checked = value===true;},  onchange: this.getEvents("change")}
+            value:  {get: function(){return this.__element.checked;}, set: function(value){this.__element.checked = value===true; this.getEvents("viewupdated").viewupdated(["value"]);},  onchange: this.getEvents("change")}
         });
     }
     Object.defineProperty(checkbox, "prototype", {value: Object.create(control.prototype)});
@@ -1279,6 +1293,7 @@
         this.__rawValue = value;
         var bound       = this.items.bind != undefined;
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
+        this.getEvents("viewupdated").viewupdated(["value"]);
     }
     function selectoption(element, selector, parent, bindPath)
     {
@@ -1312,7 +1327,7 @@
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},
-            "__options":    {value: []}
+            "__options":    {value: [], configurable: true}
         });
         this.__binder.defineDataProperties(this,
         {
@@ -1336,7 +1351,7 @@
         constructor:        {value: select},
         __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
-        selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)
@@ -1364,7 +1379,7 @@
             var sourceItem  = items.observe(counter);
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
-            this.__setViewData("appendChild", option.__element);
+            this.__element.appendChild(option.__element);
             option.selected = this.__isValueSelected(option.value());
         }
     }
@@ -1477,7 +1492,7 @@
         constructor:        {value: radiogroup},
         __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
-        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)
@@ -1494,11 +1509,12 @@
         });
     });
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
+    function clearRadioOptions(radioGroup){ for(var counter=radioGroup.__options.length-1;counter>=0;counter--) radioGroup.__setViewData("removeChild", radioGroup.__options[counter].__element); }
     function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}
     function bindRadioGroupSource(items)
     {
         var selectedValue   = this.value();
-        clearRadioGroup(this.__element);
+        clearRadioOptions(this);
         this.__options.splice(0, this.__options.length);
         Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
@@ -1521,6 +1537,7 @@
         if ( !Array.isArray(values)) values  = [values];
         this.__rawValue = values;
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = values.indexOf(this.__element.options[counter].rawValue) > -1;
+        this.getEvents("viewupdated").viewupdated(["value"]);
     }
     function getSelectListValues()
     {
@@ -1544,8 +1561,8 @@
         constructor:        {value: multiselect},
         __createNode:       {value: function(){var element = document.createElement("select"); element.multiple="multiple"; return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
-        selectedIndexes:    {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
-        size:               {get:   function(){ return this.__element.size; },            set: function(value){ this.__elements[0].size=value; }},
+        selectedIndexes:    {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
+        size:               {get:   function(){ return this.__element.size; },            set: function(value){ this.__elements[0].size=value; this.getEvents("viewupdated").viewupdated(["size"]); }},
         __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValue) && this.__rawValue.indexOf(value) > -1;}}
     });
     return multiselect;
@@ -1662,7 +1679,7 @@
         constructor:        {value: checkboxgroup},
         __createNode:       {value: function(){var element = document.createElement("checkboxgroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
-        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValues) && this.__rawValues.indexOf(value) > -1;}}
     });
     each(["text","value"], function(name)
@@ -1705,7 +1722,7 @@
         control.call(this, elements, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            alt:    {get: function(){return this.__element.alt;},           set: function(value){this.__element.alt = value||"";}},
+            alt:    {get: function(){return this.__element.alt;},           set: function(value){this.__element.alt = value||""; this.getEvents("viewupdated").viewupdated(["alt"]);}},
             value:  {get: function(){return this.__getViewData("src");},    set: function(value){this.__setViewData("src", value||"");}}
         });
     }
@@ -1725,17 +1742,17 @@
         control.call(this, elements, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            autoplay:       {get: function(){return this.__element.autoplay},       set: function(value){this.__element.autoplay = value===true;}},
-            loop:           {get: function(){return this.__element.loop;},          set: function(value){this.__element.loop = value===true;}},
-            muted:          {get: function(){return this.__element.muted},          set: function(value){this.__element.muted = value===true;}},
-            nativeControls: {get: function(){return this.__element.controls;},      set: function(value){this.__element.controls = value===true;}},
-            preload:        {get: function(){return this.__element.preload;},       set: function(value){this.__element.preload = value===true;}},
-            alt:            {get: function(){return this.__element.alt;},           set: function(value){this.__element.alt = value||"";}},
-            mediaType:      {get: function(){return this.__element.type;},          set: function(value){this.__element.type = value||"";}},
+            autoplay:       {get: function(){return this.__element.autoplay},       set: function(value){this.__element.autoplay = value===true; this.getEvents("viewupdated").viewupdated(["autoplay"]);}},
+            loop:           {get: function(){return this.__element.loop;},          set: function(value){this.__element.loop = value===true; this.getEvents("viewupdated").viewupdated(["loop"]);}},
+            muted:          {get: function(){return this.__element.muted},          set: function(value){this.__element.muted = value===true; this.getEvents("viewupdated").viewupdated(["muted"]);}},
+            nativeControls: {get: function(){return this.__element.controls;},      set: function(value){this.__element.controls = value===true; this.getEvents("viewupdated").viewupdated(["controls"]);}},
+            preload:        {get: function(){return this.__element.preload;},       set: function(value){this.__element.preload = value===true; this.getEvents("viewupdated").viewupdated(["preload"]);}},
+            alt:            {get: function(){return this.__element.alt;},           set: function(value){this.__element.alt = value||""; this.getEvents("viewupdated").viewupdated(["alt"]);}},
+            mediaType:      {get: function(){return this.__element.type;},          set: function(value){this.__element.type = value||""; this.getEvents("viewupdated").viewupdated(["type"]);}},
             value:          {get: function(){return this.__getViewData("src");},    set: function(value){this.pause(); this.__setViewData("src", value||""); this.triggerEvent("timeupdate"); }},
-            currentTime:    {get: function(){return this.__element.currentTime;},   set: function(value){this.__element.currentTime = value||0;},   onchange: this.getEvents("timeupdate")},
-            playbackRate:   {get: function(){return this.__element.playbackRate;},  set: function(value){this.__element.playbackRate = value||0;},  onchange: this.getEvents("ratechange")},
-            volume:         {get: function(){return this.__element.volume;},        set: function(value){this.__element.volume = value||0;},        onchange: this.getEvents("volumechange")}
+            currentTime:    {get: function(){return this.__element.currentTime;},   set: function(value){this.__element.currentTime = value||0; this.getEvents("viewupdated").viewupdated(["currentTime"]);},   onchange: this.getEvents("timeupdate")},
+            playbackRate:   {get: function(){return this.__element.playbackRate;},  set: function(value){this.__element.playbackRate = value||0; this.getEvents("viewupdated").viewupdated(["playbackRate"]);}, onchange: this.getEvents("ratechange")},
+            volume:         {get: function(){return this.__element.volume;},        set: function(value){this.__element.volume = value||0; this.getEvents("viewupdated").viewupdated(["volume"]);},             onchange: this.getEvents("volumechange")}
         });
     }
     Object.defineProperty(audio, "prototype", {value: Object.create(control.prototype)});
@@ -1776,7 +1793,7 @@
         control.call(this, element, selector, parent, bindPath);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__setViewData("innerHTML");},   set: function(value){this.__setViewData("innerHTML", value||"");}}
+            value:  {get: function(){return this.__getViewData("innerHTML");},   set: function(value){this.__setViewData("innerHTML", value||"");}}
         });
     }
     Object.defineProperty(button, "prototype", {value: Object.create(control.prototype)});
