@@ -1,3 +1,4 @@
+html, body { height: 100%; }
 body {
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     font-size: 12px;
@@ -10,44 +11,108 @@ body {
     margin: 6px 0px 0px 3px;
     float: right;
 }
-
-.editors {
-    margin: 0px 0px 0 217px;
-    padding: 10px;
-    position: relative;
+.sidebar
+{
+    position:   absolute;
+    top:        44px;
+    left:       0px;
+    bottom:     0px;
+    width:      15%;
+}
+.playground
+{
+    position:   absolute;
+    top:        51px;
+    right:      0px;
+    bottom:     0px;
+    width:      85%;
+}
+.editors 
+{
+    margin:     0;
+    padding:    0px;
+    position:   absolute;
     background: #F6F6F6;
+    top:        5px;
+    left:       5px;
+    right:      5px;
+    bottom:     5px;
+}
+.viewEngineModel .editors
+{
+    bottom: 135px;
+}
+.top, .middle, .bottom, .all, .footer
+{
+    position:   absolute;
+    overflow:   hidden;
+    left:       0px;
+    right:      0px;
+    width:      auto;
+    height:     auto;
 }
 
-.top, .middle. .bottom, .all, .footer {
-    width: 100%;
-    overflow: hidden;
+.top    { top: 0px; height: 20%; }
+.middle { top: 20%; height: 20%; }
+.bottom { bottom: 0px; height: 60%; }
+.footer { bottom: 0px; height: 130px; background-color: bisque; }
+.all    { height: 100%; }
+
+.editorSet, .previewSet, .playgroundDescription
+{
+    position:       absolute;
 }
-
-.top, .middle { height: 20%; }
-.bottom { height: 60%; }
-.footer { height: 20%; }
-.all { height: 100%; }
-
+.playgroundDescription
+{
+    top:        0px;
+    left:       0px;
+    right:      0px;
+    height:     15%;
+    display:    none;
+}
+.hasDescription .playgroundDescription
+{
+    display:    block;
+}
 .editorSet, .previewSet
 {
-    float:          left;
-    margin-right:   5px;
-    margin-bottom:  5px;
+    top:        0px;
 }
-.editorSet { display: none; }
-.previewSet { width: 99%; }
-.displayEditors .editorSet, .displayEditors .previewSet { display: block; width: 49%; }
-.editorContainer, .markdownContainer {
-    margin-right:   5px;
-    margin-bottom:  5px;
-    position:       relative;
+.hasDescription .editorSet, .hasDescription .previewSet
+{
+    top:        15%;
+}
+.editorSet
+{
+    display:    none;
+    left:       0px;
+    bottom:     0px;
+}
+.previewSet
+{
+    width:  100%;
+    right:  0px;
+    bottom: 0px;
+}
+.displayEditors .editorSet, .displayEditors .previewSet
+{
+    display:    block;
+    width:      50%;
+}
+.editorContainer, .markdownContainer
+{
+    position:       absolute;
     overflow-x:     hidden;
-    width:          100%;
+    top:            0px;
+    left:           0px;
+    right:          0px;
+    bottom:         0px;
 }
 .editorContainer2 { width: 100%; }
 .markdownContainer { width: 100%; }
-.editor {
-    height: 300px;
+.editor
+{
+    height: 100%;
     width: 100%;
     border: 1px #cecece solid;
 }
@@ -58,46 +123,73 @@ body {
     border: 1px #cecece solid;
 }
 
-.top .editor, .middle .editor { height: 200px; }
-.bottom .editor { height: 400px; }
-.editorContainer2 .editor { height: 200px; overflow-y: scroll; }
-.footer { clear: both; width: 100%; }
+.top .editor, .middle .editor, .bottom .editor, .all .preview
+{
+    position:   absolute;
+    top:        5px;
+    left:       5px;
+    right:      5px;
+    bottom:     5px;
+    width:      auto;
+    height:     auto;
+}
+
+.editorContainer2.editor
+{
+    position:   absolute;
+    top:        25px;
+    left:       5px;
+    right:      5px;
+    bottom:     5px;
+    overflow-y: scroll;
+    height:     auto;
+    width:      auto;
+}
+.footer { padding: 5px; display: none; }
+.viewEngineModel .footer { display: block; }
 .footer .caption
 {
-    height:     40px; 
+    height:     22px;
 }
-.scrollable-menu {
-    height: auto;
+.scrollable-menu
+{
+    height:     auto;
     max-height: 200px;
     overflow-x: hidden;
 }
 
-#sidebar {
-    padding: 0;
-    margin: 0;
-    font-size: 11px;
-    width: 217px;
-    position: absolute;
-    top: 51px;
-    left: 0;
-    background-color: #fff;
-    color: #444;
-    height: 100%;
+#sidebar
+{
+    padding:            0;
+    margin:             0;
+    font-size:          11px;
+    top:                50px;
+    left:               0;
+    width:              217px;
+    bottom:             0px;
+    position:           absolute;
+    background-color:   #fff;
+    color:              #444;
 }
 
-.navbar-default {
-    background: #2879d0; /*#609B61;*/
-    border-color: #cecece;
-    border-radius: 0px;
-    border: none;
-    height: 44px;
-    margin-bottom: 0px;
+.navbar-default
+{
+    background:     #2879d0; /*#609B61;*/
+    border-color:   #cecece;
+    border-radius:  0px;
+    border:         none;
+    position:       absolute;
+    left:           0px;
+    right:          0px;
+    height:         44px;
+    margin-bottom:  0px;
 }
 
-.navbar-default .navbar-brand {
-    width: 217px;
-    margin-right: 0px;
-    color: #fff;
+.navbar-default .navbar-brand
+{
+    width:          217px;
+    margin-right:   0px;
+    color:          #fff;
 }
 
 .navbar-default .navbar-brand:hover {

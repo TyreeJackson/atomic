@@ -10,7 +10,7 @@
         function doIt()
         {
             updaterId   = undefined;
-            this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
+            this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
             this.root.controls.playground.controls.preview.__setViewData("callback", function()
             {
                 var iframe  = this.__element.getElementsByTagName("iframe")[0];
@@ -72,19 +72,28 @@
             livePreviewCheckbox:            { bind: "livePreview" },
             displayEditorsCheckbox:         { bind: "displayEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
-            description:                    { factory:  markdownControl, bind: { value: "$shadow.activeExample.description", display: {when: "$shadow.activeExample.description", hasValue: true} } },
             playground: 
             {
-                bind:       { value: "$shadow.activeExample", display: {when: "$shadow.activeExample.placeHolder", "!=": true}, classes: { displayEditors: "displayEditors" } }, 
+                bind:
+                {
+                    value:      "$shadow.activeExample",
+                    display:    { when: "$shadow.activeExample.placeHolder", "!=": true },
+                    classes:
+                    {
+                        displayEditors:     "displayEditors",
+                        viewEngineModel:    "viewEngineModel",
+                        hasDescription:     { when: "$shadow.activeExample.description", hasValue: true }
+                    }
+                }, 
                 controls:
                 {
+                    description:            { factory:  markdownControl, bind: { value: "description" } },
                     javascriptEditor:       { factory:  editorControl,  mode:   "javascript",   bind: { value: "javascript",   theme: "...editorTheme" } },
                     cssEditor:              { factory:  editorControl,  mode:   "css",          bind: { value: "css",          theme: "...editorTheme" } },
                     htmlEditor:             { factory:  editorControl,  mode:   "html",         bind: { value: "html",         theme: "...editorTheme" } },
                     preview:                { }
                 }
             },
-            engineFooter:               { bind: { display: "viewEngineModel" } },
             model:                      { bind: { value: { to: function(item){return this.data("viewEngineModel") && JSON.stringify(this.data(), null, '    ').replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "" } } }
         },
         events: ["savePlayground", "resetPlayground", "exportPlayground", "downloadPlayground", "importPlayground"],

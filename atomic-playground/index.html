@@ -34,7 +34,7 @@
             
         </div><!-- /.navbar-collapse -->
     </nav>
-    <div id="sidebar">
+    <div id="sidebar" class="sidebar">
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
             <div class="panel panel-default">
                 <div class="panel-collapse collapse in">
@@ -79,11 +79,9 @@
             </div>
         </div>
     </div>
-    <div class="editors">
-        <div id="description" class="markdownContainer"></div>
-    </div>
-    <div id="playground">
+    <div id="playground" class="playground">
         <div class="editors">
+            <div id="description" class="playgroundDescription markdownContainer"></div>
             <div class="editorSet">
                 <div class="top">
                     <div class="editorContainer">
@@ -112,19 +110,13 @@
                     </div>
                 </div>
             </div>
-            <div class="footer">
-            </div>
         </div>
-    </div>
-    <div class="editors">
         <div id="engineFooter" class="footer">
             Playground Engine Model:
-            <div class="editorContainer2">
-                <div class="editor">
-                    <pre>
+            <div class="editorContainer2 editor">
+                <pre>
 <code id="model" class="language-javascript"></code>
-                    </pre>
-                </div>
+                </pre>
             </div>
         </div>
     </div>

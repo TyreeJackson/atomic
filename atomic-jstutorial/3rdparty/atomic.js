@@ -570,7 +570,7 @@
         toggleDisplay:      {value: function(condition)                     { if (condition === undefined) condition = this.__getViewData("style.display")=="none"; this[condition?"show":"hide"](); return this; }},
         triggerEvent:       {value: function(eventName)                     { var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this; }}
     });
-    each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__element[name](); return this;}});});
+    each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__setViewData("callback", function(){this.__setViewData("callback", function(){this.__element[name]();});}); return this;}});});
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
     {
         var args            = Array.prototype.slice.call(arguments, 0, arguments.length-2),
@@ -815,7 +815,7 @@
         __setData:              {value: function(data)
         {
             this.__binder.data = data; 
-            var childControls   = this.children();
+            var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
         }},
@@ -870,7 +870,7 @@
                 else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
-        children:               {value: function(){return this.controls || null;}},
+        children:               {get: function(){return this.controls || null;}},
         createControl:          {value: function(controlDeclaration, controlElement, selector, controlKey, bindPath, multipleElements, preConstruct)
         {
             var control;
@@ -1209,7 +1209,7 @@
             extractDeferredControls.call(this, definition.repeat, this.__element);
             control.prototype.frame.call(this, definition);
         }},
-        children:   {value: function(){return this.__repeatedControls || null;}},
+        children:   {get: function(){return this.__repeatedControls || null;}},
         pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;
@@ -1389,6 +1389,11 @@
 });}();
 !function(){"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
 {
+    function setOptionNames()
+    {
+        var options = this.__element.querySelectorAll("input[type='radio']");
+        for(var counter=0;counter<options.length;counter++) options[counter].name = this.__name;
+    }
     function setRadioGroupValue(value)
     {
         Object.defineProperty(this, "__rawValue", {value: value, configurable: true});
@@ -1471,6 +1476,7 @@
             "__options":    {value: []},
             "__name":       {value: this.getSelectorPath()}
         });
+        setOptionNames.call(this);
         this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")},
