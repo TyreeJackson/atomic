@@ -326,7 +326,7 @@ This playground features a fully implemented \`AppView\`, \`Controller\` and ser
                     }
                 },
                 {
-                    name:           "Hosting dynamic controls",
+                    name:       "Hosting dynamic controls",
                     example:
                     {
                         description:    "",
@@ -336,13 +336,53 @@ This playground features a fully implemented \`AppView\`, \`Controller\` and ser
                     }
                 },
                 {
-                    name:           "Radio Buttons with Unbounded Items Demo",
+                    name:       "Radio Buttons with Unbounded Items Demo",
                     example:
                     {
                         description:    "",
                         javascript:     "root.atomic.launch\n({\n    selectList:         { bind: \"value\" },\n    radioGroupControl1: { bind: \"value\" },\n    model:              { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: \"\" } } }\n})",
                         css:            "",
                         html:           "<select id=\"selectList\">\n    <option value=\"Alpha\">Alpha</option>\n    <option value=\"Beta\">Beta</option>\n    <option value=\"Gamma\">Gamma</option>\n</select>\n<radiogroup id=\"radioGroupControl1\">\n    <radiogroupitem class=\"radio-inline\"><input type=\"radio\" id=\"radioGroupControl1-1\" name=\"radioGroupControl1\" value=\"Alpha\"><label for=\"radioGroupControl1-1\">Alpha</label></radiogroupitem>\n    <radiogroupitem class=\"radio-inline\"><input type=\"radio\" id=\"radioGroupControl1-2\" name=\"radioGroupControl1\" value=\"Beta\"><label for=\"radioGroupControl1-2\">Beta</label></radiogroupitem>\n    <radiogroupitem class=\"radio-inline\"><input type=\"radio\" id=\"radioGroupControl1-3\" name=\"radioGroupControl1\" value=\"Gamma\"><label for=\"radioGroupControl1-3\">Gamma</label></radiogroupitem>\n</radiogroup>\n<pre id=\"model\"></pre>"
+                    }
+                },
+                {
+                    name:       "Dynamic Atomic Markdown Controls",
+                    example:
+                    {
+                        description:    "",
+                        javascript:     "root.atomic.ready(function(atomic)\n{\n    var controlTypes    =\n    {\n        controlType1:   atomic.viewAdapterFactory.createFactory({controls:{button:{onclick:function(){alert(\"You click the button in the control with id \" + this.parent.parent.id() + \".\");}}}}, \"#controlType1\"),\n        controlType2:   atomic.viewAdapterFactory.createFactory({controls:{input:{onclick:function(){alert(\"You click the textbox.\");}}}},  \"#controlType2\")\n    };\n    var markdownControl = atomic.viewAdapterFactory.createFactory\n    (\n        {\n            properties:\n            {\n                value:\n                {\n                    bound:      true,\n                    get:        function(){return this.__value;},\n                    set:        function(value)\n                    {\n                        var count   = 0;\n                        var units   = {};\n                        var content = marked(this.__value = value||\"\");\n                        content = content.replace(/\\#\\[(.*?)\\]/g,function(token, controlType)\n                        {\n                            units[\"atomicUnit_\" + count]    = controlType;\n                            return \"<atomicUnit id=\\\"atomicUnit_\" + (count++) + \"\\\" />\";\n                        });\n                        this.__element.innerHTML = content;\n                        var definition      = {};\n                        for(var unitKey in units)   definition[unitKey] = {factory: controlTypes[units[unitKey]]};\n                        atomic.viewAdapterFactory.launch(this.__element, definition, {});\n                    }\n                },\n                bind:   { get: function(){return this.value.bind;}, set: function(value){this.value.bind = value;}}\n            },\n            extensions:\n            [{\n                initializers:\n                {\n                    theme:  function(viewAdapter, value){this.__editor.setTheme(value);},\n                    mode:   function(viewAdapter, value){this.__editor.getSession().setMode(\"ace/mode/\" + value);}\n                }\n            }]\n        }, \n        \"#markdownControl\"\n    ); \n    atomic.viewAdapterFactory.launch\n    (\n        document.body,\n        {\n            documentation:\n            {\n                factory:    markdownControl,\n                bind:       \"documentation\"\n            }\n        },\n        function(adapter)\n        {adapter.data(\"\",\n        {\n            documentation:\n`\n## Testing dynamic Atomic Units within Markdown content\n\n#[controlType1]\n#[controlType2]\n#[controlType1]\n`\n        });}\n    );\n});",
+                        css:            ".indent { padding-left: 5em; }",
+                        html:           "<div id=\"content\">\n    \n</div>\n<div id=\"markdownControl\"></div>\n<div id=\"controlType1\"><button id=\"button\">Click me</button></div>\n<div id=\"controlType2\"><input id=\"input\" value=\"Click me\" /></div>\n<script type=\"application/javascript\" src=\"3rdparty/marked.js\"></script>\n"
+                    }
+                },
+                {
+                    name:       "Addresses by type example",
+                    example:
+                    {
+                        description:    "",
+                        javascript:     "root.atomic.launch\n(\n    {\n        type:       { bind: \"$shadow.selectedType\" },\n        address:\n        {\n            bind: \"selectedAddress\",\n            controls:\n            {\n                addressLine1:   { bind: \"addressLine1\" },\n                addressLine2:   { bind: \"addressLine2\" },\n                city:           { bind: \"city\" },\n                state:          { bind: \"state\" },\n                postal:         { bind: \"postalCode\" }\n            }\n        }\n    },\n    function(adapter)\n    {\n        adapter.data.define(\"person.addressesByType./.*/\", {get: function(key){if (key === undefined) return;\n            var addresses  = this(\"$parent.addresses\");\n            if (addresses !== undefined && addresses.isArrayObserver)\n            for(var counter=0;counter<addresses.count;counter++)  if (addresses(counter+\".type\") === key)  return addresses(counter);\n        }});\n        adapter.data.define(\"selectedAddress\", {get: function(){return this(\"person.addressesByType.\"+this(\"$shadow.selectedType\"));}});\n        adapter.data(\"$shadow.selectedType\", \"main\");\n        adapter.data(\"\",\n        {\n            person:\n            {\n                firstName:              faker.name.firstName(),\n                lastName:               faker.name.lastName(),\n                primaryPhoneType:       \"home\",\n                addresses:\n                [\n                    {\n                        id:             faker.random.uuid(),\n                        addressLine1:   faker.address.streetAddress(3),\n                        addressLine2:   faker.address.secondaryAddress(),\n                        city:           faker.address.city(),\n                        state:          faker.address.state(),\n                        postalCode:     faker.address.zipCode(),\n                        type:           \"main\"\n                    },\n                    {\n                        id:             faker.random.uuid(),\n                        addressLine1:   faker.address.streetAddress(3),\n                        addressLine2:   faker.address.secondaryAddress(),\n                        city:           faker.address.city(),\n                        state:          faker.address.state(),\n                        postalCode:     faker.address.zipCode(),\n                        type:           \"home\"\n                    },\n                    {\n                        id:             faker.random.uuid(),\n                        addressLine1:   faker.address.streetAddress(3),\n                        addressLine2:   faker.address.secondaryAddress(),\n                        city:           faker.address.city(),\n                        state:          faker.address.state(),\n                        type:           \"office\"\n                    }\n                ]\n            }\n        });\n    }\n)",
+                        css:            "",
+                        html:           "<script type=\"text/javascript\" src=\"/atomic-tests/3rdparty/faker.js\"></script>\n<select id=\"type\">\n    <option value=\"main\">Main</option>\n    <option value=\"home\">Home</option>\n    <option value=\"office\">Office</option>\n</select>\n<div id=\"address\">\n<p id=\"addressLine1\"></p>    \n<p id=\"addressLine2\"></p>    \n<p><span id=\"city\"></span>, <span id=\"state\"></span> <span id=\"postal\"></span></p>    \n</div>\n"
+                    }
+                },
+                {
+                    name:       "Show control for a time demo",
+                    example:
+                    {
+                        description:    "",
+                        javascript:     "root.atomic.launch({text: {hidden: true}, showIt:{onclick:function(){this.parent.controls.text.showFor(1000);}}})",
+                        css:            "",
+                        html:           "<div id=\"text\">Hello World</div>\n<button id=\"showIt\">Show It</button>"
+                    }
+                },
+                {
+                    name:       "Child control member methods demo",
+                    example:
+                    {
+                        description:    "",
+                        javascript:     "root.atomic.launch\n(\n    {\n        test:\n        {\n            members:\n            {\n                doIt: function(){this.toggleDisplay();}\n            }\n        },\n        clickMe:\n        {\n            onclick:    function(){this.parent.controls.test.doIt();}\n        }\n    }\n);",
+                        css:            "",
+                        html:           "<input id=\"test\"/><button id=\"clickMe\">Toggle Display</button>"
                     }
                 }
             ]
