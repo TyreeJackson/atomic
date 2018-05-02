@@ -72,6 +72,7 @@
             livePreviewCheckbox:            { bind: "livePreview" },
             displayEditorsCheckbox:         { bind: "displayEditors" },
             viewEngineModelCheckbox:        { bind: "viewEngineModel" },
+            toggleSideBar:                  { onclick: function(){ this.data("$shadow.hideSidebar", !this.data("$shadow.hideSidebar")); } },
             playground: 
             {
                 bind:
@@ -111,6 +112,7 @@
                     return this("$parent.examples.0.example");
                 }});
                 this.data.listen((function(){updateIframe.call(this.controls.playground.controls.preview, this.data, this.data("...livePreview"));}).bind(this));
+                this.initialize({bind:{classes:{"sidebarHidden": "$shadow.hideSidebar"}}});
             }
         }
     };

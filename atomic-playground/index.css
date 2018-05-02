@@ -11,22 +11,58 @@ body {
     margin: 6px 0px 0px 3px;
     float: right;
 }
+
 .sidebar
 {
-    position:   absolute;
-    top:        44px;
-    left:       0px;
-    bottom:     0px;
-    width:      15%;
+    padding:            0;
+    margin:             0;
+    font-size:          11px;
+    background-color:   #fff;
+    color:              #444;
+    position:           absolute;
+    top:                50px;
+    left:               0px;
+    bottom:             0px;
+    width:              10%;
+    background-color:   lightgrey;
 }
+.toggleSideBar
+{
+    position:       absolute; 
+    top:            10px; 
+    bottom:         10px;
+    right:          0px;
+    width:          15px;
+    text-align:     center;
+    padding:        0;
+    font-family:    Courier;
+}
+.sidebarHidden .sidebar { width: 15px; }
+.sidebar-panel
+{
+    position:           absolute;
+    left:               0px;
+    top:                0px;
+    bottom:             0px;
+    right:              18px;
+    overflow-x:         auto;
+    background-color:   transparent;
+}
+.sidebar-panel .panel { background-color: transparent; }
+.sidebarHidden .sidebar-panel { display: none; }
 .playground
 {
     position:   absolute;
     top:        51px;
     right:      0px;
     bottom:     0px;
-    width:      85%;
+    width:      90%;
 }
+.sidebarHidden .playground { width: auto; left: 15px; }
+.toggleSideBar .collapse { display: inline; }
+.toggleSideBar .expand { display: none; }
+.sidebarHidden .toggleSideBar .collapse { display: none; }
+.sidebarHidden .toggleSideBar .expand { display: inline; }
 .editors 
 {
     margin:     0;
@@ -156,20 +192,6 @@ body {
     height:     auto;
     max-height: 200px;
     overflow-x: hidden;
-}
-
-#sidebar
-{
-    padding:            0;
-    margin:             0;
-    font-size:          11px;
-    top:                50px;
-    left:               0;
-    width:              217px;
-    bottom:             0px;
-    position:           absolute;
-    background-color:   #fff;
-    color:              #444;
 }
 
 .navbar-default
