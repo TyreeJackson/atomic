@@ -2739,7 +2739,7 @@
                                         paths:      {},
                                         matchers:   []
                                     });
-                                    return;
+                                    break;
                                 }
                             }
                             else
@@ -2765,7 +2765,7 @@
                             if (counter==pathSegments.length-1)
                             {
                                 current.paths[pathSegment].property = virtualProperty;
-                                return;
+                                break;
                             }
                             else
                             {
@@ -2773,6 +2773,7 @@
                             }
                         }
                     }
+                    this(path);
                 }
             }},
             ignore:             {value: function(callback)
