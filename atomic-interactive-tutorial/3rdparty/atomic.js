@@ -2616,18 +2616,16 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
         {
             var listenersToNotify   = {};
 
-            var propertyPaths       = Object.keys(bag.listenersByPath);
-            for(var propertyPathCounter=0,propertyPath;(propertyPath=propertyPaths[propertyPathCounter++]) !== undefined;)
-            if (propertyPath == propertyKey || (!directOnly && propertyPath.startsWith(propertyKey+".")))
+            var listeners       = bag.listenersByPath[propertyKey];
+            if (listeners !== undefined)
             {
-                var listeners       = bag.listenersByPath[propertyPath];
                 var listenerIds     = Object.keys(listeners);
                 for(var listenerIdCounter=0,listener;(listener=listeners[listenerIds[listenerIdCounter++]]) !== undefined;)
                     if (listener.listener.callback !== undefined && !listener.listener.callback.ignore && (!directOnly||listener.direct)) listenersToNotify[listener.listener.id]  = listener.listener;
             }
 
             for(var rootPath in bag.listenersByRootPath)
-            if ((propertyKey == rootPath || propertyKey.startsWith(rootPath+".")) && propertyKey.indexOf(".$shadow", rootPath.length) == -1)
+            if ((propertyKey == rootPath || propertyKey.startsWith(rootPath+".") || rootPath == "") && propertyKey.indexOf(".$shadow", rootPath.length) == -1)
             {
                 listeners           = bag.listenersByRootPath[rootPath];
                 listenerIds         = Object.keys(listeners);
@@ -2636,7 +2634,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
             }
 
             listenerIds             = Object.keys(listenersToNotify);
-            console.log("Notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
+            console.log((directOnly?"Directly":"Indirectly") + " notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
             for(var listenerIdCounter=0,listener;(listener=listenersToNotify[listenerIds[listenerIdCounter++]]) !== undefined;)
             if(listener.callback !== undefined && !listener.callback.ignore)
                 notifyPropertyListener.call(this, listener, bag, value);
