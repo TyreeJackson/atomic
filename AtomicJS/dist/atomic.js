@@ -2559,79 +2559,86 @@
             for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter];
             return path;
         }
-        function addPropertyPath(properties, path, remainingPath)
+        function addPropertyPath(bag, path, listener)
         {
-            properties[path]    = remainingPath !== undefined ? remainingPath : "";
+            if (bag.listenersByPath[path] === undefined)    bag.listenersByPath[path]   = {}
+            bag.listenersByPath[path][listener.id]          = listener;
+            listener.properties[path]                       = true;
         }
-        function addProperties(listener, pathSegments)
+        function addProperties(bag, pathSegments)
         {
+            var listener    = bag.updating[bag.updating.length-1];
             if (listener.ignore)    return;
-            addPropertyPath(listener.properties, "", getFullPath(pathSegments.slice(0)));
+
+            addPropertyPath(bag, "", listener);
             if (pathSegments.length === 0)  return;
-            var path    = pathSegments[0];
-            addPropertyPath(listener.properties, path, getFullPath(pathSegments.slice(1)));
+
+            var path        = pathSegments[0];
+            addPropertyPath(bag, path, listener);
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
             {
-                path    += "." + pathSegments[segmentCounter];
-                addPropertyPath(listener.properties, path, getFullPath(pathSegments.slice(segmentCounter+1)));
+                path        += "." + pathSegments[segmentCounter];
+                addPropertyPath(bag, path, listener);
             }
         }
-        function notifyPropertyListener(propertyKey, listener, bag, directOnly, value)
+        function unregisterListenerFromProperties(bag, listener)
         {
-            if
-            (
-                listener.callback !== undefined
-                &&
-                !listener.callback.ignore
-                &&
-                (
-                    propertyKey == "" 
-                    ||
-                    (
-                        listener.nestedUpdatesRootPath !== undefined
-                        &&
-                        propertyKey.substr(0, listener.nestedUpdatesRootPath.length) === listener.nestedUpdatesRootPath
-                        &&
-                        propertyKey.indexOf(".$shadow", listener.nestedUpdatesRootPath.length) == -1
-                    )
-                    ||
-                    (
-                        listener.properties !== undefined
-                        &&
-                        listener.properties.hasOwnProperty(propertyKey)
-                        &&
-                        (
-                            !directOnly
-                            ||
-                            listener.properties[propertyKey] === ""
-                        )
-                    )
-                )
-            )
+            var propertyPaths   = Object.keys(listener.properties);
+            for(var propertyPathCounter=0,propertyPath;(propertyPath=propertyPaths[propertyPathCounter++]) !== undefined;)
             {
-                bag.updating.push(listener);
-                // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
-                listener.properties = {};
-                var postCallback = listener.callback
-                (
-                    value, 
-                    function(callback)
-                    {
-                        listener.ignore =true;
-                        try     {callback();}
-                        catch(e){}
-                        listener.ignore = false;
-                    }
-                );
-                bag.updating.pop();
-                if (postCallback !== undefined) postCallback();
+                delete bag.listenersByPath[propertyPath][listener.id];
+                delete listener.properties[propertyPath];
             }
+if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Invalid operation: the properties bag should be empty.");}
         }
+        function notifyPropertyListener(listener, bag, directOnly, value)
+        {
+            bag.updating.push(listener);
+            // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
+
+            unregisterListenerFromProperties(bag, listener);
+            var postCallback    = listener.callback
+            (
+                value, 
+                function(callback)
+                {
+                    listener.ignore =true;
+                    try     {callback();}
+                    catch(e){}
+                    listener.ignore = false;
+                }
+            );
+            bag.updating.pop();
+            if (postCallback !== undefined) postCallback();
+        }
+
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
-            var itemListeners   = bag.itemListeners.slice();
-            for(var listenerCounter=0;listenerCounter<itemListeners.length;listenerCounter++)   
-                notifyPropertyListener.call(this, propertyKey, itemListeners[listenerCounter], bag, directOnly, value);
+            var listenersToNotify   = {};
+
+            var propertyPaths       = Object.keys(bag.listenersByPath);
+            for(var propertyPathCounter=0,propertyPath;(propertyPath=propertyPaths[propertyPathCounter++]) !== undefined;)
+            if (propertyPath == propertyKey || (!directOnly && propertyPath.startsWith(propertyKey+".")))
+            {
+                var listeners       = bag.listenersByPath[propertyPath];
+                var listenerIds     = Object.keys(listeners);
+                for(var listenerIdCounter=0,listener;(listener=listeners[listenerIds[listenerIdCounter++]]) !== undefined;)
+                    if (listener.callback !== undefined && !listener.callback.ignore)   listenersToNotify[listener.id]  = listener;
+            }
+
+            for(var rootPath in bag.listenersByRootPath)
+            if ((propertyKey == rootPath || propertyKey.startsWith(rootPath+".")) && propertyKey.indexOf(".$shadow", rootPath.length) == -1)
+            {
+                listeners           = bag.listenersByRootPath[rootPath];
+                listenerIds         = Object.keys(listeners);
+                for(var listenerIdCounter=0,listener;(listener=listeners[listenerIds[listenerIdCounter++]]) !== undefined;)
+                    if (listener.callback !== undefined && !listener.callback.ignore)   listenersToNotify[listener.id]  = listener;
+            }
+
+            listenerIds             = Object.keys(listenersToNotify);
+            console.log("Notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
+            for(var listenerIdCounter=0,listener;(listener=listenersToNotify[listenerIds[listenerIdCounter++]]) !== undefined;)
+                notifyPropertyListener.call(this, listener, bag, directOnly, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -2648,6 +2655,16 @@
             removeFromArray(this, index);
             this.splice(toIndex, 0, item);
         }
+        function filterMatchedByMatcher(paths, counter, matcher)
+        {
+            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;)
+            if (!matcher.test(path))    paths.splice(pathCounter, 1);
+        }
+        function filterMatchedByPathSegment(paths, counter, pathSegment)
+        {
+            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;)
+            if (path !== pathSegment)   paths.splice(pathCounter, 1);
+        }
         var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
@@ -2657,7 +2674,7 @@
 
                 if (value === undefined && !forceSet)
                 {
-                    var result      = accessor.get({bag: this.__bag, basePath: this.__basePath}, (!peek && this.__bag.updating.length > 0 ? (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1], pathSegments);}).bind(this) : undefined));
+                    var result      = accessor.get({bag: this.__bag, basePath: this.__basePath}, (!peek && this.__bag.updating.length > 0 ? (function(pathSegments){addProperties(this.__bag, pathSegments);}).bind(this) : undefined));
                     var revisedPath = result.pathSegments !== undefined ? result.pathSegments.join(".") : undefined;
                     return getObserver !== getObserverEnum.no && (getObserver===getObserverEnum.yes||(path !== undefined && revisedPath !== undefined && result.value !== null && typeof result.value == "object"))
                     ?   createObserver(revisedPath, this.__bag, Array.isArray(result.value))
@@ -2711,6 +2728,7 @@
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*?\/)/g)).filter(function(s){return s!=null&&s.length>0;});
+                    var currentMatched  = Object.keys(this.__bag.listenersByPath).map(function(path){return path.split(".");});
                     for(var counter=0;counter<pathSegments.length;counter++)
                     {
                         var pathSegment = pathSegments[counter];
@@ -2723,11 +2741,14 @@
                                 matcher = current.matchers[matcherCounter];
                                 break;
                             }
+
                             if (counter==pathSegments.length-1)
                             {
                                 if (matcher !== undefined)
                                 {
+                                    console.warn("Redefining virtualProperty located at " + (this.__basePath + (this.__basePath.length > 0 ? "." : "") + path) + ".");
                                     matcher.property    = virtualProperty;
+                                    filterMatchedByMatcher(currentMatched, counter, matcher);
                                 }
                                 else
                                 {
@@ -2739,6 +2760,7 @@
                                         paths:      {},
                                         matchers:   []
                                     });
+                                    filterMatchedByMatcher(currentMatched, counter, current.matchers[current.matchers.length-1]);
                                     break;
                                 }
                             }
@@ -2746,7 +2768,7 @@
                             {
                                 if (matcher === undefined)
                                 {
-                                    matcher =
+                                    matcher     =
                                     {
                                         key:        pathSegment,
                                         test:       (function(criteria){return function(path){return criteria.test(path);}})(new RegExp(pathSegment.substring(1,pathSegment.length-1))),
@@ -2756,7 +2778,8 @@
                                     current.matchers.push(matcher);
                                 }
 
-                                current = matcher;
+                                current         = matcher;
+                                filterMatchedByMatcher(currentMatched, counter, matcher);
                             }
                         }
                         else
@@ -2765,34 +2788,59 @@
                             if (counter==pathSegments.length-1)
                             {
                                 current.paths[pathSegment].property = virtualProperty;
+                                filterMatchedByPathSegment(currentMatched, counter, pathSegment);
                                 break;
                             }
                             else
                             {
                                 current = current.paths[pathSegment];
+                                filterMatchedByPathSegment(currentMatched, counter, pathSegment);
                             }
                         }
                     }
-                    this(path);
+                    for(var pathCounter=0,path;(path=currentMatched[pathCounter++]) !== undefined;) notifyPropertyListeners.call(this, path, this.__bag.item, this.__bag, false);
                 }
             }},
             ignore:             {value: function(callback)
             {
                 var callbackFound   = false;
-                for(var listenerCounter=this.__bag.itemListeners.length-1;listenerCounter>=0;listenerCounter--)
-                if (this.__bag.itemListeners[listenerCounter].callback === callback)
+                for(var listenerCounter=this.__bag.listeners.length-1;listenerCounter>=0;listenerCounter--)
                 {
-                    removeFromArray(this.__bag.itemListeners, listenerCounter);
-                    callbackFound   = true;
-                }
+                    var listener    = this.__bag.listeners[listenerCounter];
+                    if (listener.callback === callback)
+                    {
+                        removeFromArray(this.__bag.listeners, listenerCounter);
+                        unregisterListenerFromProperties(this.__bag, listener);
+                        if (listener.nestedUpdatesRootPath !== undefined)
+                        {
+                            var listenersByRootPath = this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath];
+                            for(var listenerByRootPathCounter=listenersByRootPath.length-1;listenerByRootPathCounter>=0;listenerByRootPathCounter--)
+                            if(listenersByRootPath[listenerByRootPathCounter] == listener)  removeFromArray(listenersByRootPath, listenerByRootPathCounter);
+                        }
+                        callbackFound   = true;
+                    }
+               }
                 if (!callbackFound) debugger;
             }},
             isObserver:         {value: true},
             listen:             {value: function(callback, nestedUpdatesRootPath)
             {
-                var listener    = {callback: callback, nestedUpdatesRootPath: nestedUpdatesRootPath!==undefined?((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath):undefined};
-                this.__bag.itemListeners.push(listener);
-                notifyPropertyListener.call(this, "", listener, this.__bag, false);
+                var listener    =
+                {
+                    id:                     this.__bag.listenerId++,
+                    callback:               callback, 
+                    properties:             {},
+                    nestedUpdatesRootPath:  nestedUpdatesRootPath !== undefined
+                                            ?   ((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath)
+                                            :   undefined
+                };
+                this.__bag.listeners.push(listener);
+                if (listener.nestedUpdatesRootPath !== undefined)
+                {
+                    if (this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath] === undefined)   this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath]  = [listener];
+                    else                                                                                this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath].push(listener);
+                }
+                notifyPropertyListener.call(this, listener, this.__bag, false);
             }},
             rollback:           {value: function()
             {
@@ -2816,7 +2864,7 @@
                     (
                         {bag: this.__bag, basePath: this.__basePath},
                         this.__bag.updating.length > 0
-                        ?   (function(pathSegments){addProperties(this.__bag.updating[this.__bag.updating.length-1], pathSegments);}).bind(this)
+                        ?   (function(pathSegments){addProperties(this.__bag, pathSegments);}).bind(this)
                         :   undefined
                     );
                     var value = property.back(virtual.value);
@@ -2930,14 +2978,16 @@
         {
             var bag             =
             {
-                item:               _item,
-                virtualProperties:  {paths:{}, matchers: []},
-                itemListeners:      [],
-                rootListeners:      [],
-                propertyKeys:       [],
-                updating:           [],
-                shadows:            {},
-                rollingback:        false
+                item:                   _item,
+                virtualProperties:      {paths:{}, matchers: []},
+                listenerId:             0,
+                listenersByPath:        {},
+                listenersByRootPath:    {},
+                listeners:              [],
+                propertyKeys:           [],
+                updating:               [],
+                shadows:                {},
+                rollingback:            false
             };
             return createObserver("", bag, Array.isArray(_item));
         };
