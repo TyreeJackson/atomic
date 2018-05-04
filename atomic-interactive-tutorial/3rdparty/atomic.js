@@ -2051,7 +2051,7 @@
                 activeTokenizers    = [];
                 for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   {if (tokenizer.read(currentChar))    activeTokenizers.push(tokenizer); }
 
-                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    {debugger; throw new Error ("Invalid syntax.  Unable to tokenize statement.");}
+                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
             }
             if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");
             

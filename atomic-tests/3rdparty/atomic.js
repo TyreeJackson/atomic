@@ -2051,7 +2051,7 @@
                 activeTokenizers    = [];
                 for(var counter=0, tokenizer;tokenizer=tokenizers[counter];counter++)   {if (tokenizer.read(currentChar))    activeTokenizers.push(tokenizer); }
 
-                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    {debugger; throw new Error ("Invalid syntax.  Unable to tokenize statement.");}
+                if (activeTokenizers.length == 0 && !whiteSpaceCharacters.test(currentChar))    throw new Error ("Invalid syntax.  Unable to tokenize statement.");
             }
             if (activeTokenizers.length == 0)   throw new Error ("Invalid syntax.  Unable to tokenize statement {" + (scanner.input===undefined||scanner.input===null?"":scanner.input) + "}.");
             
@@ -2559,10 +2559,10 @@
             for(var pathCounter=1;pathCounter<paths.length;pathCounter++)   path    += "." + paths[pathCounter];
             return path;
         }
-        function addPropertyPath(bag, path, listener)
+        function addPropertyPath(bag, path, listener, direct)
         {
             if (bag.listenersByPath[path] === undefined)    bag.listenersByPath[path]   = {}
-            bag.listenersByPath[path][listener.id]          = listener;
+            bag.listenersByPath[path][listener.id]          = {listener: listener, direct: direct};
             listener.properties[path]                       = true;
         }
         function addProperties(bag, pathSegments)
@@ -2570,15 +2570,15 @@
             var listener    = bag.updating[bag.updating.length-1];
             if (listener.ignore)    return;
 
-            addPropertyPath(bag, "", listener);
+            addPropertyPath(bag, "", listener, false);
             if (pathSegments.length === 0)  return;
 
             var path        = pathSegments[0];
-            addPropertyPath(bag, path, listener);
+            addPropertyPath(bag, path, listener, false);
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
             {
                 path        += "." + pathSegments[segmentCounter];
-                addPropertyPath(bag, path, listener);
+                addPropertyPath(bag, path, listener, segmentCounter == pathSegments.length - 1);
             }
         }
         function unregisterListenerFromProperties(bag, listener)
@@ -2591,7 +2591,7 @@
             }
 if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Invalid operation: the properties bag should be empty.");}
         }
-        function notifyPropertyListener(listener, bag, directOnly, value)
+        function notifyPropertyListener(listener, bag, value)
         {
             bag.updating.push(listener);
             // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
@@ -2623,7 +2623,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                 var listeners       = bag.listenersByPath[propertyPath];
                 var listenerIds     = Object.keys(listeners);
                 for(var listenerIdCounter=0,listener;(listener=listeners[listenerIds[listenerIdCounter++]]) !== undefined;)
-                    if (listener.callback !== undefined && !listener.callback.ignore)   listenersToNotify[listener.id]  = listener;
+                    if (listener.listener.callback !== undefined && !listener.listener.callback.ignore && (!directOnly||listener.direct)) listenersToNotify[listener.listener.id]  = listener.listener;
             }
 
             for(var rootPath in bag.listenersByRootPath)
@@ -2638,7 +2638,8 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
             listenerIds             = Object.keys(listenersToNotify);
             console.log("Notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
             for(var listenerIdCounter=0,listener;(listener=listenersToNotify[listenerIds[listenerIdCounter++]]) !== undefined;)
-                notifyPropertyListener.call(this, listener, bag, directOnly, value);
+            if(listener.callback !== undefined && !listener.callback.ignore)
+                notifyPropertyListener.call(this, listener, bag, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -2840,7 +2841,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                     if (this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath] === undefined)   this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath]  = [listener];
                     else                                                                                this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath].push(listener);
                 }
-                notifyPropertyListener.call(this, listener, this.__bag, false);
+                notifyPropertyListener.call(this, listener, this.__bag);
             }},
             rollback:           {value: function()
             {
