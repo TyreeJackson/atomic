@@ -348,7 +348,6 @@
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
-            //__observer:             {value: new MutationObserver((function(mutations){ mutations.forEach((function(mutation){ console.log(callbackCounter + " - " + (logCounter++) + ". " + this.__selectorPath + ": " + mutation.type + "[" + (mutation.type == "childList" ? (mutation.addedNodes.length + "/" + mutation.removedNodes.length) : mutation.attributeName) + "]", mutation); }).bind(this)); callbackCounter++; }).bind(this)), configurable: true},
             __elementPlaceholder:   {value: [], configurable: true},
             __events:               {value: new eventsSet(this), configurable: true},
             on:                     {value: {}, configurable: true},
@@ -361,7 +360,6 @@
             __forceRoot:            {value: false, configurable: true},
             classes:                {value: {}, configurable: true},
             __viewUpdateQueue:      {value: {}, configurable: true}
-            //bindPath:               {value: bindPath, configurable: true} //parent == null || parent.basePath == null ? "" : parent.basePath + (parent.basePath.length>0 && parentBind.length>0 ? "." : "") + parentBind
         });
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
@@ -389,8 +387,6 @@
             id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value; this.getEvents("viewupdated").viewupdated(["id"]);}},
             tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||""; this.getEvents("viewupdated").viewupdated(["title"]);}}
         });
-
-        //this.__observer.observe(this.__element, { attributes: false, childList: true, characterData: true });
     }
     function notifyClassEvent(className, exists)
     {
@@ -488,7 +484,6 @@
         }},
         destroy:            {value: function()
         {
-            //this.__observer.disconnect();
             this.__events.destroy();
             this.__binder.destroy();
             each
@@ -503,7 +498,6 @@
                 "__binder",
                 "__forceRoot",
                 "classes"
-                //"__observer"
             ],
             (function(name)
             {
