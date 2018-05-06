@@ -1,5 +1,4 @@
-!function()
-{"use strict"; root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
+!function(){"use strict";root.define("atomic.pathParserFactory", function pathParserFactory(tokenizer)
 {
     var LITERAL                     = 'literal';
     var WORD                        = 'word';

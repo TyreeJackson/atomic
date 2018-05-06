@@ -32,8 +32,8 @@
             {
                 Object.defineProperties(this, 
                 {
-                    "__listenersChanged":   {value: listenersChanged},
-                    "__listeners":          {value: []},
+                    "__listenersChanged":   {value: listenersChanged, configurable: true},
+                    "__listeners":          {value: [], configurable: true},
                     "__lastPublished":      {writable: true, value: null},
                     "__publishTimeoutId":   {writable: true, value: null},
                     "limit":                {writable: true, value: null}
@@ -62,6 +62,21 @@
 
                     if (now>=limitOffset)   publish();
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
+                }},
+                destroy:
+                {value: function()
+                {
+                    this.pubsub.destroy();
+                    each
+                    ([
+                        "__listenersChanged",
+                        "__listeners"
+                    ],
+                    (function(name)
+                    {
+                        Object.defineProperty(this, name, {value: null, configurable: true});
+                        delete this[name];
+                    }).bind(this));
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},

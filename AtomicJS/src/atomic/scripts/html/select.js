@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
 {
     function getSelectListValue()
     {
@@ -15,8 +14,9 @@
         this.__rawValue = value;
         var bound       = this.items.bind != undefined;
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
+        this.getEvents("viewupdated").viewupdated(["value"]);
     }
-    function selectoption(element, selector, parent)
+    function selectoption(element, selector, parent, bindPath)
     {
         Object.defineProperties(this, 
         {
@@ -37,18 +37,18 @@
     function createOption(sourceItem, index)
     {
         var option          = new selectoption(document.createElement('option'), this.selector+"-"+index, this);
-        option.text.bind    = this.optionText||"";
-        option.value.bind   = this.optionValue||"";
+        option.text.listen({bind: this.optionText||""});
+        option.value.listen({bind: this.optionValue||""});
         option.source       = sourceItem;
         return option;
     }
-    function select(element, selector, parent)
+    function select(element, selector, parent, bindPath)
     {
-        input.call(this, element, selector, parent);
+        input.call(this, element, selector, parent, bindPath);
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},
-            "__options":    {value: []}
+            "__options":    {value: [], configurable: true}
         });
         this.__binder.defineDataProperties(this,
         {
@@ -66,12 +66,13 @@
         });
     }
     Object.defineProperty(select, "prototype", {value: Object.create(input.prototype)});
+    Object.defineProperty(select, "__getViewProperty", {value: function(name) { return input.__getViewProperty(name); }});
     Object.defineProperties(select.prototype,
     {
         constructor:        {value: select},
         __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
-        selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)

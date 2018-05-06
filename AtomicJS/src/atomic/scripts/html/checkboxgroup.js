@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.checkboxgroup", function htmlCheckboxGroup(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.checkboxgroup", function htmlCheckboxGroup(input, dataBinder, each)
 {
     function setCheckboxGroupValues(values)
     {
@@ -74,14 +73,14 @@
     function createOption(sourceItem, index)
     {
         var option          = new checkboxoption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__name, this, index);
-        option.text.bind    = this.optionText||"";
-        option.value.bind   = this.optionValue||"";
+        option.text.listen({bind: this.optionText||""});
+        option.value.listen({bind: this.optionValue||""});
         option.source       = sourceItem;
         return option;
     }
-    function checkboxgroup(elements, selector, parent)
+    function checkboxgroup(elements, selector, parent, bindPath)
     {
-        input.call(this, elements, selector, parent);
+        input.call(this, elements, selector, parent, bindPath);
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},
@@ -105,12 +104,13 @@
         });
     }
     Object.defineProperty(checkboxgroup, "prototype", {value: Object.create(input.prototype)});
+    Object.defineProperty(checkboxgroup, "__getViewProperty", {value: function(name) { return input.__getViewProperty(name); }});
     Object.defineProperties(checkboxgroup.prototype,
     {
         constructor:        {value: checkboxgroup},
         __createNode:       {value: function(){var element = document.createElement("checkboxgroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
-        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValues) && this.__rawValues.indexOf(value) > -1;}}
     });
     each(["text","value"], function(name)
@@ -140,7 +140,7 @@
             var sourceItem  = items.observe(counter);
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
-            this.__element.appendChild(option.__element);
+            this.__setViewData("appendChild", option.__element);
             option.selected = this.__isValueSelected(option.value());
         }
     }

@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, removeFromArray)
+!function(){"use strict";root.define("atomic.html.repeater", function htmlRepeater(control, removeFromArray)
 {
     var querySelector       =
     function(uiElement, selector, selectorPath, typeHint)
@@ -10,41 +9,6 @@
     {
         while(element.lastChild)    element.removeChild(element.lastChild);
     }
-    function locate(item, templateKey, retained)
-    {
-        var retainedArray   = retained[templateKey];
-        if (retainedArray === undefined)    return null;
-        for(var counter=0;counter<retainedArray.length;counter++) if ( retainedArray[counter].data() === item)
-        {
-            var retainedControl = retainedArray[counter];
-            removeFromArray(retainedArray, counter);
-            return retainedControl;
-        }
-        return null;
-    }
-    function createTemplateCopy(templateKey, subDataItem, counter, retained)
-    {
-        var templateElement = this.__templateElements[templateKey];
-        if (templateElement.declaration.skipItem !== undefined && templateElement.declaration.skipItem(subDataItem))    return;
-        var key             = templateElement.declaration.getKey.call({parent: this, index: counter}, subDataItem);
-        var originalPath    = subDataItem("$path");
-
-        var retainedControl = locate(subDataItem(), templateKey, retained);
-        if (retainedControl !== null)
-        {
-            retainedControl.__element.setAttribute("id", key);
-            retainedControl.__element.setAttribute("data-current-path", originalPath);
-            return { key: key, parent: templateElement.parent, control: retainedControl };
-        }
-
-        var elementCopy     = templateElement.element.cloneNode(true);
-        elementCopy.setAttribute("id", key);
-        elementCopy.setAttribute("data-original-path", originalPath);
-        var clone           = { key: key, parent: templateElement.parent, control: this.createControl(templateElement.declaration, elementCopy, this, "#" + key) };
-        Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
-        clone.control.data  = subDataItem;
-        return clone;
-    };
     function extractDeferredControls(templateDeclarations, viewElement)
     {
         if (templateDeclarations === undefined) return;
@@ -52,11 +16,11 @@
         {
             this.__templateKeys.push(templateKey);
             var templateDeclaration                         = templateDeclarations[templateKey];
-            if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return this.parent.__selector+"-"+this.__selector+"-"+this.index;}
             var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), this.getSelectorPath());
             var templateElementParent                       = templateElement.parentNode;
             if (templateElementParent !== null)             templateElementParent.removeChild(templateElement);
-            this.__templateElements[templateKey]            =
+            this.__templateContainers[templateKey]          = templateElementParent;
+            this.__templates[templateKey]                   =
             {
                 parent:         templateElementParent||viewElement,
                 declaration:    templateDeclaration,
@@ -64,82 +28,194 @@
             };
         }
         for(var templateKey in templateDeclarations)
-        removeAllElementChildren(this.__templateElements[templateKey].parent);
-    }
-
-    function bindRepeatedList(observer)
-    {
-        if (observer() === undefined) return;
-        var documentFragment    = document.createDocumentFragment();
-        var retained            = unbindRepeatedList.call(this, observer());
-        var parent;
-        for(var dataItemCounter=0;dataItemCounter<observer.count;dataItemCounter++)
         {
-            for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+            removeAllElementChildren(this.__templates[templateKey].parent);
+        }
+    }
+    function removeListItem(itemIndex)
+    {
+        for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+        {
+            var templateKey     = this.__templateKeys[templateKeyCounter] + "_" + itemIndex;
+            var repeatedControl = this.__repeatedControls[templateKey];
+            if (repeatedControl !== undefined)
             {
-                var subDataItem                     = observer.observe(dataItemCounter);
-                var clone                           = createTemplateCopy.call(this, this.__templateKeys[templateKeyCounter], subDataItem, dataItemCounter, retained);
-                if (clone !== undefined)
-                {
-                    this.__repeatedControls[clone.key]  = clone.control;
-                    documentFragment.appendChild(clone.control.__element);
-                    parent                              = clone.parent;
-                }
+                this.__retained[templateKey]    = repeatedControl;
+                repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+                repeatedControl.__setData(null);
             }
         }
-        (parent||this.__element).appendChild(documentFragment);
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
     }
-    function unbindRepeatedList(keepList)
+    function collectGarbage()
     {
-        var retain  = {};
-        if (this.__repeatedControls !== undefined)
-        for(var repeatedControlKey in this.__repeatedControls)
+        var garbage     = this.__retained;
+        Object.defineProperty(this, "__retained", {});
+        var keys        = Object.keys(garbage);
+        var keyCounter  = keys.length-1;
+        function collectGarbagePage()
         {
-            var repeatedControl     = this.__repeatedControls[repeatedControlKey];
-            if (retain[repeatedControl.__templateKey] === undefined)    retain[repeatedControl.__templateKey]   = [];
-            repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
-            if (keepList.indexOf(repeatedControl.data()) > -1)          retain[repeatedControl.__templateKey].push(repeatedControl);
-            else                                                        {repeatedControl.destroy();}
+            var lowerBound  = keyCounter-10 > -1 ? keyCounter - 10 : -1;
+            for(var counter=keyCounter;counter>lowerBound;counter--)
+            {
+                var key = keys[counter];
+                //console.log("Collected: " + garbage[key].__selector);
+                garbage[key].destroy();
+                delete  garbage[key];
+            }
+            keyCounter      = lowerBound;
+            if (keyCounter > 0) setTimeout(collectGarbagePage, 10);
         }
-        this.__repeatedControls     = {};
-        return retain;
+        collectGarbagePage();
     }
-
-    function repeater(elements, selector, parent)
+    function resetGarbageCollector()
     {
-        control.call(this, elements, selector, parent);
+        if (this.__gcID !== undefined)
+        {
+            clearTimeout(this.__gcID);
+            Object.defineProperty(this, "__gcID", {writable: true, configurable: true});
+            delete this.__gcID;
+        }
+        Object.defineProperty(this, "__gcID", {value: setTimeout(collectGarbage.bind(this), 180000), configurable: true});
+    }
+    function addListItem(itemIndex, documentFragments)
+    {
+        for(var templateKeyCounter=0;templateKeyCounter<this.__templateKeys.length;templateKeyCounter++)
+        {
+            var templateKey = this.__templateKeys[templateKeyCounter];
+            var clone       = getTemplateCopy.call(this, templateKey, itemIndex);
+            if (clone !== undefined)
+            {
+                this.__repeatedControls[templateKey + "_" + itemIndex]  = clone.control;
+                documentFragments[templateKey].appendChild(clone.control.__element);
+                parent                              = clone.parent;
+            }
+        }
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
+    }
+    function getRetainedTemplateCopy(itemKey)
+    {
+        if (this.__retained[itemKey])
+        {
+            var item    = this.__retained[itemKey];
+            delete this.__retained[itemKey];
+            //console.log("recycled: " + item.__selector)
+            return item;
+        }
+        return null;
+    }
+    function createTemplateCopy(templateKey, template, itemIndex, itemKey)
+    {
+        var elementCopy = template.element.cloneNode(true);
+        elementCopy.setAttribute("id", itemKey);
+        var bindPath    = this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
+        var clone       = { key: itemKey, parent: template.parent, control: this.createControl(template.declaration, elementCopy, "#" + itemKey, itemKey, bindPath + (bindPath.length > 0 ? "." : "") + itemIndex) };
+        Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
+        //console.log("created: " + clone.control.__selector)
+        return clone;
+    }
+    function getTemplateCopy(templateKey, itemIndex)
+    {
+        var itemKey         = templateKey+"_"+itemIndex;
+        var template        = this.__templates[templateKey];
+        if (template.declaration.skipItem !== undefined && template.declaration.skipItem(subDataItem))    return;
+
+        var retainedControl = getRetainedTemplateCopy.call(this, itemKey);
+        var clone           = retainedControl !== null ? { key: itemKey, parent: template.parent, control: retainedControl } : createTemplateCopy.call(this, templateKey, template, itemIndex, itemKey);
+        var data            = this.__getData();
+        if (data !== undefined) clone.control.__setData(data);
+        return clone;
+    };
+    function refreshList(itemCount)
+    {
+        itemCount   = itemCount||0;
+        if (isNaN(itemCount) || itemCount === (this.__itemCount))    return;
+        if (this.__itemCount > itemCount)
+        {
+            for(var counter=this.__itemCount-1;counter>=itemCount;counter--)   removeListItem.call(this, counter);
+            resetGarbageCollector.call(this);
+        }
+        else if (this.__itemCount < itemCount)
+        {
+            var documentFragments   = createTemplateContainerDocumentFragments.call(this);
+            for(var counter=this.__itemCount;counter<itemCount;counter++)   addListItem.call(this, counter, documentFragments.byKey);
+            attachTemplateContainerDocumentFragments.call(this, documentFragments);
+        }
+        Object.defineProperty(this, "__itemCount", {value: itemCount, configurable: true});
+    }
+    function getSharedTemplateContainerKey(templateKey)
+    {
+        var templateContainer   = this.__templateContainers[templateKey];
+        for(var counter=0;counter<this.__templateKeys.length;counter++)
+        {
+            var compareKey  = this.__templateKeys[counter];
+            if (compareKey == templateKey)                                  return null;
+            if (this.__templateContainers[compareKey] == templateContainer) return compareKey;
+        }
+    }
+    function createTemplateContainerDocumentFragments()
+    {
+        var documentFragments                           = {byKey: {}, unique: {}};
+        for(var counter=0;counter<this.__templateKeys.length;counter++)
+        {
+            var templateKey                             = this.__templateKeys[counter];
+            var sharedContainerKey                      = getSharedTemplateContainerKey.call(this, templateKey);
+            if (sharedContainerKey == null)
+            {
+                var documentFragment                    = document.createDocumentFragment();
+                documentFragments.byKey[templateKey]    = documentFragment;
+                documentFragments.unique[templateKey]   = documentFragment;
+            }
+            else
+            {
+                documentFragments.byKey[templateKey]    = documentFragments.byKey[sharedContainerKey];
+            }
+        }
+        return documentFragments;
+    }
+    function attachTemplateContainerDocumentFragments(documentFragments)
+    {
+        this.__setViewData("callback", function()
+        {for(var counter=0;counter<this.__templateKeys.length;counter++)
+        {
+            var templateKey = this.__templateKeys[counter];
+            delete documentFragments.byKey[templateKey];
+            if(documentFragments.unique[templateKey])
+            {
+                this.__templateContainers[templateKey].appendChild(documentFragments.unique[templateKey]);
+                delete documentFragments.unique[templateKey];
+            }
+        }});
+    }
+    function repeater(elements, selector, parent, bindPath)
+    {
+        control.call(this, elements, selector, parent, bindPath);
         Object.defineProperties(this,
         {
-            "__templateKeys":       {value: []},
-            "__templateElements":   {value: {}}
+            __templateKeys:         {value: [], configurable: true},
+            __templates:            {value: {}, configurable: true},
+            __templateContainers:   {value: {}, configurable: true},
+            __retained:             {value: {}, configurable: true},
+            __itemCount:            {value: 0, configurable: true},
+            __repeatedControls:     {value: {}, configurable: true}
         });
-        this.__binder.defineDataProperties(this, {value: {set: function(value)
+        this.__binder.defineDataProperties(this,
         {
-            if (this.__updateDataOnChildControlsTimeoutId !== undefined)    clearTimeout(this.__updateDataOnChildControlsTimeoutId);
-            this.__updateDataOnChildControlsTimeoutId   =
-            setTimeout
-            (
-                (function(data)
-                {
-                    delete  this.__updateDataOnChildControlsTimeoutId;
-                    bindRepeatedList.call(this, data);
-                }).bind(this, (typeof(this.bind) === "function" ? value : this.data.observe(this.bind))),
-                0
-            );
-        }}});
-        this.bind   = "";
+            value:  {get: function(){return this.__value;}, set: function(value){this.__value = value; refreshList.call(this, value!=undefined&&value.isObserver?value().length:0);}, simpleBindingsOnly: true}
+        });
+        this.value.listen({bind: ""});
     }
     Object.defineProperty(repeater, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperty(repeater, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(repeater.prototype,
     {
-        constructor:        {value: repeater},
-        init:               {value: function(definition)
+        constructor:                {value: repeater},
+        frame:                      {value: function(definition)
         {
             extractDeferredControls.call(this, definition.repeat, this.__element);
-            control.prototype.init.call(this, definition);
+            control.prototype.frame.call(this, definition);
         }},
-        children:   {value: function(){return this.__repeatedControls || null;}},
-        refresh:    {value: function(){bindRepeatedList.call(this, this.data(this.__bind||""));}},
+        children:   {get: function(){return this.__repeatedControls || null;}},
         pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;

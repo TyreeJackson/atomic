@@ -1,5 +1,4 @@
-!function()
-{"use strict"; root.define("atomic.tokenizer", function tokenizer()
+!function(){"use strict";root.define("atomic.tokenizer", function tokenizer()
 {
     return function(prot, reset, read, getToken)
     {

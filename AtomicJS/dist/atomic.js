@@ -348,7 +348,6 @@
         Object.defineProperties(this, 
         {
             __element:              {value: element, configurable: true},
-            //__observer:             {value: new MutationObserver((function(mutations){ mutations.forEach((function(mutation){ console.log(callbackCounter + " - " + (logCounter++) + ". " + this.__selectorPath + ": " + mutation.type + "[" + (mutation.type == "childList" ? (mutation.addedNodes.length + "/" + mutation.removedNodes.length) : mutation.attributeName) + "]", mutation); }).bind(this)); callbackCounter++; }).bind(this)), configurable: true},
             __elementPlaceholder:   {value: [], configurable: true},
             __events:               {value: new eventsSet(this), configurable: true},
             on:                     {value: {}, configurable: true},
@@ -361,7 +360,6 @@
             __forceRoot:            {value: false, configurable: true},
             classes:                {value: {}, configurable: true},
             __viewUpdateQueue:      {value: {}, configurable: true}
-            //bindPath:               {value: bindPath, configurable: true} //parent == null || parent.basePath == null ? "" : parent.basePath + (parent.basePath.length>0 && parentBind.length>0 ? "." : "") + parentBind
         });
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
@@ -389,8 +387,6 @@
             id:                 {get: function(){return this.__element.id;},                        set: function(value){this.__element.id=value; this.getEvents("viewupdated").viewupdated(["id"]);}},
             tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||""; this.getEvents("viewupdated").viewupdated(["title"]);}}
         });
-
-        //this.__observer.observe(this.__element, { attributes: false, childList: true, characterData: true });
     }
     function notifyClassEvent(className, exists)
     {
@@ -488,7 +484,6 @@
         }},
         destroy:            {value: function()
         {
-            //this.__observer.disconnect();
             this.__events.destroy();
             this.__binder.destroy();
             each
@@ -503,7 +498,6 @@
                 "__binder",
                 "__forceRoot",
                 "classes"
-                //"__observer"
             ],
             (function(name)
             {
@@ -768,6 +762,24 @@
     }
     function buildGet(property)                     { return function(){return this.controlData(property);} }
     function buildSet(property)                     { return function(value){this.controlData(property, value);} }
+    function buildOnchange(control, property)
+    {
+        var propertyEvent   = control.__events.getOrAdd("controlData:" + property);
+        var defining        = true;
+        control.controlData.listen(function(){var value = this(property); if (!defining) propertyEvent(value);});
+        defining            = false;
+        return [propertyEvent];
+    }
+    function connectOnchange(control, propertyKey, get, listenerCallback)
+    {
+        if (typeof listenerCallback === "string")   return control.getEvents(listenerCallback);
+        
+        var propertyEvent   = control.__events.getOrAdd("controlData:" + propertyKey);
+        var defining        = true;
+        control.controlData.listen(function(){var value = get.call(control); if (!defining) propertyEvent(value);});
+        defining            = false;
+        return [propertyEvent];
+    }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
     Object.defineProperty(container, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(container.prototype,
@@ -865,8 +877,12 @@
             {
                 var property    = propertyDeclarations[propertyKey];
                 if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
-                else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property) });
-                else    if (property.bound === true)        this.__binder.defineDataProperties(this, propertyKey, {get: typeof property.get === "string" ? buildGet(property) : property.get, set: typeof property.set === "string" ? buildSet(property) : property.set, onchange: this.getEvents(property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});
+                else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property), onchange: buildOnchange(this, property) });
+                else    if (property.bound === true)
+                {
+                    var get     = typeof property.get === "string" ? buildGet(property) : property.get;
+                    this.__binder.defineDataProperties(this, propertyKey, {get: get, set: typeof property.set === "string" ? buildSet(property) : property.set, onchange: connectOnchange(this, propertyKey, get, property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});
+                }
                 else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
             }
         }},
@@ -1009,7 +1025,6 @@
         {
             this.__templateKeys.push(templateKey);
             var templateDeclaration                         = templateDeclarations[templateKey];
-            if (templateDeclaration.getKey === undefined)   templateDeclaration.getKey = function(data){return this.parent.__selector+"-"+this.__selector+"-"+this.index;}
             var templateElement                             = querySelector(viewElement, (templateDeclaration.selector||("#"+templateKey)), this.getSelectorPath());
             var templateElementParent                       = templateElement.parentNode;
             if (templateElementParent !== null)             templateElementParent.removeChild(templateElement);
@@ -1890,11 +1905,8 @@
                         controlType:            "panel",
                         bindPath:               bindPath
                     });
-                    container.__setViewData("callback", function()
-                    {
-                        this.__element.innerHTML   = "";
-                        this.__element.appendChild(viewElement);
-                    });
+                    containerElement.innerHTML   = "";
+                    containerElement.appendChild(viewElement);
                 }
                 else                                parent.__setViewData("appendChild", viewElement);
 
@@ -2574,7 +2586,7 @@
             if (pathSegments.length === 0)  return;
 
             var path        = pathSegments[0];
-            addPropertyPath(bag, path, listener, false);
+            addPropertyPath(bag, path, listener, pathSegments.length == 1);
             for(var segmentCounter=1;segmentCounter<pathSegments.length;segmentCounter++)
             {
                 path        += "." + pathSegments[segmentCounter];
@@ -2597,8 +2609,9 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
             // useful for debugging.  I should consider a hook that allows debuggers to report on why re-evaluation of bound properties occur: var oldProperties   = listener.properties;
 
             unregisterListenerFromProperties(bag, listener);
-            var postCallback    = listener.callback
+            var postCallback    = listener.callback.call
             (
+                listener.observer,
                 value, 
                 function(callback)
                 {
@@ -2816,6 +2829,11 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                             for(var listenerByRootPathCounter=listenersByRootPath.length-1;listenerByRootPathCounter>=0;listenerByRootPathCounter--)
                             if(listenersByRootPath[listenerByRootPathCounter] == listener)  removeFromArray(listenersByRootPath, listenerByRootPathCounter);
                         }
+                        delete listener.id;
+                        delete listener.callback;
+                        delete listener.observer;
+                        delete listener.properties;
+                        delete listener.nestedUpdatesRootPath;
                         callbackFound   = true;
                     }
                }
@@ -2828,6 +2846,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                 {
                     id:                     this.__bag.listenerId++,
                     callback:               callback, 
+                    observer:               this,
                     properties:             {},
                     nestedUpdatesRootPath:  nestedUpdatesRootPath !== undefined
                                             ?   ((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath)

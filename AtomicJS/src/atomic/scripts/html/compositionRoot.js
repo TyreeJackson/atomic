@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes)
+!function(){"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes)
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
@@ -25,8 +24,9 @@
     var readonly                = new root.atomic.html.readonly(control, each);
     var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
-    var container               = new root.atomic.html.container(control, each, viewAdapterFactory, new root.atomic.initializeViewAdapter(each), root.utilities.removeItemFromArray);
+    var container               = new root.atomic.html.container(control, observer, each, viewAdapterFactory, root.utilities.removeItemFromArray);
     var panel                   = new root.atomic.html.panel(container, each);
+    var screen                  = new root.atomic.html.screen(panel, observer);
     var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);
     var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
@@ -38,6 +38,7 @@
     var multiselect             = new root.atomic.html.multiselect(select);
     var image                   = new root.atomic.html.image(control);
     var audio                   = new root.atomic.html.audio(control);
+    var video                   = new root.atomic.html.video(audio);
     var button                  = new root.atomic.html.button(control);
 
     Object.defineProperties(controlTypes,
@@ -49,6 +50,7 @@
         linkPanel:      {value: linkPanel},
         container:      {value: container},
         panel:          {value: panel},
+        screen:         {value: screen},
         composite:      {value: composite},
         repeater:       {value: repeater},
         input:          {value: input},
@@ -59,14 +61,14 @@
         multiselect:    {value: multiselect},
         image:          {value: image},
         audio:          {value: audio},
+        video:          {value: video},
         button:         {value: button}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
     return atomic;
 });}();
-!function(window, document)
-{"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
+!function(window, document){"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
 {
     root.atomic.ready(function(atomic)
     {
@@ -74,8 +76,7 @@
     });
 });}(window, document);
 !function(window, document)
-{
-    "use strict";
+{"use strict";
     var atomic;
     root.define("atomic.ready", function ready(callback)
     {

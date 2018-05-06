@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, each)
+!function(){"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, each)
 {
     function listenerList(target, eventName, withCapture)
     {
@@ -25,6 +24,22 @@
                 this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
                 Object.defineProperty(this, "__isAttached", {value: false, configurable: true});
             }
+        }},
+        destroy:
+        {value: function()
+        {
+            this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+            this.pubSub.destroy();
+            each
+            ([
+                "pubsub",
+                "__target"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
         }}
     });
     function eventsSet(target)
@@ -50,6 +65,23 @@
         destroy:
         {value: function()
         {
+            each
+            ([
+                "__listenersUsingCapture",
+                "__listenersNotUsingCapture"
+            ],
+            (function(listener)
+            {
+                each
+                (this[listener],
+                (function(name)
+                {
+                    this[listener][name].destroy();
+                    Object.defineProperty(this[listener], name, {value: null, configurable: true});
+                    delete this[listener][name];
+                }).bind(this));
+            }).bind(this));
+
             each
             ([
                 "__target",

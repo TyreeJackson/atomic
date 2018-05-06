@@ -1,59 +1,69 @@
-!function()
-{"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each, observer)
+!function(){"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each)
 {
     var viewAdapterFactory  =
     {
-        create:         function createViewAdapter(viewAdapterDefinitionConstructor, viewElement, parent, selector, controlType, preConstruct)
+        create:         function create(options)
         {
-            selector                    = selector || (viewElement.id?("#"+viewElement.id):("."+viewElement.className));
-            if (controlTypes[controlType] === undefined)    debugger;
-            var viewAdapter             = new controlTypes[controlType](viewElement, selector, parent);
-            viewAdapter.init(new viewAdapterDefinitionConstructor(viewAdapter));
-            if (typeof preConstruct === "function") preConstruct.call(viewAdapter);
+            var selector                = options.selector || (options.viewElement.id?("#"+options.viewElement.id):("."+options.viewElement.className));
+            if (controlTypes[options.controlType] === undefined)    debugger;
+
+            var viewAdapter             = new controlTypes[options.controlType](options.viewElement, selector, options.parent, options.bindPath);
+            Object.defineProperty(viewAdapter, "__childKey", {value: options.controlKey, configurable: true});
+
+            viewAdapter.frame(new options.definitionConstructor(viewAdapter));
+            if (typeof options.preConstruct === "function") options.preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
-        createView:     function(viewAdapterDefinitionConstructor, viewElement)
+        createView:     function createView(definitionConstructor, viewElement)
         {
             var adapter = this.create
-            (
-                typeof viewAdapterDefinitionConstructor !== "function"
-                ?   function(appViewAdapter){return {controls: viewAdapterDefinitionConstructor}; }
-                :   viewAdapterDefinitionConstructor,
-                viewElement,
-                undefined,
-                undefined,
-                "panel",
-                function(){this.data = new observer({});}
-            );
+            ({
+                definitionConstructor:  typeof definitionConstructor !== "function" ? function(appViewAdapter){return {controls: definitionConstructor}; } : definitionConstructor,
+                viewElement:            viewElement,
+                parent:                 undefined,
+                selector:               undefined,
+                controlKey:             undefined,
+                controlType:            "screen",
+                bindPath:               ""
+            });
             return adapter;
         },
-        createFactory:  function createFactory(viewAdapterDefinitionConstructor, viewElementTemplate)
+        createFactory:  function createFactory(definitionConstructor, viewElementTemplate)
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            var factory = (function(parent, containerElement, selector)
+            var factory = (function(parent, containerElement, selector, controlKey, bindPath)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
                 if (containerElement !== undefined)
                 {
-                    container                       = this.create(function(){return {};}, containerElement, parent, selector, "composite");
-                    container.__element.innerHTML   = "";
-                    container.__element.appendChild(viewElement);
+                    container                       = this.create
+                    ({
+                        definitionConstructor:  function(){return {};}, 
+                        viewElement:            containerElement,
+                        parent:                 parent,
+                        selector:               selector,
+                        controlKey:             controlKey,
+                        controlType:            "panel",
+                        bindPath:               bindPath
+                    });
+                    containerElement.innerHTML   = "";
+                    containerElement.appendChild(viewElement);
                 }
-                else                                parent.__element.appendChild(viewElement);
+                else                                parent.__setViewData("appendChild", viewElement);
+
                 var view                            = this.create
-                (
-                    typeof viewAdapterDefinitionConstructor !== "function"
-                    ?   function(control){return viewAdapterDefinitionConstructor}
-                    :   function(control){return viewAdapterDefinitionConstructor(control, factory);},
-                    viewElement,
-                    container,
-                    selector,
-                    "composite",
-                    function(){this.controlData = new observer({});}
-                );
+                ({
+                    definitionConstructor:  typeof definitionConstructor !== "function" ? function(control){return definitionConstructor} : function(control){return definitionConstructor(control, factory);},
+                    viewElement:            viewElement,
+                    parent:                 container,
+                    selector:               selector,
+                    controlKey:             controlKey,
+                    controlType:            "composite",
+                    bindPath:               bindPath
+                });
                 return view;
             }).bind(this);
             return factory;
@@ -68,7 +78,7 @@
                 controlsOrAdapter   = viewElement;
                 viewElement         = document.body;
             }
-            if (callback === undefined)             callback    = function(adapter){adapter.data("", {});};
+            if (callback === undefined)             callback    = function(adapter){adapter.__getData()("", {});};
             else if(typeof callback === "object")   callback    = (function(data){return function(adapter){adapter.data("", data);};})(callback);
             var adapter =
             this.createView
