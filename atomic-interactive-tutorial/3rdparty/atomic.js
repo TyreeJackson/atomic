@@ -291,6 +291,10 @@
             if (typeof value === "object")  bindMultipleProperties.call(viewAdapter, value);
             else                            viewAdapter.value.listen({bind: value});
         }},
+        on:                 {enumerable: true, value: function(viewAdapter, value)
+        {
+            for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false);
+        }},
         updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
     each(["alt", "autoplay", "currentTime", "loop", "muted", "nativeControls", "preload", "mediaType", "playbackRate", "value", "volume"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + viewAdapter.constructor.name + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
@@ -303,7 +307,7 @@
     });
     each(["abort", "blur", "canplay", "canplaythrough", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "error", "focus", "focusin", "focusout", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"], function(val)
     {
-        initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
+        initializers["on" + val] = function(viewAdapter, callback) { console.warn("The '{on" + val + ": listener}' event initializer has been deprecated.  Please switch to the '{on: {" + val + ": listener}}' initializer instead."); viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
     });
     function initializeViewAdapterExtension(viewAdapterDefinition, extension)
     {
@@ -850,7 +854,7 @@
             if (controlDeclaration === undefined)  return;
             var control;
             // hack: This feels hacky.  Think this through and see if there is a better way to do incorporate the controlDeclaration.bind into the bind path.
-            var bindPath    = this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
+            var bindPath    = this.__customBind ? "" : this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
             this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
             if (this.data !== undefined)    this.controls[controlKey].__setData(this.__getData());
             return control;
@@ -865,7 +869,7 @@
                 var declaration = controlDeclarations[controlKey];
                 var selector    = (declaration.selector||("#"+controlKey));
                 var elements    = viewAdapterFactory.selectAll(this.__element, selector, selectorPath);
-                var control     = this.controls[controlKey] = this.createControl(declaration, elements&&elements[0], selector, controlKey, this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath, elements && elements.length > 1);
+                var control     = this.controls[controlKey] = this.createControl(declaration, elements&&elements[0], selector, controlKey, this.__customBind ? "" : (this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath), elements && elements.length > 1);
             }
             var data            = this.__getData();
             if (data !== undefined) for(var controlKey in controlDeclarations)  this.controls[controlKey].__setData(data);
@@ -892,7 +896,7 @@
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(this, controlElement, selector, controlKey, bindPath);
+                control = controlDeclaration.factory(this, controlElement, selector, controlKey, this.__customBind ? "" : bindPath);
             }
             else    control = viewAdapterFactory.create
             ({
@@ -903,7 +907,7 @@
                 controlKey:             controlKey,
                 controlType:            getControlTypeForElement(controlDeclaration, controlElement, multipleElements),
                 preConstruct:           preConstruct,
-                bindPath:               bindPath
+                bindPath:               this.__customBind ? "" : bindPath
             });
             control.initialize(controlDeclaration);
             return control;
@@ -1312,7 +1316,7 @@
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
         this.getEvents("viewupdated").viewupdated(["value"]);
     }
-    function selectoption(element, selector, parent, bindPath)
+    function selectoption(element, selector, parent)
     {
         Object.defineProperties(this, 
         {
