@@ -392,10 +392,10 @@
             tooltip:            {get: function(){return this.__element.title;},                     set: function(value){this.__element.title = value||""; this.getEvents("viewupdated").viewupdated(["title"]);}}
         });
     }
-    function notifyClassEvent(className, exists)
+    function notifyClassEvent(classNames, exists)
     {
-        var event = this.__events.get("class-"+className);
-        if (event !== undefined)    event(exists);
+        for (var counter=0,className,event;(className = classNames[counter++]) !== undefined;)
+        if ((event = this.__events.get("class-"+className)) !== undefined)  event(exists);
     }
     var viewProperties  =
     {
@@ -470,10 +470,13 @@
         __setData:          {value: function(data)                          { this.__binder.data = data; }},
         addClass:           {value: function(className, silent)
         {
-            var classNames              = this.__getViewData("className").split(" ");
-            if (classNames.indexOf(className) === -1) classNames.push(className);
+            if (className === undefined)    return;
+            var classNames      = this.__getViewData("className").split(" ");
+            var classNamesToAdd = className.split(" ");
+            for(var counter=0,classNameToAdd;(classNameToAdd = classNamesToAdd[counter++]) !== undefined;)
+            if (classNames.indexOf(classNameToAdd) === -1)  classNames.push(classNameToAdd);
             this.__setViewData("className", classNames.join(" ").trim());
-            if (!silent)    notifyClassEvent.call(this, className, true);
+            if (!silent)    notifyClassEvent.call(this, classNamesToAdd, true);
             return this;
         }},
         bindClass:          {value: function(className)
@@ -555,9 +558,11 @@
                 return;
             }
             var classNames              = this.__getViewData("className").split(" ");
-            if (classNames.indexOf(className) > -1) removeItemFromArray(classNames, className);
+            var classNamesToRemove      = className.split(" ");
+            for(var counter=0,classNameToRemove;(classNameToRemove = classNamesToRemove[counter++]) !== undefined;)
+            if (classNames.indexOf(classNameToRemove) > -1) removeItemFromArray(classNames, classNameToRemove);
             this.__setViewData("className", classNames.join(" "));
-            if (!silent)    notifyClassEvent.call(this, className, false);
+            if (!silent)    notifyClassEvent.call(this, classNamesToRemove, false);
             return this;
         }},
         scrollIntoView:     {value: function()                              { this.__element.scrollTop = 0; return this; }},
@@ -764,28 +769,45 @@
         if (this.__customBind && propertyValue.isDataProperty)  this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
         else                                                    Object.defineProperty(this, propertyKey, {value: propertyValue});
     }
+    function attachProperty(propertyKey, property)
+    {
+        var state   = {updating: false};
+        if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
+        else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property, state), onchange: buildOnchange(this, property, state) });
+        else    if (property.bound === true)
+        {
+            var get     = typeof property.get === "string" ? buildGet(property.get) : property.get;
+            var set     = typeof property.set === "string" ? buildSet(property.set, state) : function(value){state.updating = true; property.set.call(this, value); state.updating = false;}
+            this.__binder.defineDataProperties(this, propertyKey, {get: get, set: set, onchange:  connectOnchange(this, propertyKey, get, property.onchange||"change", state), onupdate: property.onupdate, delay: property.delay});
+        }
+        else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+    }
     function buildGet(property)                     { return function(){return this.controlData(property);} }
-    function buildSet(property)                     { return function(value){this.controlData(property, value);} }
-    function buildOnchange(control, property)
+    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value); state.updating = false;} }
+    function buildOnchange(control, property, state)
     {
         var propertyEvent   = control.__events.getOrAdd("controlData:" + property);
-        var defining        = true;
-        control.controlData.listen(function(){var value = this(property); if (!defining) propertyEvent(value);});
-        defining            = false;
+        state.updating      = true;
+        control.controlData.listen(function(){var value = this(property); if (!state.updating) {debugger; propertyEvent(value);}}, property);
+        state.updating      = false;
         return [propertyEvent];
     }
-    function connectOnchange(control, propertyKey, get, listenerCallback)
+    function connectOnchange(control, propertyKey, get, listenerCallback, state)
     {
         if (typeof listenerCallback === "string")   return control.getEvents(listenerCallback);
         
         var propertyEvent   = control.__events.getOrAdd("controlData:" + propertyKey);
-        var defining        = true;
-        control.controlData.listen(function(){var value = get.call(control); if (!defining) propertyEvent(value);});
-        defining            = false;
+        state.updating      = true;
+        control.controlData.listen(function(){var value = get.call(control); if (!state.updating) propertyEvent(value);});
+        state.updating      = false;
         return [propertyEvent];
     }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
-    Object.defineProperty(container, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
+    Object.defineProperties(container,
+    {
+        elementControlTypes:    {get:   function() { return elementControlTypes; }},
+        __getViewProperty:      {value: function(name) { return control.__getViewProperty(name); }},
+    });
     Object.defineProperties(container.prototype,
     {
         __cancelViewUpdate:     {value: function()
@@ -879,15 +901,7 @@
             if (propertyDeclarations === undefined) return;
             for(var propertyKey in propertyDeclarations)
             {
-                var property    = propertyDeclarations[propertyKey];
-                if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
-                else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property), onchange: buildOnchange(this, property) });
-                else    if (property.bound === true)
-                {
-                    var get     = typeof property.get === "string" ? buildGet(property) : property.get;
-                    this.__binder.defineDataProperties(this, propertyKey, {get: get, set: typeof property.set === "string" ? buildSet(property) : property.set, onchange: connectOnchange(this, propertyKey, get, property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});
-                }
-                else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+                attachProperty.call(this, propertyKey, propertyDeclarations[propertyKey]);
             }
         }},
         children:               {get: function(){return this.controls || null;}},
@@ -949,7 +963,7 @@
             var childControl    = this.controls[key];
             if (childControl !== undefined)
             {
-                this.__element.removeChild(childControl.__element);
+                this.__setViewData("removeChild", childControl.__element);
                 delete this.controls[key];
             }
             removeItemFromArray(this.__controlKeys, key);
