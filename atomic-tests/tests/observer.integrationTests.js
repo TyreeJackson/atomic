@@ -452,5 +452,67 @@
 
         ion.log("Check that the updated value is correct.");
         ion.assert(JSON.stringify(dataObject.unwrap("data.person")) === JSON.stringify(subData),    "The serialized values should be equal.\nExpected:   `" + JSON.stringify(subData) + "`\nActual:     `" + JSON.stringify(dataObject.unwrap("data.person")) + "`");
+    },
+    Changes_to_linked_properties_of_a_child_linked_observer_cascade_to_the_parent_observer:
+    function()
+    {
+        var mainAddressId       = faker.random.uuid();
+        var parentDataObject    = new this.observer
+        ({
+            data:
+            {
+                person:
+                {
+                    firstName:              faker.name.firstName(),
+                    lastName:               faker.name.lastName(),
+                    mainAddressId:          mainAddressId,
+                    primaryPhoneType:       "home",
+                    addresses:
+                    [
+                        {
+                            id:             faker.random.uuid(),
+                            addressLine1:   faker.address.streetAddress(3),
+                            addressLine2:   faker.address.secondaryAddress(),
+                            city:           faker.address.city(),
+                            state:          faker.address.state(),
+                            postalCode:     faker.address.zipCode()
+                        },
+                        {
+                            id:             mainAddressId,
+                            addressLine1:   faker.address.streetAddress(3),
+                            city:           faker.address.city(),
+                            state:          faker.address.state(),
+                            postalCode:     faker.address.zipCode()
+                        },
+                        {
+                            id:             faker.random.uuid(),
+                            city:           faker.address.city(),
+                            state:          faker.address.state()
+                        }
+                    ],
+                    phones:
+                    [
+                        {type: "main", number: faker.phone.phoneNumberFormat()},
+                        {type: "home", number: faker.phone.phoneNumberFormat()},
+                        {type: "cell", number: faker.phone.phoneNumberFormat()}
+                    ],
+                    emailAddressesByType:
+                    {
+                        main:   {address: faker.internet.email()},
+                        home:   {address: faker.internet.email()}
+                    }
+                }
+            }
+        });
+        var childDataObject1     = new this.observer({});
+        var childDataObject2     = new this.observer({});
+        var childDataObject3     = new this.observer({});
+        parentDataObject.link("data.person", childDataObject1, "");
+        parentDataObject.link("data.person", childDataObject2, "person");
+        parentDataObject.link("data.person.addresses", childDataObject3, "addresses");
+        parentDataObject.link("data.person.phones", childDataObject3, "phones");
+
+    
+    
     }
 };});}();

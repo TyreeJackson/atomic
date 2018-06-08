@@ -11,11 +11,11 @@ function mockModule(debugLogger)
     function debugLog(message) { if (debugging === true) debugLogger(message); }
     var times   =
     {
-        never:          function()              {return function(stat){return {result: stat.callCount==0,                message: "Invocation of the " + stat.method +" method was expected exactly " + 0 + " times but was executed " + stat.callCount + " times."};};},
-        once:           function()              {return function(stat){return {result: stat.callCount==1,                message: "Invocation of the " + stat.method +" method was expected exactly " + 1 + " times but was executed " + stat.callCount + " times."};};},
-        atLeast:        function(expectedCount) {return function(stat){return {result: stat.callCount>=expectedCount,    message: "Invocation of the " + stat.method +" method was expected at least " + expectedCount + " times but was executed " + stat.callCount + " times."};};},
-        atLeastOnce:    function()              {return function(stat){return {result: stat.callCount>=1,                message: "Invocation of the " + stat.method +" method was expected at least " + 1 + " times but was executed " + stat.callCount + " times."};};},
-        exactly:        function(expectedCount) {return function(stat){return {result: stat.callCount==expectedCount,    message: "Invocation of the " + stat.method +" method was expected exactly " + expectedCount + " times but was executed " + stat.callCount + " times."};};}
+        never:          function()              {return function(stat){return {result: stat.callCount==0,                message: "Invocation of " + dumpCall(stat.method, stat.arguments) + " was expected exactly " + 0 + " times but was executed " + stat.callCount + " times.\nInvocations: \n" + stat.callLog};};},
+        once:           function()              {return function(stat){return {result: stat.callCount==1,                message: "Invocation of " + dumpCall(stat.method, stat.arguments) + " was expected exactly " + 1 + " times but was executed " + stat.callCount + " times.\nInvocations: \n" + stat.callLog};};},
+        atLeast:        function(expectedCount) {return function(stat){return {result: stat.callCount>=expectedCount,    message: "Invocation of " + dumpCall(stat.method, stat.arguments) + " was expected at least " + expectedCount + " times but was executed " + stat.callCount + " times.\nInvocations: \n" + stat.callLog};};},
+        atLeastOnce:    function()              {return function(stat){return {result: stat.callCount>=1,                message: "Invocation of " + dumpCall(stat.method, stat.arguments) + " was expected at least " + 1 + " times but was executed " + stat.callCount + " times.\nInvocations: \n" + stat.callLog};};},
+        exactly:        function(expectedCount) {return function(stat){return {result: stat.callCount==expectedCount,    message: "Invocation of " + dumpCall(stat.method, stat.arguments) + " was expected exactly " + expectedCount + " times but was executed " + stat.callCount + " times.\nInvocations: \n" + stat.callLog};};}
     };
     function proxy(proxiedName, mock)
     {
@@ -61,6 +61,18 @@ function mockModule(debugLogger)
         if (matchCallArguments(this.calls[callCounter], this.arguments))  callCounts++
         return callCounts;
     }
+    function dumpCall(method, arguments)
+    {
+        if (arguments === undefined)    return method;
+        var callDump    = JSON.stringify(Array.prototype.slice.call(arguments), function(key,value){return value === undefined ? "&lt;undefined&gt;" : value;});
+        return method + "(" + callDump.substring(1, callDump.length-1) + ")";
+    }
+    function dumpCalls()
+    {
+        var output      = "";
+        for(var callCounter=0;callCounter<this.calls.length;callCounter++)  output  += (callCounter>0?"\n":"") + "    " + dumpCall(this.method, this.calls[callCounter]);
+        return output;
+    }
     function getInvocationAction(invocationActions, fullName)
     {
         if (!(fullName in invocationActions))
@@ -68,6 +80,7 @@ function mockModule(debugLogger)
             var invocationAction;
             invocationAction                = {calls: [], method: fullName};
             Object.defineProperty(invocationAction, "callCount", {get: function(){return matchCallCount.call(this);}});
+            Object.defineProperty(invocationAction, "callLog", {get: function(){return dumpCalls.call(this);}});
             invocationActions[fullName]     = invocationAction;
         }
         return invocationActions[fullName];

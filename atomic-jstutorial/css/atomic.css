@@ -1,0 +1,43 @@
+i.atomic-debug-info {display: none;}
+i.atomic-debug-info[data-debug-info]
+{
+    display:    inline;
+    position:   relative;
+    padding:    2px;
+    height:     30px;
+}
+i[data-debug-info]:hover
+{
+    border: solid 2px rgba(0,0,0,.8);
+}
+i[data-debug-info]:hover + [data-debugged]
+{
+    border: solid 2px rgba(0,0,0,.8);
+    background-color: rgba(255,255,0,.05);
+}
+i[data-debug-info]:hover:after{
+    background: #333;
+    background: rgba(0,0,0,.8);
+    border-radius: 5px;
+    bottom: 26px;
+    color: #fff;
+    left: 20%;
+    content: attr(data-debug-info);
+    padding: 5px 15px;
+    position: absolute;
+    z-index: 10098;
+    width: auto;
+    white-space: pre;
+    font-family: Lucida Console, Courier, monospace;
+    text-align: left;
+}
+[data-debug-info]:hover:before{
+    border: solid;
+    border-color: #333 transparent;
+    border-width: 6px 6px 0 6px;
+    bottom: 20px;
+    content: "";
+    left: 50%;
+    position: absolute;
+    z-index: 10099;
+}

@@ -1,7 +1,7 @@
 !function(){window.onload   =
 function ComposeApp()
 {
-    var atomic  = root.atomic.html.compositionRoot();
+    var atomic  = root.atomic.html.compositionRoot(undefined, true);
     var app =
     new root.atomic.tutorial.appController
     (

@@ -28,7 +28,7 @@
         var preConstruct        = function(){preConstructCalled = this==self.mockControl.object;}
         this.mockViewElement.setup(viewElement => viewElement.id).returns(id);
         this.mockControlTypes.setup(controlTypes => controlTypes[controlType]).returns(this.mockControlType.object);
-        this.mockControlType.setup(controlType => controlType(mock.isAny, mock.isAny, mock.isAny, mock.isAny)).callback((viewElementArg, selectorArg, parentArg)=>this.mockControl.object);
+        this.mockControlType.setup(controlType => controlType(mock.isAny, mock.isAny, mock.isAny, mock.isAny, mock.isAny)).callback((viewElementArg, selectorArg, parentArg)=>this.mockControl.object);
         this.mockViewAdapterDefinitionConstructor.setup(viewAdapterDefinitionConstructor => viewAdapterDefinitionConstructor(mock.isAny)).callback(viewAdapterArg=>adapterDefinition)
         this.mockControl.setup(control => control.frame(mock.isAny));
         this.mockControl.setup(control => control.construct());
@@ -41,12 +41,13 @@
             selector:               undefined,
             controlType:            controlType,
             preConstruct:           preConstruct,
-            bindPath:               ""
+            bindPath:               "",
+            controlKey:             ""
         });
 
         this.mockViewElement.verify(viewElement => viewElement.id, mock.times.exactly(2));
         this.mockControlTypes.verify(controlTypes => controlTypes[controlType], mock.times.exactly(2));
-        this.mockControlType.verify(controlType => controlType(this.mockViewElement.object, "#"+id, this.mockParent.object, ""), mock.times.once());
+        this.mockControlType.verify(controlType => controlType(this.mockViewElement.object, "#"+id, this.mockParent.object, "", ""), mock.times.once());
         this.mockViewAdapterDefinitionConstructor.verify(viewAdapterDefinitionConstructor => viewAdapterDefinitionConstructor(this.mockControl.object), mock.times.once());
         this.mockControl.verify(control => control.frame(adapterDefinition), mock.times.once());
         ion.assert(preConstructCalled, "The preConstruct callback was not called with the viewAdapter.");
