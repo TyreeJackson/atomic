@@ -457,53 +457,48 @@
     function()
     {
         var mainAddressId       = faker.random.uuid();
-        var parentDataObject    = new this.observer
-        ({
-            data:
-            {
-                person:
+        var personObject        =
+        {
+            firstName:              faker.name.firstName(),
+            lastName:               faker.name.lastName(),
+            mainAddressId:          mainAddressId,
+            primaryPhoneType:       "home",
+            addresses:
+            [
                 {
-                    firstName:              faker.name.firstName(),
-                    lastName:               faker.name.lastName(),
-                    mainAddressId:          mainAddressId,
-                    primaryPhoneType:       "home",
-                    addresses:
-                    [
-                        {
-                            id:             faker.random.uuid(),
-                            addressLine1:   faker.address.streetAddress(3),
-                            addressLine2:   faker.address.secondaryAddress(),
-                            city:           faker.address.city(),
-                            state:          faker.address.state(),
-                            postalCode:     faker.address.zipCode()
-                        },
-                        {
-                            id:             mainAddressId,
-                            addressLine1:   faker.address.streetAddress(3),
-                            city:           faker.address.city(),
-                            state:          faker.address.state(),
-                            postalCode:     faker.address.zipCode()
-                        },
-                        {
-                            id:             faker.random.uuid(),
-                            city:           faker.address.city(),
-                            state:          faker.address.state()
-                        }
-                    ],
-                    phones:
-                    [
-                        {type: "main", number: faker.phone.phoneNumberFormat()},
-                        {type: "home", number: faker.phone.phoneNumberFormat()},
-                        {type: "cell", number: faker.phone.phoneNumberFormat()}
-                    ],
-                    emailAddressesByType:
-                    {
-                        main:   {address: faker.internet.email()},
-                        home:   {address: faker.internet.email()}
-                    }
+                    id:             faker.random.uuid(),
+                    addressLine1:   faker.address.streetAddress(3),
+                    addressLine2:   faker.address.secondaryAddress(),
+                    city:           faker.address.city(),
+                    state:          faker.address.state(),
+                    postalCode:     faker.address.zipCode()
+                },
+                {
+                    id:             mainAddressId,
+                    addressLine1:   faker.address.streetAddress(3),
+                    city:           faker.address.city(),
+                    state:          faker.address.state(),
+                    postalCode:     faker.address.zipCode()
+                },
+                {
+                    id:             faker.random.uuid(),
+                    city:           faker.address.city(),
+                    state:          faker.address.state()
                 }
+            ],
+            phones:
+            [
+                {type: "main", number: faker.phone.phoneNumberFormat()},
+                {type: "home", number: faker.phone.phoneNumberFormat()},
+                {type: "cell", number: faker.phone.phoneNumberFormat()}
+            ],
+            emailAddressesByType:
+            {
+                main:   {address: faker.internet.email()},
+                home:   {address: faker.internet.email()}
             }
-        });
+        };
+        var parentDataObject     = new this.observer({data: {person: {}}});
         var childDataObject1     = new this.observer({});
         var childDataObject2     = new this.observer({});
         var childDataObject3     = new this.observer({});
@@ -512,7 +507,31 @@
         parentDataObject.link("data.person.addresses", childDataObject3, "addresses");
         parentDataObject.link("data.person.phones", childDataObject3, "phones");
 
+        ion.log("Check that the initial value is correct on the childDataObject1.");
+        ion.assert(parentDataObject.unwrap("data.person") === childDataObject1.unwrap(""),                      "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person")) + "`\nActual:     `" + JSON.stringify(childDataObject1.unwrap("")) + "`");
     
+        ion.log("Check that the initial value is correct on the childDataObject2.");
+        ion.assert(parentDataObject.unwrap("data.person") === childDataObject2.unwrap("person"),                "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person")) + "`\nActual:     `" + JSON.stringify(childDataObject2.unwrap("person")) + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject3.");
+        ion.assert(parentDataObject.unwrap("data.person.addresses") === childDataObject3.unwrap("addresses"),   "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.addresses")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("addresses")) + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject3.");
+        ion.assert(parentDataObject.unwrap("data.person.phones") === childDataObject3.unwrap("phones"),         "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.phones")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("phones")) + "`");
+    
+        parentDataObject("data.person", personObject);
+        
+        ion.log("Check that the updated value is correct on the childDataObject1.");
+        ion.assert(parentDataObject.unwrap("data.person") === childDataObject1.unwrap(""),                      "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person")) + "`\nActual:     `" + JSON.stringify(childDataObject1.unwrap("")) + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject2.");
+        ion.assert(parentDataObject.unwrap("data.person") === childDataObject2.unwrap("person"),                "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person")) + "`\nActual:     `" + JSON.stringify(childDataObject2.unwrap("person")) + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject3.");
+        ion.assert(parentDataObject.unwrap("data.person.addresses") === childDataObject3.unwrap("addresses"),   "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.addresses")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("addresses")) + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject3.");
+        ion.assert(parentDataObject.unwrap("data.person.phones") === childDataObject3.unwrap("phones"),         "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.phones")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("phones")) + "`");
     
     }
 };});}();
