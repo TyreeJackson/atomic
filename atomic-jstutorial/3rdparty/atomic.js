@@ -879,7 +879,7 @@
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
-            this.__linkData(data);
+            if (data !== undefined)                 this.__linkData(data(this.__binder.bindPath));
         }},
         __setExtendedBindPath:  {value: function(path)
         {
@@ -2716,7 +2716,7 @@
             {
                 var linkedPath  = linkedPaths[counter];
                 if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
-                else if(propertyKey.startsWith(linkedPath+"."))                                                             notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length+1), value);
+                else if(propertyKey.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))                            notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length > 0 ? linkedPath.length + 1 : 0), value);
             }
             bag.__updatingLinkedObservers   = false;
         }
