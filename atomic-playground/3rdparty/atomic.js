@@ -291,6 +291,11 @@
             if (typeof value === "object")  bindMultipleProperties.call(viewAdapter, value);
             else                            viewAdapter.value.listen({bind: value});
         }},
+        link:               {enumerable: true, value: function(viewAdapter, value)
+        {
+            var parentLink;
+            for(var counter=0, dataLink; (dataLink=viewAdapter.__dataLinks[counter++]) !== undefined;)  if ((parentLink = value[dataLink]) !== undefined)   viewAdapter.link(parentLink, dataLink);
+        }},
         on:                 {enumerable: true, value: function(viewAdapter, value)
         {
             for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false);
@@ -771,7 +776,8 @@
             controlData:        {value: new observer({}), configurable: true},
             controls:           {value: {}, configurable: true},
             __extendedBindPath: {value: "", configurable: true},
-            __controlsToUpdate: {value: {}, configurable: true}
+            __controlsToUpdate: {value: {}, configurable: true},
+            __links:            {value: {}, configurable: true}
         });
     }
     function forwardProperty(propertyKey, property)
@@ -784,7 +790,6 @@
     {
         var state   = {updating: false};
         if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
-        else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property, state), onchange: buildOnchange(this, property, state) });
         else    if (property.bound === true)
         {
             var get     = typeof property.get === "string" ? buildGet(property.get) : property.get;
@@ -794,12 +799,12 @@
         else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
     }
     function buildGet(property)                     { return function(){return this.controlData(property);} }
-    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value && value.isObserver ? value.unwrap() : value); state.updating = false;} }
+    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value); state.updating = false;} }
     function buildOnchange(control, property, state)
     {
         var propertyEvent   = control.__events.getOrAdd("controlData:" + property);
         state.updating      = true;
-        control.controlData.listen(function(){var value = this(property); if (!state.updating) {propertyEvent(null, value);}}, property);
+        control.controlData.listen(function(){var value = this(property); if (!state.updating) propertyEvent(null, value);}, property);
         state.updating      = false;
         return [propertyEvent];
     }
@@ -861,17 +866,30 @@
         {
             return this.__customBind ? this.controlData : this.__binder.data;
         }},
+        __linkData:             {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            if (parentLinkPaths.length === 0)   return;
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
+        }},
         __setData:              {value: function(data)
         {
+            if (this.__binder.data !== undefined)   this.__unlinkData(this.__binder.data);
             this.__binder.data = data; 
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
+            this.__linkData(data);
         }},
         __setExtendedBindPath:  {value: function(path)
         {
             Object.defineProperty(this, "__extendedBindPath", {value: path||"", configurable: true});
             if (debugMode)  this.__updateDebugInfo();
+        }},
+        __unlinkData:           {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.unlink(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         bind:                   {get:   function(){var bind = this.value.bind; if (bind !== undefined && typeof bind !== "string") throw new Error("You may only use simple bindings on containers.  Please consider using a computed property on the observer instead."); return bind;}},
         constructor:            {value: container},
@@ -915,6 +933,10 @@
             {
                 attachProperty.call(this, propertyKey, propertyDeclarations[propertyKey]);
             }
+        }},
+        attachDataLinks:        {value: function(dataLinks)
+        {
+            Object.defineProperty(this, "__dataLinks", {value: (dataLinks||[]).slice()})
         }},
         children:               {get: function(){return this.controls || null;}},
         createControl:          {value: function(controlDeclaration, controlElement, selector, controlKey, bindPath, multipleElements, preConstruct)
@@ -969,6 +991,12 @@
 
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
+            this.attachDataLinks(definition.dataLinks);
+        }},
+        link:                   {value: function(parentLinkPath, controlDataLinkPath)
+        {
+            this.__links[parentLinkPath]    = controlDataLinkPath;
+            if (this.__binder.data !== undefined)   this.__binder.data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         removeControl:          {value: function(key)
         {console.warn("The `removeControl` method maybe deprecated soon.");
@@ -2628,7 +2656,7 @@
                 delete bag.listenersByPath[propertyPath][listener.id];
                 delete listener.properties[propertyPath];
             }
-if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Invalid operation: the properties bag should be empty.");}
+            if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Invalid operation: the properties bag should be empty.");}
         }
         function notifyPropertyListener(listener, bag, value)
         {
@@ -2651,9 +2679,9 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
             bag.updating.pop();
             if (postCallback !== undefined) postCallback();
         }
-
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
+            if (bag.__updatingLinkedObservers)  {return;}
             var listenersToNotify   = {};
 
             var listeners       = bag.listenersByPath[propertyKey];
@@ -2677,6 +2705,32 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
             console.log((directOnly?"Directly":"Indirectly") + " notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
             for(var listenerIdCounter=0,listener;(listener=listenersToNotify[listenerIds[listenerIdCounter++]]) !== undefined;)
             if(listener.callback !== undefined && !listener.callback.ignore)    notifyPropertyListener.call(this, listener, bag, value);
+            
+            notifyLinkedObserverPaths.call(this, propertyKey, value, bag);
+        }
+        function notifyLinkedObserverPaths(propertyKey, value, bag)
+        {
+            bag.__updatingLinkedObservers   = true;
+            var linkedPaths = Object.keys(bag.linkedObservers);
+            for(var counter=0;counter<linkedPaths.length;counter++)
+            {
+                var linkedPath  = linkedPaths[counter];
+                if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
+                else if(propertyKey.startsWith(linkedPath+"."))                                                             notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length+1), value);
+            }
+            bag.__updatingLinkedObservers   = false;
+        }
+        function updateLinkedObservers(linkedChildObservers, value)
+        {
+            for(var linkedChildObserverCounter=0,linkedChildObserver;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;)
+            for(var pathCounter=0,path;(path=linkedChildObserver.paths[pathCounter++]) !== undefined;)
+            linkedChildObserver.childObserver(path, value);
+        }
+        function notifyLinkedObservers(linkedChildObservers, propertyPath, value)
+        {
+            for(var linkedChildObserverCounter=0,linkedChildObserver;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;)
+            for(var pathCounter=0,path;(path=linkedChildObserver.paths[pathCounter++]) !== undefined;)
+            linkedChildObserver.childObserver.__notifyLinkUpdate(path + (path.length > 0 && propertyPath.length > 0 ? "." : "") + propertyPath, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -2702,27 +2756,6 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
         {
             for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;)
             if (path !== pathSegment)   paths.splice(pathCounter, 1);
-        }
-        function listen(callback, nestedUpdatesRootPath, nestedOnly)
-        {
-            var listener    =
-            {
-                id:                     this.__bag.listenerId++,
-                callback:               callback, 
-                observer:               this,
-                properties:             {},
-                nestedUpdatesRootPath:  nestedUpdatesRootPath !== undefined
-                                        ?   ((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath)
-                                        :   undefined
-            };
-
-            if(!nestedOnly) this.__bag.listeners.push(listener);
-            if (listener.nestedUpdatesRootPath !== undefined)
-            {
-                if (this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath] === undefined)   this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath]  = [listener];
-                else                                                                                this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath].push(listener);
-            }
-            notifyPropertyListener.call(this, listener, this.__bag);
         }
         var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
@@ -2752,6 +2785,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                 for(var counter=0;counter<changes.changed.length;counter++) notifyPropertyListeners.call(this, path+"."+changes.changed[counter], changes.items[changes.changed[counter]], this.__bag, directOnly);
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
+            __notifyLinkUpdate: {value: function(path, value)   { notifyPropertyListeners.call(this, path, value, this.__bag, false); }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             equals:             {value: function(other){return other !== undefined && other !== null && this.__bag === other.__bag && this.__basePath === other.__basePath;}},
             observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
@@ -2887,16 +2921,41 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                 if (!callbackFound) debugger;
             }},
             isObserver:         {value: true},
-            link:               {value: function(rootPath, childDataObject, childRootPath)
+            link:               {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
-                throw new Error("This method is not implemented fully yet.");
-                function callback(value, ignore)
-                {
-                    debugger;
-                }
-                listen.call(this, callback, rootPath, true);
+                var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
+                var linkedChildObserver     = undefined;
+
+                for(var linkedChildObserverCounter=0;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;) if (linkedChildObserver.childObserver == childObserver) break;
+
+                if (linkedChildObserver === undefined)                          linkedChildObservers.push({childObserver: childObserver, paths: [childRootPath]});
+                else if(linkedChildObserver.paths.indexOf(childRootPath) == -1) linkedChildObserver.paths.push(childRootPath);
+
+                if (skipLinkBack)   return;
+
+                childObserver.link(childRootPath, this, rootPath, true);
+                childObserver(childRootPath, this.unwrap(rootPath));
             }},
-            listen:             {value: function(callback, nestedUpdatesRootPath){ listen.call(this, callback, nestedUpdatesRootPath); }},
+            listen:             {value: function(callback, nestedUpdatesRootPath)
+            {
+                var listener    =
+                {
+                    id:                     this.__bag.listenerId++,
+                    callback:               callback, 
+                    observer:               this,
+                    properties:             {},
+                    nestedUpdatesRootPath:  nestedUpdatesRootPath !== undefined
+                                            ?   ((this.__basePath||"")+(this.__basePath && this.__basePath.length>0&&nestedUpdatesRootPath.length>0&&nestedUpdatesRootPath.substr(0,1)!=="."?".":"")+nestedUpdatesRootPath)
+                                            :   undefined
+                };
+                this.__bag.listeners.push(listener);
+                if (listener.nestedUpdatesRootPath !== undefined)
+                {
+                    if (this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath] === undefined)   this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath]  = [listener];
+                    else                                                                                this.__bag.listenersByRootPath[listener.nestedUpdatesRootPath].push(listener);
+                }
+                notifyPropertyListener.call(this, listener, this.__bag);
+            }},
             rollback:           {value: function()
             {
                 this.__bag.rollingback  = true;
@@ -2926,6 +2985,19 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                     var value = property.back(virtual.value);
                     accessor.set({bag: this.__bag, basePath: this.__basePath}, value, undefined, true);
                 }).bind(this), path);
+            }},
+            unlink:             {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
+            {
+                var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
+                var linkedChildObserver     = undefined;
+
+                for(var linkedChildObserverCounter=0;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;) if (linkedChildObserver.childObserver == childObserver) break;
+
+                if(linkedChildObserver.paths.indexOf(childRootPath) != -1) linkedChildObserver.paths.remove(childRootPath);
+
+                if (skipLinkBack)   return;
+
+                childObserver.unlink(childRootPath, this, rootPath, true);
             }}
         });});
         each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
@@ -3047,6 +3119,7 @@ if (Object.keys(listener.properties).length > 0) {debugger; throw new Error("Inv
                 listenerId:             0,
                 listenersByPath:        {},
                 listenersByRootPath:    {},
+                linkedObservers:        {},
                 listeners:              [],
                 propertyKeys:           [],
                 updating:               [],

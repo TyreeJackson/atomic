@@ -291,6 +291,11 @@
             if (typeof value === "object")  bindMultipleProperties.call(viewAdapter, value);
             else                            viewAdapter.value.listen({bind: value});
         }},
+        link:               {enumerable: true, value: function(viewAdapter, value)
+        {
+            var parentLink;
+            for(var counter=0, dataLink; (dataLink=viewAdapter.__dataLinks[counter++]) !== undefined;)  if ((parentLink = value[dataLink]) !== undefined)   viewAdapter.link(parentLink, dataLink);
+        }},
         on:                 {enumerable: true, value: function(viewAdapter, value)
         {
             for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false);
@@ -771,7 +776,8 @@
             controlData:        {value: new observer({}), configurable: true},
             controls:           {value: {}, configurable: true},
             __extendedBindPath: {value: "", configurable: true},
-            __controlsToUpdate: {value: {}, configurable: true}
+            __controlsToUpdate: {value: {}, configurable: true},
+            __links:            {value: {}, configurable: true}
         });
     }
     function forwardProperty(propertyKey, property)
@@ -784,7 +790,6 @@
     {
         var state   = {updating: false};
         if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
-        else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property, state), onchange: buildOnchange(this, property, state) });
         else    if (property.bound === true)
         {
             var get     = typeof property.get === "string" ? buildGet(property.get) : property.get;
@@ -794,12 +799,12 @@
         else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
     }
     function buildGet(property)                     { return function(){return this.controlData(property);} }
-    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value && value.isObserver ? value.unwrap() : value); state.updating = false;} }
+    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value); state.updating = false;} }
     function buildOnchange(control, property, state)
     {
         var propertyEvent   = control.__events.getOrAdd("controlData:" + property);
         state.updating      = true;
-        control.controlData.listen(function(){var value = this(property); if (!state.updating) {propertyEvent(null, value);}}, property);
+        control.controlData.listen(function(){var value = this(property); if (!state.updating) propertyEvent(null, value);}, property);
         state.updating      = false;
         return [propertyEvent];
     }
@@ -861,17 +866,30 @@
         {
             return this.__customBind ? this.controlData : this.__binder.data;
         }},
+        __linkData:             {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            if (parentLinkPaths.length === 0)   return;
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
+        }},
         __setData:              {value: function(data)
         {
+            if (this.__binder.data !== undefined)   this.__unlinkData(this.__binder.data);
             this.__binder.data = data; 
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
+            this.__linkData(data);
         }},
         __setExtendedBindPath:  {value: function(path)
         {
             Object.defineProperty(this, "__extendedBindPath", {value: path||"", configurable: true});
             if (debugMode)  this.__updateDebugInfo();
+        }},
+        __unlinkData:           {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.unlink(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         bind:                   {get:   function(){var bind = this.value.bind; if (bind !== undefined && typeof bind !== "string") throw new Error("You may only use simple bindings on containers.  Please consider using a computed property on the observer instead."); return bind;}},
         constructor:            {value: container},
@@ -915,6 +933,10 @@
             {
                 attachProperty.call(this, propertyKey, propertyDeclarations[propertyKey]);
             }
+        }},
+        attachDataLinks:        {value: function(dataLinks)
+        {
+            Object.defineProperty(this, "__dataLinks", {value: (dataLinks||[]).slice()})
         }},
         children:               {get: function(){return this.controls || null;}},
         createControl:          {value: function(controlDeclaration, controlElement, selector, controlKey, bindPath, multipleElements, preConstruct)
@@ -969,6 +991,12 @@
 
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
+            this.attachDataLinks(definition.dataLinks);
+        }},
+        link:                   {value: function(parentLinkPath, controlDataLinkPath)
+        {
+            this.__links[parentLinkPath]    = controlDataLinkPath;
+            if (this.__binder.data !== undefined)   this.__binder.data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         removeControl:          {value: function(key)
         {console.warn("The `removeControl` method maybe deprecated soon.");
@@ -2653,6 +2681,7 @@
         }
         function notifyPropertyListeners(propertyKey, value, bag, directOnly)
         {
+            if (bag.__updatingLinkedObservers)  {return;}
             var listenersToNotify   = {};
 
             var listeners       = bag.listenersByPath[propertyKey];
@@ -2681,13 +2710,15 @@
         }
         function notifyLinkedObserverPaths(propertyKey, value, bag)
         {
+            bag.__updatingLinkedObservers   = true;
             var linkedPaths = Object.keys(bag.linkedObservers);
             for(var counter=0;counter<linkedPaths.length;counter++)
             {
                 var linkedPath  = linkedPaths[counter];
-                if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+"."))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this(linkedPath))
-                else if(propertyKey.startsWith(linkedPath+"."))                             notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length+1), value);
+                if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
+                else if(propertyKey.startsWith(linkedPath+"."))                                                             notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length+1), value);
             }
+            bag.__updatingLinkedObservers   = false;
         }
         function updateLinkedObservers(linkedChildObservers, value)
         {
@@ -2699,7 +2730,7 @@
         {
             for(var linkedChildObserverCounter=0,linkedChildObserver;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;)
             for(var pathCounter=0,path;(path=linkedChildObserver.paths[pathCounter++]) !== undefined;)
-            linkedChildObserver.childObserver.__notifyLinkUpdate(path + "." + propertyPath, value);
+            linkedChildObserver.childObserver.__notifyLinkUpdate(path + (path.length > 0 && propertyPath.length > 0 ? "." : "") + propertyPath, value);
         }
         function getItemChanges(oldItems, newItems)
         {
@@ -2890,7 +2921,7 @@
                 if (!callbackFound) debugger;
             }},
             isObserver:         {value: true},
-            link:               {value: function(rootPath, childObserver, childRootPath)
+            link:               {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
                 var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
                 var linkedChildObserver     = undefined;
@@ -2900,6 +2931,9 @@
                 if (linkedChildObserver === undefined)                          linkedChildObservers.push({childObserver: childObserver, paths: [childRootPath]});
                 else if(linkedChildObserver.paths.indexOf(childRootPath) == -1) linkedChildObserver.paths.push(childRootPath);
 
+                if (skipLinkBack)   return;
+
+                childObserver.link(childRootPath, this, rootPath, true);
                 childObserver(childRootPath, this.unwrap(rootPath));
             }},
             listen:             {value: function(callback, nestedUpdatesRootPath)
@@ -2951,6 +2985,19 @@
                     var value = property.back(virtual.value);
                     accessor.set({bag: this.__bag, basePath: this.__basePath}, value, undefined, true);
                 }).bind(this), path);
+            }},
+            unlink:             {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
+            {
+                var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
+                var linkedChildObserver     = undefined;
+
+                for(var linkedChildObserverCounter=0;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;) if (linkedChildObserver.childObserver == childObserver) break;
+
+                if(linkedChildObserver.paths.indexOf(childRootPath) != -1) linkedChildObserver.paths.remove(childRootPath);
+
+                if (skipLinkBack)   return;
+
+                childObserver.unlink(childRootPath, this, rootPath, true);
             }}
         });});
         each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)

@@ -498,14 +498,28 @@
                 home:   {address: faker.internet.email()}
             }
         };
-        var parentDataObject     = new this.observer({data: {person: {}}});
-        var childDataObject1     = new this.observer({});
-        var childDataObject2     = new this.observer({});
-        var childDataObject3     = new this.observer({});
+        var parentDataObject            = new this.observer({data: {person: {}}});
+        var childDataObject1            = new this.observer({});
+        var childDataObject2            = new this.observer({});
+        var childDataObject3            = new this.observer({});
+        var childDataObject4            = new this.observer({});
+        var parentDataObjectWatchCount  = [];
+        var childDataObject1WatchCount  = [];
+        var childDataObject2WatchCount  = [];
+        var childDataObject3WatchCount  = [];
+        var childDataObject4WatchCount  = [];
+        var initializing                = true;
         parentDataObject.link("data.person", childDataObject1, "");
         parentDataObject.link("data.person", childDataObject2, "person");
         parentDataObject.link("data.person.addresses", childDataObject3, "addresses");
         parentDataObject.link("data.person.phones", childDataObject3, "phones");
+        parentDataObject.link("data", childDataObject4, "");
+        ["data.person", "data.person.addresses", "data.person.phones", "data.person.addresses[0]", "data.person.addresses[0].city"].forEach(function(path){parentDataObject.listen(function(){this(path); if(initializing) return; parentDataObjectWatchCount.push(path)})});
+        ["", "addresses", "phones", "addresses[0]", "addresses[0].city"].forEach(function(path){childDataObject1.listen(function(){this(path); if(initializing) return;  childDataObject1WatchCount.push(path)})});
+        ["", "person", "person.addresses", "person.phones", "person.addresses[0]", "person.addresses[0].city"].forEach(function(path){childDataObject2.listen(function(){this(path); if(initializing) return; childDataObject2WatchCount.push(path)})});
+        ["", "addresses", "phones", "addresses[0]", "addresses[0].city", "phones[0]", "phones[0].number"].forEach(function(path){childDataObject3.listen(function(){this(path); if(initializing) return; childDataObject3WatchCount.push(path)})});
+        ["person", "person.addresses", "person.phones", "person.addresses[0]", "person.addresses[0].city"].forEach(function(path){childDataObject4.listen(function(){this(path); if(initializing) return; debugger; childDataObject4WatchCount.push(path)})});
+        initializing                    = false;
 
         ion.log("Check that the initial value is correct on the childDataObject1.");
         ion.assert(parentDataObject.unwrap("data.person") === childDataObject1.unwrap(""),                      "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person")) + "`\nActual:     `" + JSON.stringify(childDataObject1.unwrap("")) + "`");
@@ -518,6 +532,24 @@
     
         ion.log("Check that the initial value is correct on the childDataObject3.");
         ion.assert(parentDataObject.unwrap("data.person.phones") === childDataObject3.unwrap("phones"),         "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.phones")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("phones")) + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject4.");
+        ion.assert(parentDataObject.unwrap("data") === childDataObject4.unwrap(""),                             "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("")) + "`");
+    
+        ion.log("Check that the initial value is correct on the parentDataObjectWatchCount.");
+        ion.assert(parentDataObjectWatchCount.length === 0,                                                     "The length of the parentDataObjectWatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + parentDataObjectWatchCount.length + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject1WatchCount.");
+        ion.assert(childDataObject1WatchCount.length === 0,                                                     "The length of the childDataObject1WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject1WatchCount.length + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject2WatchCount.");
+        ion.assert(childDataObject2WatchCount.length === 0,                                                     "The length of the childDataObject2WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject2WatchCount.length + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject3WatchCount.");
+        ion.assert(childDataObject3WatchCount.length === 0,                                                     "The length of the childDataObject3WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject3WatchCount.length + "`");
+    
+        ion.log("Check that the initial value is correct on the childDataObject4WatchCount.");
+        ion.assert(childDataObject4WatchCount.length === 0,                                                     "The length of the childDataObject4WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject4WatchCount.length + "`");
     
         parentDataObject("data.person", personObject);
         
@@ -532,6 +564,21 @@
     
         ion.log("Check that the updated value is correct on the childDataObject3.");
         ion.assert(parentDataObject.unwrap("data.person.phones") === childDataObject3.unwrap("phones"),         "The raw values should be equal.\nExpected:   `" + JSON.stringify(parentDataObject.unwrap("data.person.phones")) + "`\nActual:     `" + JSON.stringify(childDataObject3.unwrap("phones")) + "`");
+    
+        ion.log("Check that the updated value is correct on the parentDataObjectWatchCount.");
+        ion.assert(parentDataObjectWatchCount.length === 5,                                                     "The length of the parentDataObjectWatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + parentDataObjectWatchCount.length + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject1WatchCount.");
+        ion.assert(childDataObject1WatchCount.length === 5,                                                     "The length of the childDataObject1WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject1WatchCount.length + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject2WatchCount.");
+        ion.assert(childDataObject2WatchCount.length === 5,                                                     "The length of the childDataObject2WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject2WatchCount.length + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject3WatchCount.");
+        ion.assert(childDataObject3WatchCount.length === 6,                                                     "The length of the childDataObject3WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject3WatchCount.length + "`");
+    
+        ion.log("Check that the updated value is correct on the childDataObject4WatchCount.");
+        ion.assert(childDataObject4WatchCount.length === 5,                                                     "The length of the childDataObject4WatchCount array is incorrect.\nExpected:   `" + 0 + "`\nActual:     `" + childDataObject4WatchCount.length + "`");
     
     }
 };});}();
