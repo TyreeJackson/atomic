@@ -874,12 +874,12 @@
         }},
         __setData:              {value: function(data)
         {
-            if (this.__binder.data !== undefined)   this.__unlinkData(this.__binder.data);
+            if (this.__binder.data !== undefined && this.__binder.data !== null)    this.__unlinkData(this.__binder.data);
             this.__binder.data = data; 
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
-            if (data !== undefined)                 this.__linkData(data(this.__binder.bindPath));
+            if (data !== undefined && data !== null)                                this.__linkData(data(this.__binder.bindPath));
         }},
         __setExtendedBindPath:  {value: function(path)
         {
@@ -2993,7 +2993,10 @@
 
                 for(var linkedChildObserverCounter=0;(linkedChildObserver = linkedChildObservers[linkedChildObserverCounter++]) !== undefined;) if (linkedChildObserver.childObserver == childObserver) break;
 
-                if(linkedChildObserver.paths.indexOf(childRootPath) != -1) linkedChildObserver.paths.remove(childRootPath);
+                if (linkedChildObserver === undefined)  return;
+                
+                var pathIndex;
+                if((pathIndex = linkedChildObserver.paths.indexOf(childRootPath)) != -1)    linkedChildObserver.paths.splice(pathIndex, 1);
 
                 if (skipLinkBack)   return;
 
