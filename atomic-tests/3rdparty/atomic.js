@@ -879,7 +879,7 @@
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
-            if (data !== undefined && data !== null)                                this.__linkData(data(this.__binder.bindPath));
+            if (data !== undefined && data !== null)                                this.__linkData(data.peek(this.__binder.bindPath));
         }},
         __setExtendedBindPath:  {value: function(path)
         {
@@ -1110,6 +1110,7 @@
                 this.__retained[templateKey]    = repeatedControl;
                 repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
                 repeatedControl.__setData(null);
+                delete this.__repeatedControls[templateKey];
             }
         }
         this.getEvents("viewupdated").viewupdated(["innerHTML"]);
@@ -2923,6 +2924,8 @@
             isObserver:         {value: true},
             link:               {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
+                var resolvedObserver        = this.observe(rootPath);
+                rootPath                    = resolvedObserver("$path");
                 var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
                 var linkedChildObserver     = undefined;
 
@@ -2934,7 +2937,7 @@
                 if (skipLinkBack)   return;
 
                 childObserver.link(childRootPath, this, rootPath, true);
-                childObserver(childRootPath, this.unwrap(rootPath));
+                childObserver(childRootPath, resolvedObserver.unwrap());
             }},
             listen:             {value: function(callback, nestedUpdatesRootPath)
             {
@@ -2988,6 +2991,7 @@
             }},
             unlink:             {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
+                rootPath                    = this.observe(rootPath)("$path");
                 var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
                 var linkedChildObserver     = undefined;
 
