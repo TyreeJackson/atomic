@@ -219,7 +219,7 @@
     });
     return eventsSet;
 });}();
-!function(){"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugMode)
+!function(){"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugCallback)
 {
     var logCounter      = 0;
     var callbackCounter = 0;
@@ -329,7 +329,7 @@
     function addEvents(eventNames)
     {
         if (eventNames)
-        for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   Object.defineProperty(this.on, eventNames[eventNameCounter], {value: this.__events.getOrAdd(eventNames[eventNameCounter])});
+        for(var eventNameCounter=0;eventNameCounter<eventNames.length;eventNameCounter++)   Object.defineProperty(this.on, eventNames[eventNameCounter], {value: this.__events.getOrAdd(eventNames[eventNameCounter]), enumerable: true});
     }
     function addCustomMembers(members)
     {
@@ -368,17 +368,12 @@
             __binder:               {value: new dataBinder(this), configurable: true},
             __forceRoot:            {value: false, configurable: true},
             classes:                {value: {}, configurable: true},
-            __viewUpdateQueue:      {value: {}, configurable: true},
+            __viewUpdateQueue:      {value: {order: [], elements: {}}, configurable: true},
             __childKey:             {value: childKey, configurable: true}
         });
-        if (debugMode)
+        if (debugCallback)
         {
-            var infoElement         = document.createElement("i");
-            infoElement.innerHTML   = "i";
-            infoElement.className   = "atomic-debug-info";
-            this.__setViewData("callback", function(){if (this.__element.parentNode) this.__element.parentNode.insertBefore(infoElement, this.__element);});
-            Object.defineProperty(this, "__debugInfoElement", {value: infoElement, configurable: true});
-            this.__element.setAttribute("data-debugged", this.__childKey);
+            this.__element.addEventListener("mouseenter", (function(){debugCallback({selector: this.__selector, childKey: this.__childKey, bindPaths: this.__binder.__getDebugInfo()});}).bind(this), false);
         }
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
@@ -443,17 +438,26 @@
         __getViewData:      {value: function(name)
         {
             var property    = this.constructor.__getViewProperty(name);
-            return  this.__viewUpdateQueue[name] !== undefined
+            return  this.__viewUpdateQueue.elements[name] !== undefined
                     ?   property.reset
-                        ?   this.__viewUpdateQueue[name]
-                        :   this.__viewUpdateQueue[name][this.__viewUpdateQueue[name].length-1]
+                        ?   this.__viewUpdateQueue.elements[name]
+                        :   this.__viewUpdateQueue.elements[name][this.__viewUpdateQueue.elements[name].length-1]
                     :   property.get(this);
         }},
         __setViewData:      {value: function(name, value)
         {
             var property    = this.constructor.__getViewProperty(name);
-            if (property.reset) this.__viewUpdateQueue[name]    = value;
-            else                (this.__viewUpdateQueue[name]=this.__viewUpdateQueue[name]||[]).push(value);
+            if (property.reset)
+            {
+                this.__viewUpdateQueue.elements[name]   = value;
+                this.__viewUpdateQueue.order.push({name: name, value: value});
+            }
+            else
+            {
+                (this.__viewUpdateQueue.elements[name]=this.__viewUpdateQueue.elements[name]||[]).push(value)
+                this.__viewUpdateQueue.order.push({name: name, value: value});
+            }
+
             if (property.value) property.value(this, value);
             (!this.isRoot ? this.parent : this).__deferViewUpdate(this);
         }},
@@ -461,19 +465,14 @@
         __updateView:       {value: function()
         {
             var queue           = this.__viewUpdateQueue;
-            Object.defineProperty(this, "__viewUpdateQueue", {value: {}, configurable: true});
-            var keys            = Object.keys(queue);
-                    
-            for(var counter=0;counter<keys.length;counter++)
+            Object.defineProperty(this, "__viewUpdateQueue", {value: {order: [], elements: {}}, configurable: true});
+            var keys            = [];
+            while(queue.order.length > 0)
             {
-                var key         = keys[counter];
-                var property    = this.constructor.__getViewProperty(key);
-                if (property.reset) property.set(this, queue[key]);
-                else
-                {
-                    var operations  = queue[key];
-                    while(operations.length > 0)  property.set(this, operations.shift());
-                }
+                var operation   = queue.order.shift();
+                var property    = this.constructor.__getViewProperty(operation.name);
+                property.set(this, operation.value);
+                if (keys.indexOf(operation.name) == -1) keys.push(operation.name);
             }
             this.getEvents("viewupdated").viewupdated(keys);
         }},
@@ -727,7 +726,7 @@
     });
     return link;
 });}();
-!function(){"use strict";root.define("atomic.html.container", function htmlContainer(control, observer, each, viewAdapterFactory, removeItemFromArray, debugMode)
+!function(){"use strict";root.define("atomic.html.container", function htmlContainer(control, observer, each, viewAdapterFactory, removeItemFromArray, debugCallback)
 {
     var elementControlTypes =
     {
@@ -884,7 +883,7 @@
         __setExtendedBindPath:  {value: function(path)
         {
             Object.defineProperty(this, "__extendedBindPath", {value: path||"", configurable: true});
-            if (debugMode)  this.__updateDebugInfo();
+            if (debugCallback)  this.__updateDebugInfo();
         }},
         __unlinkData:           {value: function(data)
         {
@@ -1315,7 +1314,8 @@
         control.call(this, elements, selector, parent, bindPath, childKey);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.value;}, set: function(value){this.__element.value = value||""; this.getEvents("viewupdated").viewupdated(["value"]);},    onchange: this.getEvents("change")}
+            value:          {get: function(){return this.__element.value;},         set: function(value){this.__element.value = value||""; this.getEvents("viewupdated").viewupdated(["value"]);},    onchange: this.getEvents("change")},
+            placeholder:    {get: function(){return this.__element.placeholder;},   set: function(value){this.__element.placeholder = value||""; this.getEvents("viewupdated").viewupdated(["placeholder"]);}}
         });
     }
     Object.defineProperty(input, "prototype", {value: Object.create(control.prototype)});
@@ -2703,7 +2703,7 @@
             }
 
             listenerIds             = Object.keys(listenersToNotify);
-            console.log((directOnly?"Directly":"Indirectly") + " notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
+            //console.log((directOnly?"Directly":"Indirectly") + " notifying " + listenerIds.length + " listeners for changes to property located at `" + propertyKey + "`.");
             for(var listenerIdCounter=0,listener;(listener=listenersToNotify[listenerIds[listenerIdCounter++]]) !== undefined;)
             if(listener.callback !== undefined && !listener.callback.ignore)    notifyPropertyListener.call(this, listener, bag, value);
             
@@ -3167,11 +3167,11 @@
         }},
         __getDebugInfo:         {value: function()
         {
-            var debugInfo   = "";
+            var debugInfo   = {};
             each(this.__properties,(function(property)
             {
                 var debugBindPath   = property.__debugBindPath;
-                if (debugBindPath !== undefined)    debugInfo   += property.name + ": " + debugBindPath + "\n";
+                if (debugBindPath !== undefined)    debugInfo[property.name]    = debugBindPath;
             }).bind(this));
             return debugInfo;
         }},
@@ -3477,7 +3477,7 @@
         return defineDataProperties;
     });
 }();
-!function(){"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes, debugMode)
+!function(){"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes, debugCallback)
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
@@ -3499,7 +3499,7 @@
                                         observer
                                     );
 
-    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder, debugMode);
+    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder, debugCallback);
     var readonly                = new root.atomic.html.readonly(control, each);
     var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
