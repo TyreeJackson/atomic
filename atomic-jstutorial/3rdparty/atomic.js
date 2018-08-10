@@ -373,7 +373,22 @@
         });
         if (debugCallback)
         {
-            this.__element.addEventListener("mouseenter", (function(){debugCallback({selector: this.__selector, childKey: this.__childKey, bindPaths: this.__binder.__getDebugInfo()});}).bind(this), false);
+            this.__element.addEventListener("mouseenter", (function()
+            {
+                var debugInfo                               = {selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey, bindPaths: this.__binder.__getDebugInfo()};
+                var parent                                  = this.parent;
+                while(parent)
+                {
+                    var newDebugInfo                        = {selectorPath: parent.__selectorPath, selector: parent.__selector, childKey: parent.__childKey, bindPaths: parent.__binder.__getDebugInfo()};
+                    if (Object.keys(newDebugInfo.bindPaths).length > 0)
+                    {
+                        newDebugInfo[debugInfo.childKey]    = debugInfo;
+                        debugInfo                           = newDebugInfo;
+                    }
+                    parent                                  = parent.parent;
+                }
+                debugCallback(debugInfo);
+            }).bind(this), false);
         }
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
