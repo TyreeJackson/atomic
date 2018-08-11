@@ -93,7 +93,7 @@
                 destroy:
                 {value: function()
                 {
-                    this.pubsub.destroy();
+                    this.pubSub.destroy();
                     each
                     ([
                         "__listenersChanged",
@@ -122,13 +122,14 @@
 }();
 !function(){"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, each)
 {
-    function listenerList(target, eventName, withCapture)
+    function listenerList(target, eventNames, withCapture, intermediary)
     {
         Object.defineProperties(this,
         {
-            "__eventName":      {value: eventName},
+            "__eventNames":     {value: eventNames},
             "__target":         {value: target},
             "__withCapture":    {value: withCapture},
+            "__intermediary":   {value: intermediary&&intermediary.bind(this)},
             pubSub:             {value: new pubSub((this.__listenersChanged).bind(this))}
         });
     }
@@ -136,25 +137,26 @@
     {
         "__listenersChanged":   {value: function(listenerCount)
         {
+            for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)
             if (listenerCount > 0 && !this.__isAttached)
             {
-                this.__target.__element.addEventListener(this.__eventName, this.pubSub, this.__withCapture);
+                this.__target.__element.addEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
                 Object.defineProperty(this, "__isAttached", {value: true, configurable: true});
             }
             else    if(listenerCount == 0 && this.__isAttached)
             {
-                this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+                this.__target.__element.removeEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
                 Object.defineProperty(this, "__isAttached", {value: false, configurable: true});
             }
         }},
         destroy:
         {value: function()
-        {
-            this.__target.__element.removeEventListener(this.__eventName, this.pubSub, this.__withCapture);
+        {debugger;
+            for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)  this.__target.__element.removeEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
             this.pubSub.destroy();
             each
             ([
-                "pubsub",
+                "pubSub",
                 "__target"
             ],
             (function(name)
@@ -164,20 +166,22 @@
             }).bind(this));
         }}
     });
-    function eventsSet(target)
+    function eventsSet(target, intermediaries)
     {
         Object.defineProperties(this,
         {
             "__target":                     {value: target, configurable: true}, 
             "__listenersUsingCapture":      {value:{}, configurable: true}, 
-            "__listenersNotUsingCapture":   {value:{}, configurable: true}
+            "__listenersNotUsingCapture":   {value:{}, configurable: true},
+            "__intermediaries":             {value: intermediaries||{}, configurable: true}
         });
     }
     function getListener(name, withCapture, add)
     {
         var listeners       = withCapture ? this.__listenersUsingCapture : this.__listenersNotUsingCapture;
         var eventListeners  = listeners[name];
-        if (add && eventListeners === undefined)    Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, name, withCapture)});
+        var intermediary    = this.__intermediaries[name];
+        if (add && eventListeners === undefined)    Object.defineProperty(listeners, name, {value: eventListeners=new listenerList(this.__target, intermediary ? intermediary.eventNames : [name], withCapture, intermediary&&intermediary.handler)});
         return eventListeners&&eventListeners.pubSub;
     }
     Object.defineProperties(eventsSet.prototype,
@@ -280,7 +284,8 @@
         for(var name in bindings) if (name !== "classes")   bindProperty.call(this, name, bindings[name]);
         if (bindings.classes !== undefined)                 bindClassProperties.call(this, bindings.classes);
     }
-    var initializers    =   {};
+    var initializers    = {};
+    var notifyEarly     = [];
     Object.defineProperties(initializers,
     {
         onchangingdelay:    {enumerable: true, value: function(viewAdapter, value)    { viewAdapter.onchangingdelay = parseInt(value); }},
@@ -298,19 +303,15 @@
         }},
         on:                 {enumerable: true, value: function(viewAdapter, value)
         {
-            for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false);
+            for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false, notifyEarly.indexOf(name) > -1);
         }},
         updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
     each(["alt", "autoplay", "currentTime", "loop", "muted", "nativeControls", "preload", "mediaType", "playbackRate", "value", "volume"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + viewAdapter.constructor.name + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
-    each(["onchaging", "onenter", "onescape", "optionValue", "optionText", "isDataRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
+    each(["optionValue", "optionText", "isDataRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
     initializers.classes = function(viewAdapter, value) { each(value, function(val){viewAdapter.toggleClass(val, true);}); };
     each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
-    each(["show", "hide"], function(val)
-    {
-        initializers["on" + val] = function(viewAdapter, callback) { viewAdapter.addEventListener(val, callback.bind(viewAdapter), false, true); };
-    });
-    each(["abort", "blur", "canplay", "canplaythrough", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "error", "focus", "focusin", "focusout", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"], function(val)
+    each(["abort", "blur", "canplay", "canplaythrough", "change", "changing", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "enter", "error", "escape", "focus", "focusin", "focusout", "hide", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "show", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"], function(val)
     {
         initializers["on" + val] = function(viewAdapter, callback) { console.warn("The '{on" + val + ": listener}' event initializer has been deprecated.  Please switch to the '{on: {" + val + ": listener}}' initializer instead."); viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
     });
@@ -358,7 +359,7 @@
         {
             __element:              {value: element, configurable: true},
             __elementPlaceholder:   {value: [], configurable: true},
-            __events:               {value: new eventsSet(this), configurable: true},
+            __events:               {value: new eventsSet(this, this.__getCustomEvents()), configurable: true},
             on:                     {value: {}, configurable: true},
             __attributes:           {value: {}, writable: true, configurable: true},
             __class:                {value: null, writable: true, configurable: true},
@@ -373,8 +374,9 @@
         });
         if (debugCallback)
         {
-            this.__element.addEventListener("mouseenter", (function()
+            this.__element.addEventListener("mouseover", (function(event)
             {
+                if (!event.ctrlKey || !event.shiftKey)  return;
                 var debugInfo                               = {selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey, bindPaths: this.__binder.__getDebugInfo()};
                 var parent                                  = this.parent;
                 while(parent)
@@ -388,6 +390,10 @@
                     parent                                  = parent.parent;
                 }
                 debugCallback(debugInfo);
+                event.preventDefault();
+                event.stopPropagation();
+                event.cancelBubble = true;
+                return false;
             }).bind(this), false);
         }
         this.__element.__display    = this.__element.style.display;
@@ -448,7 +454,22 @@
         updateon:           {get:   function(){var names = []; each(this.value.onchange,function(e, name){names.push(name);}); return names;},  set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
         width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
         // methods
+        __addCustomEvents:  {value: function(events)
+        {
+            Object.defineProperties(events,
+            {
+                escape:           {value:   {eventNames: ["keydown"],   handler: function(event){ if (event.keyCode==27) { this.pubSub(event); } }}},
+                gainingfocus:     {value:   {eventNames: ["focusin"],   handler: function(event){ this.pubSub(event); }}},
+                losingfocus:      {value:   {eventNames: ["focusout"],  handler: function(event){ if (!this.__target.__element.contains(event.relatedTarget)) { this.pubSub(event); } }}}
+            });
+        }},
         __createNode:       {value: function(selector)                      { return document.createElement("div"); }, configurable: true},
+        __getCustomEvents:  {value: function()
+        {
+           var customEvents = {};
+           this.__addCustomEvents(customEvents);
+           return customEvents;
+        }},
         __getData:          {value: function()                              { return this.__binder.data; }},
         __getViewData:      {value: function(name)
         {
@@ -1313,14 +1334,14 @@
         this.__lastChangingTimeout  = undefined;
         callback.call(this, this.__lastChangingValueSeen);
     }
-    function notifyIfValueHasChangedOrDelay(callback)
+    function notifyIfValueHasChangedOrDelay()
     {
-        if ((this.__lastChangingValueSeen||"") === this.value())  return;
-        this.__lastChangingValueSeen = this.value();
-        if (this.onchangingdelay !== undefined)
+        if ((this.__target.__lastChangingValueSeen||"") === this.__target.value())  return;
+        this.__target.__lastChangingValueSeen = this.__target.value();
+        if (this.__target.onchangingdelay !== undefined)
         {
-            if (this.__lastChangingTimeout !== undefined)   clearTimeout(this.__lastChangingTimeout);
-            this.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this, callback), this.onchangingdelay);
+            if (this.__target.__lastChangingTimeout !== undefined)   clearTimeout(this.__target.__lastChangingTimeout);
+            this.__target.__lastChangingTimeout  = setTimeout(notifyIfValueHasChanged.bind(this.__target, this.pubSub), this.__target.onchangingdelay);
         }
         else    notifyIfValueHasChanged.call(this, callback);
     }
@@ -1338,12 +1359,18 @@
     Object.defineProperties(input.prototype,
     {
         constructor:        {value: input},
+        __addCustomEvents:  {value: function(events)
+        {
+            control.prototype.__addCustomEvents.call(this, events);
+            Object.defineProperties(events,
+            {
+                changing:         {value:   {eventNames: ["keydown", "keyup", "mouseup", "touchend", "change"], handler: notifyIfValueHasChangedOrDelay.bind(this)} },
+                enter:            {value:   {eventNames: ["keypress"],                                          handler: function(event){ if (event.keyCode==13) { this.pubSub(event); } }}}
+            });
+        }},
         __createNode:       {value: function(){var element = document.createElement("input"); element.type="textbox"; return element;}, configurable: true},
         select:             {value: function(){this.__element.select(); return this;}},
-        onchangingdelay:    {get:   function(){return this.__onchangingdelay;}, set: function(value){Object.defineProperty(this, "__onchangingdelay", {value: value, configurable: true});}},
-        onchanging:         {set:   function(callback) { this.addEventsListener(["keydown", "keyup", "mouseup", "touchend", "change"], notifyIfValueHasChangedOrDelay.bind(this, callback), false, true); }},
-        onenter:            {set:   function(callback) { this.addEventListener("keypress", (function(event){ if (event.keyCode==13) { callback.call(this); return cancelEvent(event); } }).bind(this), false, true); }},
-        onescape:           {set:   function(callback) { this.addEventListener("keydown", (function(event){ if (event.keyCode==27) { callback.call(this); return cancelEvent(event); } }).bind(this), false, true); }},
+        onchangingdelay:    {get:   function(){return this.__onchangingdelay;}, set: function(value){Object.defineProperty(this, "__onchangingdelay", {value: value, configurable: true});}}
     });
     return input;
 });}();
@@ -3572,12 +3599,17 @@
 !function(window, document)
 {"use strict";
     var atomic;
+    var debugInfoCallback;
+    root.define("atomic.init", function(options)
+    {
+        debugInfoCallback   = (options&&options.debugInfoCallback)||debugInfoCallback;
+    });
     root.define("atomic.ready", function ready(callback)
     {
         var deferOrExecute  =
         function()
         {
-            if (atomic === undefined)   atomic  = root.atomic.html.compositionRoot();
+            if (atomic === undefined)   atomic  = root.atomic.html.compositionRoot(undefined, debugInfoCallback);
             if (typeof callback === "function") callback(atomic);
         }
         if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);

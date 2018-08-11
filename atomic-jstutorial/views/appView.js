@@ -13,7 +13,8 @@
             examples:
             {
                 controls:   {}
-            }
+            },
+            debugInfo:      { bind: { value: { to: function(){return JSON.stringify(this.data.unwrap("$shadow.debugInfo")||{}, null, '    ');} } } }
         },
         members:
         {

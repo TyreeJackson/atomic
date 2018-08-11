@@ -13,5 +13,6 @@ function ComposeApp()
         new root.atomic.tutorial.appProxy(window.localStorage, root.utilities.removeFromArray),
         new root.path()
     );
+    root.atomic.init({debugInfoCallback: function(debugInfo){app.setDebugInfo(debugInfo);}});
     app.launch();
 };}();
