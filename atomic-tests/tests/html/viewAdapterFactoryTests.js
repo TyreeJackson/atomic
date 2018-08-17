@@ -23,6 +23,9 @@
         var self                = this;
         var id                  = faker.random.uuid();
         var controlType         = faker.random.uuid();
+        var bindPath            = faker.random.uuid();
+        var childKey            = faker.random.uuid();
+        var protoChildKey       = faker.random.uuid();
         var adapterDefinition   = {};
         var preConstructCalled  = false;
         var preConstruct        = function(){preConstructCalled = this==self.mockControl.object;}
@@ -41,13 +44,14 @@
             selector:               undefined,
             controlType:            controlType,
             preConstruct:           preConstruct,
-            bindPath:               "",
-            controlKey:             ""
+            bindPath:               bindPath,
+            controlKey:             childKey,
+            protoControlKey:        protoChildKey
         });
 
         this.mockViewElement.verify(viewElement => viewElement.id, mock.times.exactly(2));
         this.mockControlTypes.verify(controlTypes => controlTypes[controlType], mock.times.exactly(2));
-        this.mockControlType.verify(controlType => controlType(this.mockViewElement.object, "#"+id, this.mockParent.object, "", ""), mock.times.once());
+        this.mockControlType.verify(controlType => controlType(this.mockViewElement.object, "#"+id, this.mockParent.object, bindPath, childKey, protoChildKey), mock.times.once());
         this.mockViewAdapterDefinitionConstructor.verify(viewAdapterDefinitionConstructor => viewAdapterDefinitionConstructor(this.mockControl.object), mock.times.once());
         this.mockControl.verify(control => control.frame(adapterDefinition), mock.times.once());
         ion.assert(preConstructCalled, "The preConstruct callback was not called with the viewAdapter.");

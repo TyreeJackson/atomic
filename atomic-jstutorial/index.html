@@ -8,6 +8,7 @@
     <script type="text/javascript" src="3rdparty/atomic.js"></script>
     <script type="text/javascript" src="3rdparty/path.min.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
+    <script type="text/javascript" src="views/debugInfoViewer/appView.js"></script>
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
     <script type="text/javascript" src="controllers/appController.js"></script>
     <script type="text/javascript" src="index.js"></script>
@@ -2667,14 +2668,12 @@ root.atomic.launch
             </div>
         </div> <!-- /container -->
     </div>
-    <footer class="footer">
-        <figure class="highlight">
-            <h2>Debug Info</h2>
-            <span>(Hint: hold control and shift keys and hover the mouse over an element)</span>
-            <pre id="debugInfo">
-            </pre>
-        </figure>
-    </footer>
+    <figure id="debugInfoPanel" class="highlight">
+        <h2>Debug Info</h2>
+        <span>(Hint: hold control and shift keys and hover the mouse over an element)</span>
+        <pre id="debugInfo">
+        </pre>
+    </figure>
 </body>
 </html>
 <!--

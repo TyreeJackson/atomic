@@ -39,18 +39,3 @@ body
 {
     width: 240px;
 }
-footer.footer
-{
-    background-color:   white;
-    border-top:         solid 1px rgb(196,196,196);
-    position:           fixed; 
-    bottom:             0px; 
-    left:               0px; 
-    right:              0px; 
-    height:             200px;
-    overflow-y:         auto;
-}
-footer.footer > h2
-{
-    margin: 0;
-}
