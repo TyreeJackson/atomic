@@ -378,7 +378,11 @@
             __viewAdapterPath:      {value: this.getViewAdapterPath()},
             __protoViewAdapterPath: {value: this.getViewAdapterPath(true)}
         });
-        if (debugInfoObserver)  debugInfoObserver(this.__viewAdapterPath, {protoViewAdapterPath: this.__protoViewAdapterPath, viewAdapterPath: this.__viewAdapterPath, selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey, protoChildKey: protoChildKey, bindPaths: this.__binder.__getDebugInfo()});
+        if (debugInfoObserver)
+        {
+            debugInfoObserver("__controlIndex").push({shortName: this.__viewAdapterPath.replace(/\.controls\./g, "."), path: this.__viewAdapterPath})
+            debugInfoObserver(this.__viewAdapterPath, {protoViewAdapterPath: this.__protoViewAdapterPath, viewAdapterPath: this.__viewAdapterPath, selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey||"root", protoChildKey: protoChildKey||"root", bindPaths: this.__binder.__getDebugInfo()});
+        }
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
         this.__binder.defineDataProperties(this,
@@ -482,7 +486,17 @@
         }},
         __updateDebugInfo:  {value: function()
         {
-            if(debugInfoObserver) debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+            function deferred()
+            {
+                delete this.__updateDebugInfoId;
+                if(debugInfoObserver) debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+            }
+            if (this.__updateDebugInfoId !== undefined)
+            {
+                clearTimeout(this.__updateDebugInfoId);
+                delete(this.__updateDebugInfoId);
+            }
+            this.__updateDebugInfoId    = setTimeout(deferred.bind(this), 0);
         }},
         __updateView:       {value: function()
         {
@@ -572,7 +586,7 @@
             return events;
         }},
         getSelectorPath:    {value: function()                              { return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root"); }},
-        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls.") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")); }},
+        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls[\"") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")) + (this.parent === undefined ? "" : "\"]"); }},
         hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
         hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
         hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
@@ -966,7 +980,7 @@
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(this, controlElement, selector, controlKey, this.__customBind ? "" : bindPath);
+                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath);
             }
             else    control = viewAdapterFactory.create
             ({
@@ -1403,8 +1417,8 @@
     {
         Object.defineProperties(this, 
         {
-            "__element":        {value: element},
-            "__sourceBinder":   {value: new dataBinder()}
+            "__element":        {value: element, configurable: true},
+            "__sourceBinder":   {value: new dataBinder(), configurable: true}
         });
         this.__sourceBinder.defineDataProperties(this,
         {
@@ -1415,7 +1429,22 @@
     Object.defineProperties(selectoption.prototype,
     {
         source:     {get: function(){return this.__sourceBinder.data;}, set: function(value){this.__sourceBinder.data = value;}},
-        selected:   {get: function(){return this.__element.selected;}, set: function(value){this.__element.selected = !(!value);}}
+        selected:   {get: function(){return this.__element.selected;}, set: function(value){this.__element.selected = !(!value);}},
+        destroy:                {value: function()
+        {
+            this.__sourceBinder.destroy();
+            each
+            ([
+                "__element",
+                "__sourceBinder"
+            ],
+            (function(name)
+            {
+                Object.defineProperty(this, name, {value: null, configurable: true});
+                delete this[name];
+            }).bind(this));
+            Object.defineProperty(this, "isDestroyed", {value: true});
+        }},
     });
     function createOption(sourceItem, index)
     {
@@ -1471,7 +1500,14 @@
             }
         });
     });
-    function clearOptions(){ for(var counter=this.__element.options.length-1;counter>=0;counter--) this.__element.remove(counter); }
+    function removeOption(index)
+    {
+        var option  = this.__options[index];
+        this.__element.removeChild(option.__element);
+        option.destroy();
+        this.__options.splice(index, 1);
+    }
+    function clearOptions(){ for(var counter=this.__options.length-1;counter>=0;counter--) removeOption.call(this, counter); }
     function bindSelectListSource(items)
     {
         var selectedValue   = this.__rawValue;
@@ -1966,6 +2002,7 @@
                 parent:                 undefined,
                 selector:               undefined,
                 controlKey:             undefined,
+                protoControlKey:        undefined,
                 controlType:            "screen",
                 bindPath:               ""
             });
@@ -1975,7 +2012,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            var factory = (function(parent, containerElement, selector, controlKey, bindPath)
+            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -1988,6 +2025,7 @@
                         parent:                 parent,
                         selector:               selector,
                         controlKey:             controlKey,
+                        protoControlKey:        protoControlKey,
                         controlType:            "panel",
                         bindPath:               bindPath
                     });
@@ -2003,6 +2041,7 @@
                     parent:                 container,
                     selector:               selector,
                     controlKey:             controlKey,
+                    protoControlKey:        protoControlKey,
                     controlType:            "composite",
                     bindPath:               bindPath
                 });
@@ -3514,7 +3553,7 @@
     var pathParserFactory       = new root.atomic.pathParserFactory(new root.atomic.tokenizer());
     var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
     var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each, pathParser);
-    if (debugInfoObserver === true) debugInfoObserver = new observer({});
+    if (debugInfoObserver === true) debugInfoObserver = new observer({__controlIndex:[]});
 
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
