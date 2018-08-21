@@ -1470,9 +1470,17 @@
                 get:        function() {return this.__items;},
                 set:        function(value)
                 {
-                    Object.defineProperty(this, "__items", {value: value!==undefined&&value.isObserver?value():value, configurable: true});
+                    var itemCount       = value!==undefined?value.isObserver?value("length"):value.length:0;
+                    var items           = value!==undefined&&value.isObserver?value():value;
+                    if (items === this.__items && itemCount === this.__itemCount)           return;
+                    var truncateIndex   = items === this.__items ? itemCount : 0;
+                    Object.defineProperties(this,
+                    {
+                        __items:        {value: items, configurable: true},
+                        __itemCount:    {value: itemCount, configurable: true},
+                    });
 
-                    bindSelectListSource.call(this, value);
+                    bindSelectListSource.call(this, value, truncateIndex);
                 }
             }
         });
@@ -1507,16 +1515,18 @@
         option.destroy();
         this.__options.splice(index, 1);
     }
-    function clearOptions(){ for(var counter=this.__options.length-1;counter>=0;counter--) removeOption.call(this, counter); }
-    function bindSelectListSource(items)
+    function clearOptions(truncateIndex){ for(var counter=this.__options.length-1;counter>=truncateIndex;counter--) removeOption.call(this, counter); }
+    function bindSelectListSource(items, truncateIndex)
     {
         var selectedValue   = this.__rawValue;
-        clearOptions.call(this);
+        var itemsCount      = items !== undefined ? items.count : 0;
+        clearOptions.call(this, truncateIndex);
+        var startingIndex   = this.__options.length;
         if (items === undefined)   return;
 
-        for(var counter=0;counter<items.count;counter++)
+        for(var counter=startingIndex;counter<itemsCount;counter++)
         {
-            var sourceItem  = items.observe(counter);
+            var sourceItem  = items.observe(counter, true);
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
             this.__element.appendChild(option.__element);
@@ -2786,7 +2796,7 @@
             {
                 var linkedPath  = linkedPaths[counter];
                 if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
-                else if(propertyKey.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))                            notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], propertyKey.substr(linkedPath.length > 0 ? linkedPath.length + 1 : 0), value);
+                else if(linkedPath === "$root" || propertyKey.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))  notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], linkedPath === "$root" ? propertyKey : propertyKey.substr(linkedPath.length > 0 ? linkedPath.length + 1 : 0), value);
             }
             bag.__updatingLinkedObservers   = false;
         }
@@ -2858,7 +2868,7 @@
             __notifyLinkUpdate: {value: function(path, value)   { notifyPropertyListeners.call(this, path, value, this.__bag, false); }},
             delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
             equals:             {value: function(other){return other !== undefined && other !== null && this.__bag === other.__bag && this.__basePath === other.__basePath;}},
-            observe:            {value: function(path){return this.__invoke(path, undefined, getObserverEnum.yes, false);}},
+            observe:            {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.yes, peek);}},
             peek:               {value: function(path, unwrap){return this.__invoke(path, undefined, unwrap === true ? getObserverEnum.no : getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
@@ -3171,7 +3181,7 @@
                 return filtered;
             }},
             isArrayObserver:    {value: true},
-            count:              {get: function(){return this().length;}},
+            count:              {get: function(){return this("length");}},
             reduce:             {value: function(callback, initialValue)
             {
                 var returnValue = initialValue;
