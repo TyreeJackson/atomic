@@ -93,7 +93,6 @@
                 destroy:
                 {value: function()
                 {
-                    this.pubSub.destroy();
                     each
                     ([
                         "__listenersChanged",
