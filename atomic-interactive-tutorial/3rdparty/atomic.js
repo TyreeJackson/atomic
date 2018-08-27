@@ -225,8 +225,45 @@
 });}();
 !function(){"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
 {
-    var logCounter      = 0;
-    var callbackCounter = 0;
+    var logCounter              = 0;
+    var callbackCounter         = 0;
+    var debugInfoAddQueue       = [];
+    var debugInfoRemoveQueue    = [];
+    var updateDebugInfoId;
+    function resetDebugInfoQueue()
+    {
+        if (updateDebugInfoId !== undefined)
+        {
+            clearTimeout(updateDebugInfoId);
+            updateDebugInfoId   = undefined;
+        }
+        function deferred()
+        {
+            updateDebugInfoId       = undefined;
+            var addQueue            = debugInfoAddQueue;
+            var removeQueue         = debugInfoRemoveQueue;
+            debugInfoAddQueue       = [];
+            debugInfoRemoveQueue    = [];
+            var debugInfo           = debugInfoObserver.unwrap();
+            for(var removeCounter=0,path;(path=removeQueue[removeCounter++])!==undefined;)
+            for(var indexCounter=0,indexItem;(indexItem=debugInfo.__controlIndex[indexCounter])!==undefined;)
+            if (indexItem.shortName == path)
+            {
+                debugInfo.__controlIndex.splice(indexCounter, 1);
+                debugInfoObserver.delete("controls."+path, true);
+                break;
+            }
+            for(var addCounter=0,item;(item=addQueue[addCounter++])!==undefined;)
+            {
+                debugInfo.__controlIndex.push({shortName: item.viewAdapterPath.replace(/\.controls\./g, "."), path: item.viewAdapterPath})
+                debugInfoObserver.setValue("controls."+item.viewAdapterPath, item, true);
+            }
+            debugInfo.__controlIndex.sort(function(a,b){return a.shortName<b.shortName?-1:a.shortName>b.shortName?1:0;});
+            debugInfoObserver.notify("__controlIndex");
+            debugInfoObserver.notify("controls");
+        }
+        updateDebugInfoId   = setTimeout(deferred, 100);
+    }
     function createWhenBinding(name, binding)
     {
         if (binding.equals          !== undefined)  return { get: function(item){return item(binding.when) == binding.equals;},                  set: function(item, value){if (binding.equals === true) item(binding.when, value); else if (binding.equals === false) item(binding.when, !value);}};
@@ -380,8 +417,17 @@
         });
         if (debugInfoObserver)
         {
-            debugInfoObserver("__controlIndex").push({shortName: this.__viewAdapterPath.replace(/\.controls\./g, "."), path: this.__viewAdapterPath})
-            debugInfoObserver(this.__viewAdapterPath, {protoViewAdapterPath: this.__protoViewAdapterPath, viewAdapterPath: this.__viewAdapterPath, selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey||"root", protoChildKey: protoChildKey||"root", bindPaths: this.__binder.__getDebugInfo()});
+            debugInfoAddQueue.push({protoViewAdapterPath: this.__protoViewAdapterPath, viewAdapterPath: this.__viewAdapterPath, selectorPath: this.__selectorPath, selector: this.__selector, childKey: this.__childKey||"root", protoChildKey: protoChildKey||"root", bindPaths: this.__binder.__getDebugInfo()});
+            resetDebugInfoQueue();
+            this.__element.addEventListener("mouseover", (function(event)
+            {
+                if (!event.ctrlKey || !event.shiftKey)  return;
+                debugInfoObserver("__selectedControlPath", this.__viewAdapterPath);
+                event.preventDefault();
+                event.stopPropagation();
+                event.cancelBubble = true;
+                return false;
+            }).bind(this), false);
         }
         this.__element.__display    = this.__element.style.display;
         this.bindPath               = bindPath;
@@ -542,7 +588,11 @@
         }},
         destroy:            {value: function()
         {
-            if (debugInfoObserver)  debugInfoObserver.delete(this.__viewAdapterPath);
+            if (debugInfoObserver)
+            {
+                debugInfoRemoveQueue.push(this.__viewAdapterPath);
+                resetDebugInfoQueue();
+            }
             this.__events.destroy();
             this.__binder.destroy();
             each
@@ -2840,7 +2890,7 @@
         var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
-            __invoke:           {value: function(path, value, getObserver, peek, forceSet)
+            __invoke:           {value: function(path, value, getObserver, peek, forceSet, silentUpdate)
             {
                 var accessor        = pathParser.parse(path);
 
@@ -2857,7 +2907,7 @@
                 var currentValue    = accessor.get({bag: this.__bag, basePath: this.__basePath});
                 if (value !== currentValue.value)
                 {
-                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, (function(revisedPath){notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);}).bind(this));
+                    accessor.set({bag: this.__bag, basePath: this.__basePath}, value, (function(revisedPath){if (!silentUpdate) notifyPropertyListeners.call(this, revisedPath, value, this.__bag, false);}).bind(this));
                 }
             }},
             __notify:           {value: function(path, changes, directOnly)
@@ -2866,7 +2916,7 @@
                 notifyPropertyListeners.call(this, path, changes.items, this.__bag, true);
             }},
             __notifyLinkUpdate: {value: function(path, value)   { notifyPropertyListeners.call(this, path, value, this.__bag, false); }},
-            delete:             {value: function(path){this.__invoke(path, undefined, undefined, undefined, true);}},
+            delete:             {value: function(path, silent){this.__invoke(path, undefined, undefined, undefined, true, silent);}},
             equals:             {value: function(other){return other !== undefined && other !== null && this.__bag === other.__bag && this.__basePath === other.__basePath;}},
             observe:            {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.yes, peek);}},
             peek:               {value: function(path, unwrap){return this.__invoke(path, undefined, unwrap === true ? getObserverEnum.no : getObserverEnum.auto, true);}},
@@ -3038,6 +3088,7 @@
                 }
                 notifyPropertyListener.call(this, listener, this.__bag);
             }},
+            notify:             {value: function(path, directOnly){notifyPropertyListeners.call(this, path, this.unwrap(path), this.__bag, directOnly);}},
             rollback:           {value: function()
             {
                 this.__bag.rollingback  = true;
@@ -3046,6 +3097,7 @@
                 notifyPropertyListeners.call(this, this.__basePath, this.__bag.item, this.__bag, false);
                 this.__bag.rollingback  = false;
             }},
+            setValue:           {value: function(path, value, silent){this.__invoke(path, value, undefined, undefined, true, silent);}},
             toString:           {value: function(){ return " Atomic Observer bound to path: `" + this.__basePath + "`; If you are seeing this, you might have bound a value based property to an object within the observer."; }},
             transform:          {value: function(path, property)
             {
@@ -3563,7 +3615,7 @@
     var pathParserFactory       = new root.atomic.pathParserFactory(new root.atomic.tokenizer());
     var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
     var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each, pathParser);
-    if (debugInfoObserver === true) debugInfoObserver = new observer({__controlIndex:[]});
+    if (debugInfoObserver === true) debugInfoObserver = new observer({__controlIndex:[], __controls:{}});
 
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
