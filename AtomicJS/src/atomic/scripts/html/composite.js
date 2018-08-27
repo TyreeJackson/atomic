@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.composite", function htmlComposite(base, each, observer)
 {
-    function composite(elements, selector, parent, bindPath)
+    function composite(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        base.call(this, elements, selector, parent, bindPath);
+        base.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
     }
     Object.defineProperty(composite, "prototype", {value: Object.create(base.prototype)});
     Object.defineProperty(composite, "__getViewProperty", {value: function(name) { return base.__getViewProperty(name); }});

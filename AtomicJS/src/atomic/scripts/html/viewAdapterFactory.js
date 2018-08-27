@@ -7,8 +7,7 @@
             var selector                = options.selector || (options.viewElement.id?("#"+options.viewElement.id):("."+options.viewElement.className));
             if (controlTypes[options.controlType] === undefined)    debugger;
 
-            var viewAdapter             = new controlTypes[options.controlType](options.viewElement, selector, options.parent, options.bindPath);
-            Object.defineProperty(viewAdapter, "__childKey", {value: options.controlKey, configurable: true});
+            var viewAdapter             = new controlTypes[options.controlType](options.viewElement, selector, options.parent, options.bindPath, options.controlKey, options.protoControlKey);
 
             viewAdapter.frame(new options.definitionConstructor(viewAdapter));
             if (typeof options.preConstruct === "function") options.preConstruct.call(viewAdapter);
@@ -24,6 +23,7 @@
                 parent:                 undefined,
                 selector:               undefined,
                 controlKey:             undefined,
+                protoControlKey:        undefined,
                 controlType:            "screen",
                 bindPath:               ""
             });
@@ -33,7 +33,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            var factory = (function(parent, containerElement, selector, controlKey, bindPath)
+            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -46,6 +46,7 @@
                         parent:                 parent,
                         selector:               selector,
                         controlKey:             controlKey,
+                        protoControlKey:        protoControlKey,
                         controlType:            "panel",
                         bindPath:               bindPath
                     });
@@ -61,6 +62,7 @@
                     parent:                 container,
                     selector:               selector,
                     controlKey:             controlKey,
+                    protoControlKey:        protoControlKey,
                     controlType:            "composite",
                     bindPath:               bindPath
                 });

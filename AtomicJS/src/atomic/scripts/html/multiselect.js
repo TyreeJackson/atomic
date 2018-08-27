@@ -15,9 +15,9 @@
         if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) if (this.__element.options[counter].selected)   values.push(this.__element.options[counter].rawValue);
         return this.__rawValue = values;
     }
-    function multiselect(elements, selector, parent, bindPath)
+    function multiselect(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        base.call(this, elements, selector, parent, bindPath);
+        base.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return getSelectListValues.call(this);}, set: function(value){setSelectListValues.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")}

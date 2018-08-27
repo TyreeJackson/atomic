@@ -26,6 +26,17 @@
             Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
             if(parent)   parent.unregister(this);
         }},
+        __getDebugInfo:         {value: function()
+        {
+            var debugInfo   = {};
+            each(this.__properties,(function(property)
+            {
+                var debugBindPath   = property.__debugBindPath;
+                if (debugBindPath !== undefined)    debugInfo[property.name]    = debugBindPath;
+            }).bind(this));
+            return debugInfo;
+        }},
+        __updateDebugInfo:      {value: function(){if (this.__target !== undefined) this.__target.__updateDebugInfo();}},
         bindPath:
         {
             get:    function(){return this.__bindPath;},
@@ -69,6 +80,7 @@
                 Object.defineProperty(this, name, {value: null, configurable: true});
                 delete this[name];
             }).bind(this));
+            Object.defineProperty(this, "isDestroyed", {value: true});
         }},
         isBinder:               {value: true},
         isRoot:
@@ -81,7 +93,7 @@
             }
         },
         register:               {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.listen({data: this.data, bindPath: this.bindPath});}},
-        unregister:             {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
+        unregister:             {value: function(property){removeItemFromArray(this.__properties, property);}}
     });
     return dataBinder;
 });}()

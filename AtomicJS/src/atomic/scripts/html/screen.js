@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.screen", function htmlScreen(panel, observer)
 {
-    function screen(elements, selector, parent, bindPath)
+    function screen(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        panel.call(this, elements, selector, parent, bindPath);
+        panel.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         this.__setData(new observer({}));
     }
     Object.defineProperty(screen, "prototype", {value: Object.create(panel.prototype)});

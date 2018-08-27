@@ -7,7 +7,7 @@
         var functionFactory = new isolatedFunctionFactory();
         var dataProperty    =
         functionFactory.create
-        (function dataProperty(owner, getter, setter, onchange, binder, delay)
+        (function dataProperty(owner, getter, setter, onchange, binder, delay, name)
         {if (binder === undefined)  debugger;
             var property    = this;
             Object.defineProperties(this,
@@ -28,7 +28,8 @@
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}, configurable: true},
                 __notifyingObserver:    {value: undefined, writable: true, configurable: true},
                 __onchange:             {value: {}, configurable: true},
-                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true}
+                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true},
+                name:                   {value: name}
             });
             if (typeof onchange === "string") debugger;
             property.listen({onchange: onchange});
@@ -119,6 +120,19 @@
                 }).bind(this));
                 Object.defineProperty(this, "isDestroyed", {value: true});
             }},
+            __debugBindPath:    {get: function()
+            {
+                var bindPath    = this.__bindPath||"";
+                return  this.__bind !== undefined
+                        ?   typeof this.__bind === "string"
+                            ?   (bindPath.length>0?bindPath+".":"")+this.__bind
+                            :   typeof this.__bind === "function"
+                                ?   "function(data(`" + bindPath + "`))"
+                                :   this.__bind && typeof this.__bind.get === "function"
+                                    ?   "getter(data(`" + bindPath + "`))"
+                                    :   bindPath
+                        :   undefined;
+            }},
             ___inputListener:   {value: function()
             {
                 if (this.__delayId !== undefined)
@@ -165,6 +179,7 @@
                 rebind.call(this, function()
                 {
                     each(["data","bindPath","root","onupdate"],(function(name){ if(options[name] !== undefined) Object.defineProperty(this, "__"+name, {value: options[name], configurable: true}); }).bind(this));
+                    if (options.bindPath !== undefined) this.__binder.__updateDebugInfo();
                     if(options.bind !== undefined)
                     {
                         Object.defineProperty(this, "__bind", {value: options.bind, configurable: true});
@@ -201,8 +216,14 @@
         });
         function defineDataProperty(target, binder, propertyName, property)
         {
-            if (target.hasOwnProperty(propertyName)) target[propertyName].destroy();
-            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
+            if (target.hasOwnProperty(propertyName))
+            {
+                binder.unregister(target[propertyName]);
+                target[propertyName].destroy();
+                Object.defineProperty(target, propertyName, {value: null, configurable: true, writable: true}); 
+                delete target[propertyName];
+            }
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay, propertyName), configurable: true})
             each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)

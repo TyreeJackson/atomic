@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.container", function htmlContainer(control, observer, each, viewAdapterFactory, removeItemFromArray)
+!function(){"use strict";root.define("atomic.html.container", function htmlContainer(control, observer, each, viewAdapterFactory, removeItemFromArray, debugInfoObserver)
 {
     var elementControlTypes =
     {
@@ -38,17 +38,17 @@
                             :   elementControlTypes[element.nodeName.toLowerCase() + (element.type ? ":" + element.type.toLowerCase() : "")]||elementControlTypes[element.nodeName.toLowerCase()]||elementControlTypes.default
                         :   elementControlTypes.default);
     }
-    function container(elements, selector, parent, bindPath)
+    function container(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, elements, selector, parent, bindPath);
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         Object.defineProperties(this,
         {
             __controlKeys:      {value: [], configurable: true},
             controlData:        {value: new observer({}), configurable: true},
             controls:           {value: {}, configurable: true},
-            __bindPath:         {value: bindPath, configurable: true},
             __extendedBindPath: {value: "", configurable: true},
-            __controlsToUpdate: {value: {}, configurable: true}
+            __controlsToUpdate: {value: {}, configurable: true},
+            __links:            {value: {}, configurable: true}
         });
     }
     function forwardProperty(propertyKey, property)
@@ -57,28 +57,44 @@
         if (this.__customBind && propertyValue.isDataProperty)  this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
         else                                                    Object.defineProperty(this, propertyKey, {value: propertyValue});
     }
+    function attachProperty(propertyKey, property)
+    {
+        var state   = {updating: false};
+        if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
+        else    if (property.bound === true)
+        {
+            var get     = typeof property.get === "string" ? buildGet(property.get) : property.get;
+            var set     = typeof property.set === "string" ? buildSet(property.set, state) : function(value){state.updating = true; property.set.call(this, value); state.updating = false;}
+            this.__binder.defineDataProperties(this, propertyKey, {get: get, set: set, onchange:  connectOnchange(this, propertyKey, get, property.onchange||"change", state), onupdate: property.onupdate, delay: property.delay});
+        }
+        else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+    }
     function buildGet(property)                     { return function(){return this.controlData(property);} }
-    function buildSet(property)                     { return function(value){this.controlData(property, value);} }
-    function buildOnchange(control, property)
+    function buildSet(property, state)              { return function(value){state.updating = true; this.controlData(property, value); state.updating = false;} }
+    function buildOnchange(control, property, state)
     {
         var propertyEvent   = control.__events.getOrAdd("controlData:" + property);
-        var defining        = true;
-        control.controlData.listen(function(){var value = this(property); if (!defining) propertyEvent(value);});
-        defining            = false;
+        state.updating      = true;
+        control.controlData.listen(function(){var value = this(property); if (!state.updating) propertyEvent(null, value);}, property);
+        state.updating      = false;
         return [propertyEvent];
     }
-    function connectOnchange(control, propertyKey, get, listenerCallback)
+    function connectOnchange(control, propertyKey, get, listenerCallback, state)
     {
         if (typeof listenerCallback === "string")   return control.getEvents(listenerCallback);
         
         var propertyEvent   = control.__events.getOrAdd("controlData:" + propertyKey);
-        var defining        = true;
-        control.controlData.listen(function(){var value = get.call(control); if (!defining) propertyEvent(value);});
-        defining            = false;
+        state.updating      = true;
+        control.controlData.listen(function(){var value = get.call(control); if (!state.updating) propertyEvent(null, value);});
+        state.updating      = false;
         return [propertyEvent];
     }
     Object.defineProperty(container, "prototype", {value: Object.create(control.prototype)});
-    Object.defineProperty(container, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
+    Object.defineProperties(container,
+    {
+        elementControlTypes:    {get:   function() { return elementControlTypes; }},
+        __getViewProperty:      {value: function(name) { return control.__getViewProperty(name); }},
+    });
     Object.defineProperties(container.prototype,
     {
         __cancelViewUpdate:     {value: function()
@@ -121,16 +137,30 @@
         {
             return this.__customBind ? this.controlData : this.__binder.data;
         }},
+        __linkData:             {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            if (parentLinkPaths.length === 0)   return;
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
+        }},
         __setData:              {value: function(data)
         {
+            if (this.__binder.data !== undefined && this.__binder.data !== null)    this.__unlinkData(this.__binder.data);
             this.__binder.data = data; 
             var childControls   = this.children;
             var childData       = this.__getData();
             if (childControls != null)  each(childControls, function(child){child.__setData(childData);});
+            if (data !== undefined && data !== null)                                this.__linkData(data.peek(this.__binder.bindPath));
         }},
         __setExtendedBindPath:  {value: function(path)
         {
             Object.defineProperty(this, "__extendedBindPath", {value: path||"", configurable: true});
+            if (debugInfoObserver)  this.__updateDebugInfo();
+        }},
+        __unlinkData:           {value: function(data)
+        {
+            var parentLinkPaths = Object.keys(this.__links);
+            for(var counter=0,parentLinkPath;(parentLinkPath = parentLinkPaths[counter++]) !== undefined;)  data.unlink(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         bind:                   {get:   function(){var bind = this.value.bind; if (bind !== undefined && typeof bind !== "string") throw new Error("You may only use simple bindings on containers.  Please consider using a computed property on the observer instead."); return bind;}},
         constructor:            {value: container},
@@ -148,7 +178,7 @@
             var control;
             // hack: This feels hacky.  Think this through and see if there is a better way to do incorporate the controlDeclaration.bind into the bind path.
             var bindPath    = this.__customBind ? "" : this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
-            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
+            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
             if (this.data !== undefined)    this.controls[controlKey].__setData(this.__getData());
             return control;
         }},
@@ -162,7 +192,7 @@
                 var declaration = controlDeclarations[controlKey];
                 var selector    = (declaration.selector||("#"+controlKey));
                 var elements    = viewAdapterFactory.selectAll(this.__element, selector, selectorPath);
-                var control     = this.controls[controlKey] = this.createControl(declaration, elements&&elements[0], selector, controlKey, this.__customBind ? "" : (this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath), elements && elements.length > 1);
+                var control     = this.controls[controlKey] = this.createControl(declaration, elements&&elements[0], selector, controlKey, controlKey, this.__customBind ? "" : (this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath), elements && elements.length > 1);
             }
             var data            = this.__getData();
             if (data !== undefined) for(var controlKey in controlDeclarations)  this.controls[controlKey].__setData(data);
@@ -172,24 +202,20 @@
             if (propertyDeclarations === undefined) return;
             for(var propertyKey in propertyDeclarations)
             {
-                var property    = propertyDeclarations[propertyKey];
-                if (typeof property === "function")         forwardProperty.call(this, propertyKey, property);
-                else    if (typeof property === "string")   this.__binder.defineDataProperties(this, propertyKey, { get: buildGet(property),   set: buildSet(property), onchange: buildOnchange(this, property) });
-                else    if (property.bound === true)
-                {
-                    var get     = typeof property.get === "string" ? buildGet(property) : property.get;
-                    this.__binder.defineDataProperties(this, propertyKey, {get: get, set: typeof property.set === "string" ? buildSet(property) : property.set, onchange: connectOnchange(this, propertyKey, get, property.onchange||"change"), onupdate: property.onupdate, delay: property.delay});
-                }
-                else                                        Object.defineProperty(this, propertyKey, {get: property.get, set: property.set});
+                attachProperty.call(this, propertyKey, propertyDeclarations[propertyKey]);
             }
         }},
+        attachDataLinks:        {value: function(dataLinks)
+        {
+            Object.defineProperty(this, "__dataLinks", {value: (dataLinks||[]).slice()})
+        }},
         children:               {get: function(){return this.controls || null;}},
-        createControl:          {value: function(controlDeclaration, controlElement, selector, controlKey, bindPath, multipleElements, preConstruct)
+        createControl:          {value: function(controlDeclaration, controlElement, selector, controlKey, protoControlKey, bindPath, multipleElements, preConstruct)
         {
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(this, controlElement, selector, controlKey, this.__customBind ? "" : bindPath);
+                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath);
             }
             else    control = viewAdapterFactory.create
             ({
@@ -198,6 +224,7 @@
                 parent:                 this,
                 selector:               selector,
                 controlKey:             controlKey,
+                protoControlKey:        protoControlKey,
                 controlType:            getControlTypeForElement(controlDeclaration, controlElement, multipleElements),
                 preConstruct:           preConstruct,
                 bindPath:               this.__customBind ? "" : bindPath
@@ -236,13 +263,19 @@
 
             this.attachControls(definition.controls, this.__element);
             this.attachProperties(definition.properties);
+            this.attachDataLinks(definition.dataLinks);
+        }},
+        link:                   {value: function(parentLinkPath, controlDataLinkPath)
+        {
+            this.__links[parentLinkPath]    = controlDataLinkPath;
+            if (this.__binder.data !== undefined)   this.__binder.data.link(parentLinkPath, this.controlData, this.__links[parentLinkPath]);
         }},
         removeControl:          {value: function(key)
         {console.warn("The `removeControl` method maybe deprecated soon.");
             var childControl    = this.controls[key];
             if (childControl !== undefined)
             {
-                this.__element.removeChild(childControl.__element);
+                this.__setViewData("removeChild", childControl.__element);
                 delete this.controls[key];
             }
             removeItemFromArray(this.__controlKeys, key);

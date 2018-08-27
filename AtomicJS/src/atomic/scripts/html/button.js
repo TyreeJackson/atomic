@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.button", function htmlButton(control)
 {
-    function button(element, selector, parent, bindPath)
+    function button(element, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, element, selector, parent, bindPath);
+        control.call(this, element, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return this.__getViewData("innerHTML");},   set: function(value){this.__setViewData("innerHTML", value||"");}}

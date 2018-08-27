@@ -78,9 +78,9 @@
         option.source       = sourceItem;
         return option;
     }
-    function radiogroup(elements, selector, parent, bindPath)
+    function radiogroup(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        input.call(this, elements, selector, parent, bindPath);
+        input.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},

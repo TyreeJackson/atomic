@@ -43,6 +43,7 @@
                 this.__retained[templateKey]    = repeatedControl;
                 repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
                 repeatedControl.__setData(null);
+                delete this.__repeatedControls[templateKey];
             }
         }
         this.getEvents("viewupdated").viewupdated(["innerHTML"]);
@@ -109,7 +110,7 @@
         var elementCopy = template.element.cloneNode(true);
         elementCopy.setAttribute("id", itemKey);
         var bindPath    = this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
-        var clone       = { key: itemKey, parent: template.parent, control: this.createControl(template.declaration, elementCopy, "#" + itemKey, itemKey, bindPath + (bindPath.length > 0 ? "." : "") + itemIndex) };
+        var clone       = { key: itemKey, parent: template.parent, control: this.createControl(template.declaration, elementCopy, "#" + itemKey, itemKey, templateKey, bindPath + (bindPath.length > 0 ? "." : "") + itemIndex) };
         Object.defineProperty(clone.control, "__templateKey", {value: templateKey});
         //console.log("created: " + clone.control.__selector)
         return clone;
@@ -118,8 +119,6 @@
     {
         var itemKey         = templateKey+"_"+itemIndex;
         var template        = this.__templates[templateKey];
-        if (template.declaration.skipItem !== undefined && template.declaration.skipItem(subDataItem))    return;
-
         var retainedControl = getRetainedTemplateCopy.call(this, itemKey);
         var clone           = retainedControl !== null ? { key: itemKey, parent: template.parent, control: retainedControl } : createTemplateCopy.call(this, templateKey, template, itemIndex, itemKey);
         var data            = this.__getData();
@@ -187,9 +186,9 @@
             }
         }});
     }
-    function repeater(elements, selector, parent, bindPath)
+    function repeater(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, elements, selector, parent, bindPath);
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         Object.defineProperties(this,
         {
             __templateKeys:         {value: [], configurable: true},

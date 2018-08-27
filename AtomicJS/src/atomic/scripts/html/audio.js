@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.audio", function htmlAudio(control)
 {
-    function audio(elements, selector, parent, bindPath)
+    function audio(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, elements, selector, parent, bindPath);
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
             autoplay:       {get: function(){return this.__element.autoplay},       set: function(value){this.__element.autoplay = value===true; this.getEvents("viewupdated").viewupdated(["autoplay"]);}},

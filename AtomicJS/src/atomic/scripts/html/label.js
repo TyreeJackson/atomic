@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.label", function htmlLabel(control, each)
 {
-    function label(elements, selector, parent, bindPath)
+    function label(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, elements, selector, parent, bindPath);
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         Object.defineProperty(this, "__elements", {value: Array.prototype.slice.call(parent.__element.querySelectorAll(selector)), configurable: true});
         this.__binder.defineDataProperties(this,
         {

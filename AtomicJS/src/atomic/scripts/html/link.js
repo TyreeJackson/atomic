@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.link", function htmlLink(base, each)
 {
-    function link(elements, selector, parent, bindPath)
+    function link(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        base.call(this, elements, selector, parent, bindPath);
+        base.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
             href: {get: function(){return this.__element.href;}, set: function(value){var val = value&&value.isObserver?value():value; each(this.__elements, function(element){element.href = val;}); this.__element.href = val; this.getEvents("viewupdated").viewupdated(["href"]);}}

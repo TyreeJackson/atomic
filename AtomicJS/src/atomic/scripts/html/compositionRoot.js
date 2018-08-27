@@ -1,10 +1,12 @@
-!function(){"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes)
+!function(){"use strict";root.define("atomic.html.compositionRoot", function htmlCompositionRoot(customizeControlTypes, debugInfoObserver)
 {
     var each                    = root.utilities.each
     var isolatedFunctionFactory = new root.atomic.html.isolatedFunctionFactory(document);
     var pathParserFactory       = new root.atomic.pathParserFactory(new root.atomic.tokenizer());
     var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
     var observer                = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, each, pathParser);
+    if (debugInfoObserver === true) debugInfoObserver = new observer({__controlIndex:[], __controls:{}});
+
     var pubSub                  = new root.utilities.pubSub(isolatedFunctionFactory, root.utilities.removeItemFromArray);
     var defineDataProperties    = new root.atomic.defineDataProperties(isolatedFunctionFactory, each, pubSub);
     var dataBinder              = new root.atomic.dataBinder(each, root.utilities.removeItemFromArray, defineDataProperties);
@@ -16,11 +18,10 @@
                                         controlTypes,
                                         pubSub,
                                         function(message){console.log(message);},
-                                        each,
-                                        observer
+                                        each
                                     );
 
-    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder);
+    var control                 = new root.atomic.html.control(document, root.utilities.removeItemFromArray, window.setTimeout, each, eventsSet, dataBinder, debugInfoObserver);
     var readonly                = new root.atomic.html.readonly(control, each);
     var label                   = new root.atomic.html.label(readonly, each);
     var link                    = new root.atomic.html.link(readonly, each);
@@ -64,7 +65,7 @@
         video:          {value: video},
         button:         {value: button}
     });
-    var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer };
+    var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer, debugInfoObserver: debugInfoObserver };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
     return atomic;
 });}();
@@ -78,12 +79,17 @@
 !function(window, document)
 {"use strict";
     var atomic;
+    var debugInfoObserver;
+    root.define("atomic.init", function(options)
+    {
+        debugInfoObserver   = (options&&options.debugInfoObserver)||debugInfoObserver;
+    });
     root.define("atomic.ready", function ready(callback)
     {
         var deferOrExecute  =
         function()
         {
-            if (atomic === undefined)   atomic  = root.atomic.html.compositionRoot();
+            if (atomic === undefined)   atomic  = root.atomic.html.compositionRoot(undefined, debugInfoObserver);
             if (typeof callback === "function") callback(atomic);
         }
         if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);

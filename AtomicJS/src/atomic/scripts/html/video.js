@@ -1,8 +1,8 @@
 !function(){"use strict";root.define("atomic.html.video", function htmlVideo(audio)
 {
-    function video(elements, selector, parent, bindPath)
+    function video(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        audio.call(this, elements, selector, parent, bindPath);
+        audio.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
     }
     Object.defineProperty(video, "prototype", {value: Object.create(audio.prototype)});
     Object.defineProperty(video, "__getViewProperty", {value: function(name) { return audio.__getViewProperty(name); }});
