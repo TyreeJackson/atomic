@@ -1857,23 +1857,26 @@ root.atomic.launch
                                             var textboxControl  = atomic.viewAdapterFactory.createFactory
                                             (
                                                 {
+                                                    customBind: true,
                                                     controls:
                                                     {
                                                         label:
                                                         {
-                                                            selector:   ".textbox-label"
+                                                            selector:   ".textbox-label",
+                                                            bind:       "label"
                                                         },
                                                         input:
                                                         {
                                                             selector:   ".textbox-input",
+                                                            bind:       {value: {to: "value", updateon: ["keyup", "change"] } },
                                                             onescape:   function(){ this.value(""); }
                                                         }
                                                     },
                                                     properties:
                                                     {
-                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
-                                                        value:  function(){return this.controls.input.value}
+                                                        label:  { get: function(){return this.controlData("label");}, set: function(value){this.controlData("label", value);} }
                                                     },
+                                                    dataLinks: ["value"],
                                                     extensions:
                                                     [{
                                                         initializers:
@@ -1881,29 +1884,31 @@ root.atomic.launch
                                                             label:  function(adapter, value){adapter.label = value;}
                                                         }
                                                     }]
-                                                    
                                                 },
                                                 "#example12 .textbox-field-control"
                                             );
                                             var readonlyControl = atomic.viewAdapterFactory.createFactory
                                             (
                                                 {
+                                                    customBind: true,
                                                     controls:
                                                     {
                                                         label:
                                                         {
-                                                            selector:   ".readonly-label"
+                                                            selector:   ".readonly-label",
+                                                            bind:       "label"
                                                         },
                                                         readout:
                                                         {
-                                                            selector:   ".readonly-readout"
+                                                            selector:   ".readonly-readout",
+                                                            bind:       "value"
                                                         }
                                                     },
                                                     properties:
                                                     {
-                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
-                                                        value:  function(){return this.controls.readout.value}
+                                                        label:  { get: function(){return this.controlData("label");}, set: function(value){this.controlData("label", value);} }
                                                     },
+                                                    dataLinks: ["value"],
                                                     extensions:
                                                     [{
                                                         initializers:
@@ -1927,24 +1932,21 @@ root.atomic.launch
                                                             {
                                                                 factory:    textboxControl, 
                                                                 label:      "First Name:", 
-                                                                bind:       {value: {to: "firstName", updateon: ["keyup", "change"] } }
+                                                                link:       { value: "firstName" }
                                                             },
                                                             lastName:
                                                             {
                                                                 factory:    textboxControl, 
                                                                 label:      "Last Name:", 
-                                                                bind:       {value: {to: "lastName", updateon: ["keyup", "change"] } }
+                                                                link:       { value: "lastName" }
                                                             },
                                                             fullName:
                                                             {
                                                                 factory:    readonlyControl, 
-                                                                label:      "Full Name:", 
+                                                                label:      "Full Name:",
+                                                                link:       { value: "fullName" },
                                                                 bind: 
                                                                 {
-                                                                    value:      function()
-                                                                    {
-                                                                        return (this.data("firstName")||"") + " " + (this.data("lastName")||"");
-                                                                    }, 
                                                                     display:    function()
                                                                     {
                                                                         return (this.data("firstName")||"").length > 0
@@ -1956,6 +1958,10 @@ root.atomic.launch
                                                         }
                                                     },
                                                     example12model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                                },
+                                                function(viewAdapter)
+                                                {
+                                                    viewAdapter.data.define("fullName", {get: function(){ return (this("firstName")||"") + " " + (this("lastName")||"");}});
                                                 }
                                             );
                                         });

@@ -150,7 +150,7 @@
         }},
         destroy:
         {value: function()
-        {debugger;
+        {
             for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)  this.__target.__element.removeEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
             this.pubSub.destroy();
             each
@@ -614,18 +614,17 @@
             }).bind(this));
             Object.defineProperty(this, "isDestroyed", {value: true});
         }},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition)
         {
-            addEvents.call(this, definition.events);
-            addCustomMembers.call(this, definition.members);
+            addEvents.call(this, controlDefinition.events);
+            addCustomMembers.call(this, controlDefinition.members);
 
-            if (definition.extensions !== undefined && definition.extensions.length !== undefined)
-            for(var counter=0;counter<definition.extensions.length;counter++)
+            if (controlDefinition.extensions !== undefined && controlDefinition.extensions.length !== undefined)
+            for(var counter=0;counter<controlDefinition.extensions.length;counter++)
             {
-                if (definition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
-                if (definition.extensions[counter].extend !== undefined) definition.extensions[counter].extend.call(this);
+                if (controlDefinition.extensions[counter] === undefined)        throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
+                if (controlDefinition.extensions[counter].extend !== undefined) controlDefinition.extensions[counter].extend.call(this);
             }
-            this.__extensions   = definition.extensions;
         }},
         getEvents:          {value: function(eventNames)
         {
@@ -639,14 +638,13 @@
         hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
         hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
         hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
-        initialize:         {value: function(definition)
+        initialize:         {value: function(initializerDefinition, controlDefinition)
         {
             for(var initializerKey in initializers)
-            if (definition.hasOwnProperty(initializerKey))    initializers[initializerKey](this, definition[initializerKey]);
+            if (initializerDefinition.hasOwnProperty(initializerKey))   initializers[initializerKey](this, initializerDefinition[initializerKey]);
 
-            if (this.__extensions !== undefined && this.__extensions.length !== undefined)
-            for(var counter=0;counter<this.__extensions.length;counter++)   initializeViewAdapterExtension.call(this, definition, this.__extensions[counter]);
-            delete this.__extensions;
+            if (controlDefinition !== undefined && controlDefinition.extensions !== undefined && controlDefinition.extensions.length !== undefined)
+            for(var counter=0;counter<controlDefinition.extensions.length;counter++)    initializeViewAdapterExtension.call(this, initializerDefinition, controlDefinition.extensions[counter]);
         }},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertBefore:       {value: function(siblingControl)                { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; }},
@@ -1029,11 +1027,12 @@
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath);
+                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath, controlDeclaration);
             }
             else    control = viewAdapterFactory.create
             ({
                 definitionConstructor:  controlDeclaration.adapter||function(){ return controlDeclaration; },
+                initializerDefinition:  controlDeclaration,
                 viewElement:            controlElement,
                 parent:                 this,
                 selector:               selector,
@@ -1043,7 +1042,6 @@
                 preConstruct:           preConstruct,
                 bindPath:               this.__customBind ? "" : bindPath
             });
-            control.initialize(controlDeclaration);
             return control;
         }},
         destroy:                {value: function()
@@ -1061,23 +1059,27 @@
             }).bind(this));
             control.prototype.destroy.call(this);
         }},
-        frame:                  {value: function(definition)
+        frame:                  {value: function(controlDefinition)
         {
-            Object.defineProperty(this, "__customBind", {value: definition.customBind === true, configurable: true});
-            control.prototype.frame.call(this, definition);
-            var binding =   definition.bind !== undefined && definition.bind !== null
-                            ?   typeof definition.bind === "object" && definition.bind.value !== undefined && definition.bind.value !== null
-                                ?   typeof definition.bind.value === "object" && definition.bind.value.to !== undefined && definition.bind.value.to !== null
-                                    ?   definition.bind.value.to
-                                    :   definition.bind.value
-                                :   definition.bind
+            Object.defineProperty(this, "__customBind", {value: controlDefinition.customBind === true, configurable: true});
+            control.prototype.frame.call(this, controlDefinition);
+
+            this.attachProperties(controlDefinition.properties);
+            this.attachDataLinks(controlDefinition.dataLinks);
+        }},
+        initialize:         {value: function(initializerDefinition, controlDefinition)
+        {
+            var binding =   initializerDefinition.bind !== undefined && initializerDefinition.bind !== null
+                            ?   typeof initializerDefinition.bind === "object" && initializerDefinition.bind.value !== undefined && initializerDefinition.bind.value !== null
+                                ?   typeof initializerDefinition.bind.value === "object" && initializerDefinition.bind.value.to !== undefined && initializerDefinition.bind.value.to !== null
+                                    ?   initializerDefinition.bind.value.to
+                                    :   initializerDefinition.bind.value
+                                :   initializerDefinition.bind
                             :   null;
             if (typeof binding === "function")      throw new Error("Function based value bindings are no longer supported on containers.  Please switch to binding to a computed property on the observer.  Path: "+ this.getSelectorPath());
             else if (typeof binding === "string")   {this.__setExtendedBindPath(binding);}
-
-            this.attachControls(definition.controls, this.__element);
-            this.attachProperties(definition.properties);
-            this.attachDataLinks(definition.dataLinks);
+            control.prototype.initialize.call(this, initializerDefinition, controlDefinition);
+            if (controlDefinition !== undefined)    this.attachControls(controlDefinition.controls, this.__element);
         }},
         link:                   {value: function(parentLinkPath, controlDataLinkPath)
         {
@@ -1096,7 +1098,11 @@
             this.getEvents("viewupdated").viewupdated(["innerHTML"]);
             return this;
         }},
-        value:                  {value: {listen: function(){}}, configurable: true}
+        value:                  {get: function(){return {listen: (function(options)
+        {
+            if (typeof options.bind === "function")     throw new Error("Function based value bindings are no longer supported on containers.  Please switch to binding to a computed property on the observer.  Path: "+ this.getSelectorPath());
+            else if (typeof options.bind === "string")  {this.__setExtendedBindPath(options.bind);}
+        }).bind(this)}}, configurable: true}
     });
     return container;
 });}();
@@ -1111,9 +1117,9 @@
     Object.defineProperties(panel.prototype,
     {
         constructor:        {value: panel},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition, initializerDefinition)
         {
-            container.prototype.frame.call(this, definition);
+            container.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }}
     });
     return panel;
@@ -1144,9 +1150,9 @@
     Object.defineProperties(composite.prototype,
     {
         constructor:        {value: composite},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition, initializerDefinition)
         {
-            base.prototype.frame.call(this, definition);
+            base.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }}
     });
     return composite;
@@ -1362,10 +1368,10 @@
     Object.defineProperties(repeater.prototype,
     {
         constructor:                {value: repeater},
-        frame:                      {value: function(definition)
+        frame:                      {value: function(controlDefinition, initializerDefinition)
         {
-            extractDeferredControls.call(this, definition.repeat, this.__element);
-            control.prototype.frame.call(this, definition);
+            extractDeferredControls.call(this, controlDefinition.repeat, this.__element);
+            control.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }},
         children:   {get: function(){return this.__repeatedControls || null;}},
         pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
@@ -1415,7 +1421,7 @@
             control.prototype.__addCustomEvents.call(this, events);
             Object.defineProperties(events,
             {
-                changing:         {value:   {eventNames: ["keydown", "keyup", "mouseup", "touchend", "change"], handler: notifyIfValueHasChangedOrDelay.bind(this)} },
+                changing:         {value:   {eventNames: ["keydown", "keyup", "mouseup", "touchend", "change"], handler: notifyIfValueHasChangedOrDelay} },
                 enter:            {value:   {eventNames: ["keypress"],                                          handler: function(event){ if (event.keyCode==13) { this.pubSub(event); } }}}
             });
         }},
@@ -1472,7 +1478,7 @@
         this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value&&value.isObserver?value():value;}},
-            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value;}}
+            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value; this.selected = parent.__isValueSelected(value);}}
         });
     }
     Object.defineProperties(selectoption.prototype,
@@ -1579,7 +1585,6 @@
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
             this.__element.appendChild(option.__element);
-            option.selected = this.__isValueSelected(option.value());
         }
     }
     return select;
@@ -2046,8 +2051,9 @@
             if (controlTypes[options.controlType] === undefined)    debugger;
 
             var viewAdapter             = new controlTypes[options.controlType](options.viewElement, selector, options.parent, options.bindPath, options.controlKey, options.protoControlKey);
-
-            viewAdapter.frame(new options.definitionConstructor(viewAdapter));
+            var controlDefinition       = new options.definitionConstructor(viewAdapter);
+            viewAdapter.frame(controlDefinition, options.initializerDefinition||controlDefinition);
+            viewAdapter.initialize(options.initializerDefinition||controlDefinition, controlDefinition);
             if (typeof options.preConstruct === "function") options.preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
@@ -2057,6 +2063,7 @@
             var adapter = this.create
             ({
                 definitionConstructor:  typeof definitionConstructor !== "function" ? function(appViewAdapter){return {controls: definitionConstructor}; } : definitionConstructor,
+                initializerDefinition:  {},
                 viewElement:            viewElement,
                 parent:                 undefined,
                 selector:               undefined,
@@ -2071,7 +2078,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath)
+            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath, initializerDefinition)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -2080,6 +2087,7 @@
                     container                       = this.create
                     ({
                         definitionConstructor:  function(){return {};}, 
+                        initializerDefinition:  {},
                         viewElement:            containerElement,
                         parent:                 parent,
                         selector:               selector,
@@ -2096,6 +2104,7 @@
                 var view                            = this.create
                 ({
                     definitionConstructor:  typeof definitionConstructor !== "function" ? function(control){return definitionConstructor} : function(control){return definitionConstructor(control, factory);},
+                    initializerDefinition:  initializerDefinition,
                     viewElement:            viewElement,
                     parent:                 container,
                     selector:               selector,
@@ -2608,9 +2617,8 @@
             resolved.property.set(resolved.basePath, resolved.key, newValue);
         }
         else if (typeof resolved.segment.value === "object")
-        {debugger;
+        {
             resolved.segment.value.set({bag: root.bag, basePath: resolved.basePath}, newValue);
-            debugger;
         }
         else
         {
@@ -2883,8 +2891,8 @@
         }
         function filterMatchedByPathSegment(paths, counter, pathSegment)
         {
-            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;)
-            if (path !== pathSegment)   paths.splice(pathCounter, 1);
+            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter]) !== undefined;pathCounter--)
+            if (path.length <= counter || path[counter] !== pathSegment)    paths.splice(pathCounter, 1);
         }
         var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
@@ -2950,7 +2958,7 @@
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*?\/)/g)).filter(function(s){return s!=null&&s.length>0;});
-                    var currentMatched  = Object.keys(this.__bag.listenersByPath).map(function(path){return path.split(".");});
+                    var currentMatched  = Object.keys(this.__bag.listenersByPath).concat(Object.keys(this.__bag.linkedObservers)).map(function(path){return path.split(".");});
                     for(var counter=0;counter<pathSegments.length;counter++)
                     {
                         var pathSegment = pathSegments[counter];
@@ -3020,7 +3028,7 @@
                             }
                         }
                     }
-                    for(var pathCounter=0,path;(path=currentMatched[pathCounter++]) !== undefined;) notifyPropertyListeners.call(this, path, this.__bag.item, this.__bag, false);
+                    for(var pathCounter=0,path;(path=currentMatched[pathCounter++]) !== undefined;) notifyPropertyListeners.call(this, path.join("."), this.__bag.item, this.__bag, false);
                 }
             }},
             ignore:             {value: function(callback)
