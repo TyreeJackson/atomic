@@ -531,10 +531,11 @@
         }},
         __updateDebugInfo:  {value: function()
         {
+            if (debugInfoObserver === undefined)    return;
             function deferred()
             {
                 delete this.__updateDebugInfoId;
-                if(debugInfoObserver) debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
             }
             if (this.__updateDebugInfoId !== undefined)
             {
