@@ -635,7 +635,7 @@
             return events;
         }},
         getSelectorPath:    {value: function()                              { return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root"); }},
-        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls[\"") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")) + (this.parent === undefined ? "" : "\"]"); }},
+        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls.") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")); }},
         hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
         hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
         hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
@@ -3307,12 +3307,17 @@
         __getDebugInfo:         {value: function()
         {
             var debugInfo   = {};
+            var hasBinding  = false;
             each(this.__properties,(function(property)
             {
                 var debugBindPath   = property.__debugBindPath;
-                if (debugBindPath !== undefined)    debugInfo[property.name]    = debugBindPath;
+                if (debugBindPath !== undefined)
+                {
+                    hasBinding                  = true;
+                    debugInfo[property.name]    = debugBindPath;
+                }
             }).bind(this));
-            return debugInfo;
+            return hasBinding ? debugInfo : undefined;
         }},
         __updateDebugInfo:      {value: function(){if (this.__target !== undefined) this.__target.__updateDebugInfo();}},
         bindPath:
