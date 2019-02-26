@@ -411,7 +411,7 @@
             return events;
         }},
         getSelectorPath:    {value: function()                              { return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root"); }},
-        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls[\"") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")) + (this.parent === undefined ? "" : "\"]"); }},
+        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls.") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")); }},
         hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
         hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
         hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},

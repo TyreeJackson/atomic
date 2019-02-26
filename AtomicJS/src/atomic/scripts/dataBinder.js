@@ -29,12 +29,17 @@
         __getDebugInfo:         {value: function()
         {
             var debugInfo   = {};
+            var hasBinding  = false;
             each(this.__properties,(function(property)
             {
                 var debugBindPath   = property.__debugBindPath;
-                if (debugBindPath !== undefined)    debugInfo[property.name]    = debugBindPath;
+                if (debugBindPath !== undefined)
+                {
+                    hasBinding                  = true;
+                    debugInfo[property.name]    = debugBindPath;
+                }
             }).bind(this));
-            return debugInfo;
+            return hasBinding ? debugInfo : undefined;
         }},
         __updateDebugInfo:      {value: function(){if (this.__target !== undefined) this.__target.__updateDebugInfo();}},
         bindPath:
