@@ -239,6 +239,10 @@
         {
             return {type: resolvedSegmentType, value: newBasePath.length > 0 ? newBasePath.join(".") : "$root", newBasePath: newBasePath};
         }
+        else if (segment.value === "$rootPath")
+        {
+            return {type: resolvedSegmentType, value: "$root" + (newBasePath.length > 0 ? "." + newBasePath.join(".") : ""), newBasePath: newBasePath};
+        }
         else
         {
             newBasePath.push(segment.value);
@@ -322,9 +326,8 @@
             resolved.property.set(resolved.basePath, resolved.key, newValue);
         }
         else if (typeof resolved.segment.value === "object")
-        {debugger;
+        {
             resolved.segment.value.set({bag: root.bag, basePath: resolved.basePath}, newValue);
-            debugger;
         }
         else
         {

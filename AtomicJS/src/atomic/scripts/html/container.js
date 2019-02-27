@@ -176,9 +176,8 @@
         {console.warn("The `addControl` method maybe deprecated soon.");
             if (controlDeclaration === undefined)  return;
             var control;
-            // hack: This feels hacky.  Think this through and see if there is a better way to do incorporate the controlDeclaration.bind into the bind path.
             var bindPath    = this.__customBind ? "" : this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
-            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
+            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, controlKey, bindPath));
             if (this.data !== undefined)    this.controls[controlKey].__setData(this.__getData());
             return control;
         }},
@@ -215,11 +214,12 @@
             var control;
             if (controlDeclaration.factory !== undefined)
             {
-                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath);
+                control = controlDeclaration.factory(this, controlElement, selector, controlKey, protoControlKey, this.__customBind ? "" : bindPath, controlDeclaration);
             }
             else    control = viewAdapterFactory.create
             ({
                 definitionConstructor:  controlDeclaration.adapter||function(){ return controlDeclaration; },
+                initializerDefinition:  controlDeclaration,
                 viewElement:            controlElement,
                 parent:                 this,
                 selector:               selector,
@@ -229,7 +229,6 @@
                 preConstruct:           preConstruct,
                 bindPath:               this.__customBind ? "" : bindPath
             });
-            control.initialize(controlDeclaration);
             return control;
         }},
         destroy:                {value: function()
@@ -247,23 +246,27 @@
             }).bind(this));
             control.prototype.destroy.call(this);
         }},
-        frame:                  {value: function(definition)
+        frame:                  {value: function(controlDefinition)
         {
-            Object.defineProperty(this, "__customBind", {value: definition.customBind === true, configurable: true});
-            control.prototype.frame.call(this, definition);
-            var binding =   definition.bind !== undefined && definition.bind !== null
-                            ?   typeof definition.bind === "object" && definition.bind.value !== undefined && definition.bind.value !== null
-                                ?   typeof definition.bind.value === "object" && definition.bind.value.to !== undefined && definition.bind.value.to !== null
-                                    ?   definition.bind.value.to
-                                    :   definition.bind.value
-                                :   definition.bind
+            Object.defineProperty(this, "__customBind", {value: controlDefinition.customBind === true, configurable: true});
+            control.prototype.frame.call(this, controlDefinition);
+
+            this.attachProperties(controlDefinition.properties);
+            this.attachDataLinks(controlDefinition.dataLinks);
+        }},
+        initialize:         {value: function(initializerDefinition, controlDefinition)
+        {
+            var binding =   initializerDefinition.bind !== undefined && initializerDefinition.bind !== null
+                            ?   typeof initializerDefinition.bind === "object" && initializerDefinition.bind.value !== undefined && initializerDefinition.bind.value !== null
+                                ?   typeof initializerDefinition.bind.value === "object" && initializerDefinition.bind.value.to !== undefined && initializerDefinition.bind.value.to !== null
+                                    ?   initializerDefinition.bind.value.to
+                                    :   initializerDefinition.bind.value
+                                :   initializerDefinition.bind
                             :   null;
             if (typeof binding === "function")      throw new Error("Function based value bindings are no longer supported on containers.  Please switch to binding to a computed property on the observer.  Path: "+ this.getSelectorPath());
             else if (typeof binding === "string")   {this.__setExtendedBindPath(binding);}
-
-            this.attachControls(definition.controls, this.__element);
-            this.attachProperties(definition.properties);
-            this.attachDataLinks(definition.dataLinks);
+            control.prototype.initialize.call(this, initializerDefinition, controlDefinition);
+            if (controlDefinition !== undefined)    this.attachControls(controlDefinition.controls, this.__element);
         }},
         link:                   {value: function(parentLinkPath, controlDataLinkPath)
         {
@@ -282,7 +285,11 @@
             this.getEvents("viewupdated").viewupdated(["innerHTML"]);
             return this;
         }},
-        value:                  {value: {listen: function(){}}, configurable: true}
+        value:                  {get: function(){return {listen: (function(options)
+        {
+            if (typeof options.bind === "function")     throw new Error("Function based value bindings are no longer supported on containers.  Please switch to binding to a computed property on the observer.  Path: "+ this.getSelectorPath());
+            else if (typeof options.bind === "string")  {this.__setExtendedBindPath(options.bind);}
+        }).bind(this)}}, configurable: true}
     });
     return container;
 });}();

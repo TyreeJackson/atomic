@@ -989,9 +989,8 @@
         {console.warn("The `addControl` method maybe deprecated soon.");
             if (controlDeclaration === undefined)  return;
             var control;
-            // hack: This feels hacky.  Think this through and see if there is a better way to do incorporate the controlDeclaration.bind into the bind path.
             var bindPath    = this.__customBind ? "" : this.bindPath + (this.bindPath.length > 0 && this.__extendedBindPath.length > 0 ? "." : "") + this.__extendedBindPath;
-            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, controlKey, bindPath + (bindPath.length > 0 && controlDeclaration.bind.length > 0 ? "." : "") + controlDeclaration.bind));
+            this.appendControl(controlKey, control = this.createControl(controlDeclaration, undefined, "#" + controlKey, controlKey, controlKey, bindPath));
             if (this.data !== undefined)    this.controls[controlKey].__setData(this.__getData());
             return control;
         }},
@@ -2535,6 +2534,10 @@
         {
             return {type: resolvedSegmentType, value: newBasePath.length > 0 ? newBasePath.join(".") : "$root", newBasePath: newBasePath};
         }
+        else if (segment.value === "$rootPath")
+        {
+            return {type: resolvedSegmentType, value: "$root" + (newBasePath.length > 0 ? "." + newBasePath.join(".") : ""), newBasePath: newBasePath};
+        }
         else
         {
             newBasePath.push(segment.value);
@@ -2850,11 +2853,15 @@
         {
             bag.__updatingLinkedObservers   = true;
             var linkedPaths = Object.keys(bag.linkedObservers);
-            for(var counter=0;counter<linkedPaths.length;counter++)
+            if (linkedPaths.length > 0)
             {
-                var linkedPath  = linkedPaths[counter];
-                if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
-                else if(linkedPath === "$root" || propertyKey.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))  notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], linkedPath === "$root" ? propertyKey : propertyKey.substr(linkedPath.length > 0 ? linkedPath.length + 1 : 0), value);
+                var resolvedPropertyKeyPath     = this.observe(propertyKey)("$rootPath");
+                for(var counter=0;counter<linkedPaths.length;counter++)
+                {
+                    var linkedPath  = linkedPaths[counter];
+                    if (linkedPath === resolvedPropertyKeyPath  || linkedPath.startsWith(resolvedPropertyKeyPath+(resolvedPropertyKeyPath.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
+                    else if(linkedPath === "$root"              || resolvedPropertyKeyPath.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))              notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], linkedPath === "$root" ? propertyKey : linkedPath.length > 0 ? resolvedPropertyKeyPath.substr(linkedPath.length + 1) : propertyKey, value);
+                }
             }
             bag.__updatingLinkedObservers   = false;
         }
@@ -2959,7 +2966,7 @@
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*?\/)/g)).filter(function(s){return s!=null&&s.length>0;});
-                    var currentMatched  = Object.keys(this.__bag.listenersByPath).concat(Object.keys(this.__bag.linkedObservers)).map(function(path){return path.split(".");});
+                    var currentMatched  = Object.keys(this.__bag.listenersByPath).map(function(path){return path.split(".");}).concat(Object.keys(this.__bag.linkedObservers).map(function(path){return path.substr(6).split(".");}));
                     for(var counter=0;counter<pathSegments.length;counter++)
                     {
                         var pathSegment = pathSegments[counter];
@@ -3062,7 +3069,7 @@
             link:               {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
                 var resolvedObserver        = this.observe(rootPath);
-                rootPath                    = resolvedObserver("$path");
+                rootPath                    = resolvedObserver("$rootPath");
                 var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
                 var linkedChildObserver     = undefined;
 

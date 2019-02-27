@@ -129,11 +129,15 @@
         {
             bag.__updatingLinkedObservers   = true;
             var linkedPaths = Object.keys(bag.linkedObservers);
-            for(var counter=0;counter<linkedPaths.length;counter++)
+            if (linkedPaths.length > 0)
             {
-                var linkedPath  = linkedPaths[counter];
-                if (linkedPath === propertyKey || linkedPath.startsWith(propertyKey+(propertyKey.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
-                else if(linkedPath === "$root" || propertyKey.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))  notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], linkedPath === "$root" ? propertyKey : propertyKey.substr(linkedPath.length > 0 ? linkedPath.length + 1 : 0), value);
+                var resolvedPropertyKeyPath     = this.observe(propertyKey)("$rootPath");
+                for(var counter=0;counter<linkedPaths.length;counter++)
+                {
+                    var linkedPath  = linkedPaths[counter];
+                    if (linkedPath === resolvedPropertyKeyPath  || linkedPath.startsWith(resolvedPropertyKeyPath+(resolvedPropertyKeyPath.length > 0 ? "." : "")))   updateLinkedObservers.call(this, bag.linkedObservers[linkedPath], this.unwrap(linkedPath))
+                    else if(linkedPath === "$root"              || resolvedPropertyKeyPath.startsWith(linkedPath + (linkedPath.length > 0 ? "." : "")))              notifyLinkedObservers.call(this, bag.linkedObservers[linkedPath], linkedPath === "$root" ? propertyKey : linkedPath.length > 0 ? resolvedPropertyKeyPath.substr(linkedPath.length + 1) : propertyKey, value);
+                }
             }
             bag.__updatingLinkedObservers   = false;
         }
@@ -171,8 +175,8 @@
         }
         function filterMatchedByPathSegment(paths, counter, pathSegment)
         {
-            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;)
-            if (path !== pathSegment)   paths.splice(pathCounter, 1);
+            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter]) !== undefined;pathCounter--)
+            if (path.length <= counter || path[counter] !== pathSegment)    paths.splice(pathCounter, 1);
         }
         var regExMatch  = /^\/.*\/$/;
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
@@ -238,7 +242,7 @@
                     if (property.set !== undefined) virtualProperty.set = (function(basePath, key, value){return property.set.call(createObserver(basePath, this.__bag, false), key, value);}).bind(this);
 
                     var pathSegments    = this.__basePath.split(".").concat((path||"").split(/\.|(\/.*?\/)/g)).filter(function(s){return s!=null&&s.length>0;});
-                    var currentMatched  = Object.keys(this.__bag.listenersByPath).map(function(path){return path.split(".");});
+                    var currentMatched  = Object.keys(this.__bag.listenersByPath).map(function(path){return path.split(".");}).concat(Object.keys(this.__bag.linkedObservers).map(function(path){return path.substr(6).split(".");}));
                     for(var counter=0;counter<pathSegments.length;counter++)
                     {
                         var pathSegment = pathSegments[counter];
@@ -308,7 +312,7 @@
                             }
                         }
                     }
-                    for(var pathCounter=0,path;(path=currentMatched[pathCounter++]) !== undefined;) notifyPropertyListeners.call(this, path, this.__bag.item, this.__bag, false);
+                    for(var pathCounter=0,path;(path=currentMatched[pathCounter++]) !== undefined;) notifyPropertyListeners.call(this, path.join("."), this.__bag.item, this.__bag, false);
                 }
             }},
             ignore:             {value: function(callback)
@@ -341,7 +345,7 @@
             link:               {value: function(rootPath, childObserver, childRootPath, skipLinkBack)
             {
                 var resolvedObserver        = this.observe(rootPath);
-                rootPath                    = resolvedObserver("$path");
+                rootPath                    = resolvedObserver("$rootPath");
                 var linkedChildObservers    = this.__bag.linkedObservers[rootPath] = this.__bag.linkedObservers[rootPath]||[];
                 var linkedChildObserver     = undefined;
 
