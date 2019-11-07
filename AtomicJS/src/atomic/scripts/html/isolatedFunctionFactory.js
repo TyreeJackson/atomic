@@ -1,5 +1,4 @@
-!function()
-{"use strict";root.define("atomic.html.isolatedFunctionFactory", function isolatedFunctionFactory(document)
+!function(){"use strict";root.define("atomic.html.isolatedFunctionFactory", function isolatedFunctionFactory(document)
 {
     return function()
     {

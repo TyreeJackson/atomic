@@ -1,14 +1,14 @@
 !function()
-{
-    "use strict";
+{"use strict";
     var defineDataProperties;
+    var bindCounter             = 0;
     function buildFunction(isolatedFunctionFactory, each)
     {
         var functionFactory = new isolatedFunctionFactory();
         var dataProperty    =
         functionFactory.create
-        (function dataProperty(owner, getter, setter, onchange, binder, delay)
-        {
+        (function dataProperty(owner, getter, setter, onchange, binder, delay, name)
+        {if (binder === undefined)  debugger;
             var property    = this;
             Object.defineProperties(this,
             {
@@ -28,27 +28,30 @@
                 __setter:               {value: function(value){if (typeof setter === "function") setter.call(owner, value);}, configurable: true},
                 __notifyingObserver:    {value: undefined, writable: true, configurable: true},
                 __onchange:             {value: {}, configurable: true},
-                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true}
+                __inputListener:        {value: function(event){property.___inputListener(); if (event !== undefined && event !== null && typeof event.stopPropagation === "function") event.stopPropagation();}, configurable: true},
+                name:                   {value: name}
             });
             if (typeof onchange === "string") debugger;
-            property.onchange = onchange;
+            property.listen({onchange: onchange});
             if (binder) binder.register(property);
             return property;
         });
         function bindData()
         {
-            if (this.__data === undefined || this.__data == null)   return;
+            if (this.__data === undefined || this.__data == null || this.isDestroyed)   return;
             Object.defineProperty(this,"__bounded", {value: true, configurable: true});
             if (this.__bind !== undefined)
             {
                 Object.defineProperty(this, "__bindListener", 
                 {
                     configurable:   true, 
-                    value:          (function()
+                    value:          (function(val, ignore)
                     {
-                        var value = this.__getDataValue();
+                        var value           = this.__getDataValue();
+                        var currentValue    = this.__getter();
+                        if (value === currentValue)  return;
                         if (!this.__notifyingObserver) this.__setter(value);
-                        setTimeout((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this),0); 
+                        ignore((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this)); 
                     }).bind(this)
                 });
                 each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
@@ -80,6 +83,7 @@
         function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
         function notifyOnDataUpdate(data)   { if (this.__onupdate) this.__onupdate.call(this.__owner, data); }
         function notifyOnunbind(data)       { if (this.__onunbind) this.__onunbind.call(this.__owner, data); }
+        
         function rebind(callback)
         {
             unbindData.call(this);
@@ -116,6 +120,19 @@
                 }).bind(this));
                 Object.defineProperty(this, "isDestroyed", {value: true});
             }},
+            __debugBindPath:    {get: function()
+            {
+                var bindPath    = this.__bindPath||"";
+                return  this.__bind !== undefined
+                        ?   typeof this.__bind === "string"
+                            ?   (bindPath.length>0?bindPath+".":"")+this.__bind
+                            :   typeof this.__bind === "function"
+                                ?   "function(data(`" + bindPath + "`))"
+                                :   this.__bind && typeof this.__bind.get === "function"
+                                    ?   "getter(data(`" + bindPath + "`))"
+                                    :   bindPath
+                        :   undefined;
+            }},
             ___inputListener:   {value: function()
             {
                 if (this.__delayId !== undefined)
@@ -137,32 +154,47 @@
             {
                 value:  function()
                 {
-                    if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data);
-                    else if (typeof this.__bind === "string")                       return this.data(this.__bind);
-                    else if (this.__bind && typeof this.__bind.get === "function")  return this.__bind.get.call(this.__owner, this.data);
-                    return this.data();
+                    var bindPath    = this.__bindPath||"";
+                    if      (typeof this.__bind === "function")                     return this.__bind.call(this.__owner, this.data.observe(bindPath));
+                    else if (typeof this.__bind === "string")                       return this.data((bindPath.length>0?bindPath+".":"")+this.__bind);
+                    else if (this.__bind && typeof this.__bind.get === "function")  return this.__bind.get.call(this.__owner, this.data.observe(bindPath));
+                    return this.data(bindPath);
                 }
             },
             __setDataValue:
             {
                 value:  function()
                 {
+                    var bindPath    = this.__bindPath||"";
                     if (this.__getter === undefined || this.__bind === undefined)   return;
 
-                    if      (typeof this.__bind === "string")                       this.data(this.__bind, this.__getter());
-                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data, this.__getter());
+                    if      (typeof this.__bind === "string")                       this.data((bindPath.length>0?bindPath+".":"")+this.__bind, this.__getter());
+                    else if (this.__bind && typeof this.__bind.set === "function")  this.__bind.set.call(this.__owner, this.data.observe(bindPath), this.__getter());
                     else                                                            {debugger; throw new Error("Unable to set back two way bound value to model.");}
                 }
             },
             isDataProperty: {value: true, configurable: false, writable: false},
+            listen:         {value: function(options)
+            {
+                rebind.call(this, function()
+                {
+                    each(["data","bindPath","root","onupdate"],(function(name){ if(options[name] !== undefined) Object.defineProperty(this, "__"+name, {value: options[name], configurable: true}); }).bind(this));
+                    if (options.bindPath !== undefined) this.__binder.__updateDebugInfo();
+                    if(options.bind !== undefined)
+                    {
+                        Object.defineProperty(this, "__bind", {value: options.bind, configurable: true});
+                    }
+                    if(options.onchange !== undefined)
+                    {
+                        each(this.__onchange,   (function(event, name){Object.defineProperty(this.__onchange,name,{writable: true});delete this.__onchange[name];}).bind(this));
+                        each(options.onchange,  (function(event, name){Object.defineProperty(this.__onchange,name,{value: event, configurable: true, enumerable: true});}).bind(this));
+                    }
+                });
+            }},
             onchange:
             {
                 get:    function(){return this.__onchange;},
-                set:    function(value) {rebind.call(this,function()
-                {
-                    each(this.__onchange,   (function(event, name){Object.defineProperty(this.__onchange,name,{writable: true});delete this.__onchange[name];}).bind(this));
-                    each(value,             (function(event, name){Object.defineProperty(this.__onchange,name,{value: event, configurable: true, enumerable: true});}).bind(this));
-                });}
+                set:    function(value){throw new Error("obsolete");}
             },
             update:         {value: function(){this.___inputListener();}}
         });
@@ -171,17 +203,10 @@
             Object.defineProperty(functionFactory.root.prototype, name,
             {
                 get:    function(){return this["__"+name];},
-                set:    function(value)
-                {
-                    rebind.call(this, function()
-                    {
-                        Object.defineProperty(this, "__"+name, {value: value, configurable: true});
-                    });
-                    if(typeof this[name+"updated"] === "function")  this[name+"updated"](value);
-                }
+                set:    function(value){throw new Error("obsolete");}
             });
         });
-        each(["onbind","onupdate","onunbind","delay"],function(name)
+        each(["onbind","onunbind","delay"],function(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
@@ -191,8 +216,14 @@
         });
         function defineDataProperty(target, binder, propertyName, property)
         {
-            if (target.hasOwnProperty(propertyName)) target[propertyName].destroy();
-            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay), configurable: true})
+            if (target.hasOwnProperty(propertyName))
+            {
+                binder.unregister(target[propertyName]);
+                target[propertyName].destroy();
+                Object.defineProperty(target, propertyName, {value: null, configurable: true, writable: true}); 
+                delete target[propertyName];
+            }
+            Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay, propertyName), configurable: true})
             each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
         }
         function defineDataProperties(target, binder, properties, singleProperty)

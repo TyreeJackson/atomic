@@ -1,5 +1,4 @@
-!function()
-{"use strict"; root.define("atomic.scanner", function scanner()
+!function(){"use strict";root.define("atomic.scanner", function scanner()
 {
     var priv    =
     {

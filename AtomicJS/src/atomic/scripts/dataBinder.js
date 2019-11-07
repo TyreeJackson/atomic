@@ -1,11 +1,10 @@
-!function()
-{"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray, defineDataProperties)
+!function(){"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray, defineDataProperties)
 {
     function notifyProperties()
     {
         each(this.__properties,(function(property)
         {
-            property.data = this.data===undefined?null:this.data;
+            property.listen({bindPath: this.bindPath||"", data: this.data===undefined?null:this.data});
         }).bind(this));
     }
     function dataBinder(target, data)
@@ -21,12 +20,33 @@
     };
     Object.defineProperties(dataBinder.prototype,
     {
-        __makeRoot:   {value: function()
+        __makeRoot:             {value: function()
         {
             var parent  = this.__parentBinder;
             Object.defineProperty(this,"__parentBinder", {value: null, configurable: true});
             if(parent)   parent.unregister(this);
         }},
+        __getDebugInfo:         {value: function()
+        {
+            var debugInfo   = {};
+            var hasBinding  = false;
+            each(this.__properties,(function(property)
+            {
+                var debugBindPath   = property.__debugBindPath;
+                if (debugBindPath !== undefined)
+                {
+                    hasBinding                  = true;
+                    debugInfo[property.name]    = debugBindPath;
+                }
+            }).bind(this));
+            return hasBinding ? debugInfo : undefined;
+        }},
+        __updateDebugInfo:      {value: function(){if (this.__target !== undefined) this.__target.__updateDebugInfo();}},
+        bindPath:
+        {
+            get:    function(){return this.__bindPath;},
+            set:    function(value){Object.defineProperty(this,"__bindPath", {value: value, configurable: true}); notifyProperties.call(this);}
+        },
         data:
         {
             get:    function(){return this.__data;},
@@ -50,8 +70,7 @@
             }
         },
         defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
-        destroy:                
-        {value: function()
+        destroy:                {value: function()
         {
             each(this.__properties,(function(property){property.destroy();}).bind(this));
             each
@@ -66,8 +85,9 @@
                 Object.defineProperty(this, name, {value: null, configurable: true});
                 delete this[name];
             }).bind(this));
+            Object.defineProperty(this, "isDestroyed", {value: true});
         }},
-        isBinder:   {value: true},
+        isBinder:               {value: true},
         isRoot:
         {
             get: function(){return this.__forceRoot || (this.__parentBinder==null&&this.__data!=null);}, 
@@ -77,8 +97,8 @@
                 Object.defineProperty(this, "__forceRoot", {value: value, configurable: true});
             }
         },
-        register:   {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.data = this.data;}},
-        unregister: {value: function(property){property.data = undefined; removeItemFromArray(this.__properties, property);}}
+        register:               {value: function(property){if (this.__properties.indexOf(property)==-1) this.__properties.push(property); property.listen({data: this.data, bindPath: this.bindPath});}},
+        unregister:             {value: function(property){removeItemFromArray(this.__properties, property);}}
     });
     return dataBinder;
 });}()

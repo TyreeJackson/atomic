@@ -1,6 +1,10 @@
-!function()
-{"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
 {
+    function setOptionNames()
+    {
+        var options = this.__element.querySelectorAll("input[type='radio']");
+        for(var counter=0;counter<options.length;counter++) options[counter].name = this.__name;
+    }
     function setRadioGroupValue(value)
     {
         Object.defineProperty(this, "__rawValue", {value: value, configurable: true});
@@ -69,20 +73,21 @@
     function createOption(sourceItem, index)
     {
         var option          = new radiooption(this.__templateElement.cloneNode(true), this.selector+"-"+index, this.__name, this, index);
-        option.text.bind    = this.optionText||"";
-        option.value.bind   = this.optionValue||"";
+        option.text.listen({bind: this.optionText||""});
+        option.value.listen({bind: this.optionValue||""});
         option.source       = sourceItem;
         return option;
     }
-    function radiogroup(elements, selector, parent)
+    function radiogroup(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        input.call(this, elements, selector, parent);
+        input.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         Object.defineProperties(this, 
         {
             "__items":      {value: null, configurable: true},
             "__options":    {value: []},
             "__name":       {value: this.getSelectorPath()}
         });
+        setOptionNames.call(this);
         this.__binder.defineDataProperties(this,
         {
             value:  {get: function(){return getRadioGroupValue.call(this);}, set: function(value){setRadioGroupValue.call(this, value===undefined?null:value);},  onchange: this.getEvents("change")},
@@ -100,12 +105,13 @@
         });
     }
     Object.defineProperty(radiogroup, "prototype", {value: Object.create(input.prototype)});
+    Object.defineProperty(radiogroup, "__getViewProperty", {value: function(name) { return input.__getViewProperty(name); }});
     Object.defineProperties(radiogroup.prototype,
     {
         constructor:        {value: radiogroup},
         __createNode:       {value: function(){var element = document.createElement("radiogroup"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__elements[0].options.length; }},
-        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; }},
+        selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
     each(["text","value"], function(name)
@@ -122,11 +128,12 @@
         });
     });
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
+    function clearRadioOptions(radioGroup){ for(var counter=radioGroup.__options.length-1;counter>=0;counter--) radioGroup.__setViewData("removeChild", radioGroup.__options[counter].__element); }
     function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}
     function bindRadioGroupSource(items)
     {
         var selectedValue   = this.value();
-        clearRadioGroup(this.__element);
+        clearRadioOptions(this);
         this.__options.splice(0, this.__options.length);
         Object.defineProperty(this, "__boundItems", {value: items, configurable: true});
         if (items === undefined)   return;
@@ -135,7 +142,7 @@
             var sourceItem  = items.observe(counter);
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
-            this.__element.appendChild(option.__element);
+            this.__setViewData("appendChild", option.__element);
             option.selected = this.__isValueSelected(option.value());
         }
     }
