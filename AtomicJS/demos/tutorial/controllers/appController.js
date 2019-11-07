@@ -1,6 +1,10 @@
 !function()
-{"use strict";root.define("atomic.tutorial.appController", function tutorialAppController(appView, appProxy, observer, path)
+{"use strict";root.define("atomic.tutorial.appController", function tutorialAppController(appView, appProxy, path)
 {
+    this.setDebugInfo   = function(debugInfo)
+    {
+        appView.data("$shadow.debugInfo", debugInfo);
+    }
     this.launch =
     function()
     {
