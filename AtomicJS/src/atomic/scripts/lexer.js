@@ -1,5 +1,4 @@
-!function()
-{"use strict"; root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
+!function(){"use strict";root.define("atomic.lexer", function lexer(scanner, tokenizers, removeFromArray)
 {
     var whiteSpaceCharacters    = /\s/;
     var priv    =

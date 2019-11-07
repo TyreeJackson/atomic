@@ -6,12 +6,14 @@
     <link rel="stylesheet" type="text/css" href="index.css" />
     <script type="text/javascript" src="../../dist/atomic.js"></script>
     <script type="text/javascript" src="../../3rdparty/path.min.js"></script>
+    <script type="text/javascript" src="views/debugInfoViewer/appView.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
     <script type="text/javascript" src="proxies/appProtoProxy.js"></script>
     <script type="text/javascript" src="controllers/appController.js"></script>
     <script type="text/javascript" src="index.js"></script>
 </head>
 <body id="tutorialApp">
+    <a id="/example/1"></a><a id="/example/2"></a><a id="/example/3"></a><a id="/example/4"></a><a id="/example/5"></a><a id="/example/6"></a><a id="/example/7"></a><a id="/example/8"></a><a id="/example/9"></a><a id="/example/10"></a><a id="/example/11"></a><a id="/example/12"></a><a id="/example/13"></a>
     <div id="screens">
         <div id="tutorialScreen">
             <div class="container">
@@ -44,7 +46,6 @@
                         </div>
                     </div>
                     <div class="col-md-10 col-xs-10" role="main">
-                        <a id="/example/1"></a><a id="/example/2"></a><a id="/example/3"></a><a id="/example/4"></a><a id="/example/5"></a><a id="/example/6"></a><a id="/example/7"></a>
                         <div class="docs-section">
                             <h1 class="page-header">Examples</h1>
                             <p class="lead">It is the goal of this tutorial to show you how to build web applications using AtomicJS.  Each page contains a new example.</p>
@@ -1855,23 +1856,26 @@ root.atomic.launch
                                             var textboxControl  = atomic.viewAdapterFactory.createFactory
                                             (
                                                 {
+                                                    customBind: true,
                                                     controls:
                                                     {
                                                         label:
                                                         {
-                                                            selector:   ".textbox-label"
+                                                            selector:   ".textbox-label",
+                                                            bind:       "label"
                                                         },
                                                         input:
                                                         {
                                                             selector:   ".textbox-input",
+                                                            bind:       {value: {to: "value", updateon: ["keyup", "change"] } },
                                                             onescape:   function(){ this.value(""); }
                                                         }
                                                     },
                                                     properties:
                                                     {
-                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
-                                                        value:  function(){return this.controls.input.value}
+                                                        label:  { get: function(){return this.controlData("label");}, set: function(value){this.controlData("label", value);} }
                                                     },
+                                                    dataLinks: ["value"],
                                                     extensions:
                                                     [{
                                                         initializers:
@@ -1879,29 +1883,31 @@ root.atomic.launch
                                                             label:  function(adapter, value){adapter.label = value;}
                                                         }
                                                     }]
-                                                    
                                                 },
                                                 "#example12 .textbox-field-control"
                                             );
                                             var readonlyControl = atomic.viewAdapterFactory.createFactory
                                             (
                                                 {
+                                                    customBind: true,
                                                     controls:
                                                     {
                                                         label:
                                                         {
-                                                            selector:   ".readonly-label"
+                                                            selector:   ".readonly-label",
+                                                            bind:       "label"
                                                         },
                                                         readout:
                                                         {
-                                                            selector:   ".readonly-readout"
+                                                            selector:   ".readonly-readout",
+                                                            bind:       "value"
                                                         }
                                                     },
                                                     properties:
                                                     {
-                                                        label:  {get: function(){return this.controls.label.value();}, set: function(value){this.controls.label.value(value);}},
-                                                        value:  function(){return this.controls.readout.value}
+                                                        label:  { get: function(){return this.controlData("label");}, set: function(value){this.controlData("label", value);} }
                                                     },
+                                                    dataLinks: ["value"],
                                                     extensions:
                                                     [{
                                                         initializers:
@@ -1925,24 +1931,21 @@ root.atomic.launch
                                                             {
                                                                 factory:    textboxControl, 
                                                                 label:      "First Name:", 
-                                                                bind:       {value: {to: "firstName", updateon: ["keyup", "change"] } }
+                                                                link:       { value: "firstName" }
                                                             },
                                                             lastName:
                                                             {
                                                                 factory:    textboxControl, 
                                                                 label:      "Last Name:", 
-                                                                bind:       {value: {to: "lastName", updateon: ["keyup", "change"] } }
+                                                                link:       { value: "lastName" }
                                                             },
                                                             fullName:
                                                             {
                                                                 factory:    readonlyControl, 
-                                                                label:      "Full Name:", 
+                                                                label:      "Full Name:",
+                                                                link:       { value: "fullName" },
                                                                 bind: 
                                                                 {
-                                                                    value:      function()
-                                                                    {
-                                                                        return (this.data("firstName")||"") + " " + (this.data("lastName")||"");
-                                                                    }, 
                                                                     display:    function()
                                                                     {
                                                                         return (this.data("firstName")||"").length > 0
@@ -1954,6 +1957,10 @@ root.atomic.launch
                                                         }
                                                     },
                                                     example12model:  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
+                                                },
+                                                function(viewAdapter)
+                                                {
+                                                    viewAdapter.data.define("fullName", {get: function(){ return (this("firstName")||"") + " " + (this("lastName")||"");}});
                                                 }
                                             );
                                         });
@@ -2270,14 +2277,14 @@ root.atomic.ready(function(atomic)
                                         (
                                             "#example13",
                                             {
-                                                readonlyWithAttributesControl:          { bind: { attributes: { to: "settings", root: "settings" } } },
-                                                disabledExampleControl:                 { bind: { disabled: "settings.disabled" } },
-                                                displayExampleControl:                  { bind: { display: "settings.display" } },
-                                                enabledExampleControl:                  { bind: { enabled: "settings.enabled" } },
-                                                labelForControl:                        { bind: { for: "settings.for" } },
-                                                dynamicIdControl:                       { bind: { id: "settings.id" } },
-                                                tooltipControl:                         { bind: { tooltip: "settings.tooltip" } },
-                                                valueControl:                           { bind: { value: "settings.value" } },
+                                                readonlyWithAttributesControl:          { bind: { attributes: { to: "settings", root: "settings" } }, onviewupdated: function(){this.parent.controls.readonlyWithAttibutesControlReadout.value(this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                disabledExampleControl:                 { bind: { disabled: "settings.disabled" }, onviewupdated: function(){this.parent.controls.disabledExampleControlReadout.value(this.parent.controls.disabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                displayExampleControl:                  { bind: { display: "settings.display" }, onviewupdated: function(){this.parent.controls.displayExampleControlReadout.value(this.parent.controls.displayExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                enabledExampleControl:                  { bind: { enabled: "settings.enabled" }, onviewupdated: function(){this.parent.controls.enabledExampleControlReadout.value(this.parent.controls.enabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                labelForControl:                        { bind: { for: "settings.for" }, onviewupdated: function(){this.parent.controls.labelForControlReadout.value(this.parent.controls.labelForControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                dynamicIdControl:                       { bind: { id: "settings.id" }, onviewupdated: function(){this.parent.controls.dynamicIdControlReadout.value(this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                tooltipControl:                         { bind: { tooltip: "settings.tooltip" }, onviewupdated: function(){this.parent.controls.tooltipControlReadout.value(this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
+                                                valueControl:                           { bind: { value: "settings.value" }, onviewupdated: function(){this.parent.controls.valueControlReadout.value(this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
                                                 classesControl:
                                                 {
                                                     bind:
@@ -2290,9 +2297,10 @@ root.atomic.ready(function(atomic)
                                                             addBold:    { when: "classBindings.classes.addBold",      equals: true },       // alternative operation equals
                                                             addPadding: { when: "classBindings.classes.addPadding",   notequals: false }    // alternative operation notequals
                                                         }
-                                                    }
+                                                    }, 
+                                                    onviewupdated:  function(){this.parent.controls.classesControlReadout.value(this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));}
                                                 },
-                                                altControl:                             { bind: { alt: "settings.alt" } },
+                                                altControl:                             { bind: { alt: "settings.alt" }, onviewupdated: function(){this.parent.controls.altControlReadout.value(this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;"));} },
 
 
 
@@ -2326,16 +2334,16 @@ root.atomic.ready(function(atomic)
                                                 valueControlWrapper:                    {},
                                                 classesControlWrapper:                  {},
                                                 altControlWrapper:                      {},
-                                                readonlyWithAttibutesControlReadout:    { bind: { value: { to: function(item){item("settings"); return this.parent.controls.readonlyWithAttributesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "settings" } } },
-                                                disabledExampleControlReadout:          { bind: { value: { to: function(item){item("settings.disabled"); return this.parent.controls.disabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                displayExampleControlReadout:           { bind: { value: { to: function(item){item("settings.display"); return this.parent.controls.displayExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                enabledExampleControlReadout:           { bind: { value: { to: function(item){item("settings.enabled"); return this.parent.controls.enabledExampleControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                labelForControlReadout:                 { bind: { value: { to: function(item){item("settings.for"); return this.parent.controls.labelForControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                dynamicIdControlReadout:                { bind: { value: { to: function(item){item("settings.id"); return this.parent.controls.dynamicIdControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                tooltipControlReadout:                  { bind: { value: { to: function(item){item("settings.tooltip"); return this.parent.controls.tooltipControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                valueControlReadout:                    { bind: { value: { to: function(item){item("settings.value"); return this.parent.controls.valueControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
-                                                classesControlReadout:                  { bind: { value: { to: function(item){item("classBindings"); return this.parent.controls.classesControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");}, root: "classBindings" } } },
-                                                altControlReadout:                      { bind: { value: { to: function(item){item("settings.alt"); return this.parent.controls.altControlWrapper.value().replace(/\</g, "&lt;").replace(/\>/g, "&gt;");} } } },
+                                                readonlyWithAttibutesControlReadout:    {},
+                                                disabledExampleControlReadout:          {},
+                                                displayExampleControlReadout:           {},
+                                                enabledExampleControlReadout:           {},
+                                                labelForControlReadout:                 {},
+                                                dynamicIdControlReadout:                {},
+                                                tooltipControlReadout:                  {},
+                                                valueControlReadout:                    {},
+                                                classesControlReadout:                  {},
+                                                altControlReadout:                      {},
 
                                                 /* END: these controls are here to display the contents of the view */
 
@@ -2665,6 +2673,12 @@ root.atomic.launch
             </div>
         </div> <!-- /container -->
     </div>
+    <figure id="debugInfoPanel" class="highlight">
+        <h2>Debug Info</h2>
+        <span>This window contains live information regarding the bound controls from the main window, including all of their bindings.  As new controls are added to the tree, they will appear here.  See the "Working with Lists" ("example8" on this page) demo to see an example of this.</span>
+        <pre id="debugInfo">
+        </pre>
+    </figure>
 </body>
 </html>
 <!--

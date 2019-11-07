@@ -1,15 +1,15 @@
-!function()
-{"use strict";root.define("atomic.html.button", function htmlButton(control)
+!function(){"use strict";root.define("atomic.html.button", function htmlButton(control)
 {
-    function button(element, selector, parent)
+    function button(element, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, element, selector, parent);
+        control.call(this, element, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
-            value:  {get: function(){return this.__element.innerHTML;},   set: function(value){this.__element.innerHTML = value||"";}}
+            value:  {get: function(){return this.__getViewData("innerHTML");},   set: function(value){this.__setViewData("innerHTML", value||"");}}
         });
     }
     Object.defineProperty(button, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperty(button, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(button.prototype,
     {
         constructor:    {value: button},

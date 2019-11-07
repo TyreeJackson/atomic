@@ -1,16 +1,16 @@
-!function()
-{"use strict";root.define("atomic.html.image", function htmlImage(control)
+!function(){"use strict";root.define("atomic.html.image", function htmlImage(control)
 {
-    function image(elements, selector, parent)
+    function image(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
-        control.call(this, elements, selector, parent);
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
         this.__binder.defineDataProperties(this,
         {
-            alt:    {get: function(){return this.__element.alt;},   set: function(value){this.__element.alt = value||"";}},
-            value:  {get: function(){return this.__element.src;},   set: function(value){this.__element.src = value||"";}}
+            alt:    {get: function(){return this.__element.alt;},           set: function(value){this.__element.alt = value||""; this.getEvents("viewupdated").viewupdated(["alt"]);}},
+            value:  {get: function(){return this.__getViewData("src");},    set: function(value){this.__setViewData("src", value||"");}}
         });
     }
     Object.defineProperty(image, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperty(image, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(image.prototype,
     {
         constructor:    {value: image},
