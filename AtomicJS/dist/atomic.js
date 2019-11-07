@@ -105,6 +105,21 @@
                     }).bind(this));
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
+                destroy:
+                {value: function()
+                {
+                    this.pubsub.destroy();
+                    each
+                    ([
+                        "__listenersChanged",
+                        "__listeners"
+                    ],
+                    (function(name)
+                    {
+                        Object.defineProperty(this, name, {value: null, configurable: true});
+                        delete this[name];
+                    }).bind(this));
+                }},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
                 ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
                 invoke:                     {value: function(){this.apply(this, arguments);}}
