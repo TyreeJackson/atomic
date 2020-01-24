@@ -482,6 +482,7 @@
         height:             {get:   function(){return this.__element.offsetHeight;},                                                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetHeight"]);}},
         isDataRoot:         {get:   function(){return this.__isDataRoot;},                                                                      set:    function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
         isRoot:             {get:   function(){return this.__forceRoot||this.parent===undefined;},                                              set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}},
+        scrollTop:          {get:   function(){return this.__element.scrollTop;},                                                               set:    function(value){this.__element.style.scrollTop = parseInt(value); this.getEvents("viewupdated").viewupdated(["scrollTop"]);}},
         root:               {get:   function(){return !this.isRoot && this.parent ? this.parent.root : this;}},
         updateon:           {get:   function(){var names = []; each(this.value.onchange,function(e, name){names.push(name);}); return names;},  set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
         width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
@@ -826,9 +827,11 @@
         "radiogroup":               "radiogroup",
         "checkboxgroup":            "checkboxgroup",
         "a":                        "link",
-        "label":                    "label"
+        "label":                    "label",
+        "input:file":               "file",
+        "table":                    "table"
     };
-    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","table","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
     {
         elementControlTypes[name]   = "readonly";
@@ -1248,7 +1251,6 @@
             {
                 this.__repeatedControls[templateKey + "_" + itemIndex]  = clone.control;
                 documentFragments[templateKey].appendChild(clone.control.__element);
-                parent                              = clone.parent;
             }
         }
         this.getEvents("viewupdated").viewupdated(["innerHTML"]);
@@ -1378,6 +1380,218 @@
     });
     return repeater;
 });}();
+!function(){"use strict";root.define("atomic.html.table", function htmlTable(control, removeFromArray)
+{
+    var querySelector       =
+    function(uiElement, selector, selectorPath, typeHint)
+    {
+        return uiElement.querySelector(selector)||document.createElement(typeHint);
+    };
+    function removeAllElementChildren(element)
+    {
+        while(element.lastChild)    element.removeChild(element.lastChild);
+    }
+    function extractDeferredControls(headerDeclaration, rowDeclaration, cellDeclaration, viewElement)
+    {
+        if (headerDeclaration !== undefined)
+        {
+            var headerElement                               = querySelector(viewElement, (headerDeclaration.selector||("thead>tr>th")), this.getSelectorPath(), "th");
+            var headerElementParent                         = headerElement.parentNode;
+            if (headerElementParent !== null)               headerElementParent.removeChild(headerElement);
+            Object.defineProperty(this, "__header", { value:
+            { 
+                declaration:    headerDeclaration,
+                element:        headerElement,
+                parentElement:  headerElementParent
+            }});
+        }
+        if (cellDeclaration !== undefined)
+        {
+            var cellElement                                 = querySelector(viewElement, (cellDeclaration.selector||("tbody>tr>td")), this.getSelectorPath(), "td");
+            var rowElement                                  = cellElement.parentNode;
+            var rowElementParent                            = rowElement.parentNode;
+            rowElement.removeChild(cellElement);
+            if (rowElementParent !== null)                  rowElementParent.removeChild(rowElement);
+            Object.defineProperty(this, "__cell", { value:
+            { 
+                declaration:    cellDeclaration,
+                cellElement:    cellElement,
+                rowDeclaration: rowDeclaration,
+                rowElement:     rowElement,
+                parentElement:  rowElementParent
+            }});
+        }
+        removeAllElementChildren(this.__header.parentElement);
+        removeAllElementChildren(this.__cell.parentElement);
+    }
+    function removeListItem(itemIndex)
+    {
+        var templateKey     = "row_" + itemIndex;
+        var repeatedControl = this.__repeatedRows[templateKey];
+        if (repeatedControl !== undefined)
+        {
+            this.__retained[templateKey]    = repeatedControl;
+            repeatedControl.__element.parentNode.removeChild(repeatedControl.__element);
+            repeatedControl.__setData(null);
+            delete this.__repeatedRows[templateKey];
+        }
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
+    }
+    function collectGarbage()
+    {
+        var garbage     = this.__retained;
+        Object.defineProperty(this, "__retained", {});
+        var keys        = Object.keys(garbage);
+        var keyCounter  = keys.length-1;
+        function collectGarbagePage()
+        {
+            var lowerBound  = keyCounter-10 > -1 ? keyCounter - 10 : -1;
+            for(var counter=keyCounter;counter>lowerBound;counter--)
+            {
+                var key = keys[counter];
+                //console.log("Collected: " + garbage[key].__selector);
+                garbage[key].destroy();
+                delete  garbage[key];
+            }
+            keyCounter      = lowerBound;
+            if (keyCounter > 0) setTimeout(collectGarbagePage, 10);
+        }
+        collectGarbagePage();
+    }
+    function resetGarbageCollector()
+    {
+        if (this.__gcID !== undefined)
+        {
+            clearTimeout(this.__gcID);
+            Object.defineProperty(this, "__gcID", {writable: true, configurable: true});
+            delete this.__gcID;
+        }
+        Object.defineProperty(this, "__gcID", {value: setTimeout(collectGarbage.bind(this), 180000), configurable: true});
+    }
+    function addListItem(itemIndex, documentFragment)
+    {
+        var clone       = getTemplateCopy.call(this, itemIndex);
+        if (clone !== undefined)
+        {
+            this.__repeatedRows["row_" + itemIndex] = clone.control;
+            documentFragment.appendChild(clone.control.__element);
+        }
+        this.getEvents("viewupdated").viewupdated(["innerHTML"]);
+    }
+    function getRetainedTemplateCopy(itemKey)
+    {
+        if (this.__retained[itemKey])
+        {
+            var item    = this.__retained[itemKey];
+            delete this.__retained[itemKey];
+            //console.log("recycled: " + item.__selector)
+            return item;
+        }
+        return null;
+    }
+    function createTemplateCopy(itemIndex, itemKey)
+    {
+        var elementCopy = this.__cell.rowElement.cloneNode(true);
+        elementCopy.setAttribute("id", itemKey);
+        var bindPath    = this.__rows.__basePath;
+        var clone       = { key: itemKey, control: this.createControl(this.__cell.rowDeclarations, elementCopy, "#" + itemKey, itemKey, "row", bindPath + (bindPath.length > 0 ? "." : "") + itemIndex) };
+        Object.defineProperty(clone.control, "__templateKey", {value: "row"});
+        //console.log("created: " + clone.control.__selector)
+        return clone;
+    }
+    function getTemplateCopy(itemIndex)
+    {
+        var itemKey         = "row_"+itemIndex;
+        var template        = this.__cell;
+        var retainedControl = getRetainedTemplateCopy.call(this, itemKey);
+        var clone           = retainedControl !== null ? { key: itemKey, parent: template.parentElement, control: retainedControl } : createTemplateCopy.call(this, itemIndex, itemKey);
+        var data            = this.__getData();
+        if (data !== undefined) clone.control.__setData(data);
+        return clone;
+    };
+    function discardRetained()
+    {
+        this.__trash.push(this.__retained);
+        Object.defineProperty(this, "__itemCount", {value: 0, configurable: true});
+        Object.defineProperty(this, "__retained", {value: {}, configurable: true});
+    }
+    function refreshTable(forceRefresh)
+    {
+        var itemCount   = this.__rows != undefined ? this.__rows("length")||0 : 0;
+        if (isNaN(itemCount) || itemCount === (this.__itemCount) || this.__headerCount === 0)   return;
+        if (forceRefresh)   discardRetained.call(this);
+        if (this.__itemCount < itemCount)
+        {
+            var documentFragment    = document.createDocumentFragment();
+            for(var counter=this.__itemCount;counter<itemCount;counter++)   addListItem.call(this, counter, documentFragment);
+            this.__setViewData("callback", function() { this.__cell.parentElement.appendChild(documentFragment); });
+        }
+        else if (this.__itemCount > itemCount)
+        {
+            for(var counter=this.__itemCount-1;counter>=itemCount;counter--)   removeListItem.call(this, counter);
+            resetGarbageCollector.call(this);
+        }
+        Object.defineProperty(this, "__itemCount", {value: itemCount, configurable: true});
+    }
+    function refreshLayout()
+    {
+        var headerCount = this.__headers != undefined ? this.__headers("length")||0 : 0;
+        if (isNaN(headerCount) || headerCount === (this.__headerCount)) return;
+        removeAllElementChildren(this.__header.parentElement);
+
+        var headerDeclarations      = {selector: "thead > tr", bind: this.headers.bind, controls: {}};
+        this.__cell.rowDeclarations = {bind: this.__cell.rowDeclaration.bind, on: this.__cell.rowDeclaration.on, controls: {}};
+        for(var counter=0;counter < this.__headers("length"); counter++)
+        {
+            headerDeclarations.controls["header_"+counter] = {bind: counter.toString(), controls: this.__header.declaration};
+            var newNode = this.__header.element.cloneNode(true);
+            newNode.id  = "header_"+counter;
+            this.__header.parentElement.appendChild(newNode);
+
+            this.__cell.rowDeclarations.controls["cell_" + counter] = {bind: counter.toString(), controls: this.__cell.declaration};
+            var newNode = this.__cell.cellElement.cloneNode(true);
+            newNode.id  = "cell_"+counter;
+            this.__cell.rowElement.appendChild(newNode);
+        }
+        this.attachControls({header: headerDeclarations});
+        Object.defineProperty(this, "__headerCount", {value: headerCount, configurable: true});
+        refreshTable.call(this, true);
+    }
+    function table(elements, selector, parent, bindPath, childKey, protoChildKey)
+    {
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
+        Object.defineProperties(this,
+        {
+            __headerRowCells:       {value: [], configurable: true},
+            __templateContainers:   {value: {}, configurable: true},
+            __retained:             {value: {}, configurable: true},
+            __trash:                {value: [], configurable: true},
+            __itemCount:            {value: 0, configurable: true},
+            __headerCount:          {value: 0, configurable: true},
+            __repeatedRows:         {value: {}, configurable: true}
+        });
+        this.__binder.defineDataProperties(this,
+        {
+            headers:    {get: function(){return this.__headers;},   set: function(value){this.__headers = value; refreshLayout.call(this);}, simpleBindingsOnly: true},
+            rows:       {get: function(){return this.__rows;},      set: function(value){this.__rows = value; refreshTable.call(this);}, simpleBindingsOnly: true}
+        });
+        this.value.listen({bind: ""});
+    }
+    Object.defineProperty(table, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperty(table, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
+    Object.defineProperties(table.prototype,
+    {
+        constructor:                {value: table},
+        frame:                      {value: function(controlDefinition, initializerDefinition)
+        {
+            extractDeferredControls.call(this, controlDefinition.header, controlDefinition.row, controlDefinition.cell, this.__element);
+            control.prototype.frame.call(this, controlDefinition, initializerDefinition);
+        }},
+        children:   {get: function(){return this.__repeatedRows || null;}},
+        pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
+    });
+    return table;
+});}();
 !function(){"use strict";root.define("atomic.html.input", function htmlInput(control)
 {
     function cancelEvent(event)
@@ -1449,6 +1663,69 @@
         __createNode:   {value: function(){var element = document.createElement("input"); element.type="checkbox"; return element;}, configurable: true}
     });
     return checkbox;
+});}();
+!function(){"use strict";root.define("atomic.html.file", function htmlFile(control)
+{
+    function useReader(use, callback, errorCallback)
+    {
+        var reader  = new FileReader();
+        function handleloadend()
+        {
+            reader.removeEventListener("loadend", handleloadend);
+            callback(reader.result);
+            reader  = null;
+        }
+        reader.addEventListener("loadend", handleloadend);
+        function handleerror()
+        {
+            reader.removeEventListener("error", handleerror);
+            errorCallback();
+            reader  = null;
+        }
+        reader.addEventListener("error", handleerror);
+        use(reader);
+    }
+    function File(htmlFile)
+    {
+        Object.defineProperty(this, "__file", {value: htmlFile, configurable: true});
+        Object.defineProperties(this,
+        {
+            lastModified:       {value: {get: function(){return this.__file.lastModified;}}},
+            lastModifiedDate:   {value: {get: function(){return this.__file.lastModifiedDaate;}}},
+            name:               {value: {get: function(){return this.__file.name;}}},
+            size:               {value: {get: function(){return this.__file.size;}}},
+            type:               {value: {get: function(){return this.__file.type;}}}
+        });
+    }
+    Object.defineProperties(File.prototype,
+    {
+        readAsArrayBuffer:  {value: function(callback, errorCallback){useReader(function(reader){reader.readAsArrayBuffer(this.__file);}, callback, errorCallback)}},
+        readAsBinaryString: {value: function(callback, errorCallback){useReader(function(reader){reader.readAsBinaryString(this.__file);}, callback, errorCallback)}},
+        readAsDataURL:      {value: function(callback, errorCallback){useReader(function(reader){reader.readAsDataURL(this.__file);}, callback, errorCallback)}},
+        readAsText:         {value: function(callback, errorCallback){useReader(function(reader){reader.readAsText(this.__file);}, callback, errorCallback)}}
+    });
+    function adapt(htmlFiles)
+    {
+        var returnFiles = [];
+        for(var counter=0, htmlFile; (htmlFile=htmlFiles[counter++]) !== undefined;)  returnFiles.push(new File(htmlFile));
+        return returnFiles;
+    }
+    function file(elements, selector, parent, bindPath, childKey, protoChildKey)
+    {
+        control.call(this, elements, selector, parent, bindPath, childKey, protoChildKey);
+        this.__binder.defineDataProperties(this,
+        {
+            value:  {get: function(){return adapt(this.__element.files);}, set: function(value){},  onchange: this.getEvents("change")}
+        });
+    }
+    Object.defineProperty(file, "prototype", {value: Object.create(control.prototype)});
+    Object.defineProperty(file, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
+    Object.defineProperties(file.prototype,
+    {
+        constructor:    {value: file},
+        __createNode:   {value: function(){var element = document.createElement("input"); element.type="file"; return element;}, configurable: true}
+    });
+    return file;
 });}();
 !function(){"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
 {
@@ -3661,8 +3938,10 @@
     var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);
     var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
+    var table                   = new root.atomic.html.table(container, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control);
     var checkbox                = new root.atomic.html.checkbox(control);
+    var file                    = new root.atomic.html.file(control);
     var select                  = new root.atomic.html.select(input, dataBinder, each);
     var radiogroup              = new root.atomic.html.radiogroup(input, dataBinder, each);
     var checkboxgroup           = new root.atomic.html.checkboxgroup(input, dataBinder, each);
@@ -3693,7 +3972,9 @@
         image:          {value: image},
         audio:          {value: audio},
         video:          {value: video},
-        button:         {value: button}
+        button:         {value: button},
+        file:           {value: file},
+        table:          {value: table}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer, debugInfoObserver: debugInfoObserver };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
