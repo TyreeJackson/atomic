@@ -1690,19 +1690,19 @@
         Object.defineProperty(this, "__file", {value: htmlFile, configurable: true});
         Object.defineProperties(this,
         {
-            lastModified:       {value: {get: function(){return this.__file.lastModified;}}},
-            lastModifiedDate:   {value: {get: function(){return this.__file.lastModifiedDaate;}}},
-            name:               {value: {get: function(){return this.__file.name;}}},
-            size:               {value: {get: function(){return this.__file.size;}}},
-            type:               {value: {get: function(){return this.__file.type;}}}
+            lastModified:       {get: function(){return this.__file.lastModified;}, enumerable: true},
+            lastModifiedDate:   {get: function(){return this.__file.lastModifiedDaate;}, enumerable: true},
+            name:               {get: function(){return this.__file.name;}, enumerable: true},
+            size:               {get: function(){return this.__file.size;}, enumerable: true},
+            type:               {get: function(){return this.__file.type;}, enumerable: true}
         });
     }
     Object.defineProperties(File.prototype,
     {
-        readAsArrayBuffer:  {value: function(callback, errorCallback){useReader(function(reader){reader.readAsArrayBuffer(this.__file);}, callback, errorCallback)}},
-        readAsBinaryString: {value: function(callback, errorCallback){useReader(function(reader){reader.readAsBinaryString(this.__file);}, callback, errorCallback)}},
-        readAsDataURL:      {value: function(callback, errorCallback){useReader(function(reader){reader.readAsDataURL(this.__file);}, callback, errorCallback)}},
-        readAsText:         {value: function(callback, errorCallback){useReader(function(reader){reader.readAsText(this.__file);}, callback, errorCallback)}}
+        readAsArrayBuffer:  {value: function(callback, errorCallback){useReader((function(reader){reader.readAsArrayBuffer(this.__file);}).bind(this), callback, errorCallback)}},
+        readAsBinaryString: {value: function(callback, errorCallback){useReader((function(reader){reader.readAsBinaryString(this.__file);}).bind(this), callback, errorCallback)}},
+        readAsDataURL:      {value: function(callback, errorCallback){useReader((function(reader){reader.readAsDataURL(this.__file);}).bind(this), callback, errorCallback)}},
+        readAsText:         {value: function(callback, errorCallback){useReader((function(reader){reader.readAsText(this.__file);}).bind(this), callback, errorCallback)}}
     });
     function adapt(htmlFiles)
     {
