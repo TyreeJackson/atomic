@@ -235,6 +235,7 @@
         }},
         destroy:                {value: function()
         {
+            this.__setData(undefined);
             each(this.controls, function(control){control.destroy();});
             each
             ([
