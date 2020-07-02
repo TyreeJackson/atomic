@@ -1060,6 +1060,7 @@
         }},
         destroy:                {value: function()
         {
+            this.__setData(undefined);
             each(this.controls, function(control){control.destroy();});
             each
             ([
@@ -3205,6 +3206,12 @@
             if (path.length <= counter || path[counter] !== pathSegment)    paths.splice(pathCounter, 1);
         }
         var regExMatch  = /^\/.*\/$/;
+        function undefine(virtualProperty)
+        {
+            if (virtualProperty === undefined)  return;
+            var paths   = Object.keys(virtualProperty.cachedValues);
+            for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;) this.ignore(virtualProperty.cachedValues[path].listener);
+        }
         each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet, silentUpdate)
@@ -3287,6 +3294,7 @@
                                 if (matcher !== undefined)
                                 {
                                     console.warn("Redefining virtualProperty located at " + (this.__basePath + (this.__basePath.length > 0 ? "." : "") + path) + ".");
+                                    undefine.call(this, matcher.property);
                                     matcher.property    = virtualProperty;
                                     filterMatchedByMatcher(currentMatched, counter, matcher);
                                 }
@@ -3327,6 +3335,7 @@
                             if (current.paths[pathSegment] === undefined)   current.paths[pathSegment]    = {paths:{}, matchers:[]};
                             if (counter==pathSegments.length-1)
                             {
+                                undefine.call(this, current.paths[pathSegment].property);
                                 current.paths[pathSegment].property = virtualProperty;
                                 filterMatchedByPathSegment(currentMatched, counter, pathSegment);
                                 break;
