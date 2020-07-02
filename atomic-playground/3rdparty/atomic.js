@@ -103,6 +103,7 @@
                         Object.defineProperty(this, name, {value: null, configurable: true});
                         delete this[name];
                     }).bind(this));
+                    Object.defineProperty(this, "isDestroyed", { value: true });
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
@@ -193,7 +194,8 @@
             each
             ([
                 "__listenersUsingCapture",
-                "__listenersNotUsingCapture"
+                "__listenersNotUsingCapture",
+                "__intermediaries"
             ],
             (function(listener)
             {
@@ -211,7 +213,8 @@
             ([
                 "__target",
                 "__listenersUsingCapture",
-                "__listenersNotUsingCapture"
+                "__listenersNotUsingCapture",
+                "__intermediaries"
             ],
             (function(name)
             {
@@ -438,11 +441,19 @@
                 set:    function(value)
                 {
                     if (value!==undefined&&value.isObserver) value=value(); 
+                    if (this.__attributes !== undefined)
+                    {
+                        for (var key in this.__attributes) this.__element.setAttribute("data-" + key, undefined);
+                        this.getEvents("viewupdated").viewupdated(Object.keys(this.__attributes));
+                    }
+
                     this.__attributes=value;
 
                     if (value!==undefined)
-                    for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
-                    this.getEvents("viewupdated").viewupdated(Object.keys(value));
+                    {
+                        for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
+                        this.getEvents("viewupdated").viewupdated(Object.keys(value));
+                    }
                 }
             },
             "class":            {get: function(){return this.__class;},                             set: function(value){if (this.__class != null) this.removeClass(this.__class); this.__class=value; this.addClass(value);}},
@@ -1218,6 +1229,7 @@
         var keyCounter  = keys.length-1;
         function collectGarbagePage()
         {
+            console.log("Collecting garbage... ");
             var lowerBound  = keyCounter-10 > -1 ? keyCounter - 10 : -1;
             for(var counter=keyCounter;counter>lowerBound;counter--)
             {
@@ -1369,14 +1381,19 @@
     Object.defineProperty(repeater, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(repeater.prototype,
     {
-        constructor:                {value: repeater},
-        frame:                      {value: function(controlDefinition, initializerDefinition)
+        constructor:    {value: repeater},
+        frame:          {value: function(controlDefinition, initializerDefinition)
         {
             extractDeferredControls.call(this, controlDefinition.repeat, this.__element);
             control.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }},
-        children:   {get: function(){return this.__repeatedControls || null;}},
-        pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
+        children:       {get:   function(){return this.__repeatedControls || null;}},
+        destroy:        {value: function()
+        {
+            refreshList.call(this, 0);
+            control.prototype.destroy.call(this);
+        }},
+        pageSize:       {get:   function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;
 });}();
@@ -1741,9 +1758,12 @@
     function setSelectListValue(value)
     {
         this.__rawValue = value;
-        var bound       = this.items.bind != undefined;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
-        this.getEvents("viewupdated").viewupdated(["value"]);
+        if (this.items !== undefined)
+        {
+            var bound       = this.items.bind != undefined;
+            if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
+            this.getEvents("viewupdated").viewupdated(["value"]);
+        }
     }
     function selectoption(element, selector, parent)
     {
@@ -1802,8 +1822,8 @@
                 get:        function() {return this.__items;},
                 set:        function(value)
                 {
-                    var itemCount       = value!==undefined?value.isObserver?value("length"):value.length:0;
-                    var items           = value!==undefined&&value.isObserver?value():value;
+                    var itemCount       = value !== undefined && value !== null ? value.isObserver ? value("length") : value.length : 0;
+                    var items           = value !== undefined && value !== null && value.isObserver ? value() : value;
                     if (items === this.__items && itemCount === this.__itemCount)           return;
                     var truncateIndex   = items === this.__items ? itemCount : 0;
                     Object.defineProperties(this,
@@ -1825,7 +1845,12 @@
         __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
         selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
-        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}},
+        destroy:            {value: function()
+        {
+            bindSelectListSource.call(this, undefined, 0);
+            input.prototype.destroy.call(this);
+        }}
     });
     each(["text","value"], function(name)
     {
@@ -1851,7 +1876,7 @@
     function bindSelectListSource(items, truncateIndex)
     {
         var selectedValue   = this.__rawValue;
-        var itemsCount      = items !== undefined ? items.count : 0;
+        var itemsCount      = items !== undefined && items !== null ? items.count : 0;
         clearOptions.call(this, truncateIndex);
         var startingIndex   = this.__options.length;
         if (items === undefined)   return;
