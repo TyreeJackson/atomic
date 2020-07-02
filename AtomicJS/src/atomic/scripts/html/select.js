@@ -12,9 +12,12 @@
     function setSelectListValue(value)
     {
         this.__rawValue = value;
-        var bound       = this.items.bind != undefined;
-        if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
-        this.getEvents("viewupdated").viewupdated(["value"]);
+        if (this.items !== undefined)
+        {
+            var bound       = this.items.bind != undefined;
+            if (this.__element.options.length > 0) for(var counter=0;counter<this.__element.options.length;counter++) this.__element.options[counter].selected = (bound ? this.__element.options[counter].rawValue : this.__element.options[counter].value) == value;
+            this.getEvents("viewupdated").viewupdated(["value"]);
+        }
     }
     function selectoption(element, selector, parent)
     {
@@ -26,7 +29,7 @@
         this.__sourceBinder.defineDataProperties(this,
         {
             text:   {get: function(){return this.__element.text;}, set: function(value){this.__element.text = value&&value.isObserver?value():value;}},
-            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value;}}
+            value:  {get: function(){return this.__element.rawValue;}, set: function(value){this.__element.value = this.__element.rawValue = value&&value.isObserver?value():value; this.selected = parent.__isValueSelected(value);}}
         });
     }
     Object.defineProperties(selectoption.prototype,
@@ -73,8 +76,8 @@
                 get:        function() {return this.__items;},
                 set:        function(value)
                 {
-                    var itemCount       = value!==undefined?value.isObserver?value("length"):value.length:0;
-                    var items           = value!==undefined&&value.isObserver?value():value;
+                    var itemCount       = value !== undefined && value !== null ? value.isObserver ? value("length") : value.length : 0;
+                    var items           = value !== undefined && value !== null && value.isObserver ? value() : value;
                     if (items === this.__items && itemCount === this.__itemCount)           return;
                     var truncateIndex   = items === this.__items ? itemCount : 0;
                     Object.defineProperties(this,
@@ -96,7 +99,12 @@
         __createNode:       {value: function(){var element = document.createElement("select"); return element;}, configurable: true},
         count:              {get:   function(){ return this.__element.options.length; }},
         selectedIndex:      {get:   function(){ return this.__element.selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
-        __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
+        __isValueSelected:  {value: function(value){return this.__rawValue === value;}},
+        destroy:            {value: function()
+        {
+            bindSelectListSource.call(this, undefined, 0);
+            input.prototype.destroy.call(this);
+        }}
     });
     each(["text","value"], function(name)
     {
@@ -122,7 +130,7 @@
     function bindSelectListSource(items, truncateIndex)
     {
         var selectedValue   = this.__rawValue;
-        var itemsCount      = items !== undefined ? items.count : 0;
+        var itemsCount      = items !== undefined && items !== null ? items.count : 0;
         clearOptions.call(this, truncateIndex);
         var startingIndex   = this.__options.length;
         if (items === undefined)   return;
@@ -133,7 +141,6 @@
             var option      = createOption.call(this, sourceItem, counter);
             this.__options.push(option);
             this.__element.appendChild(option.__element);
-            option.selected = this.__isValueSelected(option.value());
         }
     }
     return select;

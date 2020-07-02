@@ -9,9 +9,9 @@
     Object.defineProperties(panel.prototype,
     {
         constructor:        {value: panel},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition, initializerDefinition)
         {
-            container.prototype.frame.call(this, definition);
+            container.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }}
     });
     return panel;

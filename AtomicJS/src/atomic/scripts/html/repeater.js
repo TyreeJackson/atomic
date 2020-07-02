@@ -56,6 +56,7 @@
         var keyCounter  = keys.length-1;
         function collectGarbagePage()
         {
+            console.log("Collecting garbage... ");
             var lowerBound  = keyCounter-10 > -1 ? keyCounter - 10 : -1;
             for(var counter=keyCounter;counter>lowerBound;counter--)
             {
@@ -89,7 +90,6 @@
             {
                 this.__repeatedControls[templateKey + "_" + itemIndex]  = clone.control;
                 documentFragments[templateKey].appendChild(clone.control.__element);
-                parent                              = clone.parent;
             }
         }
         this.getEvents("viewupdated").viewupdated(["innerHTML"]);
@@ -208,14 +208,19 @@
     Object.defineProperty(repeater, "__getViewProperty", {value: function(name) { return control.__getViewProperty(name); }});
     Object.defineProperties(repeater.prototype,
     {
-        constructor:                {value: repeater},
-        frame:                      {value: function(definition)
+        constructor:    {value: repeater},
+        frame:          {value: function(controlDefinition, initializerDefinition)
         {
-            extractDeferredControls.call(this, definition.repeat, this.__element);
-            control.prototype.frame.call(this, definition);
+            extractDeferredControls.call(this, controlDefinition.repeat, this.__element);
+            control.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }},
-        children:   {get: function(){return this.__repeatedControls || null;}},
-        pageSize:   {get: function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
+        children:       {get:   function(){return this.__repeatedControls || null;}},
+        destroy:        {value: function()
+        {
+            refreshList.call(this, 0);
+            control.prototype.destroy.call(this);
+        }},
+        pageSize:       {get:   function(){return this.__pageSize;}, set: function(value){this.__pageSize = value;}}
     });
     return repeater;
 });}();

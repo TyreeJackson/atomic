@@ -41,7 +41,7 @@
             control.prototype.__addCustomEvents.call(this, events);
             Object.defineProperties(events,
             {
-                changing:         {value:   {eventNames: ["keydown", "keyup", "mouseup", "touchend", "change"], handler: notifyIfValueHasChangedOrDelay.bind(this)} },
+                changing:         {value:   {eventNames: ["keydown", "keyup", "mouseup", "touchend", "change"], handler: notifyIfValueHasChangedOrDelay} },
                 enter:            {value:   {eventNames: ["keypress"],                                          handler: function(event){ if (event.keyCode==13) { this.pubSub(event); } }}}
             });
         }},

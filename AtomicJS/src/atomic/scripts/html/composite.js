@@ -9,9 +9,9 @@
     Object.defineProperties(composite.prototype,
     {
         constructor:        {value: composite},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition, initializerDefinition)
         {
-            base.prototype.frame.call(this, definition);
+            base.prototype.frame.call(this, controlDefinition, initializerDefinition);
         }}
     });
     return composite;

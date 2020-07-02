@@ -31,8 +31,10 @@
     var linkPanel               = new root.atomic.html.link(panel, each);
     var composite               = new root.atomic.html.composite(container, each);
     var repeater                = new root.atomic.html.repeater(container, root.utilities.removeFromArray);
+    var table                   = new root.atomic.html.table(container, root.utilities.removeFromArray);
     var input                   = new root.atomic.html.input(control);
     var checkbox                = new root.atomic.html.checkbox(control);
+    var file                    = new root.atomic.html.file(control);
     var select                  = new root.atomic.html.select(input, dataBinder, each);
     var radiogroup              = new root.atomic.html.radiogroup(input, dataBinder, each);
     var checkboxgroup           = new root.atomic.html.checkboxgroup(input, dataBinder, each);
@@ -63,7 +65,9 @@
         image:          {value: image},
         audio:          {value: audio},
         video:          {value: video},
-        button:         {value: button}
+        button:         {value: button},
+        file:           {value: file},
+        table:          {value: table}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer, debugInfoObserver: debugInfoObserver };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);

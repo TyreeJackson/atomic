@@ -76,6 +76,7 @@
                         Object.defineProperty(this, name, {value: null, configurable: true});
                         delete this[name];
                     }).bind(this));
+                    Object.defineProperty(this, "isDestroyed", { value: true });
                 }},
                 "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
                 listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},

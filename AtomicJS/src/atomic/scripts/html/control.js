@@ -214,11 +214,19 @@
                 set:    function(value)
                 {
                     if (value!==undefined&&value.isObserver) value=value(); 
+                    if (this.__attributes !== undefined)
+                    {
+                        for (var key in this.__attributes) this.__element.setAttribute("data-" + key, undefined);
+                        this.getEvents("viewupdated").viewupdated(Object.keys(this.__attributes));
+                    }
+
                     this.__attributes=value;
 
                     if (value!==undefined)
-                    for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
-                    this.getEvents("viewupdated").viewupdated(Object.keys(value));
+                    {
+                        for(var key in value)   this.__element.setAttribute("data-" + key, value[key]);
+                        this.getEvents("viewupdated").viewupdated(Object.keys(value));
+                    }
                 }
             },
             "class":            {get: function(){return this.__class;},                             set: function(value){if (this.__class != null) this.removeClass(this.__class); this.__class=value; this.addClass(value);}},
@@ -258,6 +266,7 @@
         height:             {get:   function(){return this.__element.offsetHeight;},                                                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetHeight"]);}},
         isDataRoot:         {get:   function(){return this.__isDataRoot;},                                                                      set:    function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
         isRoot:             {get:   function(){return this.__forceRoot||this.parent===undefined;},                                              set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}},
+        scrollTop:          {get:   function(){return this.__element.scrollTop;},                                                               set:    function(value){this.__element.style.scrollTop = parseInt(value); this.getEvents("viewupdated").viewupdated(["scrollTop"]);}},
         root:               {get:   function(){return !this.isRoot && this.parent ? this.parent.root : this;}},
         updateon:           {get:   function(){var names = []; each(this.value.onchange,function(e, name){names.push(name);}); return names;},  set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
         width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
@@ -307,10 +316,11 @@
         }},
         __updateDebugInfo:  {value: function()
         {
+            if (debugInfoObserver === undefined)    return;
             function deferred()
             {
                 delete this.__updateDebugInfoId;
-                if(debugInfoObserver) debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
             }
             if (this.__updateDebugInfoId !== undefined)
             {
@@ -390,18 +400,17 @@
             }).bind(this));
             Object.defineProperty(this, "isDestroyed", {value: true});
         }},
-        frame:              {value: function(definition)
+        frame:              {value: function(controlDefinition)
         {
-            addEvents.call(this, definition.events);
-            addCustomMembers.call(this, definition.members);
+            addEvents.call(this, controlDefinition.events);
+            addCustomMembers.call(this, controlDefinition.members);
 
-            if (definition.extensions !== undefined && definition.extensions.length !== undefined)
-            for(var counter=0;counter<definition.extensions.length;counter++)
+            if (controlDefinition.extensions !== undefined && controlDefinition.extensions.length !== undefined)
+            for(var counter=0;counter<controlDefinition.extensions.length;counter++)
             {
-                if (definition.extensions[counter] === undefined) throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
-                if (definition.extensions[counter].extend !== undefined) definition.extensions[counter].extend.call(this);
+                if (controlDefinition.extensions[counter] === undefined)        throw new Error("Extension was undefined in view adapter with element " + this.__element.__selectorPath+"-"+this.__selector);
+                if (controlDefinition.extensions[counter].extend !== undefined) controlDefinition.extensions[counter].extend.call(this);
             }
-            this.__extensions   = definition.extensions;
         }},
         getEvents:          {value: function(eventNames)
         {
@@ -415,14 +424,13 @@
         hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
         hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
         hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
-        initialize:         {value: function(definition)
+        initialize:         {value: function(initializerDefinition, controlDefinition)
         {
             for(var initializerKey in initializers)
-            if (definition.hasOwnProperty(initializerKey))    initializers[initializerKey](this, definition[initializerKey]);
+            if (initializerDefinition.hasOwnProperty(initializerKey))   initializers[initializerKey](this, initializerDefinition[initializerKey]);
 
-            if (this.__extensions !== undefined && this.__extensions.length !== undefined)
-            for(var counter=0;counter<this.__extensions.length;counter++)   initializeViewAdapterExtension.call(this, definition, this.__extensions[counter]);
-            delete this.__extensions;
+            if (controlDefinition !== undefined && controlDefinition.extensions !== undefined && controlDefinition.extensions.length !== undefined)
+            for(var counter=0;counter<controlDefinition.extensions.length;counter++)    initializeViewAdapterExtension.call(this, initializerDefinition, controlDefinition.extensions[counter]);
         }},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
         insertBefore:       {value: function(siblingControl)                { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; }},

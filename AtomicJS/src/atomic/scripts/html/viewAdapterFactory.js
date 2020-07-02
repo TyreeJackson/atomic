@@ -8,8 +8,9 @@
             if (controlTypes[options.controlType] === undefined)    debugger;
 
             var viewAdapter             = new controlTypes[options.controlType](options.viewElement, selector, options.parent, options.bindPath, options.controlKey, options.protoControlKey);
-
-            viewAdapter.frame(new options.definitionConstructor(viewAdapter));
+            var controlDefinition       = new options.definitionConstructor(viewAdapter);
+            viewAdapter.frame(controlDefinition, options.initializerDefinition||controlDefinition);
+            viewAdapter.initialize(options.initializerDefinition||controlDefinition, controlDefinition);
             if (typeof options.preConstruct === "function") options.preConstruct.call(viewAdapter);
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
@@ -19,6 +20,7 @@
             var adapter = this.create
             ({
                 definitionConstructor:  typeof definitionConstructor !== "function" ? function(appViewAdapter){return {controls: definitionConstructor}; } : definitionConstructor,
+                initializerDefinition:  {},
                 viewElement:            viewElement,
                 parent:                 undefined,
                 selector:               undefined,
@@ -33,7 +35,7 @@
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
-            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath)
+            var factory = (function(parent, containerElement, selector, controlKey, protoControlKey, bindPath, initializerDefinition)
             {
                 var container                       = parent;
                 var viewElement                     = viewElementTemplate.cloneNode(true);
@@ -42,6 +44,7 @@
                     container                       = this.create
                     ({
                         definitionConstructor:  function(){return {};}, 
+                        initializerDefinition:  {},
                         viewElement:            containerElement,
                         parent:                 parent,
                         selector:               selector,
@@ -58,6 +61,7 @@
                 var view                            = this.create
                 ({
                     definitionConstructor:  typeof definitionConstructor !== "function" ? function(control){return definitionConstructor} : function(control){return definitionConstructor(control, factory);},
+                    initializerDefinition:  initializerDefinition,
                     viewElement:            viewElement,
                     parent:                 container,
                     selector:               selector,

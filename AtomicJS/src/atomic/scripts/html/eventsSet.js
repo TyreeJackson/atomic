@@ -29,7 +29,7 @@
         }},
         destroy:
         {value: function()
-        {debugger;
+        {
             for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)  this.__target.__element.removeEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
             this.pubSub.destroy();
             each
@@ -72,7 +72,8 @@
             each
             ([
                 "__listenersUsingCapture",
-                "__listenersNotUsingCapture"
+                "__listenersNotUsingCapture",
+                "__intermediaries"
             ],
             (function(listener)
             {
@@ -90,7 +91,8 @@
             ([
                 "__target",
                 "__listenersUsingCapture",
-                "__listenersNotUsingCapture"
+                "__listenersNotUsingCapture",
+                "__intermediaries"
             ],
             (function(name)
             {
