@@ -43,6 +43,7 @@
     var audio                   = new root.atomic.html.audio(control);
     var video                   = new root.atomic.html.video(audio);
     var button                  = new root.atomic.html.button(control);
+    var details                 = new root.atomic.html.details(panel, document);
 
     Object.defineProperties(controlTypes,
     {
@@ -67,7 +68,8 @@
         video:          {value: video},
         button:         {value: button},
         file:           {value: file},
-        table:          {value: table}
+        table:          {value: table},
+        details:        {value: details}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer, debugInfoObserver: debugInfoObserver };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);

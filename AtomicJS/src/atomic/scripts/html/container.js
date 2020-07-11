@@ -15,9 +15,10 @@
         "a":                        "link",
         "label":                    "label",
         "input:file":               "file",
-        "table":                    "table"
+        "table":                    "table",
+        "details":                  "details"
     };
-    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
     {
         elementControlTypes[name]   = "readonly";
@@ -29,7 +30,9 @@
                 (definition.controls || definition.adapter
                 ?   element !== undefined && element.nodeName.toLowerCase() == "a"
                     ?   "linkPanel"
-                    :   "panel"
+                    :   element.nodeName.toLowerCase() == "details"
+                        ?   "details"
+                        :   "panel"
                 :   definition.repeat
                     ?   "repeater"
                     :   element !== undefined

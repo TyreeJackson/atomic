@@ -684,6 +684,14 @@ root.atomic.launch
                                                                 Volume: <input type="number" id="videoVolume" />
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Details:</td>
+                                                            <td class="table-cell">
+                                                                <details id="detailsControl">
+                                                                    <input type="text" id="detailsNestedInput" />
+                                                                </details>
+                                                            </td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                                 <div class="col-md-4">
@@ -725,6 +733,14 @@ root.atomic.launch
                                                             <td class="table-cell">Video path value:</td>
                                                             <td class="table-cell" id="videoPathValueReadout"></td>
                                                         </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Summary:</td>
+                                                            <td class="table-cell" id="summaryReadout"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="table-cell">Details Toggled:</td>
+                                                            <td class="table-cell" id="detailsToggledReadout"></td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                                             </div>
@@ -741,10 +757,11 @@ root.atomic.launch
                                                 booleanValueReadout:            { bind: "booleanValue" },
                                                 selectedValueReadout:           { bind: "selectedValue" },
                                                 multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
-                                                radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
                                                 imagePathValueReadout:          { bind: "imageUrl" },
                                                 audioPathValueReadout:          { bind: "audioUrl" },
                                                 videoPathValueReadout:          { bind: "videoUrl" },
+                                                summaryReadout:                 { bind: "summary" },
+                                                detailsToggledReadout:          { bind: "$shadow.detailsToggled" },
                                                 onChangeTextboxControl:         { bind: "stringValue" },
                                                 onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
                                                 textAreaControl:                { bind: "stringValue" },
@@ -797,6 +814,18 @@ root.atomic.launch
                                                 videoTimeLapsed:                { bind: function(){return this.data("$shadow.videoTimeLapsed")||0;} },
                                                 videoVolume:                    { bind: { value: { get: function(){return (this.data("videoVolume")||0)*100;}, set: function(data, value){this.data("videoVolume", value/100);} } } },
                                                 videoPathControl:               { bind: { value: "videoUrl",                items: { to: "videos", text: "title", value: "url" } } },
+                                                detailsControl:
+                                                {
+                                                    bind:
+                                                    {
+                                                        open:       "$shadow.detailsToggled",
+                                                        summary:    "summary"
+                                                    },
+                                                    controls:
+                                                    {
+                                                        detailsNestedInput: { bind: "stringValue" }
+                                                    }
+                                                },
                                                 example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
                                             },
                                             function(adapter)
@@ -809,12 +838,13 @@ root.atomic.launch
                                                     booleanValue:           true, 
                                                     selectedValue:          "Gamma", 
                                                     multipleSelectedValues: ["Beta"], 
-                                                    radioSelectedValue:     "Alpha",
                                                     imageUrl:               "images/hammock_cat.jpg",
                                                     audioUrl:               "audio/birds_after_rain.mp3",
                                                     videoUrl:               "video/Countdown.mov",
                                                     audioVolume:            1,
                                                     videoVolume:            1,
+                                                    summary:                "This is the summary",
+                                                    details:                "These are the details.",
                                                     items:                  ["Alpha","Beta","Gamma"],
                                                     images:
                                                     [
@@ -906,10 +936,11 @@ root.atomic.launch
         booleanValueReadout:            { bind: "booleanValue" },
         selectedValueReadout:           { bind: "selectedValue" },
         multipleSelectedValuesReadout:  { bind: function(data){ return data("multipleSelectedValues")&&data("multipleSelectedValues").join();} },
-        radioSelectedOptionReadout:     { bind: "radioSelectedValue" },
         imagePathValueReadout:          { bind: "imageUrl" },
         audioPathValueReadout:          { bind: "audioUrl" },
         videoPathValueReadout:          { bind: "videoUrl" },
+        summaryReadout:                 { bind: "summary" },
+        detailsToggledReadout:          { bind: "$shadow.detailsToggled" },
         onChangeTextboxControl:         { bind: "stringValue" },
         onKeyStrokeTextboxControl:      { bind: { value: { to: "stringValue", updateon: ["keydown","keyup","change"] } } },
         textAreaControl:                { bind: "stringValue" },
@@ -961,7 +992,19 @@ root.atomic.launch
         },
         videoTimeLapsed:                { bind: function(){return this.data("$shadow.videoTimeLapsed")||0;} },
         videoVolume:                    { bind: { value: { get: function(){return (this.data("videoVolume")||0)*100;}, set: function(data, value){this.data("videoVolume", value/100);} } } },
-        videoPathControl:               { bind: { value: "videoUrl",                items: { to: "sounds", text: "title", value: "url" } } },
+        videoPathControl:               { bind: { value: "videoUrl",                items: { to: "videos", text: "title", value: "url" } } },
+        detailsControl:
+        {
+            bind:
+            {
+                open:       "$shadow.detailsToggled",
+                summary:    "summary"
+            },
+            controls:
+            {
+                detailsNestedInput: { bind: "stringValue" }
+            }
+        },
         example7model:                  { bind: { value: { to: function(){return JSON.stringify(this.data(), null, '    ');}, root: "" } } }
     },
     function(adapter)
@@ -974,12 +1017,13 @@ root.atomic.launch
             booleanValue:           true, 
             selectedValue:          "Gamma", 
             multipleSelectedValues: ["Beta"], 
-            radioSelectedValue:     "Alpha",
             imageUrl:               "images/hammock_cat.jpg",
             audioUrl:               "audio/birds_after_rain.mp3",
-            videoUrl:               "videos/Countdown.mov",
+            videoUrl:               "video/Countdown.mov",
             audioVolume:            1,
             videoVolume:            1,
+            summary:                "This is the summary",
+            details:                "These are the details.",
             items:                  ["Alpha","Beta","Gamma"],
             images:
             [
@@ -1022,6 +1066,29 @@ root.atomic.launch
                     title:  "Wind",
                     type:   "audio/mpeg",
                     url:    "audio/wind.mp3"
+                }
+            ],
+            videos:
+            [
+                {
+                    title:  "Background",
+                    type:   "video/mov",
+                    url:    "video/Background.mov"
+                },
+                {
+                    title:  "Countdown",
+                    type:   "video/mov",
+                    url:    "video/Countdown.mov"
+                },
+                {
+                    title:  "Earth",
+                    type:   "video/mov",
+                    url:    "video/Earth.mov"
+                },
+                {
+                    title:  "Milky Way",
+                    type:   "video/mp4",
+                    url:    "video/Milky_Way.mp4"
                 }
             ]
         });
@@ -1122,6 +1189,26 @@ root.atomic.launch
                                 &lt;br/&gt;
                                 Time lapsed: &lt;span id="audioTimeLapsed"&gt;&lt;/span&gt;&lt;br/&gt;
                                 Volume: &lt;input type="number" id="audioVolume" /&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Video:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;video id="videoControl" class="videoPlayer"&gt;&lt;/video&gt;&lt;br/&gt;
+                                &lt;radiogroup id="videoPathControl"&gt;
+                                    &lt;radiogroupitem class="radio-inline"&gt;&lt;input type="radio" /&gt;&lt;label>&lt;/label&gt;&lt;/radiogroupitem&gt;
+                                &lt;/radiogroup&gt;
+                                &lt;br/&gt;
+                                Time lapsed: &lt;span id="videoTimeLapsed">&lt;/span&gt;&lt;br/&gt;
+                                Volume: &lt;input type="number" id="videoVolume" /&gt;
+                            &lt;/td&gt;
+                        &lt;/tr&gt;
+                        &lt;tr&gt;
+                            &lt;td class="table-cell"&gt;Details:&lt;/td&gt;
+                            &lt;td class="table-cell"&gt;
+                                &lt;details id="detailsControl"&gt;
+                                    &lt;input type="text" id="detailsNestedInput" /&gt;
+                                &lt;/details>
                             &lt;/td&gt;
                         &lt;/tr&gt;
                     &lt;/table&gt;
