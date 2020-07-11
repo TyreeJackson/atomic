@@ -1,0 +1,45 @@
+root.define("atomic.exampleView",
+{
+    constructor:    function(){ return function(controlViewAdapter)
+    {
+        var adapterDefinition   =
+        {
+            controls:
+            {
+                world:
+                {
+                    bind:   { value: { to: "world", updateon: ["change", "keyup", "keydown"] } },
+                    on:
+                    {
+                        enter: function(){ this.parent.controls.clickMe.click(); }
+                    },
+                    focused:    true
+                },
+                clickMe:
+                {
+                    bind:   { enabled: "world" },
+                    on:
+                    {
+                        click:  function()
+                        {
+                            if (!this.parent.controls.remoteControlHost.controls.remoteControl) this.parent.controls.remoteControlHost.attachRemoteControl("views/example-control.acu", "atomic.exampleControl", [], "remoteControl", function(){alert("Remote control attached!");});
+                        }
+                    }
+                },
+                remoteControlHost:  { controls: {} }
+            }
+        };
+        return adapterDefinition;
+    }},
+    selector:   "#exampleView",
+    html:       
+`<div id="exampleView">
+    <p>This view was loaded from a remote ACU file using data attributes ("data-atomic-name", "data-atomic-selector" and "data-atomic-src") on the Atomic script tag on the host page.</p>
+    <label for="world">Who are you?</label><input id="world" type="text" />
+    <input id="clickMe" type="button" value="Click Me!" />
+    <div id="remoteControlHost"></div>
+</div>`,
+    css:
+`#exampleView { background-color: rgba(127,127,127,.15); padding: 10px; }
+label { padding: 5px; }`
+});

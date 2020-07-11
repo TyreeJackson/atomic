@@ -2,7 +2,12 @@
 {"use strict";
     function __namespace() {}
     function define(fullName, item) { namespace(this, fullName, item); }
-    Object.defineProperty(__namespace.prototype, "define", {value:define});
+    function get(fullName) { return namespace(this, fullName); }
+    Object.defineProperties(__namespace.prototype, 
+    {
+        define: {value:define},
+        get:    {value:get}
+    });
     var __root  = new __namespace();
     function getNamespace(root, paths)
     {
@@ -225,7 +230,7 @@
     });
     return eventsSet;
 });}();
-!function(){"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
+!function(){"use strict";root.define("atomic.html.control", function htmlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
 {
     var logCounter              = 0;
     var callbackCounter         = 0;
@@ -248,10 +253,10 @@
             debugInfoRemoveQueue    = [];
             var debugInfo           = debugInfoObserver.unwrap();
             for(var removeCounter=0,path;(path=removeQueue[removeCounter++])!==undefined;)
-            for(var indexCounter=0,indexItem;(indexItem=debugInfo.__controlIndex[indexCounter])!==undefined;)
-            if (indexItem.shortName == path)
+            for(var indexCounter=0,indexItem;(indexItem=debugInfo.__controlIndex[indexCounter++])!==undefined;)
+            if (indexItem.path == path)
             {
-                debugInfo.__controlIndex.splice(indexCounter, 1);
+                debugInfo.__controlIndex.splice(indexCounter-1, 1);
                 debugInfoObserver.delete("controls."+path, true);
                 break;
             }
@@ -547,7 +552,8 @@
             function deferred()
             {
                 delete this.__updateDebugInfoId;
-                debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                if (this.__binder !== undefined)    debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                else                                debugInfoObserver.delete(this.__viewAdapterPath);
             }
             if (this.__updateDebugInfoId !== undefined)
             {
@@ -1025,6 +1031,16 @@
             }
             var data            = this.__getData();
             if (data !== undefined) for(var controlKey in controlDeclarations)  this.controls[controlKey].__setData(data);
+        }},
+        attachRemoteControl:    {value: function(remoteControlUrl, remoteControlName, constructorArguments, controlKey, callback)
+        {
+            viewAdapterFactory.loadControlFactory(remoteControlUrl, remoteControlName, constructorArguments, (function(controlFactory)
+            {
+                var def         = {};
+                def[controlKey] = {factory: controlFactory};
+                this.attachControls(def);
+                callback();
+            }).bind(this));
         }},
         attachProperties:       {value: function(propertyDeclarations)
         {
@@ -2383,9 +2399,36 @@
 });}();
 !function(){"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each)
 {
+    function loadACU(url, controlUnitFullName, callback)
+    {
+        var callbackExecuted        = false;
+        function executeCallback()
+        {
+            if (callbackExecuted)   return;
+            callbackExecuted    = true;
+            callback(root.get(controlUnitFullName));
+        }
+        var script                  = document.createElement('script');
+        script.src                  = url;
+        script.onload               = executeCallback;
+        script.onreadystatechange   = executeCallback;
+    
+        document.body.appendChild(script);
+    };
+    function loadACView(controlDefinition)
+    {
+        if (typeof controlDefinition.constructor !== "function") throw new Error("Failed to load remote Atomic control unit.");
+        var cssElement          = document.createElement("style");
+        cssElement.innerHTML    = controlDefinition.css;
+        document.body.appendChild(cssElement);
+        var viewElement         = document.createElement("div");
+        viewElement.innerHTML   = controlDefinition.html;
+        return viewElement.querySelector(controlDefinition.selector);
+    }
+    var dynamicControlUnits = {};
     var viewAdapterFactory  =
     {
-        create:         function create(options)
+        create:             function create(options)
         {
             var selector                = options.selector || (options.viewElement.id?("#"+options.viewElement.id):("."+options.viewElement.className));
             if (controlTypes[options.controlType] === undefined)    debugger;
@@ -2398,7 +2441,7 @@
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
-        createView:     function createView(definitionConstructor, viewElement)
+        createView:         function createView(definitionConstructor, viewElement)
         {
             var adapter = this.create
             ({
@@ -2414,7 +2457,7 @@
             });
             return adapter;
         },
-        createFactory:  function createFactory(definitionConstructor, viewElementTemplate)
+        createFactory:      function createFactory(definitionConstructor, viewElementTemplate)
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
@@ -2457,7 +2500,7 @@
             }).bind(this);
             return factory;
         },
-        launch:         function(viewElement, controlsOrAdapter, callback)
+        launch:             function(viewElement, controlsOrAdapter, callback)
         {
             var argsLength  = callback === undefined ? controlsOrAdapter === undefined ? viewElement === undefined ? 0 : 1 : 2 : 3;
             if (argsLength === 0) return;
@@ -2478,13 +2521,22 @@
             if (typeof callback === "function") callback(adapter);
             return adapter;
         },
-        select:         function(uiElement, selector, selectorPath)
+        loadView:           function(controlUnitUrl, controlUnitFullName, constructorArguments, callback)
+        {
+            loadACU(controlUnitUrl, controlUnitFullName, (function(controlDefinition){ callback(this.createView(controlDefinition.constructor.apply(null, constructorArguments), loadACView(controlDefinition))); }).bind(this));
+        },
+        loadControlFactory: function(controlUnitUrl, controlUnitFullName, constructorArguments, callback)
+        {
+            if (dynamicControlUnits[controlUnitFullName] !== undefined) return callback(dynamicControlUnits[controlUnitFullName]);
+            loadACU(controlUnitUrl, controlUnitFullName, (function(controlDefinition){callback(dynamicControlUnits[controlUnitFullName] = this.createFactory(controlDefinition.constructor.apply(null, constructorArguments), loadACView(controlDefinition))); }).bind(this));
+        },
+        select:             function(uiElement, selector, selectorPath)
         {
             var element = uiElement.querySelector(selector)||undefined;
             element.__selectorPath  = selectorPath;
             return element;
         },
-        selectAll:      function(uiElement, selector, selectorPath, typeHint)
+        selectAll:          function(uiElement, selector, selectorPath, typeHint)
         {
             return uiElement.querySelectorAll(selector);
         }
@@ -4053,17 +4105,18 @@
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
     return atomic;
 });}();
-!function(window, document){"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
-{
-    root.atomic.ready(function(atomic)
-    {
-        var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
-    });
-});}(window, document);
 !function(window, document)
 {"use strict";
     var atomic;
+    var atomicScript        = document.currentScript||document.getElementById("atomicjs")
     var debugInfoObserver;
+    root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
+    {
+        root.atomic.ready(function(atomic)
+        {
+            var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
+        });
+    });
     root.define("atomic.init", function(options)
     {
         debugInfoObserver   = (options&&options.debugInfoObserver)||debugInfoObserver;
@@ -4079,4 +4132,15 @@
         if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
         else                                    deferOrExecute();
     });
+    setTimeout(function(){root.atomic.ready(function(atomic)
+    {
+        if (atomicScript !== undefined && atomicScript !== null)
+        {
+            var controlName         = atomicScript.getAttribute("data-atomic-name");
+            var hostSelector        = atomicScript.getAttribute("data-atomic-selector");
+            var remoteControlUrl    = atomicScript.getAttribute("data-atomic-src");
+            var hostElement         = document.querySelector(hostSelector)||document.body;
+            if (controlName && hostSelector && remoteControlUrl)    atomic.viewAdapterFactory.loadView(remoteControlUrl, controlName, [], function(control) { hostElement.appendChild(control.__element); if (control && control.launch)  control.launch(); });
+        }
+    });}, 0);
 }(window, document);
