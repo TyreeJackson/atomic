@@ -840,9 +840,10 @@
         "a":                        "link",
         "label":                    "label",
         "input:file":               "file",
-        "table":                    "table"
+        "table":                    "table",
+        "details":                  "details"
     };
-    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","details","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
+    each(["default","abbr","address","article","aside","b","bdi","blockquote","body","caption","cite","code","col","colgroup","dd","del","dfn","dialog","div","dl","dt","em","fieldset","figcaption","figure","footer","h1","h2","h3","h4","h5","h6","header","i","ins","kbd","legend","li","menu","main","mark","menuitem","meter","nav","ol","optgroup","p","pre","q","rp","rt","ruby","section","s","samp","small","span","strong","sub","summary","sup","tbody","td","tfoot","th","thead","time","title","tr","u","ul","wbr"],
     function(name)
     {
         elementControlTypes[name]   = "readonly";
@@ -854,7 +855,9 @@
                 (definition.controls || definition.adapter
                 ?   element !== undefined && element.nodeName.toLowerCase() == "a"
                     ?   "linkPanel"
-                    :   "panel"
+                    :   element.nodeName.toLowerCase() == "details"
+                        ?   "details"
+                        :   "panel"
                 :   definition.repeat
                     ?   "repeater"
                     :   element !== undefined
@@ -1138,6 +1141,40 @@
         }}
     });
     return panel;
+});}();
+!function(){"use strict";root.define("atomic.html.details", function htmlDetails(panel, document)
+{
+    function details(element, selector, parent, bindPath, childKey, protoChildKey)
+    {
+        panel.call(this, element, selector, parent, bindPath, childKey, protoChildKey);
+        var summaryElement  = element.querySelector("summary");
+        if (summaryElement == null)
+        {
+            summaryElement  = document.createElement("summary");
+            this.__element.appendChild(summaryElement);
+        }
+        Object.defineProperties(this, 
+        {
+            __summaryElement:   {value: summaryElement, configurable: true}
+        });
+        this.__binder.defineDataProperties(this,
+        {
+            open:       {get: function(){return this.__element.open==true;},        set: function(value){this.__element.open=!(!value); this.getEvents("viewupdated").viewupdated(["open"]);},    onchange: this.getEvents("toggle")},
+            summary:    {get: function(){return this.__getViewData("summary");},    set: function(value){this.__setViewData("summary", value);}}
+        });
+    }
+    Object.defineProperty(details, "prototype", {value: Object.create(panel.prototype)});
+    var viewProperties  =
+    {
+        summary:    { reset:    false,  get: function(control){ return control.__summary    !== undefined ? control.__summary   : control.__summaryElement.innerHTML; },    set: function(control, value){ var val = value&&value.isObserver?value():value; control.__summary   = control.__summaryElement.innerHTML    = val;},     value: function(control, value){ control.__summary = value; } }
+    };
+    Object.defineProperty(details, "__getViewProperty", {value: function(name) { return viewProperties[name]||panel.__getViewProperty(name); }});
+    Object.defineProperties(details.prototype,
+    {
+        constructor:    {value: details},
+        __createNode:   {value: function(){return document.createElement("details");}, configurable: true}
+    });
+    return details;
 });}();
 !function(){"use strict";root.define("atomic.html.screen", function htmlScreen(panel, observer)
 {
@@ -3984,6 +4021,7 @@
     var audio                   = new root.atomic.html.audio(control);
     var video                   = new root.atomic.html.video(audio);
     var button                  = new root.atomic.html.button(control);
+    var details                 = new root.atomic.html.details(panel, document);
 
     Object.defineProperties(controlTypes,
     {
@@ -4008,7 +4046,8 @@
         video:          {value: video},
         button:         {value: button},
         file:           {value: file},
-        table:          {value: table}
+        table:          {value: table},
+        details:        {value: details}
     });
     var atomic  = { viewAdapterFactory: viewAdapterFactory, observer: observer, debugInfoObserver: debugInfoObserver };
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
