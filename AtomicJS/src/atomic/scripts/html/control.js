@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.control", function hmtlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
+!function(){"use strict";root.define("atomic.html.control", function htmlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
 {
     var logCounter              = 0;
     var callbackCounter         = 0;
@@ -21,10 +21,10 @@
             debugInfoRemoveQueue    = [];
             var debugInfo           = debugInfoObserver.unwrap();
             for(var removeCounter=0,path;(path=removeQueue[removeCounter++])!==undefined;)
-            for(var indexCounter=0,indexItem;(indexItem=debugInfo.__controlIndex[indexCounter])!==undefined;)
-            if (indexItem.shortName == path)
+            for(var indexCounter=0,indexItem;(indexItem=debugInfo.__controlIndex[indexCounter++])!==undefined;)
+            if (indexItem.path == path)
             {
-                debugInfo.__controlIndex.splice(indexCounter, 1);
+                debugInfo.__controlIndex.splice(indexCounter-1, 1);
                 debugInfoObserver.delete("controls."+path, true);
                 break;
             }
@@ -320,7 +320,8 @@
             function deferred()
             {
                 delete this.__updateDebugInfoId;
-                debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                if (this.__binder !== undefined)    debugInfoObserver(this.__viewAdapterPath + ".bindPaths", this.__binder.__getDebugInfo()); 
+                else                                debugInfoObserver.delete(this.__viewAdapterPath);
             }
             if (this.__updateDebugInfoId !== undefined)
             {

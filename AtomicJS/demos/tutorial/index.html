@@ -4,7 +4,7 @@
     <title>AtomicJS • Tutorial</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="index.css" />
-    <script type="text/javascript" src="../../dist/atomic.js"></script>
+    <script type="text/javascript" src="../../dist/atomic.js" data-atomic-name="atomic.exampleView" data-atomic-selector="#exampleViewHost" data-atomic-src="example-view.acu"></script>
     <script type="text/javascript" src="../../3rdparty/path.min.js"></script>
     <script type="text/javascript" src="views/debugInfoViewer/appView.js"></script>
     <script type="text/javascript" src="views/appView.js"></script>
@@ -42,6 +42,7 @@
                                 <li id="exampleLink11"><a href="#/example/11">A really simple Todo</a></li>
                                 <li id="exampleLink12"><a href="#/example/12">Composite Controls</a></li>
                                 <li id="exampleLink13"><a href="#/example/13">Control Bindings</a></li>
+                                <li id="exampleLink14"><a href="#/example/14">Dynamically Loaded Remote Control</a></li>
                             </ul>
                         </div>
                     </div>
@@ -2751,6 +2752,27 @@ root.atomic.launch
                                     </figure>
                                 </div>
                             
+                                <div id="example14">
+                                    <div class="example" id="exampleViewHost">
+                                    </div>
+                                    <figure class="highlight">
+                                        <h2>View Adapter is dynamically loaded</h2>
+                                        <pre>
+                                            <code class="language-javascript">
+                                            // No Local Code
+                                            </code>
+                                        </pre>
+                                        <h2>View</h2>
+                                        <pre>
+                                            <code class="language-html">
+&lt;div id="example14"&gt;
+    &lt;div class="example" id="exampleViewHost"&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+                                            </code>
+                                        </pre>
+                                    </figure>
+                                </div>
                             
                             
                             </div>

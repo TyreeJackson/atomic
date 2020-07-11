@@ -75,17 +75,18 @@
     if (typeof customizeControlTypes === "function")    customizeControlTypes(controlTypes, atomic);
     return atomic;
 });}();
-!function(window, document){"use strict";root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
-{
-    root.atomic.ready(function(atomic)
-    {
-        var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
-    });
-});}(window, document);
 !function(window, document)
 {"use strict";
     var atomic;
+    var atomicScript        = document.currentScript||document.getElementById("atomicjs")
     var debugInfoObserver;
+    root.define("atomic.launch", function launch(viewElement, controlsOrAdapter, callback)
+    {
+        root.atomic.ready(function(atomic)
+        {
+            var adapter = atomic.viewAdapterFactory.launch(viewElement, controlsOrAdapter, callback);
+        });
+    });
     root.define("atomic.init", function(options)
     {
         debugInfoObserver   = (options&&options.debugInfoObserver)||debugInfoObserver;
@@ -101,4 +102,15 @@
         if (document.readyState !== "complete") window.addEventListener("load", deferOrExecute);
         else                                    deferOrExecute();
     });
+    setTimeout(function(){root.atomic.ready(function(atomic)
+    {
+        if (atomicScript !== undefined && atomicScript !== null)
+        {
+            var controlName         = atomicScript.getAttribute("data-atomic-name");
+            var hostSelector        = atomicScript.getAttribute("data-atomic-selector");
+            var remoteControlUrl    = atomicScript.getAttribute("data-atomic-src");
+            var hostElement         = document.querySelector(hostSelector)||document.body;
+            if (controlName && hostSelector && remoteControlUrl)    atomic.viewAdapterFactory.loadView(remoteControlUrl, controlName, [], function(control) { hostElement.appendChild(control.__element); if (control && control.launch)  control.launch(); });
+        }
+    });}, 0);
 }(window, document);

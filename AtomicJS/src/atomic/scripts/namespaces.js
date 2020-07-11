@@ -2,7 +2,12 @@
 {"use strict";
     function __namespace() {}
     function define(fullName, item) { namespace(this, fullName, item); }
-    Object.defineProperty(__namespace.prototype, "define", {value:define});
+    function get(fullName) { return namespace(this, fullName); }
+    Object.defineProperties(__namespace.prototype, 
+    {
+        define: {value:define},
+        get:    {value:get}
+    });
     var __root  = new __namespace();
     function getNamespace(root, paths)
     {

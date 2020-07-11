@@ -201,6 +201,16 @@
             var data            = this.__getData();
             if (data !== undefined) for(var controlKey in controlDeclarations)  this.controls[controlKey].__setData(data);
         }},
+        attachRemoteControl:    {value: function(remoteControlUrl, remoteControlName, constructorArguments, controlKey, callback)
+        {
+            viewAdapterFactory.loadControlFactory(remoteControlUrl, remoteControlName, constructorArguments, (function(controlFactory)
+            {
+                var def         = {};
+                def[controlKey] = {factory: controlFactory};
+                this.attachControls(def);
+                callback();
+            }).bind(this));
+        }},
         attachProperties:       {value: function(propertyDeclarations)
         {
             if (propertyDeclarations === undefined) return;

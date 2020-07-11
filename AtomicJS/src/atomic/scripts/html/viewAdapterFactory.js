@@ -1,8 +1,35 @@
 !function(){"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each)
 {
+    function loadACU(url, controlUnitFullName, callback)
+    {
+        var callbackExecuted        = false;
+        function executeCallback()
+        {
+            if (callbackExecuted)   return;
+            callbackExecuted    = true;
+            callback(root.get(controlUnitFullName));
+        }
+        var script                  = document.createElement('script');
+        script.src                  = url;
+        script.onload               = executeCallback;
+        script.onreadystatechange   = executeCallback;
+    
+        document.body.appendChild(script);
+    };
+    function loadACView(controlDefinition)
+    {
+        if (typeof controlDefinition.constructor !== "function") throw new Error("Failed to load remote Atomic control unit.");
+        var cssElement          = document.createElement("style");
+        cssElement.innerHTML    = controlDefinition.css;
+        document.body.appendChild(cssElement);
+        var viewElement         = document.createElement("div");
+        viewElement.innerHTML   = controlDefinition.html;
+        return viewElement.querySelector(controlDefinition.selector);
+    }
+    var dynamicControlUnits = {};
     var viewAdapterFactory  =
     {
-        create:         function create(options)
+        create:             function create(options)
         {
             var selector                = options.selector || (options.viewElement.id?("#"+options.viewElement.id):("."+options.viewElement.className));
             if (controlTypes[options.controlType] === undefined)    debugger;
@@ -15,7 +42,7 @@
             if(viewAdapter.construct)   viewAdapter.construct.call(viewAdapter);
             return viewAdapter;
         },
-        createView:     function createView(definitionConstructor, viewElement)
+        createView:         function createView(definitionConstructor, viewElement)
         {
             var adapter = this.create
             ({
@@ -31,7 +58,7 @@
             });
             return adapter;
         },
-        createFactory:  function createFactory(definitionConstructor, viewElementTemplate)
+        createFactory:      function createFactory(definitionConstructor, viewElementTemplate)
         {
             if (typeof viewElementTemplate === "string")    viewElementTemplate = document.querySelector(viewElementTemplate);
             viewElementTemplate.parentNode.removeChild(viewElementTemplate);
@@ -74,7 +101,7 @@
             }).bind(this);
             return factory;
         },
-        launch:         function(viewElement, controlsOrAdapter, callback)
+        launch:             function(viewElement, controlsOrAdapter, callback)
         {
             var argsLength  = callback === undefined ? controlsOrAdapter === undefined ? viewElement === undefined ? 0 : 1 : 2 : 3;
             if (argsLength === 0) return;
@@ -95,13 +122,22 @@
             if (typeof callback === "function") callback(adapter);
             return adapter;
         },
-        select:         function(uiElement, selector, selectorPath)
+        loadView:           function(controlUnitUrl, controlUnitFullName, constructorArguments, callback)
+        {
+            loadACU(controlUnitUrl, controlUnitFullName, (function(controlDefinition){ callback(this.createView(controlDefinition.constructor.apply(null, constructorArguments), loadACView(controlDefinition))); }).bind(this));
+        },
+        loadControlFactory: function(controlUnitUrl, controlUnitFullName, constructorArguments, callback)
+        {
+            if (dynamicControlUnits[controlUnitFullName] !== undefined) return callback(dynamicControlUnits[controlUnitFullName]);
+            loadACU(controlUnitUrl, controlUnitFullName, (function(controlDefinition){callback(dynamicControlUnits[controlUnitFullName] = this.createFactory(controlDefinition.constructor.apply(null, constructorArguments), loadACView(controlDefinition))); }).bind(this));
+        },
+        select:             function(uiElement, selector, selectorPath)
         {
             var element = uiElement.querySelector(selector)||undefined;
             element.__selectorPath  = selectorPath;
             return element;
         },
-        selectAll:      function(uiElement, selector, selectorPath, typeHint)
+        selectAll:          function(uiElement, selector, selectorPath, typeHint)
         {
             return uiElement.querySelectorAll(selector);
         }
