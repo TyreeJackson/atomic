@@ -189,10 +189,9 @@
                     }
                     if(options.onchange !== undefined)
                     {
-                        var onchangeKeys    = Object.keys(this.__onchange);
-                        reflect.deleteProperties(this.__onchange, onchangeKeys);
+                        reflect.deleteProperties(this.__onchange, Object.keys(this.__onchange));
 
-                        onchangeKeys       = Object.keys(options.onchange);
+                        var onchangeKeys    = Object.keys(options.onchange);
                         for(var counter2=0, onchangeKey;(onchangeKey=onchangeKeys[counter2]) !== undefined; counter2++)
                         {
                             var event   = options.onchange[onchangeKey];

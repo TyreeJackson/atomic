@@ -59,8 +59,7 @@
     function forwardProperty(propertyKey, property)
     {
         var propertyValue   = property.property.call(this);
-        if (this.__customBind && propertyValue.isDataProperty)  this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
-        else                                                    Object.defineProperty(this, propertyKey, {value: propertyValue, writable: !propertyValue.isDataProperty});
+        this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
         
         if (property.value !== undefined)
         if (this[propertyKey].isDataProperty)   this[propertyKey](property.value);
