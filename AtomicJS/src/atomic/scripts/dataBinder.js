@@ -1,11 +1,8 @@
-!function(){"use strict";root.define("atomic.dataBinder", function dataBinder(each, removeItemFromArray, defineDataProperties)
+!function(){"use strict";root.define("atomic.dataBinder", function dataBinder(reflect, removeItemFromArray, defineDataProperties)
 {
     function notifyProperties()
     {
-        each(this.__properties,(function(property)
-        {
-            property.listen({bindPath: this.bindPath||"", data: this.data===undefined?null:this.data});
-        }).bind(this));
+        for(var counter=0,property;(property=this.__properties[counter]) !== undefined; counter++) property.listen({bindPath: this.bindPath||"", data: this.data===undefined?null:this.data});
     }
     function dataBinder(target, data)
     {
@@ -30,7 +27,7 @@
         {
             var debugInfo   = {};
             var hasBinding  = false;
-            each(this.__properties,(function(property)
+            for(var counter=0,property;(property=this.__properties[counter]) !== undefined; counter++)
             {
                 var debugBindPath   = property.__debugBindPath;
                 if (debugBindPath !== undefined)
@@ -38,7 +35,7 @@
                     hasBinding                  = true;
                     debugInfo[property.name]    = debugBindPath;
                 }
-            }).bind(this));
+            }
             return hasBinding ? debugInfo : undefined;
         }},
         __updateDebugInfo:      {value: function(){if (this.__target !== undefined) this.__target.__updateDebugInfo();}},
@@ -69,22 +66,18 @@
                 notifyProperties.call(this);
             }
         },
-        defineDataProperties:   {value: function (target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
-        destroy:                {value: function()
+        defineDataProperties:   {value: function $_defineDataProperties(target, properties, singleProperty){defineDataProperties(target, this, properties, singleProperty);}},
+        destroy:                {value: function destroy()
         {
-            each(this.__properties,(function(property){property.destroy();}).bind(this));
-            each
-            ([
+            Object.defineProperty(this, "__data", {value: undefined, configurable: true});
+            for(var counter=0,property;(property=this.__properties[counter]) !== undefined; counter++)  property.destroy();
+            reflect.deleteProperties(this,
+            [
                 "__properties",
                 "__forceRoot",
                 "__target",
                 "__data"
-            ],
-            (function(name)
-            {
-                Object.defineProperty(this, name, {value: null, configurable: true});
-                delete this[name];
-            }).bind(this));
+            ]);
             Object.defineProperty(this, "isDestroyed", {value: true});
         }},
         isBinder:               {value: true},

@@ -1,5 +1,6 @@
 !function()
 {"use strict";
+    var reflect = {};
     root.define("utilities.each", function each(array, callback)
     {
         if      (Array.isArray(array))  for(var arrayCounter=0;arrayCounter<array.length;arrayCounter++)    callback(array[arrayCounter], arrayCounter);
@@ -13,6 +14,23 @@
             }
         }
     });
+    Object.defineProperties(reflect,
+    {
+        deleteProperty:     {value: function deleteProperty(object, propertyName)
+        {
+            Object.defineProperty(object, propertyName, {value: null, configurable: true});
+            delete object[propertyName];
+        }},
+        deleteProperties:   { value: function deleteProperties(object, propertyNames)
+        {
+            for(var counter=0,propertyName;(propertyName=propertyNames[counter]) !== undefined;counter++)
+            {
+                Object.defineProperty(object, propertyName, {value: null, configurable: true});
+                delete object[propertyName];
+            }
+        }}
+    });
+    root.define("utilities.reflect", reflect);
     root.define("utilities.removeFromArray", function removeFromArray(array, from, to)
     {
         if (from == -1) return;
@@ -42,7 +60,7 @@
             });
             Object.defineProperties(functionFactory.root.prototype,
             {
-                ___invoke:                  {value: function()
+                ___invoke:                  {value: function __invoke()
                 {
                     var publish = (function(args)
                     {
@@ -64,24 +82,19 @@
                     else                    this.__publishTimeoutId = setTimeout(publish, limitOffset-now);
                 }},
                 destroy:
-                {value: function()
+                {value: function destroy()
                 {
-                    each
-                    ([
+                    reflect.deleteProperties(this,
+                    [
                         "__listenersChanged",
                         "__listeners"
-                    ],
-                    (function(name)
-                    {
-                        Object.defineProperty(this, name, {value: null, configurable: true});
-                        delete this[name];
-                    }).bind(this));
+                    ]);
                     Object.defineProperty(this, "isDestroyed", { value: true });
                 }},
-                "__notifyListenersChanged": {value: function(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
-                listen:                     {value: function(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
-                ignore:                     {value: function(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
-                invoke:                     {value: function(){this.apply(this, arguments);}}
+                "__notifyListenersChanged": {value: function __notifyListenersChanged(){if (typeof this.__listenersChanged === "function") this.__listenersChanged(this.__listeners.length);}},
+                listen:                     {value: function listen(listener, notifyEarly) { this.__listeners[notifyEarly?"unshift":"push"](listener); this.__notifyListenersChanged(); }},
+                ignore:                     {value: function ignore(listener)              { removeItemFromArray(this.__listeners, listener); this.__notifyListenersChanged(); }},
+                invoke:                     {value: function invoke(){this.apply(this, arguments);}}
             });
             return pubSub;
         }

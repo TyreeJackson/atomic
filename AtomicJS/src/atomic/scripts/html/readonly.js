@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, each)
+!function(){"use strict";root.define("atomic.html.readonly", function htmlReadOnly(control, reflect)
 {
     function readonly(elements, selector, parent, bindPath, childKey, protoChildKey)
     {
@@ -24,10 +24,10 @@
                     }
                 }
             },
-            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){each(this.__elements, function(element){element.disabled = !(!value);}); this.__element.disabled=!(!value); this.getEvents("viewupdated").viewupdated(["disabled"]);}},
+            disabled:           {get: function(){return this.__element.disabled;},                  set: function(value){for(var counter=0,element; (element=this.__elements[counter])!==undefined; counter++) element.disabled = !(!value); this.__element.disabled=!(!value); this.getEvents("viewupdated").viewupdated(["disabled"]);}},
             display:            {get: function(){return this.__getViewData("styles.display")=="";}, set: function(value){this[value?"show":"hide"]();}},
-            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){each(this.__elements, function(element){element.disabled = !value;}); this.__element.disabled=!value; this.getEvents("viewupdated").viewupdated(["disabled"]);}},
-            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){var val = value&&value.isObserver?value():(value||""); each(this.__elements, function(element){element.title = val;}); this.__element.title = val; this.getEvents("viewupdated").viewupdated(["title"]);}},
+            enabled:            {get: function(){return !this.__element.disabled;},                 set: function(value){for(var counter=0,element; (element=this.__elements[counter])!==undefined; counter++) element.disabled = !value; this.__element.disabled=!value; this.getEvents("viewupdated").viewupdated(["disabled"]);}},
+            tooltip:            {get: function(){return this.__element.title;},                     set: function(value){var val = value&&value.isObserver?value():(value||""); for(var counter=0,element; (element=this.__elements[counter])!==undefined; counter++) element.title = val; this.__element.title = val; this.getEvents("viewupdated").viewupdated(["title"]);}},
             value:              {get: function(){return this.__getViewData("innerHTMLs");},         set: function(value){this.__setViewData("innerHTMLs", value);}}
         });
     }

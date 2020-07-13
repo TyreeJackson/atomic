@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, each)
+!function(){"use strict";root.define("atomic.html.viewAdapterFactory", function htmlViewAdapterFactory(document, controlTypes, pubSub, logger, reflect)
 {
     function loadACU(url, controlUnitFullName, callback)
     {
@@ -68,20 +68,24 @@
                 var viewElement                     = viewElementTemplate.cloneNode(true);
                 if (containerElement !== undefined)
                 {
-                    container                       = this.create
-                    ({
-                        definitionConstructor:  function(){return {};}, 
-                        initializerDefinition:  {},
-                        viewElement:            containerElement,
-                        parent:                 parent,
-                        selector:               selector,
-                        controlKey:             controlKey,
-                        protoControlKey:        protoControlKey,
-                        controlType:            "panel",
-                        bindPath:               bindPath
-                    });
-                    containerElement.innerHTML   = "";
-                    containerElement.appendChild(viewElement);
+                    if (initializerDefinition.replaceElement)   containerElement.parentNode.replaceChild(viewElement, containerElement);
+                    else
+                    {
+                        container                       = this.create
+                        ({
+                            definitionConstructor:  function(){return {};}, 
+                            initializerDefinition:  {},
+                            viewElement:            containerElement,
+                            parent:                 parent,
+                            selector:               selector,
+                            controlKey:             controlKey,
+                            protoControlKey:        protoControlKey,
+                            controlType:            "panel",
+                            bindPath:               bindPath
+                        });
+                        containerElement.innerHTML   = "";
+                        containerElement.appendChild(viewElement);
+                    }
                 }
                 else                                parent.__setViewData("appendChild", viewElement);
 
@@ -112,6 +116,7 @@
                 viewElement         = document.body;
             }
             if (callback === undefined)             callback    = function(adapter){adapter.__getData()("", {});};
+            else if(callback.isObserver)            callback    = (function(data){return function(adapter){adapter.__setData(data);};})(callback);
             else if(typeof callback === "object")   callback    = (function(data){return function(adapter){adapter.data("", data);};})(callback);
             var adapter =
             this.createView
