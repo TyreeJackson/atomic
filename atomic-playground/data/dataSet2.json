@@ -1,0 +1,21 @@
+{
+    "data": 
+    {
+        "chartType":    "bar",
+        "chartTypes":   ["line", "bar", "radar", "pie", "doughnut", "polarArea"],
+        "labels": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "datasets": 
+        [{
+            "label": "My First weekly dataset",
+            "backgroundColor": "rgb(255, 99, 132)",
+            "borderColor": "rgb(255, 99, 132)",
+            "data": [30, 2, 53, 35, 45, 58, 14]
+        },
+        {
+            "label": "My Second weekley dataset",
+            "backgroundColor": "rgb(99, 132, 255)",
+            "borderColor": "rgb(99, 132, 255)",
+            "data": [4, 135, 20, 33, 30, 20, 74]
+        }]
+    }
+}

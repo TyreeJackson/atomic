@@ -1,0 +1,21 @@
+{
+    "data": 
+    {
+        "chartType":    "line",
+        "chartTypes":   ["line", "bar", "radar", "pie", "doughnut", "polarArea"],
+        "labels": ["January", "February", "March", "April", "May", "June", "July"],
+        "datasets": 
+        [{
+            "label": "My First dataset",
+            "backgroundColor": "rgb(255, 99, 132)",
+            "borderColor": "rgb(255, 99, 132)",
+            "data": [0, 10, 5, 2, 20, 30, 45]
+        },
+        {
+            "label": "My Second dataset",
+            "backgroundColor": "rgb(99, 132, 255)",
+            "borderColor": "rgb(99, 132, 255)",
+            "data": [20, 0, 51, 25, 120, 20, 17]
+        }]
+    }
+}

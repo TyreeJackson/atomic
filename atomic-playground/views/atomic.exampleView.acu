@@ -1,0 +1,44 @@
+root.define("atomic.exampleView",
+{
+    constructor:    function(){ return function(controlViewAdapter)
+    {
+        var adapterDefinition   =
+        {
+            controls:
+            {
+                world:
+                {
+                    bind:   { value: { to: "world", updateon: ["change", "keyup", "keydown"] } },
+                    on:
+                    {
+                        enter: function(){ this.parent.controls.clickMe.click(); }
+                    }
+                },
+                clickMe:
+                {
+                    bind:   { enabled: "world" },
+                    on:
+                    {
+                        click:  function()
+                        {
+                            if (!this.parent.controls.remoteControlHost.controls.remoteControl) this.parent.controls.remoteControlHost.attachRemoteControl("views/atomic.exampleControl.acu", "atomic.exampleControl", [], "remoteControl", function(){});
+                        }
+                    }
+                },
+                remoteControlHost:  { controls: {} }
+            }
+        };
+        return adapterDefinition;
+    }},
+    selector:   "#exampleView",
+    html:       
+`<div id="exampleView">
+    <p>This view was loaded from a remote ACU file using the loadRemote extended Atomic markdown control.</p>
+    <label for="world">Who are you?</label><input id="world" type="text" />
+    <input id="clickMe" type="button" value="Click Me!" />
+    <div id="remoteControlHost"></div>
+</div>`,
+    css:
+`#exampleView { background-color: rgba(127,127,127,.15); padding: 10px; }
+label { padding: 5px; }`
+});

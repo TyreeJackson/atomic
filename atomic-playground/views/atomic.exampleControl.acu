@@ -1,0 +1,40 @@
+root.define("atomic.exampleControl",
+{
+    constructor:    function(){ return function(controlViewAdapter)
+    {
+        var adapterDefinition   =
+        {
+            controls:
+            {
+                world:
+                {
+                    bind:   "world", 
+                    on:
+                    {
+                        enter: function(){ this.parent.controls.clickMe.click(); }
+                    },
+                    focused:    true
+                },
+                removeMe:
+                {
+                    bind:   { enabled: "world" },
+                    on:
+                    {
+                        click:  function(){controlViewAdapter.parent.removeControl(controlViewAdapter.__childKey); controlViewAdapter.destroy(); alert("Remote control removed."); }
+                    }
+                }
+            }
+        };
+        return adapterDefinition;
+    }},
+    selector:   "#exampleControl",
+    html:       
+`<div id="exampleControl">
+    <p>This control was loaded from a remote ACU file using the container.attachRemoteControl(...) method.</p>
+    <label for="world">Hello </label><span id="world"></span>
+    <input id="removeMe" type="button" value="Remove Me!" />
+</div>`,
+    css:
+`#exampleControl { background-color: rgba(127,127,127,.15); padding: 10px; }
+label { padding: 5px; }`
+});
