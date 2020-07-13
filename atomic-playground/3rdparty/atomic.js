@@ -904,8 +904,7 @@
     function forwardProperty(propertyKey, property)
     {
         var propertyValue   = property.property.call(this);
-        if (this.__customBind && propertyValue.isDataProperty)  this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
-        else                                                    Object.defineProperty(this, propertyKey, {value: propertyValue, writable: !propertyValue.isDataProperty});
+        this.__binder.defineDataProperties(this, propertyKey, {get: function(){return propertyValue();}, set: function(value){propertyValue(value);}, onchange: propertyValue.onchange});
         
         if (property.value !== undefined)
         if (this[propertyKey].isDataProperty)   this[propertyKey](property.value);
@@ -4031,10 +4030,9 @@
                     }
                     if(options.onchange !== undefined)
                     {
-                        var onchangeKeys    = Object.keys(this.__onchange);
-                        reflect.deleteProperties(this.__onchange, onchangeKeys);
+                        reflect.deleteProperties(this.__onchange, Object.keys(this.__onchange));
 
-                        onchangeKeys       = Object.keys(options.onchange);
+                        var onchangeKeys    = Object.keys(options.onchange);
                         for(var counter2=0, onchangeKey;(onchangeKey=onchangeKeys[counter2]) !== undefined; counter2++)
                         {
                             var event   = options.onchange[onchangeKey];
