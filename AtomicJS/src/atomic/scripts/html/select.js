@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.select", function htmlSelect(input, dataBinder, reflect)
 {
     function getSelectListValue()
     {
@@ -39,16 +39,11 @@
         destroy:                {value: function()
         {
             this.__sourceBinder.destroy();
-            each
-            ([
+            reflect.deleteProperties(this,
+            [
                 "__element",
                 "__sourceBinder"
-            ],
-            (function(name)
-            {
-                Object.defineProperty(this, name, {value: null, configurable: true});
-                delete this[name];
-            }).bind(this));
+            ]);
             Object.defineProperty(this, "isDestroyed", {value: true});
         }},
     });
@@ -106,7 +101,7 @@
             input.prototype.destroy.call(this);
         }}
     });
-    each(["text","value"], function(name)
+    function defineOptionMember(name)
     {
         var thisName    = name.substr(0,1).toUpperCase()+name.substr(1);
         Object.defineProperty(select.prototype, "option"+thisName, 
@@ -115,10 +110,12 @@
             set: function(value)
             {
                 Object.defineProperty(this,"__option"+thisName, {value: value, configurable: true});
-                each(this.__options, function(option){option[name].bind = value;});
+                for(var counter=0,option;(option=this.__options[counter]) !== undefined; counter++) option[name].bind = value;
             }
         });
-    });
+    }
+    defineOptionMember("text");
+    defineOptionMember("value");
     function removeOption(index)
     {
         var option  = this.__options[index];

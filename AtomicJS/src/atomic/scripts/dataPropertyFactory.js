@@ -2,7 +2,7 @@
 {"use strict";
     var defineDataProperties;
     var bindCounter             = 0;
-    function buildFunction(isolatedFunctionFactory, each)
+    function buildFunction(isolatedFunctionFactory, reflect)
     {
         var functionFactory = new isolatedFunctionFactory();
         var dataProperty    =
@@ -38,6 +38,7 @@
         });
         function bindData()
         {
+            var that    = this;
             if (this.__data === undefined || this.__data == null || this.isDestroyed)   return;
             Object.defineProperty(this,"__bounded", {value: true, configurable: true});
             if (this.__bind !== undefined)
@@ -45,16 +46,17 @@
                 Object.defineProperty(this, "__bindListener", 
                 {
                     configurable:   true, 
-                    value:          (function(val, ignore)
+                    value:          function __bindListener(val, ignore)
                     {
-                        var value           = this.__getDataValue();
-                        var currentValue    = this.__getter();
+                        var value           = that.__getDataValue();
+                        var currentValue    = that.__getter();
                         if (value === currentValue)  return;
-                        if (!this.__notifyingObserver) this.__setter(value);
-                        ignore((function(){notifyOnDataUpdate.call(this, this.data);}).bind(this)); 
-                    }).bind(this)
+                        if (!that.__notifyingObserver) that.__setter(value);
+                        ignore(function ignoreCallback(){notifyOnDataUpdate.call(that, that.data);}); 
+                    }
                 });
-                each(this.__onchange, (function(onchange){onchange.listen(this.__inputListener, true);}).bind(this));
+                var onchangeKeys    = Object.keys(this.__onchange);
+                for(var counter=0, onchangeKey;(onchangeKey=onchangeKeys[counter]) !== undefined; counter++)    this.__onchange[onchangeKey].listen(this.__inputListener, true);
                 this.data.listen(this.__bindListener, this.__root);
                 notifyOnbind.call(this, this.data);
                 return this;
@@ -77,7 +79,8 @@
                 this.__bindListener.ignore  = true;
                 Object.defineProperty(this, "__bindListener", {configurable: true, value: undefined});
             }
-            each(this.__onchange, (function(onchange){onchange.ignore(this.__inputListener);}).bind(this));
+            var onchangeKeys    = Object.keys(this.__onchange);
+            for(var counter=0, onchangeKey;(onchangeKey=onchangeKeys[counter]) !== undefined; counter++)    this.__onchange[onchangeKey].ignore(this.__inputListener);
             if (notify)                                 notifyOnunbind.call(this);
         }
         function notifyOnbind(data)         { if (this.__onbind) this.__onbind.call(this.__owner, data); }
@@ -92,11 +95,12 @@
         }
         Object.defineProperties(functionFactory.root.prototype,
         {
-            destroy:            {value: function()
+            destroy:            {value: function destroy()
             {
                 unbindData.call(this);
-                each
-                ([
+                reflect.deleteProperties(this.__onchange, Object.keys(this.__onchange));
+                reflect.deleteProperties(this,
+                [
                     "___invoke",
                     "__owner",
                     "__binder",
@@ -112,12 +116,7 @@
                     "__onbind",
                     "__onupdate",
                     "__onunbind"
-                ],
-                (function(name)
-                {
-                    Object.defineProperty(this, name, {value: null, configurable: true});
-                    delete this[name];
-                }).bind(this));
+                ]);
                 Object.defineProperty(this, "isDestroyed", {value: true});
             }},
             __debugBindPath:    {get: function()
@@ -178,7 +177,11 @@
             {
                 rebind.call(this, function()
                 {
-                    each(["data","bindPath","root","onupdate"],(function(name){ if(options[name] !== undefined) Object.defineProperty(this, "__"+name, {value: options[name], configurable: true}); }).bind(this));
+                    var optionKeys = ["data","bindPath","root","onupdate"];
+                    for(var counter=0,optionKey;(optionKey=optionKeys[counter]) !== undefined; counter++)
+                    {
+                        if(options[optionKey] !== undefined)    Object.defineProperty(this, "__"+optionKey, {value: options[optionKey], configurable: true});
+                    }
                     if (options.bindPath !== undefined) this.__binder.__updateDebugInfo();
                     if(options.bind !== undefined)
                     {
@@ -186,8 +189,15 @@
                     }
                     if(options.onchange !== undefined)
                     {
-                        each(this.__onchange,   (function(event, name){Object.defineProperty(this.__onchange,name,{writable: true});delete this.__onchange[name];}).bind(this));
-                        each(options.onchange,  (function(event, name){Object.defineProperty(this.__onchange,name,{value: event, configurable: true, enumerable: true});}).bind(this));
+                        var onchangeKeys    = Object.keys(this.__onchange);
+                        reflect.deleteProperties(this.__onchange, onchangeKeys);
+
+                        onchangeKeys       = Object.keys(options.onchange);
+                        for(var counter2=0, onchangeKey;(onchangeKey=onchangeKeys[counter2]) !== undefined; counter2++)
+                        {
+                            var event   = options.onchange[onchangeKey];
+                            Object.defineProperty(this.__onchange,onchangeKey,{value: event, configurable: true, enumerable: true});
+                        }
                     }
                 });
             }},
@@ -198,22 +208,30 @@
             },
             update:         {value: function(){this.___inputListener();}}
         });
-        each(["data","bind","root"],function(name)
+        function definePrototypeMember(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
                 get:    function(){return this["__"+name];},
                 set:    function(value){throw new Error("obsolete");}
             });
-        });
-        each(["onbind","onunbind","delay"],function(name)
+        }
+        definePrototypeMember("data");
+        definePrototypeMember("bind");
+        definePrototypeMember("root");
+
+        function definePrototypeMember2(name)
         {
             Object.defineProperty(functionFactory.root.prototype, name,
             {
                 get:    function(){return this["__"+name];},
                 set:    function(value){Object.defineProperty(this, "__"+name, {value: value, configurable: true});}
             });
-        });
+        }
+        definePrototypeMember2("onbind");
+        definePrototypeMember2("onunbind");
+        definePrototypeMember2("delay");
+
         function defineDataProperty(target, binder, propertyName, property)
         {
             if (target.hasOwnProperty(propertyName))
@@ -224,18 +242,24 @@
                 delete target[propertyName];
             }
             Object.defineProperty(target, propertyName, {value: new dataProperty(property.owner||target, property.get, property.set, property.onchange, binder, property.delay, propertyName), configurable: true})
-            each(["onbind","onupdate","onunbind","delay"],function(name){if (property[name])  target[propertyName][name] = property[name];});
+
+            var memberNames = ["onbind","onupdate","onunbind","delay"];
+            for(var counter=0,memberName;(memberName=memberNames[counter]) !== undefined; counter++)    if (property[memberName])   target[propertyName][memberName] = property[memberName];
         }
         function defineDataProperties(target, binder, properties, singleProperty)
         {
             if (typeof properties === "string") defineDataProperty(target, binder, properties, singleProperty);
-            else                                each(properties, function(property, propertyName){defineDataProperty(target, binder, propertyName, property);});
+            else
+            {
+                var propertyKeys    = Object.keys(properties);
+                for(var counter=0,propertyKey;(propertyKey=propertyKeys[counter]) !== undefined; counter++) defineDataProperty(target, binder, propertyKey, properties[propertyKey]);
+            }
         }
         return defineDataProperties;
     }
-    root.define("atomic.defineDataProperties", function(isolatedFunctionFactory, each)
+    root.define("atomic.defineDataProperties", function(isolatedFunctionFactory, reflect)
     {
-        if (defineDataProperties === undefined) defineDataProperties    = buildFunction(isolatedFunctionFactory, each);
+        if (defineDataProperties === undefined) defineDataProperties    = buildFunction(isolatedFunctionFactory, reflect);
         return defineDataProperties;
     });
 }();

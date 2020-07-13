@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.control", function htmlControl(document, removeItemFromArray, setTimeout, each, eventsSet, dataBinder, debugInfoObserver)
+!function(){"use strict";root.define("atomic.html.control", function htmlControl(document, removeItemFromArray, setTimeout, reflect, eventsSet, dataBinder, debugInfoObserver)
 {
     var logCounter              = 0;
     var callbackCounter         = 0;
@@ -75,11 +75,13 @@
                             ?   this.getEvents(binding.updateon)
                             :   undefined
             });
-            each(["text","value"], (function(option)
+            function setOption(option)
             {
                 var optionName  = "option"+option.substr(0,1).toUpperCase()+option.substr(1);
                 if (binding[option] !== undefined)  this[optionName] = binding[option];
-            }).bind(this));
+            };
+            setOption.call(this, "text");
+            setOption.call(this, "value");
         }
     }
     function bindClassProperty(name, binding)
@@ -117,16 +119,31 @@
         {
             for(var name in value)  viewAdapter.addEventListener(name, value[name].bind(viewAdapter), false, notifyEarly.indexOf(name) > -1);
         }},
-        updateon:           {value: function(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
+        updateon:           {value: function updateon(viewAdapter, value)    {if (Array.isArray(value))  viewAdapter.updateon = value;}}
     });
-    each(["alt", "autoplay", "currentTime", "loop", "muted", "nativeControls", "preload", "mediaType", "playbackRate", "value", "volume"], function(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + viewAdapter.constructor.name + ".  Skipping initializer."); return;} viewAdapter[val](value); }; });
-    each(["optionValue", "optionText", "isDataRoot"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; });
-    initializers.classes = function(viewAdapter, value) { each(value, function(val){viewAdapter.toggleClass(val, true);}); };
-    each(["onbind", "ondataupdate", "onsourceupdate", "onunbind"], function(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; });
-    each(["abort", "blur", "canplay", "canplaythrough", "change", "changing", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "enter", "error", "escape", "focus", "focusin", "focusout", "hide", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "show", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"], function(val)
+
+    function defineBasicInitializer(val){ initializers[val] = function(viewAdapter, value) { if (viewAdapter[val] === undefined) {console.error("property named " +val + " was not found on the view adapter of type " + viewAdapter.constructor.name + ".  Skipping initializer."); return;} viewAdapter[val](value); }; }
+    var initializerKeys = ["alt", "autoplay", "currentTime", "loop", "muted", "nativeControls", "preload", "mediaType", "playbackRate", "value", "volume"];
+    for(var counter=0,initializerKey;(initializerKey=initializerKeys[counter]) !== undefined; counter++)    defineBasicInitializer(initializerKey);
+
+    function defineOptionInitializer(val){ initializers[val] = function(viewAdapter, value) { viewAdapter[val] = value; }; }
+    initializerKeys     = ["optionValue", "optionText", "isDataRoot"];
+    for(var counter=0,initializerKey; (initializerKey=initializerKeys[counter]) !== undefined; counter++)    defineOptionInitializer(initializerKey);
+
+    initializers.classes = function(viewAdapter, value){ for(var counter=0, className;(className=value[counter]) !== undefined;counter++) viewAdapter.toggleClass(className, true); };
+
+    function defineHiddenInitializer(val){ initializers[val] = function(viewAdapter, value) { viewAdapter["__" + val] = value; }; };
+    initializerKeys = ["onbind", "ondataupdate", "onsourceupdate", "onunbind"];
+    for(var counter=0,initializerKey; (initializerKey=initializerKeys[counter]) !== undefined; counter++)    defineHiddenInitializer(initializerKey);
+
+    function defineEventInitializer(val) { initializers["on" + val] = function(viewAdapter, callback)
     {
-        initializers["on" + val] = function(viewAdapter, callback) { console.warn("The '{on" + val + ": listener}' event initializer has been deprecated.  Please switch to the '{on: {" + val + ": listener}}' initializer instead."); viewAdapter.addEventListener(val, callback.bind(viewAdapter), false); };
-    });
+        console.warn("The '{on" + val + ": listener}' event initializer has been deprecated.  Please switch to the '{on: {" + val + ": listener}}' initializer instead."); 
+        viewAdapter.addEventListener(val, callback.bind(viewAdapter), false);
+    };}
+    initializerKeys = ["abort", "blur", "canplay", "canplaythrough", "change", "changing", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave", "dragover", "dragstart", "drop", "durationchanged", "ended", "enter", "error", "escape", "focus", "focusin", "focusout", "hide", "input", "loadeddata", "loadedmetadata", "loadstart", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "paste", "pause", "play", "playing", "progress", "ratechange", "search", "seeked", "seeking", "select", "show", "stalled", "suspend", "timeupdate", "touchcancel", "touchend", "touchmove", "touchstart", "volumechange", "waiting", "wheel", "transitionend", "viewupdated"];
+    for(var counter=0,initializerKey; (initializerKey=initializerKeys[counter]) !== undefined; counter++)    defineEventInitializer(initializerKey);
+
     function initializeViewAdapterExtension(viewAdapterDefinition, extension)
     {
         for(var initializerSetKey in extension.initializers)
@@ -254,24 +271,24 @@
         removeChild:        { reset:    false,  set: function(control, value){ control.__element.removeChild(value); } },
         callback:           { reset:    false,  set: function(control, value){ value.call(control); } },
     };
-    Object.defineProperty(control, "__getViewProperty", {value: function(name) { return viewProperties[name]; }});
+    Object.defineProperty(control, "__getViewProperty", {value: function __getViewProperty(name) { return viewProperties[name]; }});
     Object.defineProperties(control.prototype,
     {
         // fields
         constructor:        {value: control},
         // properties
-        bindPath:           {get:   function(){return this.__binder.bindPath||"";},                                                             set:    function(value){this.__binder.bindPath = value; }},
+        bindPath:           {get:   function(){return this.__binder.bindPath||"";},                             set:    function(value){this.__binder.bindPath = value; }},
         bind:               {get:   function(){return this.value.bind;}},
         data:               {get:   function(){return this.__binder.data.observe(this.bindPath);}},
-        height:             {get:   function(){return this.__element.offsetHeight;},                                                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetHeight"]);}},
-        isDataRoot:         {get:   function(){return this.__isDataRoot;},                                                                      set:    function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
-        isRoot:             {get:   function(){return this.__forceRoot||this.parent===undefined;},                                              set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}},
-        scrollTop:          {get:   function(){return this.__element.scrollTop;},                                                               set:    function(value){this.__element.style.scrollTop = parseInt(value); this.getEvents("viewupdated").viewupdated(["scrollTop"]);}},
+        height:             {get:   function(){return this.__element.offsetHeight;},                            set:    function(value){console.log("setting height on " + this.getSelectorPath()); this.__element.style.height = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetHeight"]);}},
+        isDataRoot:         {get:   function(){return this.__isDataRoot;},                                      set:    function(value){Object.defineProperty(this, "__isDataRoot", {value: value===true, configurable: true});}},
+        isRoot:             {get:   function(){return this.__forceRoot||this.parent===undefined;},              set:    function(value){Object.defineProperty(this, "__forceRoot", {value: value===true, configurable: true});}},
+        scrollTop:          {get:   function(){return this.__element.scrollTop;},                               set:    function(value){this.__element.style.scrollTop = parseInt(value); this.getEvents("viewupdated").viewupdated(["scrollTop"]);}},
         root:               {get:   function(){return !this.isRoot && this.parent ? this.parent.root : this;}},
-        updateon:           {get:   function(){var names = []; each(this.value.onchange,function(e, name){names.push(name);}); return names;},  set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
-        width:              {get:   function(){return this.__element.offsetWidth;},                                                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
+        updateon:           {get:   function(){return Object.keys(this.value.onchange); },                      set:    function(eventNames){ this.value.onchange = this.getEvents(eventNames); }},
+        width:              {get:   function(){return this.__element.offsetWidth;},                             set:    function(value){console.log("setting width on " + this.getSelectorPath()); this.__element.style.width = parseInt(value)+"px"; this.getEvents("viewupdated").viewupdated(["offsetWidth"]);}},
         // methods
-        __addCustomEvents:  {value: function(events)
+        __addCustomEvents:  {value: function __addCustomEvents(events)
         {
             Object.defineProperties(events,
             {
@@ -280,15 +297,15 @@
                 losingfocus:      {value:   {eventNames: ["focusout"],  handler: function(event){ if (!this.__target.__element.contains(event.relatedTarget)) { this.pubSub(event); } }}}
             });
         }},
-        __createNode:       {value: function()                              { return document.createElement("div"); }, configurable: true},
-        __getCustomEvents:  {value: function()
+        __createNode:       {value: function __createNode()                             { return document.createElement("div"); }, configurable: true},
+        __getCustomEvents:  {value: function __getCustomEvents()
         {
            var customEvents = {};
            this.__addCustomEvents(customEvents);
            return customEvents;
         }},
-        __getData:          {value: function()                              { return this.__binder.data; }},
-        __getViewData:      {value: function(name)
+        __getData:          {value: function __getData()                                { return this.__binder.data; }},
+        __getViewData:      {value: function __getViewData(name)
         {
             var property    = this.constructor.__getViewProperty(name);
             return  this.__viewUpdateQueue.elements[name] !== undefined
@@ -297,7 +314,7 @@
                         :   this.__viewUpdateQueue.elements[name][this.__viewUpdateQueue.elements[name].length-1]
                     :   property.get(this);
         }},
-        __setViewData:      {value: function(name, value)
+        __setViewData:      {value: function __setViewData(name, value)
         {
             var property    = this.constructor.__getViewProperty(name);
             if (property.reset)
@@ -314,7 +331,7 @@
             if (property.value) property.value(this, value);
             (!this.isRoot ? this.parent : this).__deferViewUpdate(this);
         }},
-        __updateDebugInfo:  {value: function()
+        __updateDebugInfo:  {value: function __updateDebugInfo()
         {
             if (debugInfoObserver === undefined)    return;
             function deferred()
@@ -330,7 +347,7 @@
             }
             this.__updateDebugInfoId    = setTimeout(deferred.bind(this), 0);
         }},
-        __updateView:       {value: function()
+        __updateView:       {value: function __updateView()
         {
             var queue           = this.__viewUpdateQueue;
             Object.defineProperty(this, "__viewUpdateQueue", {value: {order: [], elements: {}}, configurable: true});
@@ -344,14 +361,14 @@
             }
             this.getEvents("viewupdated").viewupdated(keys);
         }},
-        __reattach:         {value: function()
+        __reattach:         {value: function __reattach()
         {
             this.__elementPlaceholder.parentNode.replaceChild(this.__element, this.__elementPlaceholder); 
             delete this.__elementPlaceholder;
             return this;
         }},
-        __setData:          {value: function(data)                          { this.__binder.data = data; }},
-        addClass:           {value: function(className, silent)
+        __setData:          {value: function __setData(data)                          { this.__binder.data = data; }},
+        addClass:           {value: function addClass(className, silent)
         {
             if (className === undefined)    return;
             var classNames      = this.__getViewData("className").split(" ");
@@ -362,7 +379,7 @@
             if (!silent)    notifyClassEvent.call(this, classNamesToAdd, true);
             return this;
         }},
-        bindClass:          {value: function(className)
+        bindClass:          {value: function bindClass(className)
         {
             this.__binder.defineDataProperties(this.classes, className, 
             {
@@ -372,8 +389,9 @@
                 onchange:   [this.__events.getOrAdd("class-"+className)]
             })
         }},
-        destroy:            {value: function()
+        destroy:            {value: function destroy()
         {
+            this.__binder.data = undefined;
             if (debugInfoObserver)
             {
                 debugInfoRemoveQueue.push(this.__viewAdapterPath);
@@ -381,8 +399,8 @@
             }
             this.__events.destroy();
             this.__binder.destroy();
-            each
-            ([
+            reflect.deleteProperties(this, 
+            [
                 "__element",
                 "__elementPlaceholder",
                 "__events",
@@ -393,15 +411,11 @@
                 "__binder",
                 "__forceRoot",
                 "classes"
-            ],
-            (function(name)
-            {
-                Object.defineProperty(this, name, {value: null, configurable: true});
-                delete this[name];
-            }).bind(this));
+            ]);
             Object.defineProperty(this, "isDestroyed", {value: true});
+            Object.freeze(this);
         }},
-        frame:              {value: function(controlDefinition)
+        frame:              {value: function frame(controlDefinition)
         {
             addEvents.call(this, controlDefinition.events);
             addCustomMembers.call(this, controlDefinition.members);
@@ -413,19 +427,19 @@
                 if (controlDefinition.extensions[counter].extend !== undefined) controlDefinition.extensions[counter].extend.call(this);
             }
         }},
-        getEvents:          {value: function(eventNames)
+        getEvents:          {value: function getEvents(eventNames)
         {
             if (!Array.isArray(eventNames)) eventNames  = [eventNames];
             var events  = {};
-            each(eventNames, (function(eventName){events[eventName] = this.__events.getOrAdd(eventName);}).bind(this));
+            for(var counter=0,eventName;(eventName=eventNames[counter]) !== undefined; counter++) events[eventName] = this.__events.getOrAdd(eventName);
             return events;
         }},
-        getSelectorPath:    {value: function()                              { return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root"); }},
-        getViewAdapterPath: {value: function(proto)                         { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls.") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")); }},
-        hasClass:           {value: function(className)                     { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
-        hasFocus:           {value: function(nested)                        { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
-        hide:               {value: function()                              { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
-        initialize:         {value: function(initializerDefinition, controlDefinition)
+        getSelectorPath:    {value: function getSelectorPath()                                      { return (this.parent === undefined ? "" : this.parent.getSelectorPath() + "-") + (this.__selector||"root"); }},
+        getViewAdapterPath: {value: function getViewAdapterPath(proto)                              { return (this.parent === undefined ? "" : this.parent.getViewAdapterPath(proto) + ".controls.") + ((proto?this.__protoChildKey:this.__childKey)||((this.__selector||"#root").substr(1) + ".root")); }},
+        hasClass:           {value: function hasClass(className)                                    { return this.__getViewData("className").split(" ").indexOf(className) > -1; }},
+        hasFocus:           {value: function hasFocus(nested)                                       { return document.activeElement == this.__element || (nested && this.__element.contains(document.activeElement)); }},
+        hide:               {value: function hide()                                                 { this.__setViewData("style.display", "none"); this.triggerEvent("hide"); return this; }},
+        initialize:         {value: function initialize(initializerDefinition, controlDefinition)
         {
             for(var initializerKey in initializers)
             if (initializerDefinition.hasOwnProperty(initializerKey))   initializers[initializerKey](this, initializerDefinition[initializerKey]);
@@ -434,10 +448,10 @@
             for(var counter=0;counter<controlDefinition.extensions.length;counter++)    initializeViewAdapterExtension.call(this, initializerDefinition, controlDefinition.extensions[counter]);
         }},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
-        insertBefore:       {value: function(siblingControl)                { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; }},
+        insertBefore:       {value: function insertBefore(siblingControl)                           { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element); return this; }},
         //TODO: ensure that this control is moved to the siblingControl's parent controls set
-        insertAfter:        {value: function(siblingControl)                { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; }},
-        removeClass:        {value: function(className, silent)
+        insertAfter:        {value: function insertAfter(siblingControl)                            { siblingControl.__element.parentNode.insertBefore(this.__element, siblingControl.__element.nextSibling); return this; }},
+        removeClass:        {value: function removeClass(className, silent)
         {
             if (className === undefined)
             {
@@ -452,15 +466,18 @@
             if (!silent)    notifyClassEvent.call(this, classNamesToRemove, false);
             return this;
         }},
-        scrollIntoView:     {value: function()                              { this.__element.scrollTop = 0; return this; }},
-        select:             {value: function()                              { selectContents(this.__element); return this; }},
-        show:               {value: function()                              { this.__setViewData("style.display", ""); this.triggerEvent("show"); return this; }},
-        toggleClass:        {value: function(className, condition, silent)  { if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent); }},
-        toggleEdit:         {value: function(condition)                     { if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); this.getEvents("viewupdated").viewupdated(["contentEditable"]); return this; }},
-        toggleDisplay:      {value: function(condition)                     { if (condition === undefined) condition = this.__getViewData("style.display")=="none"; this[condition?"show":"hide"](); return this; }},
-        triggerEvent:       {value: function(eventName)                     { var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this; }}
+        scrollIntoView:     {value: function scrollIntoView()                                       { this.__element.scrollTop = 0; return this; }},
+        select:             {value: function select()                                               { selectContents(this.__element); return this; }},
+        show:               {value: function show()                                                 { this.__setViewData("style.display", ""); this.triggerEvent("show"); return this; }},
+        toggleClass:        {value: function toggleClass(className, condition, silent)              { if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent); }},
+        toggleEdit:         {value: function toggleEdit(condition)                                  { if (condition === undefined) condition = this.__element.getAttribute("contentEditable")!=="true"; this.__element.setAttribute("contentEditable", condition); this.getEvents("viewupdated").viewupdated(["contentEditable"]); return this; }},
+        toggleDisplay:      {value: function toggleDisplay(condition)                               { if (condition === undefined) condition = this.__getViewData("style.display")=="none"; this[condition?"show":"hide"](); return this; }},
+        triggerEvent:       {value: function triggerEvent(eventName)                                { var args = Array.prototype.slice(arguments, 1); this.__events.getOrAdd(eventName).invoke(args); return this; }}
     });
-    each(["blur","click","focus"],function(name){Object.defineProperty(control.prototype,name,{value:function(){this.__setViewData("callback", function(){this.__setViewData("callback", function(){this.__element[name]();});}); return this;}});});
+    function defineCallback(name){Object.defineProperty(control.prototype,name,{value:function(){this.__setViewData("callback", function(){this.__setViewData("callback", function(){this.__element[name]();});}); return this;}});}
+    defineCallback("blur");
+    defineCallback("click");
+    defineCallback("focus");
     function defineFor(on,off){Object.defineProperty(control.prototype,on+"For",{value:function()
     {
         var args            = Array.prototype.slice.call(arguments, 0, arguments.length-2),
@@ -478,8 +495,11 @@
         ); 
         return this;
     }});}
-    each([["addClass","removeClass"],["show","hide"]],function(names){defineFor(names[0], names[1]);defineFor(names[1],names[0]);});
-    each(["addEvent","removeEvent"],function(name)
+    function defineForSet(name1, name2){defineFor(name1, name2);defineFor(name2,name1);}
+    defineForSet("addClass","removeClass");
+    defineForSet("show","hide");
+
+    function defineListeners(name)
     {
         Object.defineProperty
         (
@@ -497,13 +517,13 @@
             name+"sListener",
             {value: function(eventNames, listener, withCapture, notifyEarly)
             {
-                each(eventNames, (function(eventName)
-                {
-                    this.addEventListener(eventName, listener, withCapture, notifyEarly); 
-                }).bind(this));
+                if (!Array.isArray(eventNames)) eventNames  = [eventNames];
+                for(var counter=0,eventName;(eventName=eventNames[counter]) !== undefined; counter++)   this.addEventListener(eventName, listener, withCapture, notifyEarly);
                 return this;
             }}
         );
-    });
+    }
+    defineListeners("addEvent");
+    defineListeners("removeEvent");
     return control;
 });}();
