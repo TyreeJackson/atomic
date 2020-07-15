@@ -9,6 +9,25 @@
         var pathParser              = new pathParserFactory.parser(new root.atomic.lexer(new root.atomic.scanner(), pathParserFactory.getTokenizers(), root.utilities.removeFromArray));
         this.observer               = new root.atomic.observerFactory(root.utilities.removeFromArray, isolatedFunctionFactory, root.utilities.each, pathParser);
     },
+    Hyphens_are_now_supported_in_property_words:
+    function()
+    {
+        var firstName       = faker.name.firstName();
+        var dataObject      = new this.observer
+        ({
+            data:
+            {
+                "person-data":
+                {
+                    firstName:              firstName,
+                    lastName:               faker.name.lastName()
+                }
+            }
+        });
+        var firstNameRead   = dataObject("data.person-data.firstName");
+        ion.log("Testing accessing the property path containing a hyphen.");
+        ion.assert(firstName === firstNameRead, "The first names should match and no error should be thrown for the hyphen in the property path.");
+    },
     When_changing_a_value_in_an_observer_listeners_are_notified:
     function()
     {
