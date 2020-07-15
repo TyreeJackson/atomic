@@ -45,7 +45,7 @@
     function wordTokenizer()
     {
         var firstLetterCharacters   = /[a-zA-Z_$]/;
-        var wordCharacters          = /[a-zA-Z0-9_$]/;
+        var wordCharacters          = /[a-zA-Z0-9_\-$]/;
         var priv                    =
         {
             value:  ""
