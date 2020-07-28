@@ -466,7 +466,7 @@
             if (!silent)    notifyClassEvent.call(this, classNamesToRemove, false);
             return this;
         }},
-        scrollIntoView:     {value: function scrollIntoView()                                       { this.__element.scrollTop = 0; return this; }},
+        scrollIntoView:     {value: function scrollIntoView()                                       { if (this.__element.scrollIntoView) this.__element.scrollIntoView(); else this.__element.scrollTop = 0; return this; }},
         select:             {value: function select()                                               { selectContents(this.__element); return this; }},
         show:               {value: function show()                                                 { this.__setViewData("style.display", ""); this.triggerEvent("show"); return this; }},
         toggleClass:        {value: function toggleClass(className, condition, silent)              { if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent); }},

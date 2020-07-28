@@ -218,6 +218,7 @@
             observe:            {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.yes, peek);}},
             peek:               {value: function(path, unwrap){return this.__invoke(path, undefined, unwrap === true ? getObserverEnum.no : getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
+            toggle:             {value: function(path, value){this.setValue(path, this(path) == value ? undefined : value, false); }},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
             shadows:            {get:   function(){return this.__bag.shadows;}},
