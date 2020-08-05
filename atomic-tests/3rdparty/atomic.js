@@ -692,7 +692,7 @@
             if (!silent)    notifyClassEvent.call(this, classNamesToRemove, false);
             return this;
         }},
-        scrollIntoView:     {value: function scrollIntoView()                                       { this.__element.scrollTop = 0; return this; }},
+        scrollIntoView:     {value: function scrollIntoView()                                       { if (this.__element.scrollIntoView) this.__element.scrollIntoView(); else this.__element.scrollTop = 0; return this; }},
         select:             {value: function select()                                               { selectContents(this.__element); return this; }},
         show:               {value: function show()                                                 { this.__setViewData("style.display", ""); this.triggerEvent("show"); return this; }},
         toggleClass:        {value: function toggleClass(className, condition, silent)              { if (condition === undefined) condition = !this.hasClass(className); return this[condition?"addClass":"removeClass"](className, silent); }},
@@ -3382,6 +3382,7 @@
             observe:            {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.yes, peek);}},
             peek:               {value: function(path, unwrap){return this.__invoke(path, undefined, unwrap === true ? getObserverEnum.no : getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
+            toggle:             {value: function(path, value){this.setValue(path, this(path) == value ? undefined : value, false); }},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
             shadows:            {get:   function(){return this.__bag.shadows;}},
@@ -3395,7 +3396,7 @@
                     var virtualProperty = {cachedValues: {}};
                     if (property.get !== undefined) virtualProperty.get = (function(basePath, key)
                     {
-                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "." : "") + key;
+                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "[\'" : "") + key.replace("'", "\\'") + ((basePath||"").length > 0 && (key||"").length > 0 ? "']" : "");
                         if (virtualProperty.cachedValues[path] === undefined)
                         {
                             virtualProperty.cachedValues[path]  = { listener: (function()
