@@ -3396,7 +3396,7 @@
                     var virtualProperty = {cachedValues: {}};
                     if (property.get !== undefined) virtualProperty.get = (function(basePath, key)
                     {
-                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "." : "") + key;
+                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "[\'" : "") + key.replace("'", "\\'") + ((basePath||"").length > 0 && (key||"").length > 0 ? "']" : "");
                         if (virtualProperty.cachedValues[path] === undefined)
                         {
                             virtualProperty.cachedValues[path]  = { listener: (function()
