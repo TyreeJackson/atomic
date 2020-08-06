@@ -28,6 +28,30 @@
         ion.log("Testing accessing the property path containing a hyphen.");
         ion.assert(firstName === firstNameRead, "The first names should match and no error should be thrown for the hyphen in the property path.");
     },
+    Numbers_are_now_supported_as_the_first_character_in_property_words:
+    function()
+    {
+        var firstName       = faker.name.firstName();
+        var dataObject      = new this.observer
+        ({
+            data:
+            {
+                "1-person-data":
+                {
+                    firstName:              firstName,
+                    lastName:               faker.name.lastName()
+                },
+                "2-person-data":
+                {
+                    firstName:              firstName,
+                    lastName:               faker.name.lastName()
+                }
+            }
+        });
+        var firstNameRead   = dataObject("data.1-person-data.firstName");
+        ion.log("Testing accessing the property path starting with a number and continuing with alpha-numeric characters.");
+        ion.assert(firstName === firstNameRead, "The first names should match and no error should be thrown for the hyphen in the property path.");
+    },
     When_changing_a_value_in_an_observer_listeners_are_notified:
     function()
     {

@@ -2779,7 +2779,6 @@
     Object.defineProperty(stringLiteralTokenizer, "prototype", {value: Object.create(tokenizer.prototype)});
     function wordTokenizer()
     {
-        var firstLetterCharacters   = /[a-zA-Z_$]/;
         var wordCharacters          = /[a-zA-Z0-9_\-$]/;
         var priv                    =
         {
@@ -2790,16 +2789,11 @@
         function read(currentChar)
         {
             var handled = false;
-            if (!prot.isClosed && wordCharacters.test(currentChar))
+            if (wordCharacters.test(currentChar))
             {
+                if (prot.isClosed)  prot.isClosed   = false;
                 priv.value  += currentChar;
                 handled     = true;
-            }
-            else if (prot.isClosed && firstLetterCharacters.test(currentChar))
-            {
-                prot.isClosed   = false;
-                priv.value      = currentChar;
-                handled         = true;
             }
             return handled;
         }
@@ -3139,8 +3133,8 @@
                 new stringLiteralTokenizer("'", true),
                 new stringLiteralTokenizer("\"", true),
                 new stringLiteralTokenizer("`", false),
-                new wordTokenizer(),
                 new numeralTokenizer(),
+                new wordTokenizer(),
                 new delimiterTokenizer('.', propertyDelimiter),
                 new operatorTokenizer("...", ROOTDIRECTIVE),
                 new delimiterTokenizer('[', openKeyDelimiter),
@@ -3396,7 +3390,7 @@
                     var virtualProperty = {cachedValues: {}};
                     if (property.get !== undefined) virtualProperty.get = (function(basePath, key)
                     {
-                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "[\'" : "") + key.replace("'", "\\'") + ((basePath||"").length > 0 && (key||"").length > 0 ? "']" : "");
+                        var path = basePath + ((basePath||"").length > 0 && (key||"").length > 0 ? "." : "") + key;
                         if (virtualProperty.cachedValues[path] === undefined)
                         {
                             virtualProperty.cachedValues[path]  = { listener: (function()
