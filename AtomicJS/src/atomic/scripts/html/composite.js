@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.composite", function htmlComposite(base, each, observer)
+!function(){"use strict";root.define("atomic.html.composite", function htmlComposite(base, reflect, observer)
 {
     function composite(elements, selector, parent, bindPath, childKey, protoChildKey)
     {

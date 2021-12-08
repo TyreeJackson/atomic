@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, each)
+!function(){"use strict";root.define("atomic.html.eventsSet", function eventsSet(pubSub, reflect)
 {
     function listenerList(target, eventNames, withCapture, intermediary)
     {
@@ -13,7 +13,7 @@
     }
     Object.defineProperties(listenerList.prototype,
     {
-        "__listenersChanged":   {value: function(listenerCount)
+        "__listenersChanged":   {value: function __listenersChanged(listenerCount)
         {
             for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)
             if (listenerCount > 0 && !this.__isAttached)
@@ -28,20 +28,15 @@
             }
         }},
         destroy:
-        {value: function()
+        {value: function destroy()
         {
             for(var eventCounter=0,eventName;(eventName=this.__eventNames[eventCounter]) !== undefined;eventCounter++)  this.__target.__element.removeEventListener(eventName, this.__intermediary||this.pubSub, this.__withCapture);
             this.pubSub.destroy();
-            each
-            ([
+            reflect.deleteProperties(this,
+            [
                 "pubSub",
                 "__target"
-            ],
-            (function(name)
-            {
-                Object.defineProperty(this, name, {value: null, configurable: true});
-                delete this[name];
-            }).bind(this));
+            ]);
         }}
     });
     function eventsSet(target, intermediaries)
@@ -64,41 +59,27 @@
     }
     Object.defineProperties(eventsSet.prototype,
     {
-        getOrAdd:   {value: function(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
-        get:        {value: function(name, withCapture){ return getListener.call(this, name, withCapture, false); }},
-        destroy:
-        {value: function()
+        getOrAdd:   {value: function getOrAdd(name, withCapture){ return getListener.call(this, name, withCapture, true); }},
+        get:        {value: function get(name, withCapture){ return getListener.call(this, name, withCapture, false); }},
+        destroy:    {value: function destroy()
         {
-            each
-            ([
-                "__listenersUsingCapture",
-                "__listenersNotUsingCapture",
-                "__intermediaries"
-            ],
-            (function(listener)
+            function destroyListener(listenerSet)
             {
-                each
-                (this[listener],
-                (function(name)
-                {
-                    this[listener][name].destroy();
-                    Object.defineProperty(this[listener], name, {value: null, configurable: true});
-                    delete this[listener][name];
-                }).bind(this));
-            }).bind(this));
+                var keys    = Object.keys(listenerSet);
+                for(var counter=0,key;(key=keys[counter])!==undefined;counter++)   listenerSet[key].destroy();
+                reflect.deleteProperties(listenerSet, keys);
+            };
+            destroyListener(this.__listenersUsingCapture);
+            destroyListener(this.__listenersNotUsingCapture);
+            destroyListener(this.__intermediaries);
 
-            each
-            ([
+            reflect.deleteProperties(this,
+            [
                 "__target",
                 "__listenersUsingCapture",
                 "__listenersNotUsingCapture",
                 "__intermediaries"
-            ],
-            (function(name)
-            {
-                Object.defineProperty(this, name, {value: null, configurable: true});
-                delete this[name];
-            }).bind(this));
+            ]);
         }}
     });
     return eventsSet;

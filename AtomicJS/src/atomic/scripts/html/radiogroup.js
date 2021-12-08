@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.radiogroup", function htmlRadioGroup(input, dataBinder, reflect)
 {
     function setOptionNames()
     {
@@ -114,7 +114,7 @@
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return this.__rawValue === value;}}
     });
-    each(["text","value"], function(name)
+    function defineOptionMember(name)
     {
         var thisName    = name.substr(0,1).toUpperCase()+name.substr(1);
         Object.defineProperty(radiogroup.prototype, "option"+thisName, 
@@ -123,10 +123,12 @@
             set: function(value)
             {
                 Object.defineProperty(this,"__option"+thisName, {value: value, configurable: true});
-                each(this.__options, function(option){option[name].bind = value;});
+                for(var counter=0,option;(option=this.__options[counter]) !== undefined; counter++) option[name].bind = value;
             }
         });
-    });
+    }
+    defineOptionMember("text");
+    defineOptionMember("value");
     function clearRadioGroup(radioGroup){ for(var counter=radioGroup.childNodes.length-1;counter>=0;counter--) radioGroup.removeChild(radioGroup.childNodes[counter]); }
     function clearRadioOptions(radioGroup){ for(var counter=radioGroup.__options.length-1;counter>=0;counter--) radioGroup.__setViewData("removeChild", radioGroup.__options[counter].__element); }
     function rebindRadioGroupSource(){bindRadioGroupSource.call(this, this.__boundItems);}

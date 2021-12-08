@@ -1,7 +1,7 @@
 !function()
 {"use strict";
     var createObserver;
-    function buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser)
+    function buildConstructor(removeFromArray, isolatedFunctionFactory, reflect, pathParser)
     {
         var getObserverEnum                             = {auto: 0, no: -1, yes: 1};
         var objectObserverFunctionFactory               = new isolatedFunctionFactory();
@@ -185,7 +185,7 @@
             var paths   = Object.keys(virtualProperty.cachedValues);
             for(var pathCounter=paths.length-1,path;(path=paths[pathCounter--]) !== undefined;) this.ignore(virtualProperty.cachedValues[path].listener);
         }
-        each([objectObserverFunctionFactory,arrayObserverFunctionFactory],function(functionFactory){Object.defineProperties(functionFactory.root.prototype,
+        function decorateFunctionFactory(functionFactory){Object.defineProperties(functionFactory.root.prototype,
         {
             __invoke:           {value: function(path, value, getObserver, peek, forceSet, silentUpdate)
             {
@@ -218,6 +218,7 @@
             observe:            {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.yes, peek);}},
             peek:               {value: function(path, unwrap){return this.__invoke(path, undefined, unwrap === true ? getObserverEnum.no : getObserverEnum.auto, true);}},
             read:               {value: function(path, peek){return this.__invoke(path, undefined, getObserverEnum.auto, peek);}},
+            toggle:             {value: function(path, value){this.setValue(path, this(path) == value ? undefined : value, false); }},
             unwrap:             {value: function(path){return this.__invoke(path, undefined, getObserverEnum.no, false);}},
             basePath:           {value: function(){return this.__basePath;}},
             shadows:            {get:   function(){return this.__bag.shadows;}},
@@ -436,8 +437,10 @@
 
                 childObserver.unlink(childRootPath, this, rootPath, true);
             }}
-        });});
-        each(["push","pop","shift","unshift","sort","reverse","splice"], function(name)
+        });}
+        decorateFunctionFactory(objectObserverFunctionFactory);
+        decorateFunctionFactory(arrayObserverFunctionFactory);
+        function addArrayMembers(name)
         {
             Object.defineProperty
             (
@@ -456,8 +459,12 @@
                     }
                 }
             );
-        });
-        each(["remove","removeAll","move","swap"], function(name)
+        }
+        var members = ["push","pop","shift","unshift","sort","reverse","splice"];
+        for(var counter=0,member;(member=members[counter]) !== undefined; counter++)   addArrayMembers(member);
+
+        members     = ["remove","removeAll","move","swap"];
+        function addArrayMembers2(name)
         {
             Object.defineProperty
             (
@@ -475,8 +482,11 @@
                     }
                 }
             );
-        });
-        each(["join","indexOf","slice"], function(name)
+        }
+        for(var counter=0,member;(member=members[counter]) !== undefined; counter++)   addArrayMembers2(member);
+
+        members     = ["join","indexOf","slice"];
+        function addArrayMembers3(name)
         {
             Object.defineProperty
             (
@@ -490,7 +500,9 @@
                     }
                 }
             );
-        });
+        }
+        for(var counter=0,member;(member=members[counter]) !== undefined; counter++)   addArrayMembers3(member);
+
         Object.defineProperties(arrayObserverFunctionFactory.root.prototype,
         {
             __move:             {value: function(value, toIndex)
@@ -544,9 +556,9 @@
         });
         return createObserver;
     }
-    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, each, pathParser)
+    root.define("atomic.observerFactory", function(removeFromArray, isolatedFunctionFactory, reflect, pathParser)
     {
-        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, each, pathParser);
+        if (createObserver === undefined)  createObserver   = buildConstructor(removeFromArray, isolatedFunctionFactory, reflect, pathParser);
         return function observer(_item)
         {
             var bag             =

@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.panel", function htmlPanel(container, each)
+!function(){"use strict";root.define("atomic.html.panel", function htmlPanel(container, reflect)
 {
     function panel(elements, selector, parent, bindPath, childKey, protoChildKey)
     {

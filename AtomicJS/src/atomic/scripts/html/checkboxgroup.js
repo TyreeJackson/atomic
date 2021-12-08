@@ -1,4 +1,4 @@
-!function(){"use strict";root.define("atomic.html.checkboxgroup", function htmlCheckboxGroup(input, dataBinder, each)
+!function(){"use strict";root.define("atomic.html.checkboxgroup", function htmlCheckboxGroup(input, dataBinder, reflect)
 {
     function setCheckboxGroupValues(values)
     {
@@ -113,7 +113,7 @@
         selectedIndex:      {get:   function(){ return this.__elements[0].selectedIndex; },   set: function(value){ this.__element.selectedIndex=value; this.getEvents("viewupdated").viewupdated(["selectedIndex"]); }},
         __isValueSelected:  {value: function(value){return Array.isArray(this.__rawValues) && this.__rawValues.indexOf(value) > -1;}}
     });
-    each(["text","value"], function(name)
+    function defineOptionMember(name)
     {
         var thisName    = name.substr(0,1).toUpperCase()+name.substr(1);
         Object.defineProperty(checkboxgroup.prototype, "option"+thisName, 
@@ -122,10 +122,12 @@
             set: function(value)
             {
                 Object.defineProperty(this,"__option"+thisName, {value: value, configurable: true});
-                each(this.__options, function(option){option[name].bind = value;});
+                for(var counter=0,option;(option=this.__options[counter]) !== undefined; counter++) option[name].bind = value;
             }
         });
-    });
+    }
+    defineOptionMember("text");
+    defineOptionMember("value");
     function clearCheckboxGroup(checkboxGroup){ for(var counter=checkboxGroup.childNodes.length-1;counter>=0;counter--) checkboxGroup.removeChild(checkboxGroup.childNodes[counter]); }
     function rebindCheckboxGroupSource(){bindCheckboxGroupSource.call(this, this.__boundItems);}
     function bindCheckboxGroupSource(items)
