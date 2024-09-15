@@ -5,18 +5,16 @@
     var updaterId;
     function updateIframe(data, execute, peek)
     {
-        var html        = '<!DOCTYPE html><html><head><link rel="stylesheet" href="css/bootstrap.css" /><scr' + 'ipt type="application/javascript" src="3rdparty/atomic.js"></sc' + 'ript></head><body>' + (data.read("$shadow.activeExample.html", peek)||"").replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">") + '<style>' + data.read("$shadow.activeExample.css", peek) + '</style><scr' + 'ipt type="application/javascript">' + data.read("$shadow.activeExample.javascript", peek) + '</scr' + 'ipt></body></html>';
+        var html        = `<!DOCTYPE html><html><head><link rel='stylesheet' href='css/bootstrap.css' /><scr` + `ipt type='application/javascript' src='3rdparty/atomic.js'></sc` + `ript></head><body>` + (data.read('$shadow.activeExample.html', peek)||'').replace(/\&lt\;/g, '<').replace(/\&gt\;/g, '>') + `<style>` + data.read('$shadow.activeExample.css', peek) + `</style><scr` + `ipt type='application/javascript'>` + data.read('$shadow.activeExample.javascript', peek) + `</scr` + `ipt></body></html>`;
         if (!execute) return;
         function doIt()
         {
             updaterId   = undefined;
-            this.root.controls.playground.controls.preview.value('                <iframe name="result" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>');
+            this.root.controls.playground.controls.preview.value(`                <iframe name="result" style="width: 100%; height: 100%;" frameborder="0">#document</iframe>`);
             this.root.controls.playground.controls.preview.__setViewData("callback", function()
             {
                 var iframe  = this.__element.getElementsByTagName("iframe")[0];
-                iframe.contentWindow.document.open();
-                iframe.contentWindow.document.write(html);
-                iframe.contentWindow.document.close();
+                iframe.srcdoc = html;
             });
         }
         if (updaterId !== undefined)    clearTimeout(updaterId);
